@@ -197,6 +197,8 @@ git push origin source
     <p class="meta">
       
       
+        <a class="basic-alignment right" href="/blog/2012/03/10/writing-math-equations-on-octopress/" title="Next Post: Writing math equations on Octopress">Writing math equations on Octopress &raquo;</a>
+      
     </p>
   </footer>
 </article>
@@ -208,6 +210,10 @@ git push origin source
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/03/10/writing-math-equations-on-octopress/">Writing math equations on Octopress</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2012/03/10/my-octopress-configs/">My Octopress configs</a>
@@ -256,4 +262,20 @@ git push origin source
 
 
 </body>
+<!-- mathjax config similar to math.stackexchange -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/HTML-CSS"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
 </html>
+

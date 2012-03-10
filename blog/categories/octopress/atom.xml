@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Octopress | Dryman's Blog]]></title>
   <link href="http://dryman.github.com/blog/categories/octopress/atom.xml" rel="self"/>
   <link href="http://dryman.github.com/"/>
-  <updated>2012-03-10T16:14:52+08:00</updated>
+  <updated>2012-03-10T17:10:23+08:00</updated>
   <id>http://dryman.github.com/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,91 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Writing math equations on Octopress]]></title>
+    <link href="http://dryman.github.com/blog/2012/03/10/writing-math-equations-on-octopress/"/>
+    <updated>2012-03-10T16:23:00+08:00</updated>
+    <id>http://dryman.github.com/blog/2012/03/10/writing-math-equations-on-octopress</id>
+    <content type="html"><![CDATA[<p>Octopress is a wonderful blogging framework for hackers, but it does not support
+math typesetting by default! What hacker doesn’t use Latex math?</p>
+
+<p>The followings are configs to make you write latex math equations in Octopress.</p>
+
+<ol>
+  <li>Use <a href="http://kramdown.rubyforge.org/">kramdown</a> instead of rdiscount</li>
+</ol>
+
+<p>kramdown is a free GPL-licensed Ruby library for parsing and converting a
+superset of Markdown. It is completely written in Ruby, supports standard
+Markdown and latex math equations.</p>
+
+<pre><code>gem install kramdown
+</code></pre>
+
+<ol>
+  <li>Change settings in <code>_config.yml</code></li>
+</ol>
+
+<p><code>_config.yml</code> is configurations for Jekyll’s settings. find <code>markdown</code> and
+change <code>rdiscount</code> to <code>kramdown</code></p>
+
+<ol>
+  <li>
+    <p>Change <code>gem 'ridiscount'</code> to <code>gem 'kramdown</code> in <code>Gemfile</code><sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>.</p>
+  </li>
+  <li>
+    <p>Put <a href="http://www.mathjax.org/">MathJax</a> CDN and configs in
+<code>source/_layouts/default.html</code>.</p>
+  </li>
+</ol>
+
+<pre><code>&lt;!-- mathjax config similar to math.stackexchange --&gt;
+&lt;script type="text/x-mathjax-config"&gt;
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/HTML-CSS"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+&lt;/script&gt;
+&lt;script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"&gt;&lt;/script&gt;
+</code></pre>
+
+<ol>
+  <li>Fix <a href="http://www.mathjax.org/">MathJax</a> right-click bug</li>
+</ol>
+
+<p>I found the solution on <a href="http://luikore.github.com/2011/09/good-things-learned-from-octopress/">luikore’s blog</a>. The problem was when you right-click on a MathJax formula, the whole browser becomes white. To fix it, open <code>sass/base/_theme.scss</code> and change the div under body from</p>
+
+<pre><code>body {
+  &gt; div {
+    background: $sidebar-bg $noise-bg;
+</code></pre>
+
+<p>to</p>
+
+<pre><code>body {
+  &gt; div#main {
+    background: $sidebar-bg $noise-bg;
+</code></pre>
+
+<p>and it is done.</p>
+
+<div class="footnotes">
+  <ol>
+    <li id="fn:1">
+      <p>It’s useful if you want to depoloy your code on differnt machines.<a href="#fnref:1" rev="footnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[My Octopress configs]]></title>

@@ -79,6 +79,20 @@
 
 <article>
   
+<h1><a href="/blog/2012/03/10/writing-math-equations-on-octopress/">Writing math equations on Octopress</a></h1>
+<time datetime="2012-03-10T16:23:00+08:00" pubdate><span class='month'>Mar</span> <span class='day'>10</span> <span class='year'>2012</span></time>
+
+<footer>
+  <span class="categories">posted in <a class='category' href='/blog/categories/math/'>Math</a>, <a class='category' href='/blog/categories/octopress/'>Octopress</a></span>
+</footer>
+
+
+</article>
+
+
+
+<article>
+  
 <h1><a href="/blog/2012/03/10/my-octopress-configs/">My Octopress configs</a></h1>
 <time datetime="2012-03-10T16:12:00+08:00" pubdate><span class='month'>Mar</span> <span class='day'>10</span> <span class='year'>2012</span></time>
 
@@ -101,6 +115,10 @@
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/03/10/writing-math-equations-on-octopress/">Writing math equations on Octopress</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2012/03/10/my-octopress-configs/">My Octopress configs</a>
@@ -149,4 +167,20 @@
 
 
 </body>
+<!-- mathjax config similar to math.stackexchange -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/HTML-CSS"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
 </html>
+
