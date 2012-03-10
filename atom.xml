@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Dryman's Blog]]></title>
+  <link href="http://dryman.github.com/atom.xml" rel="self"/>
+  <link href="http://dryman.github.com/"/>
+  <updated>2012-03-10T16:06:14+08:00</updated>
+  <id>http://dryman.github.com/</id>
+  <author>
+    <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+</feed>
