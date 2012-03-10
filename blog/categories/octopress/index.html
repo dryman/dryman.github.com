@@ -5,11 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Dryman's Blog</title>
+  <title>Category: Octopress - Dryman's Blog</title>
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="installation note This is an installation note for Octopress blogging framework. My configuration is developed on OSX with ruby 1.9.2, and xcode 4.2 &hellip;">
+  <meta name="description" content="Category: Octopress">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://dryman.github.com">
+  <link rel="canonical" href="http://dryman.github.comblog/categories/octopress">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -62,111 +62,40 @@
 </nav>
   <div id="main">
     <div id="content">
-      <div class="blog-index">
+      <div>
+<article role="article">
   
-  
-  
-    <article>
-      
   <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/03/10/my-octopress-configs/">My Octopress Configs</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-03-10T16:12:00+08:00" pubdate data-updated="true">Mar 10<span>th</span>, 2012</time>
-        
-      </p>
+    <h1 class="entry-title">Category: Octopress</h1>
     
   </header>
+  
+  <div id="blog-archives" class="category">
 
 
-  <div class="entry-content"><h2 id="installation-note">installation note</h2>
 
-<p>This is an installation note for <a href="http://octopress.org">Octopress</a> blogging framework. My configuration is developed on OSX with ruby 1.9.2, and xcode 4.2.</p>
+  
+  <h2>2012</h2>
 
-<h2 id="required-developement-tools">Required developement tools</h2>
+<article>
+  
+<h1><a href="/blog/2012/03/10/my-octopress-configs/">My Octopress configs</a></h1>
+<time datetime="2012-03-10T16:12:00+08:00" pubdate><span class='month'>Mar</span> <span class='day'>10</span> <span class='year'>2012</span></time>
 
-<ol>
-  <li><a href="https://github.com/kennethreitz/osx-gcc-installer">osx-gcc installer</a></li>
-  <li>install <a href="http://mxcl.github.com/homebrew/">homebrew</a> if not yet installed</li>
-</ol>
+<footer>
+  <span class="categories">posted in <a class='category' href='/blog/categories/octopress/'>Octopress</a></span>
+</footer>
 
-<h2 id="manage-rubies-with-rvmhttpbeginrescueendcom">Manage Rubies with <a href="http://beginrescueend.com/">RVM</a></h2>
 
-<p>Install RVM</p>
+</article>
 
-<pre><code>bash -s stable &lt; &lt;(curl -s https://raw.github.com/wayneeseguin/rvm/master/binscripts/rvm-installer)
-</code></pre>
-
-<p>Reload your Shell environment:</p>
-
-<pre><code>source ~/.bash_profile
-</code></pre>
-
-<p>Install ruby:</p>
-
-<pre><code>rvm install 1.9.2 --with-gcc=gcc-4.2
-</code></pre>
-
-<p>Note: Octopress requires ruby 1.9.2</p>
-
-<p>Use ruby 1.9.2</p>
-
-<pre><code>rvm use 1.9.2 --default
-</code></pre>
-
-<h2 id="setup-octopresshttpoctopressorg">Setup <a href="http://octopress.org">Octopress</a></h2>
-
-<pre><code>git clone git://github.com/imathis/octopress.git your-blog
-cd your-blog
-gem install bundler
-bundle install
-rake install
-</code></pre>
-
-<h2 id="setup-github-pages">Setup github pages</h2>
-<p>add new repository as <em>your-name.github.com</em></p>
-
-<pre><code>rake setup_github_pages
-Enter the read/write url for your repository: git@github.com:your-name/your-name.github.com.git
-rake generate
-rake deploy
-</code></pre>
-
-<p>Now you can go to github.com/your-name.github.com to see your repository</p>
-
-<pre><code>git add .
-git commit -m 'blog init'
-git push origin source
-</code></pre>
-
-<p>Wait about 10 minutes and you can see your inited blog on your-name.github.com!</p>
 </div>
-  
-  
 
-
-    </article>
   
-  <div class="pagination">
-    
-    <a href="/blog/archives">Blog Archives</a>
-    
-  </div>
+</article>
+
 </div>
+
 <aside class="sidebar">
   
     <section>
@@ -187,6 +116,7 @@ git push origin source
 
   
 </aside>
+
 
     </div>
   </div>

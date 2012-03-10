@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Dryman's Blog]]></title>
-  <link href="http://dryman.github.com/atom.xml" rel="self"/>
+  <title><![CDATA[Category: Octopress | Dryman's Blog]]></title>
+  <link href="http://dryman.github.com/blog/categories/octopress/atom.xml" rel="self"/>
   <link href="http://dryman.github.com/"/>
   <updated>2012-03-10T16:14:52+08:00</updated>
   <id>http://dryman.github.com/</id>
