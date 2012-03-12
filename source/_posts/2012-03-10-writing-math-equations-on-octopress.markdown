@@ -7,7 +7,7 @@ categories: [Octopress, Math]
 ---
 
 Octopress is a wonderful blogging framework for hackers, but it does not support
-math typesetting by default! What hacker doesn't use Latex math?
+math typesetting by default. What hacker doesn't use Latex math?
 
 
 The followings are configs to make you write latex math equations in Octopress.
