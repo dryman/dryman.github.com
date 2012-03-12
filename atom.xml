@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe dien]]></title>
   <link href="http://dryman.github.com/atom.xml" rel="self"/>
   <link href="http://dryman.github.com/"/>
-  <updated>2012-03-12T08:32:56+08:00</updated>
+  <updated>2012-03-12T08:36:57+08:00</updated>
   <id>http://dryman.github.com/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -19,7 +19,7 @@
     <updated>2012-03-10T16:23:00+08:00</updated>
     <id>http://dryman.github.com/blog/2012/03/10/writing-math-equations-on-octopress</id>
     <content type="html"><![CDATA[<p>Octopress is a wonderful blogging framework for hackers, but it does not support
-math typesetting by default! What hacker doesn’t use Latex math?</p>
+math typesetting by default. What hacker doesn’t use Latex math?</p>
 
 <p>The followings are configs to make you write latex math equations in Octopress.
 Then you can translate this</p>
