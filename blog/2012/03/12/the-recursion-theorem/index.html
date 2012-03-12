@@ -5,11 +5,12 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Category: Math - Carpe dien</title>
+  <title>The recursion theorem - Carpe dien</title>
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="Category: Math">
+  <meta name="description" content="I’m studying theorem of computation myself. Theorem of computation is an
+interesting field. It addresses questions as: What is a theorem? What is a &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +19,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://dryman.github.comblog/categories/math">
+  <link rel="canonical" href="http://dryman.github.com/blog/2012/03/12/the-recursion-theorem">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -63,35 +64,128 @@
   <div id="main">
     <div id="content">
       <div>
-<article role="article">
+<article class="hentry" role="article">
   
   <header>
-    <h1 class="entry-title">Category: Math</h1>
+    
+      <h1 class="entry-title">The Recursion Theorem</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-03-12T08:42:00+08:00" pubdate data-updated="true">Mar 12<span>th</span>, 2012</time>
+        
+      </p>
     
   </header>
-  
-  <div id="blog-archives" class="category">
 
 
+<div class="entry-content"><p>I’m studying theorem of computation myself. Theorem of computation is an
+interesting field. It addresses questions as: What is a theorem? What is a
+proof? What is truth? Can an algorithm decide which statements are true? Can
+a computer calculates everything in the universe? These questions are linked by
+the question:</p>
 
-  
-  <h2>2012</h2>
+<blockquote>
+  <p>What are the fundamental capabilities and limitations of computers?</p>
+</blockquote>
 
-<article>
-  
-<h1><a href="/blog/2012/03/10/writing-math-equations-on-octopress/">Writing math equations on Octopress</a></h1>
-<time datetime="2012-03-10T16:23:00+08:00" pubdate><span class='month'>Mar</span> <span class='day'>10</span> <span class='year'>2012</span></time>
+<p>This question goes back to the 1930s when mathematical logicians first began to
+explore the meaning of computation. Thus, three major theorem of computation has
+born: <em>automata</em>, <em>computability</em>, and <em>complexity</em>. There are a lot of algebras
+and proofs in this field. Of all the theorems, I love the <strong>recursion
+theorem</strong> the most.</p>
 
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/math/'>Math</a>, <a class='category' href='/blog/categories/octopress/'>Octopress</a></span>
-</footer>
+<hr />
 
+<h3 id="self-reference">SELF-REFERENCE</h3>
 
-</article>
+<p>First we introduce a Turing Machine that <em>ignores its input and prints out a
+copy of its own description</em>. We call this machine $SELF$.</p>
 
+<dl>
+  <dt><strong>LEMMA</strong></dt>
+  <dd>There is a computable function $q: \Sigma^\ast\longrightarrow\Sigma^\ast$,</dd>
+  <dd>where if $w$ is any string, $q(w)$ is the description of a Turing machine $P_w$</dd>
+  <dd>that prints out $w$ and then halts.</dd>
+</dl>
+
+<p><strong>PROOF</strong></p>
+
+<p>The following TM $Q$ computes $q(w)$</p>
+
+<script type="math/tex; mode=display">
+\begin{align}
+    Q= & \mbox{On input string $w$:} \\
+       & 1.\; \mbox{Construct the following Turing machine $P_w$} \\
+       & \;\;\;\;P_w = \mbox{On any input:} \\
+       & \;\;\;\;\;\;1.\; \mbox{Erase input.} \\
+       & \;\;\;\;\;\;2.\; \mbox{Write w on the tape.} \\
+       & \;\;\;\;\;\;3.\; \mbox{Halt.}  \\
+      & 2.\; \mbox{Output }<P_w>  \\
+\end{align}
+</script>
 </div>
 
+
+  <footer>
+    <p class="meta">
+      
   
+
+<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-03-12T08:42:00+08:00" pubdate data-updated="true">Mar 12<span>th</span>, 2012</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/theorem-of-comptation/'>Theorem of comptation</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://dryman.github.com/blog/2012/03/12/the-recursion-theorem/" data-via="" data-counturl="http://dryman.github.com/blog/2012/03/12/the-recursion-theorem/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2012/03/10/writing-math-equations-on-octopress/" title="Previous Post: Writing math equations on Octopress">&laquo; Writing math equations on Octopress</a>
+      
+      
+    </p>
+  </footer>
 </article>
 
 </div>

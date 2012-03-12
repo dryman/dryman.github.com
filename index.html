@@ -9,8 +9,8 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="Octopress is a wonderful blogging framework for hackers, but it does not support
-math typesetting by default. What hacker doesn’t use Latex math? The &hellip;">
+  <meta name="description" content="I’m studying theorem of computation myself. Theorem of computation is an
+interesting field. It addresses questions as: What is a theorem? What is a &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -65,6 +65,86 @@ math typesetting by default. What hacker doesn’t use Latex math? The &hellip;"
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/03/12/the-recursion-theorem/">The Recursion Theorem</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-03-12T08:42:00+08:00" pubdate data-updated="true">Mar 12<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I’m studying theorem of computation myself. Theorem of computation is an
+interesting field. It addresses questions as: What is a theorem? What is a
+proof? What is truth? Can an algorithm decide which statements are true? Can
+a computer calculates everything in the universe? These questions are linked by
+the question:</p>
+
+<blockquote>
+  <p>What are the fundamental capabilities and limitations of computers?</p>
+</blockquote>
+
+<p>This question goes back to the 1930s when mathematical logicians first began to
+explore the meaning of computation. Thus, three major theorem of computation has
+born: <em>automata</em>, <em>computability</em>, and <em>complexity</em>. There are a lot of algebras
+and proofs in this field. Of all the theorems, I love the <strong>recursion
+theorem</strong> the most.</p>
+
+<hr />
+
+<h3 id="self-reference">SELF-REFERENCE</h3>
+
+<p>First we introduce a Turing Machine that <em>ignores its input and prints out a
+copy of its own description</em>. We call this machine $SELF$.</p>
+
+<dl>
+  <dt><strong>LEMMA</strong></dt>
+  <dd>There is a computable function $q: \Sigma^\ast\longrightarrow\Sigma^\ast$,</dd>
+  <dd>where if $w$ is any string, $q(w)$ is the description of a Turing machine $P_w$</dd>
+  <dd>that prints out $w$ and then halts.</dd>
+</dl>
+
+<p><strong>PROOF</strong></p>
+
+<p>The following TM $Q$ computes $q(w)$</p>
+
+<script type="math/tex; mode=display">
+\begin{align}
+    Q= & \mbox{On input string $w$:} \\
+       & 1.\; \mbox{Construct the following Turing machine $P_w$} \\
+       & \;\;\;\;P_w = \mbox{On any input:} \\
+       & \;\;\;\;\;\;1.\; \mbox{Erase input.} \\
+       & \;\;\;\;\;\;2.\; \mbox{Write w on the tape.} \\
+       & \;\;\;\;\;\;3.\; \mbox{Halt.}  \\
+      & 2.\; \mbox{Output }<P_w>  \\
+\end{align}
+</script>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -339,6 +419,10 @@ git push origin source
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/03/12/the-recursion-theorem/">The recursion theorem</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2012/03/10/writing-math-equations-on-octopress/">Writing math equations on Octopress</a>
