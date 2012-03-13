@@ -38,7 +38,7 @@ interesting field. It addresses questions as: What is a theorem? What is a &hell
   <header role="banner"><hgroup>
   <h1><a href="/">Carpe dien</a></h1>
   
-    <h2>Work hard and enjoy every moment</h2>
+    <h2>Work hard and enjoy every moment.</h2>
   
 </hgroup>
 
@@ -122,21 +122,32 @@ copy of its own description</em>. We call this machine $SELF$.</p>
   <dd>There is a computable function $q: \Sigma^\ast\longrightarrow\Sigma^\ast$,</dd>
   <dd>where if $w$ is any string, $q(w)$ is the description of a Turing machine $P_w$</dd>
   <dd>that prints out $w$ and then halts.</dd>
+  <dt><strong>PROOF</strong></dt>
+  <dd>The following TM $Q$ computes $q(w)$</dd>
 </dl>
-
-<p><strong>PROOF</strong></p>
-
-<p>The following TM $Q$ computes $q(w)$</p>
 
 <script type="math/tex; mode=display">
 \begin{align}
-    Q= & \mbox{On input string $w$:} \\
-       & 1.\; \mbox{Construct the following Turing machine $P_w$} \\
-       & \;\;\;\;P_w = \mbox{On any input:} \\
-       & \;\;\;\;\;\;1.\; \mbox{Erase input.} \\
-       & \;\;\;\;\;\;2.\; \mbox{Write w on the tape.} \\
-       & \;\;\;\;\;\;3.\; \mbox{Halt.}  \\
-      & 2.\; \mbox{Output }<P_w>  \\
+   Q=& \mbox{On input string $w$:} \\
+     & 1.\; \mbox{Construct the following Turing machine $P_w$} \\
+     & \quad    P_w = \mbox{On any input:} \\
+     & \qquad   1.\; \mbox{Erase input.} \\
+     & \qquad   2.\; \mbox{Write w on the tape.} \\
+     & \qquad   3.\; \mbox{Halt.}  \\
+     & 2.\; \mbox{Output }\langle P_w\rangle  \\
+\end{align}
+</script>
+
+<p>Now we construct $SELF$ in two parts $A$ and $B$. We want $SELF$ to print out
+$\langle SELF\rangle = \langle AB\rangle$.</p>
+
+<script type="math/tex; mode=display">
+\begin{align}
+A=&P_{\langle B\rangle}, \\
+B=&\mbox{On input $\langle M\rangle$, where $M$ is a portion of a TM:}\\
+  & 1.\;\mbox{Compute $q(\langle M\rangle)$.} \\
+  & 2.\;\mbox{Combine the result with $\langle M\rangle$ to make a complete TM.} \\
+  & 3.\;\mbox{Print the description of this TM and halt.} \\
 \end{align}
 </script>
 </div>
