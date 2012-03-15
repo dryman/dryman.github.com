@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Octopress | Carpe dien]]></title>
   <link href="http://dryman.github.com/blog/categories/octopress/atom.xml" rel="self"/>
   <link href="http://dryman.github.com/"/>
-  <updated>2012-03-15T09:03:07+08:00</updated>
+  <updated>2012-03-15T09:14:11+08:00</updated>
   <id>http://dryman.github.com/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -19,12 +19,12 @@
     <updated>2012-03-13T09:13:00+08:00</updated>
     <id>http://dryman.github.com/blog/2012/03/13/handcraft-algorithm-environment-in-kramdown</id>
     <content type="html"><![CDATA[<p>I love $\LaTeX$. The typesetting in $\LaTeX$ is so beautiful that that no other
-system can compete with. However, I cannot write $\LaTeX$ for blog post, I need
-to use <a href="http://kramdown.rubyforge.org/">kramdown</a> or other wiki/markup languages.</p>
-
-<p>I missed some features in $\LaTeX$. One of those is <a href="http://en.wikibooks.org/wiki/LaTeX/Algorithms_and_Pseudocode">Algorithm and Pseudocode
-packages</a>.
-So, I discovered some tricks to form algorithm-like typesettings.</p>
+typesetting system can compete with. However, I cannot write $\LaTeX$ for blog
+post, I have to use <a href="http://kramdown.rubyforge.org/">kramdown</a> or other
+wiki/markup languages, because $\LaTeX$ doesn’t perfrom well in HTML output.  I
+missed some features in $\LaTeX$. One of those is <a href="http://en.wikibooks.org/wiki/LaTeX/Algorithms_and_Pseudocode">Algorithm and Pseudocode
+packages</a>.  So, I
+discovered some tricks to form algorithm-like typesettings.</p>
 
 <ol>
   <li>Use <code>\begin{align}</code> to align the lines.</li>
