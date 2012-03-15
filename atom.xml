@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe dien]]></title>
   <link href="http://dryman.github.com/atom.xml" rel="self"/>
   <link href="http://dryman.github.com/"/>
-  <updated>2012-03-15T14:08:36+08:00</updated>
+  <updated>2012-03-15T18:23:31+08:00</updated>
   <id>http://dryman.github.com/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -59,7 +59,7 @@ C=\left\{(r_1w_1s_1),(r_2w_2s_2),(r_3w_3s_3)\right\}
 \end{align}
 </script>
 
-<p>For example, a dog can be represented as</p>
+<p>For example, a dog can be represented as <sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup></p>
 
 <div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
@@ -93,6 +93,44 @@ C=\left\{(r_1w_1s_1),(r_2w_2s_2),(r_3w_3s_3)\right\}
 </span><span class="line">    <span class="p">(</span><span class="nf">:patient-of</span> <span class="p">((</span><span class="s">&quot;chase&quot;</span> <span class="mf">0.3</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;walk&quot;</span> <span class="mf">0.4</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;love&quot;</span> <span class="mf">0.4</span> <span class="p">)))))</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
+<p>which we can visualize it as below:
+<img src="http://dryman.github.com/images/nlp-day/dog-context-1.png" title="'An example of dog context'" /></p>
+
+<p>Furthermore, since every node itself can be another context, we can generate a
+graph! <sup id="fnref:2"><a href="#fn:2" rel="footnote">2</a></sup>
+<img src="http://dryman.github.com/images/nlp-day/dog-context-2.png" title="'An another example of dog context'" /></p>
+
+<h3 id="the-main-questions-to-address">The main questions to address</h3>
+
+<ul>
+  <li>Construction
+    <ul>
+      <li>Do we really need tensors? Or are vectors enough?</li>
+      <li>How to build them?</li>
+      <li>Which relations to use? Which scores?</li>
+      <li>How do we evaluate this?</li>
+    </ul>
+  </li>
+  <li>Compositionally: How to ‘add’ tensors to obtain new, more complex, meanings
+that are still tensors?</li>
+  <li>Dependency: How to represent and manage the underlying interconnections across
+tensor elements?</li>
+  <li>Logical operators: How to handle negation, quantification models (can,
+must…), etc.?</li>
+</ul>
+
+<hr />
+
+<div class="footnotes">
+  <ol>
+    <li id="fn:1">
+      <p>I use the syntax of common lisp to express the relationship<a href="#fnref:1" rev="footnote">&#8617;</a></p>
+    </li>
+    <li id="fn:2">
+      <p>The copyright of the images belongs to Eduard Hovy<a href="#fnref:2" rev="footnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
 ]]></content>
   </entry>
   
