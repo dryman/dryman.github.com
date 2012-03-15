@@ -33,7 +33,7 @@ $$
 \end{align}
 $$
 
-**whala!**
+**Voilà!**
 
 * * *
 
