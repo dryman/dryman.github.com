@@ -9,8 +9,8 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="I’m studying theorem of computation myself. Theorem of computation is an
-interesting field. It addresses questions as: What is a theorem? What is a &hellip;">
+  <meta name="description" content="I love $\LaTeX$. The typesetting in $\LaTeX$ is so beautiful that that no other
+system can compete with. However, I cannot write $\LaTeX$ for blog &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -65,6 +65,95 @@ interesting field. It addresses questions as: What is a theorem? What is a &hell
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/03/13/handcraft-algorithm-environment-in-kramdown/">Handcraft Algorithm Environment in Kramdown</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-03-13T09:13:00+08:00" pubdate data-updated="true">Mar 13<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I love $\LaTeX$. The typesetting in $\LaTeX$ is so beautiful that that no other
+system can compete with. However, I cannot write $\LaTeX$ for blog post, I need
+to use <a href="http://kramdown.rubyforge.org/">kramdown</a> or other wiki/markup languages.</p>
+
+<p>I missed some features in $\LaTeX$. One of those is <a href="http://en.wikibooks.org/wiki/LaTeX/Algorithms_and_Pseudocode">Algorithm and Pseudocode
+packages</a>.
+So, I discovered some tricks to form algorithm-like typesettings.</p>
+
+<ol>
+  <li>Use <code>\begin{align}</code> to align the lines.</li>
+  <li>Use <code>\mbox{text...}</code> to put descriptions in.</li>
+  <li>Use <code>\quad</code> and <code>\qquad</code> to make indentions.</li>
+</ol>
+
+<p>Here is the example input:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+</pre></td><td class="code"><pre><code class="latex"><span class="line"><span class="sb">$$</span><span class="nb" />
+</span><span class="line"><span class="nv">\begin</span><span class="nb">{align}</span>
+</span><span class="line"><span class="nb">   Q</span><span class="o">=</span><span class="nb">&amp; </span><span class="nv">\mbox</span><span class="nb">{On input string $w$:} </span><span class="nv">\\</span><span class="nb" />
+</span><span class="line"><span class="nb">     &amp; </span><span class="m">1</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Construct the following Turing machine $P_w$} </span><span class="nv">\\</span><span class="nb" />
+</span><span class="line"><span class="nb">     &amp; </span><span class="nv">\quad</span><span class="nb">    P_w </span><span class="o">=</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{On any input:} </span><span class="nv">\\</span><span class="nb" />
+</span><span class="line"><span class="nb">     &amp; </span><span class="nv">\qquad</span><span class="nb">   </span><span class="m">1</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Erase input.} </span><span class="nv">\\</span><span class="nb" />
+</span><span class="line"><span class="nb">     &amp; </span><span class="nv">\qquad</span><span class="nb">   </span><span class="m">2</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Write w on the tape.} </span><span class="nv">\\</span><span class="nb" />
+</span><span class="line"><span class="nb">     &amp; </span><span class="nv">\qquad</span><span class="nb">   </span><span class="m">3</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Halt.}  </span><span class="nv">\\</span><span class="nb" />
+</span><span class="line"><span class="nb">     &amp; </span><span class="m">2</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Output }</span><span class="nv">\langle</span><span class="nb"> P_w</span><span class="nv">\rangle</span><span class="nb">  </span><span class="nv">\\</span><span class="nb" />
+</span><span class="line"><span class="nv">\end</span><span class="nb">{align}</span>
+</span><span class="line"><span class="s">$$</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>and <strong>Voilà</strong>!</p>
+
+<script type="math/tex; mode=display">
+\begin{align}
+   Q=& \mbox{On input string $w$:} \\
+     & 1.\; \mbox{Construct the following Turing machine $P_w$} \\
+     & \quad    P_w = \mbox{On any input:} \\
+     & \qquad   1.\; \mbox{Erase input.} \\
+     & \qquad   2.\; \mbox{Write w on the tape.} \\
+     & \qquad   3.\; \mbox{Halt.}  \\
+     & 2.\; \mbox{Output }\langle P_w\rangle  \\
+\end{align}
+</script>
+
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -217,7 +306,7 @@ Then you can translate this</p>
 \end{align}
 </script>
 
-<p><strong>whala!</strong></p>
+<p><strong>Voilà!</strong></p>
 
 <hr />
 
@@ -430,6 +519,10 @@ git push origin source
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/03/13/handcraft-algorithm-environment-in-kramdown/">handcraft algorithm environment in kramdown</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2012/03/12/the-recursion-theorem/">The recursion theorem</a>

@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe dien]]></title>
   <link href="http://dryman.github.com/atom.xml" rel="self"/>
   <link href="http://dryman.github.com/"/>
-  <updated>2012-03-13T09:13:01+08:00</updated>
+  <updated>2012-03-15T09:03:07+08:00</updated>
   <id>http://dryman.github.com/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,68 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[handcraft algorithm environment in kramdown]]></title>
+    <link href="http://dryman.github.com/blog/2012/03/13/handcraft-algorithm-environment-in-kramdown/"/>
+    <updated>2012-03-13T09:13:00+08:00</updated>
+    <id>http://dryman.github.com/blog/2012/03/13/handcraft-algorithm-environment-in-kramdown</id>
+    <content type="html"><![CDATA[<p>I love $\LaTeX$. The typesetting in $\LaTeX$ is so beautiful that that no other
+system can compete with. However, I cannot write $\LaTeX$ for blog post, I need
+to use <a href="http://kramdown.rubyforge.org/">kramdown</a> or other wiki/markup languages.</p>
+
+<p>I missed some features in $\LaTeX$. One of those is <a href="http://en.wikibooks.org/wiki/LaTeX/Algorithms_and_Pseudocode">Algorithm and Pseudocode
+packages</a>.
+So, I discovered some tricks to form algorithm-like typesettings.</p>
+
+<ol>
+  <li>Use <code>\begin{align}</code> to align the lines.</li>
+  <li>Use <code>\mbox{text...}</code> to put descriptions in.</li>
+  <li>Use <code>\quad</code> and <code>\qquad</code> to make indentions.</li>
+</ol>
+
+<p>Here is the example input:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+</pre></td><td class="code"><pre><code class="latex"><span class="line"><span class="sb">$$</span><span class="nb" />
+</span><span class="line"><span class="nv">\begin</span><span class="nb">{align}</span>
+</span><span class="line"><span class="nb">   Q</span><span class="o">=</span><span class="nb">&amp; </span><span class="nv">\mbox</span><span class="nb">{On input string $w$:} </span><span class="nv">\\</span><span class="nb" />
+</span><span class="line"><span class="nb">     &amp; </span><span class="m">1</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Construct the following Turing machine $P_w$} </span><span class="nv">\\</span><span class="nb" />
+</span><span class="line"><span class="nb">     &amp; </span><span class="nv">\quad</span><span class="nb">    P_w </span><span class="o">=</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{On any input:} </span><span class="nv">\\</span><span class="nb" />
+</span><span class="line"><span class="nb">     &amp; </span><span class="nv">\qquad</span><span class="nb">   </span><span class="m">1</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Erase input.} </span><span class="nv">\\</span><span class="nb" />
+</span><span class="line"><span class="nb">     &amp; </span><span class="nv">\qquad</span><span class="nb">   </span><span class="m">2</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Write w on the tape.} </span><span class="nv">\\</span><span class="nb" />
+</span><span class="line"><span class="nb">     &amp; </span><span class="nv">\qquad</span><span class="nb">   </span><span class="m">3</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Halt.}  </span><span class="nv">\\</span><span class="nb" />
+</span><span class="line"><span class="nb">     &amp; </span><span class="m">2</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Output }</span><span class="nv">\langle</span><span class="nb"> P_w</span><span class="nv">\rangle</span><span class="nb">  </span><span class="nv">\\</span><span class="nb" />
+</span><span class="line"><span class="nv">\end</span><span class="nb">{align}</span>
+</span><span class="line"><span class="s">$$</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>and <strong>Voilà</strong>!</p>
+
+<script type="math/tex; mode=display">
+\begin{align}
+   Q=& \mbox{On input string $w$:} \\
+     & 1.\; \mbox{Construct the following Turing machine $P_w$} \\
+     & \quad    P_w = \mbox{On any input:} \\
+     & \qquad   1.\; \mbox{Erase input.} \\
+     & \qquad   2.\; \mbox{Write w on the tape.} \\
+     & \qquad   3.\; \mbox{Halt.}  \\
+     & 2.\; \mbox{Output }\langle P_w\rangle  \\
+\end{align}
+</script>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[The recursion theorem]]></title>
@@ -114,7 +176,7 @@ Then you can translate this</p>
 \end{align}
 </script>
 
-<p><strong>whala!</strong></p>
+<p><strong>Voilà!</strong></p>
 
 <hr />
 
