@@ -2,28 +2,32 @@
 <urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>
     <url>
         <loc>http://dryman.github.com/blog/2012/03/10/my-octopress-configs/</loc>
-        <lastmod>2012-03-10T16:57:41+08:00</lastmod>
+        <lastmod>2012-03-15T14:06:51+08:00</lastmod>
     </url>
     <url>
         <loc>http://dryman.github.com/blog/2012/03/10/writing-math-equations-on-octopress/</loc>
-        <lastmod>2012-03-15T08:59:26+08:00</lastmod>
+        <lastmod>2012-03-15T14:06:51+08:00</lastmod>
     </url>
     <url>
         <loc>http://dryman.github.com/blog/2012/03/12/the-recursion-theorem/</loc>
-        <lastmod>2012-03-15T09:03:07+08:00</lastmod>
+        <lastmod>2012-03-15T14:06:51+08:00</lastmod>
     </url>
     <url>
         <loc>
             http://dryman.github.com/blog/2012/03/13/handcraft-algorithm-environment-in-kramdown/
         </loc>
-        <lastmod>2012-03-15T09:31:20+08:00</lastmod>
+        <lastmod>2012-03-15T14:06:51+08:00</lastmod>
+    </url>
+    <url>
+        <loc>http://dryman.github.com/blog/2012/03/14/the-nlp-day/</loc>
+        <lastmod>2012-03-15T14:06:51+08:00</lastmod>
     </url>
     <url>
         <loc>http://dryman.github.com/blog/archives/</loc>
-        <lastmod>2012-03-15T09:31:20+08:00</lastmod>
+        <lastmod>2012-03-15T14:06:51+08:00</lastmod>
     </url>
     <url>
         <loc>http://dryman.github.com/</loc>
-        <lastmod>2012-03-15T09:31:20+08:00</lastmod>
+        <lastmod>2012-03-15T14:06:51+08:00</lastmod>
     </url>
 </urlset>
