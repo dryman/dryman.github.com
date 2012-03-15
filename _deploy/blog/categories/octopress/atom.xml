@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Octopress | Carpe dien]]></title>
+  <link href="http://dryman.github.com/blog/categories/octopress/atom.xml" rel="self"/>
+  <link href="http://dryman.github.com/"/>
+  <updated>2012-03-15T13:08:52+08:00</updated>
+  <id>http://dryman.github.com/</id>
+  <author>
+    <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[handcraft algorithm environment in kramdown]]></title>
+    <link href="http://dryman.github.com/blog/2012/03/13/handcraft-algorithm-environment-in-kramdown/"/>
+    <updated>2012-03-13T09:13:00+08:00</updated>
+    <id>http://dryman.github.com/blog/2012/03/13/handcraft-algorithm-environment-in-kramdown</id>
+    <content type="html"><![CDATA[<p>I love $\LaTeX$. The typesetting in $\LaTeX$ is so beautiful that that no other
+typesetting system can compete with. Unfortunately, I cannot write $\LaTeX$ for blog
+post. I have to use <a href="http://kramdown.rubyforge.org/">kramdown</a> or other
+wiki/markup languages, because $\LaTeX$ doesn’t perform well in HTML output.
+However, I missed some features in $\LaTeX$. One of those is <a href="http://en.wikibooks.org/wiki/LaTeX/Algorithms_and_Pseudocode">Algorithm and
+Pseudocode packages</a>.
+So, I discovered some tricks to form algorithm-like typesettings.</p>
+
+<ol>
+  <li>Use <code>\begin{align}</code> to align the lines.</li>
+  <li>Use <code>\mbox{text...}</code> to put descriptions in.</li>
+  <li>Use <code>\quad</code> and <code>\qquad</code> to make indentions.</li>
+</ol>
+
+<p>Here is the example input:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='latex'><span class='line'><span class="sb">$$</span><span class="nb"></span>
+</span><span class='line'><span class="nv">\begin</span><span class="nb">{align}</span>
+</span><span class='line'><span class="nb">   Q</span><span class="o">=</span><span class="nb">&amp;amp; </span><span class="nv">\mbox</span><span class="nb">{On input string $w$:} &lt;br </span><span class="o">/</span><span class="nb">&gt;</span>
+</span><span class='line'><span class="nb">     &amp;amp; </span><span class="m">1</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Construct the following Turing machine $P_w$} &lt;br </span><span class="o">/</span><span class="nb">&gt;</span>
+</span><span class='line'><span class="nb">     &amp;amp; </span><span class="nv">\quad</span><span class="nb">    P_w </span><span class="o">=</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{On any input:} &lt;br </span><span class="o">/</span><span class="nb">&gt;</span>
+</span><span class='line'><span class="nb">     &amp;amp; </span><span class="nv">\qquad</span><span class="nb">   </span><span class="m">1</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Erase input.} &lt;br </span><span class="o">/</span><span class="nb">&gt;</span>
+</span><span class='line'><span class="nb">     &amp;amp; </span><span class="nv">\qquad</span><span class="nb">   </span><span class="m">2</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Write w on the tape.} &lt;br </span><span class="o">/</span><span class="nb">&gt;</span>
+</span><span class='line'><span class="nb">     &amp;amp; </span><span class="nv">\qquad</span><span class="nb">   </span><span class="m">3</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Halt.}  &lt;br </span><span class="o">/</span><span class="nb">&gt;</span>
+</span><span class='line'><span class="nb">     &amp;amp; </span><span class="m">2</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Output }</span><span class="nv">\langle</span><span class="nb"> P_w</span><span class="nv">\rangle</span><span class="nb">  &lt;br </span><span class="o">/</span><span class="nb">&gt;</span>
+</span><span class='line'><span class="nv">\end</span><span class="nb">{align}</span>
+</span><span class='line'><span class="s">$$</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>and <strong>Voilà</strong>!</p>
+
+<script type="math/tex; mode=display">
+\begin{align}
+   Q=& \mbox{On input string $w$:} \\
+     & 1.\; \mbox{Construct the following Turing machine $P_w$} \\
+     & \quad    P_w = \mbox{On any input:} \\
+     & \qquad   1.\; \mbox{Erase input.} \\
+     & \qquad   2.\; \mbox{Write w on the tape.} \\
+     & \qquad   3.\; \mbox{Halt.}  \\
+     & 2.\; \mbox{Output }\langle P_w\rangle  \\
+\end{align}
+</script>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Writing math equations on Octopress]]></title>
+    <link href="http://dryman.github.com/blog/2012/03/10/writing-math-equations-on-octopress/"/>
+    <updated>2012-03-10T16:23:00+08:00</updated>
+    <id>http://dryman.github.com/blog/2012/03/10/writing-math-equations-on-octopress</id>
+    <content type="html"><![CDATA[<p>Octopress is a wonderful blogging framework for hackers, but it does not support
+math typesetting by default. What hacker doesn’t use Latex math?</p>
+
+<p>The followings are configs to make you write latex math equations in Octopress.
+Then you can translate this</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='latex'><span class='line'><span class="sb">$$</span><span class="nb"></span>
+</span><span class='line'><span class="nv">\begin</span><span class="nb">{align}</span>
+</span><span class='line'><span class="nv">\mbox</span><span class="nb">{Union: } &amp;amp; A</span><span class="nv">\cup</span><span class="nb"> B </span><span class="o">=</span><span class="nb"> {x</span><span class="nv">\mid</span><span class="nb"> x</span><span class="nv">\in</span><span class="nb"> A </span><span class="nv">\mbox</span><span class="nb">{ or } x</span><span class="nv">\in</span><span class="nb"> B} &lt;br </span><span class="o">/</span><span class="nb">&gt;</span>
+</span><span class='line'><span class="nv">\mbox</span><span class="nb">{Concatenation: } &amp;amp; A</span><span class="nv">\circ</span><span class="nb"> B  </span><span class="o">=</span><span class="nb"> {xy</span><span class="nv">\mid</span><span class="nb"> x</span><span class="nv">\in</span><span class="nb"> A </span><span class="nv">\mbox</span><span class="nb">{ and } y</span><span class="nv">\in</span><span class="nb"> B} &lt;br </span><span class="o">/</span><span class="nb">&gt;</span>
+</span><span class='line'><span class="nv">\mbox</span><span class="nb">{Star: } &amp;amp; A^</span><span class="nv">\star</span><span class="nb">  </span><span class="o">=</span><span class="nb"> {x&lt;em&gt;</span><span class="m">1</span><span class="nb">x&lt;</span><span class="o">/</span><span class="nb">em&gt;</span><span class="m">2</span><span class="nv">\ldots</span><span class="nb"> x_k </span><span class="nv">\mid</span><span class="nb">  k</span><span class="nv">\geq</span><span class="nb"> </span><span class="m">0</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{ and each } x_i</span><span class="nv">\in</span><span class="nb"> A} &lt;br </span><span class="o">/</span><span class="nb">&gt;</span>
+</span><span class='line'><span class="nv">\end</span><span class="nb">{align}</span>
+</span><span class='line'><span class="s">$$</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>into this</p>
+
+<script type="math/tex; mode=display">
+\begin{align}
+\mbox{Union: } & A\cup B = \{x\mid x\in A \mbox{ or } x\in B\} \\
+\mbox{Concatenation: } & A\circ B  = \{xy\mid x\in A \mbox{ and } y\in B\} \\
+\mbox{Star: } & A^\star  = \{x_1x_2\ldots x_k \mid  k\geq 0 \mbox{ and each } x_i\in A\} \\
+\end{align}
+</script>
+
+<p><strong>Voilà!</strong></p>
+
+<hr />
+
+<h2 id="here-are-the-instructions">Here are the instructions:</h2>
+
+<ol>
+  <li>Use <a href="http://kramdown.rubyforge.org/">kramdown</a> instead of rdiscount</li>
+</ol>
+
+<p>kramdown is a free GPL-licensed Ruby library for parsing and converting a
+superset of Markdown. It is completely written in Ruby, supports standard
+Markdown and latex math equations.</p>
+
+<pre><code>gem install kramdown
+</code></pre>
+
+<ol>
+  <li>Change settings in <code>_config.yml</code></li>
+</ol>
+
+<p><code>_config.yml</code> is configurations for Jekyll’s settings. find <code>markdown</code> and
+change <code>rdiscount</code> to <code>kramdown</code></p>
+
+<ol>
+  <li>
+    <p>Change <code>gem 'ridiscount'</code> to <code>gem 'kramdown</code> in <code>Gemfile</code><sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>.</p>
+  </li>
+  <li>
+    <p>Put <a href="http://www.mathjax.org/">MathJax</a> CDN and configs in
+<code>source/_layouts/default.html</code>.</p>
+  </li>
+</ol>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="c">&lt;!-- mathjax config similar to math.stackexchange --&gt;</span>
+</span><span class='line'><span class="nt">&lt;script </span><span class="na">type=</span><span class="s">&quot;text/x-mathjax-config&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'><span class="nx">MathJax</span><span class="p">.</span><span class="nx">Hub</span><span class="p">.</span><span class="nx">Config</span><span class="p">({</span>
+</span><span class='line'>  <span class="nx">jax</span><span class="o">:</span> <span class="p">[</span><span class="s2">&quot;input/TeX&quot;</span><span class="p">,</span> <span class="s2">&quot;output/HTML-CSS&quot;</span><span class="p">],</span>
+</span><span class='line'>  <span class="nx">tex2jax</span><span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">inlineMath</span><span class="o">:</span> <span class="p">[</span> <span class="p">[</span><span class="s1">&#39;$&#39;</span><span class="p">,</span> <span class="s1">&#39;$&#39;</span><span class="p">]</span> <span class="p">],</span>
+</span><span class='line'>    <span class="nx">displayMath</span><span class="o">:</span> <span class="p">[</span> <span class="p">[</span><span class="s1">&#39;$$&#39;</span><span class="p">,</span> <span class="s1">&#39;$$&#39;</span><span class="p">]],</span>
+</span><span class='line'>    <span class="nx">processEscapes</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+</span><span class='line'>    <span class="nx">skipTags</span><span class="o">:</span> <span class="p">[</span><span class="s1">&#39;script&#39;</span><span class="p">,</span> <span class="s1">&#39;noscript&#39;</span><span class="p">,</span> <span class="s1">&#39;style&#39;</span><span class="p">,</span> <span class="s1">&#39;textarea&#39;</span><span class="p">,</span> <span class="s1">&#39;pre&#39;</span><span class="p">,</span> <span class="s1">&#39;code&#39;</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">},</span>
+</span><span class='line'>  <span class="nx">messageStyle</span><span class="o">:</span> <span class="s2">&quot;none&quot;</span><span class="p">,</span>
+</span><span class='line'>  <span class="s2">&quot;HTML-CSS&quot;</span><span class="o">:</span> <span class="p">{</span> <span class="nx">preferredFont</span><span class="o">:</span> <span class="s2">&quot;TeX&quot;</span><span class="p">,</span> <span class="nx">availableFonts</span><span class="o">:</span> <span class="p">[</span><span class="s2">&quot;STIX&quot;</span><span class="p">,</span><span class="s2">&quot;TeX&quot;</span><span class="p">]</span> <span class="p">}</span>
+</span><span class='line'><span class="p">});</span>
+</span><span class='line'><span class="nt">&lt;/script&gt;</span>
+</span><span class='line'><span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML&quot;</span> <span class="na">type=</span><span class="s">&quot;text/javascript&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<ol>
+  <li>Fix <a href="http://www.mathjax.org/">MathJax</a> right-click bug</li>
+</ol>
+
+<p>I found the solution on <a href="http://luikore.github.com/2011/09/good-things-learned-from-octopress/">luikore’s blog</a>. The problem was when you right-click on a MathJax formula, the whole browser becomes white. To fix it, open <code>sass/base/_theme.scss</code> and change the div under body from</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='scss'><span class='line'><span class="nt">body</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">&amp;</span><span class="nt">gt</span><span class="o">;</span> <span class="nt">div</span> <span class="p">{</span>
+</span><span class='line'>    <span class="na">background</span><span class="o">:</span> <span class="nv">$sidebar-bg</span> <span class="nv">$noise-bg</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>to</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='scss'><span class='line'><span class="nt">body</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">&amp;</span><span class="nt">gt</span><span class="o">;</span> <span class="nt">div</span><span class="nn">#main</span> <span class="p">{</span>
+</span><span class='line'>    <span class="na">background</span><span class="o">:</span> <span class="nv">$sidebar-bg</span> <span class="nv">$noise-bg</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>and it is done.</p>
+
+<div class="footnotes">
+  <ol>
+    <li id="fn:1">
+      <p>It’s useful if you want to depoloy your code on differnt machines.<a href="#fnref:1" rev="footnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[My Octopress configs]]></title>
+    <link href="http://dryman.github.com/blog/2012/03/10/my-octopress-configs/"/>
+    <updated>2012-03-10T16:12:00+08:00</updated>
+    <id>http://dryman.github.com/blog/2012/03/10/my-octopress-configs</id>
+    <content type="html"><![CDATA[<h2 id="installation-note">installation note</h2>
+
+<p>This is an installation note for <a href="http://octopress.org">Octopress</a> blogging framework. My configuration is developed on OSX with ruby 1.9.2, and xcode 4.2.</p>
+
+<h2 id="required-developement-tools">Required developement tools</h2>
+
+<ol>
+  <li><a href="https://github.com/kennethreitz/osx-gcc-installer">osx-gcc installer</a></li>
+  <li>install <a href="http://mxcl.github.com/homebrew/">homebrew</a> if not yet installed</li>
+</ol>
+
+<h2 id="manage-rubies-with-rvmhttpbeginrescueendcom">Manage Rubies with <a href="http://beginrescueend.com/">RVM</a></h2>
+
+<p>Install RVM</p>
+
+<pre><code>bash -s stable &lt; &lt;(curl -s https://raw.github.com/wayneeseguin/rvm/master/binscripts/rvm-installer)
+</code></pre>
+
+<p>Reload your Shell environment:</p>
+
+<pre><code>source ~/.bash_profile
+</code></pre>
+
+<p>Install ruby:</p>
+
+<pre><code>rvm install 1.9.2 --with-gcc=gcc-4.2
+</code></pre>
+
+<p>Note: Octopress requires ruby 1.9.2</p>
+
+<p>Use ruby 1.9.2</p>
+
+<pre><code>rvm use 1.9.2 --default
+</code></pre>
+
+<h2 id="setup-octopresshttpoctopressorg">Setup <a href="http://octopress.org">Octopress</a></h2>
+
+<pre><code>git clone git://github.com/imathis/octopress.git your-blog
+cd your-blog
+gem install bundler
+bundle install
+rake install
+</code></pre>
+
+<h2 id="setup-github-pages">Setup github pages</h2>
+<p>add new repository as <em>your-name.github.com</em></p>
+
+<pre><code>rake setup_github_pages
+Enter the read/write url for your repository: git@github.com:your-name/your-name.github.com.git
+rake generate
+rake deploy
+</code></pre>
+
+<p>Now you can go to github.com/your-name.github.com to see your repository</p>
+
+<pre><code>git add .
+git commit -m 'blog init'
+git push origin source
+</code></pre>
+
+<p>Wait about 10 minutes and you can see your inited blog on your-name.github.com!</p>
+]]></content>
+  </entry>
+  
+</feed>

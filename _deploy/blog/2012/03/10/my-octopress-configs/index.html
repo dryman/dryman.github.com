@@ -1,0 +1,293 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>My Octopress configs - Carpe dien</title>
+  <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
+
+  
+  <meta name="description" content="installation note This is an installation note for Octopress blogging framework. My configuration is developed on OSX with ruby 1.9.2, and xcode 4.2 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://dryman.github.com/blog/2012/03/10/my-octopress-configs">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Carpe dien" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Carpe dien</a></h1>
+  
+    <h2>Work hard and enjoy every moment.</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:dryman.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">My Octopress Configs</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-03-10T16:12:00+08:00" pubdate data-updated="true">Mar 10<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="installation-note">installation note</h2>
+
+<p>This is an installation note for <a href="http://octopress.org">Octopress</a> blogging framework. My configuration is developed on OSX with ruby 1.9.2, and xcode 4.2.</p>
+
+<h2 id="required-developement-tools">Required developement tools</h2>
+
+<ol>
+  <li><a href="https://github.com/kennethreitz/osx-gcc-installer">osx-gcc installer</a></li>
+  <li>install <a href="http://mxcl.github.com/homebrew/">homebrew</a> if not yet installed</li>
+</ol>
+
+<h2 id="manage-rubies-with-rvmhttpbeginrescueendcom">Manage Rubies with <a href="http://beginrescueend.com/">RVM</a></h2>
+
+<p>Install RVM</p>
+
+<pre><code>bash -s stable &lt; &lt;(curl -s https://raw.github.com/wayneeseguin/rvm/master/binscripts/rvm-installer)
+</code></pre>
+
+<p>Reload your Shell environment:</p>
+
+<pre><code>source ~/.bash_profile
+</code></pre>
+
+<p>Install ruby:</p>
+
+<pre><code>rvm install 1.9.2 --with-gcc=gcc-4.2
+</code></pre>
+
+<p>Note: Octopress requires ruby 1.9.2</p>
+
+<p>Use ruby 1.9.2</p>
+
+<pre><code>rvm use 1.9.2 --default
+</code></pre>
+
+<h2 id="setup-octopresshttpoctopressorg">Setup <a href="http://octopress.org">Octopress</a></h2>
+
+<pre><code>git clone git://github.com/imathis/octopress.git your-blog
+cd your-blog
+gem install bundler
+bundle install
+rake install
+</code></pre>
+
+<h2 id="setup-github-pages">Setup github pages</h2>
+<p>add new repository as <em>your-name.github.com</em></p>
+
+<pre><code>rake setup_github_pages
+Enter the read/write url for your repository: git@github.com:your-name/your-name.github.com.git
+rake generate
+rake deploy
+</code></pre>
+
+<p>Now you can go to github.com/your-name.github.com to see your repository</p>
+
+<pre><code>git add .
+git commit -m 'blog init'
+git push origin source
+</code></pre>
+
+<p>Wait about 10 minutes and you can see your inited blog on your-name.github.com!</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-03-10T16:12:00+08:00" pubdate data-updated="true">Mar 10<span>th</span>, 2012</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/octopress/'>Octopress</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://dryman.github.com/blog/2012/03/10/my-octopress-configs/" data-via="" data-counturl="http://dryman.github.com/blog/2012/03/10/my-octopress-configs/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+      
+        <a class="basic-alignment right" href="/blog/2012/03/10/writing-math-equations-on-octopress/" title="Next Post: Writing math equations on Octopress">Writing math equations on Octopress &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/03/14/the-nlp-day/">The NLP Day</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/13/handcraft-algorithm-environment-in-kramdown/">handcraft algorithm environment in kramdown</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/12/the-recursion-theorem/">The recursion theorem</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/10/writing-math-equations-on-octopress/">Writing math equations on Octopress</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/10/my-octopress-configs/">My Octopress configs</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - dryman (Felix Ren-Chyan Chern) -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+<!-- mathjax config similar to math.stackexchange -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/HTML-CSS"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+</html>
+

@@ -1,0 +1,366 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Writing math equations on Octopress - Carpe dien</title>
+  <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
+
+  
+  <meta name="description" content="Octopress is a wonderful blogging framework for hackers, but it does not support
+math typesetting by default. What hacker doesn’t use Latex math? The &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://dryman.github.com/blog/2012/03/10/writing-math-equations-on-octopress">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Carpe dien" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Carpe dien</a></h1>
+  
+    <h2>Work hard and enjoy every moment.</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:dryman.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Writing Math Equations on Octopress</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-03-10T16:23:00+08:00" pubdate data-updated="true">Mar 10<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Octopress is a wonderful blogging framework for hackers, but it does not support
+math typesetting by default. What hacker doesn’t use Latex math?</p>
+
+<p>The followings are configs to make you write latex math equations in Octopress.
+Then you can translate this</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="latex"><span class="line"><span class="sb">$$</span><span class="nb" />
+</span><span class="line"><span class="nv">\begin</span><span class="nb">{align}</span>
+</span><span class="line"><span class="nv">\mbox</span><span class="nb">{Union: } &amp; A</span><span class="nv">\cup</span><span class="nb"> B </span><span class="o">=</span><span class="nb"> </span><span class="nv">\{</span><span class="nb">x</span><span class="nv">\mid</span><span class="nb"> x</span><span class="nv">\in</span><span class="nb"> A </span><span class="nv">\mbox</span><span class="nb">{ or } x</span><span class="nv">\in</span><span class="nb"> B</span><span class="nv">\}</span><span class="nb"> </span><span class="nv">\\</span><span class="nb" />
+</span><span class="line"><span class="nv">\mbox</span><span class="nb">{Concatenation: } &amp; A</span><span class="nv">\circ</span><span class="nb"> B  </span><span class="o">=</span><span class="nb"> </span><span class="nv">\{</span><span class="nb">xy</span><span class="nv">\mid</span><span class="nb"> x</span><span class="nv">\in</span><span class="nb"> A </span><span class="nv">\mbox</span><span class="nb">{ and } y</span><span class="nv">\in</span><span class="nb"> B</span><span class="nv">\}</span><span class="nb"> </span><span class="nv">\\</span><span class="nb" />
+</span><span class="line"><span class="nv">\mbox</span><span class="nb">{Star: } &amp; A^</span><span class="nv">\star</span><span class="nb">  </span><span class="o">=</span><span class="nb"> </span><span class="nv">\{</span><span class="nb">x_</span><span class="m">1</span><span class="nb">x_</span><span class="m">2</span><span class="nv">\ldots</span><span class="nb"> x_k </span><span class="nv">\mid</span><span class="nb">  k</span><span class="nv">\geq</span><span class="nb"> </span><span class="m">0</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{ and each } x_i</span><span class="nv">\in</span><span class="nb"> A</span><span class="nv">\}</span><span class="nb"> </span><span class="nv">\\</span><span class="nb" />
+</span><span class="line"><span class="nv">\end</span><span class="nb">{align}</span>
+</span><span class="line"><span class="s">$$</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>into this</p>
+
+<script type="math/tex; mode=display">
+\begin{align}
+\mbox{Union: } & A\cup B = \{x\mid x\in A \mbox{ or } x\in B\} \\
+\mbox{Concatenation: } & A\circ B  = \{xy\mid x\in A \mbox{ and } y\in B\} \\
+\mbox{Star: } & A^\star  = \{x_1x_2\ldots x_k \mid  k\geq 0 \mbox{ and each } x_i\in A\} \\
+\end{align}
+</script>
+
+<p><strong>Voilà!</strong></p>
+
+<hr />
+
+<h2 id="here-are-the-instructions">Here are the instructions:</h2>
+
+<ol>
+  <li>Use <a href="http://kramdown.rubyforge.org/">kramdown</a> instead of rdiscount</li>
+</ol>
+
+<p>kramdown is a free GPL-licensed Ruby library for parsing and converting a
+superset of Markdown. It is completely written in Ruby, supports standard
+Markdown and latex math equations.</p>
+
+<pre><code>gem install kramdown
+</code></pre>
+
+<ol>
+  <li>Change settings in <code>_config.yml</code></li>
+</ol>
+
+<p><code>_config.yml</code> is configurations for Jekyll’s settings. find <code>markdown</code> and
+change <code>rdiscount</code> to <code>kramdown</code></p>
+
+<ol>
+  <li>
+    <p>Change <code>gem 'ridiscount'</code> to <code>gem 'kramdown</code> in <code>Gemfile</code><sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>.</p>
+  </li>
+  <li>
+    <p>Put <a href="http://www.mathjax.org/">MathJax</a> CDN and configs in
+<code>source/_layouts/default.html</code>.</p>
+  </li>
+</ol>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+</pre></td><td class="code"><pre><code class="html"><span class="line"><span class="c">&lt;!-- mathjax config similar to math.stackexchange --&gt;</span>
+</span><span class="line"><span class="nt">&lt;script </span><span class="na">type=</span><span class="s">&quot;text/x-mathjax-config&quot;</span><span class="nt">&gt;</span>
+</span><span class="line"><span class="nx">MathJax</span><span class="p">.</span><span class="nx">Hub</span><span class="p">.</span><span class="nx">Config</span><span class="p">({</span>
+</span><span class="line">  <span class="nx">jax</span><span class="o">:</span> <span class="p">[</span><span class="s2">&quot;input/TeX&quot;</span><span class="p">,</span> <span class="s2">&quot;output/HTML-CSS&quot;</span><span class="p">],</span>
+</span><span class="line">  <span class="nx">tex2jax</span><span class="o">:</span> <span class="p">{</span>
+</span><span class="line">    <span class="nx">inlineMath</span><span class="o">:</span> <span class="p">[</span> <span class="p">[</span><span class="s1">&#39;$&#39;</span><span class="p">,</span> <span class="s1">&#39;$&#39;</span><span class="p">]</span> <span class="p">],</span>
+</span><span class="line">    <span class="nx">displayMath</span><span class="o">:</span> <span class="p">[</span> <span class="p">[</span><span class="s1">&#39;$$&#39;</span><span class="p">,</span> <span class="s1">&#39;$$&#39;</span><span class="p">]],</span>
+</span><span class="line">    <span class="nx">processEscapes</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+</span><span class="line">    <span class="nx">skipTags</span><span class="o">:</span> <span class="p">[</span><span class="s1">&#39;script&#39;</span><span class="p">,</span> <span class="s1">&#39;noscript&#39;</span><span class="p">,</span> <span class="s1">&#39;style&#39;</span><span class="p">,</span> <span class="s1">&#39;textarea&#39;</span><span class="p">,</span> <span class="s1">&#39;pre&#39;</span><span class="p">,</span> <span class="s1">&#39;code&#39;</span><span class="p">]</span>
+</span><span class="line">  <span class="p">},</span>
+</span><span class="line">  <span class="nx">messageStyle</span><span class="o">:</span> <span class="s2">&quot;none&quot;</span><span class="p">,</span>
+</span><span class="line">  <span class="s2">&quot;HTML-CSS&quot;</span><span class="o">:</span> <span class="p">{</span> <span class="nx">preferredFont</span><span class="o">:</span> <span class="s2">&quot;TeX&quot;</span><span class="p">,</span> <span class="nx">availableFonts</span><span class="o">:</span> <span class="p">[</span><span class="s2">&quot;STIX&quot;</span><span class="p">,</span><span class="s2">&quot;TeX&quot;</span><span class="p">]</span> <span class="p">}</span>
+</span><span class="line"><span class="p">});</span>
+</span><span class="line"><span class="nt">&lt;/script&gt;</span>
+</span><span class="line"><span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML&quot;</span> <span class="na">type=</span><span class="s">&quot;text/javascript&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<ol>
+  <li>Fix <a href="http://www.mathjax.org/">MathJax</a> right-click bug</li>
+</ol>
+
+<p>I found the solution on <a href="http://luikore.github.com/2011/09/good-things-learned-from-octopress/">luikore’s blog</a>. The problem was when you right-click on a MathJax formula, the whole browser becomes white. To fix it, open <code>sass/base/_theme.scss</code> and change the div under body from</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="scss"><span class="line"><span class="nt">body</span> <span class="p">{</span>
+</span><span class="line">  <span class="o">&gt;</span> <span class="nt">div</span> <span class="p">{</span>
+</span><span class="line">    <span class="na">background</span><span class="o">:</span> <span class="nv">$sidebar-bg</span> <span class="nv">$noise-bg</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>to</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="scss"><span class="line"><span class="nt">body</span> <span class="p">{</span>
+</span><span class="line">  <span class="o">&gt;</span> <span class="nt">div</span><span class="nn">#main</span> <span class="p">{</span>
+</span><span class="line">    <span class="na">background</span><span class="o">:</span> <span class="nv">$sidebar-bg</span> <span class="nv">$noise-bg</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>and it is done.</p>
+
+<div class="footnotes">
+  <ol>
+    <li id="fn:1">
+      <p>It’s useful if you want to depoloy your code on differnt machines.<a href="#fnref:1" rev="footnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-03-10T16:23:00+08:00" pubdate data-updated="true">Mar 10<span>th</span>, 2012</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/math/'>Math</a>, <a class='category' href='/blog/categories/octopress/'>Octopress</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://dryman.github.com/blog/2012/03/10/writing-math-equations-on-octopress/" data-via="" data-counturl="http://dryman.github.com/blog/2012/03/10/writing-math-equations-on-octopress/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2012/03/10/my-octopress-configs/" title="Previous Post: My Octopress configs">&laquo; My Octopress configs</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2012/03/12/the-recursion-theorem/" title="Next Post: The recursion theorem">The recursion theorem &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/03/14/the-nlp-day/">The NLP Day</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/13/handcraft-algorithm-environment-in-kramdown/">handcraft algorithm environment in kramdown</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/12/the-recursion-theorem/">The recursion theorem</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/10/writing-math-equations-on-octopress/">Writing math equations on Octopress</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/10/my-octopress-configs/">My Octopress configs</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - dryman (Felix Ren-Chyan Chern) -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+<!-- mathjax config similar to math.stackexchange -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/HTML-CSS"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+</html>
+

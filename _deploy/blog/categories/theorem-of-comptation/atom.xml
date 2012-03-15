@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Theorem of comptation | Carpe dien]]></title>
+  <link href="http://dryman.github.com/blog/categories/theorem-of-comptation/atom.xml" rel="self"/>
+  <link href="http://dryman.github.com/"/>
+  <updated>2012-03-15T13:08:52+08:00</updated>
+  <id>http://dryman.github.com/</id>
+  <author>
+    <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[The recursion theorem]]></title>
+    <link href="http://dryman.github.com/blog/2012/03/12/the-recursion-theorem/"/>
+    <updated>2012-03-12T08:42:00+08:00</updated>
+    <id>http://dryman.github.com/blog/2012/03/12/the-recursion-theorem</id>
+    <content type="html"><![CDATA[<p>I’m studying theorem of computation myself. Theorem of computation is an
+interesting field. It addresses questions as: What is a theorem? What is a
+proof? What is truth? Can an algorithm decide which statements are true? Can
+a computer calculates everything in the universe? These questions are linked by
+the question:</p>
+
+<blockquote>
+  <p>What are the fundamental capabilities and limitations of computers?</p>
+</blockquote>
+
+<p>This question goes back to the 1930s when mathematical logicians first began to
+explore the meaning of computation. Thus, three major theorem of computation has
+born: <em>automata</em>, <em>computability</em>, and <em>complexity</em>. There are a lot of algebras
+and proofs in this field. Of all the theorems, I love the <strong>recursion
+theorem</strong> the most.</p>
+
+<hr />
+
+<h3 id="self-reference">SELF-REFERENCE</h3>
+
+<p>First we introduce a Turing Machine that <em>ignores its input and prints out a
+copy of its own description</em>. We call this machine $SELF$.</p>
+
+<dl>
+  <dt><strong>LEMMA</strong></dt>
+  <dd>There is a computable function $q: \Sigma^\ast\longrightarrow\Sigma^\ast$,</dd>
+  <dd>where if $w$ is any string, $q(w)$ is the description of a Turing machine $P_w$</dd>
+  <dd>that prints out $w$ and then halts.</dd>
+  <dt><strong>PROOF</strong></dt>
+  <dd>The following TM $Q$ computes $q(w)$</dd>
+</dl>
+
+<script type="math/tex; mode=display">
+\begin{align}
+   Q=& \mbox{On input string $w$:} \\
+     & 1.\; \mbox{Construct the following Turing machine $P_w$} \\
+     & \quad    P_w = \mbox{On any input:} \\
+     & \qquad   1.\; \mbox{Erase input.} \\
+     & \qquad   2.\; \mbox{Write w on the tape.} \\
+     & \qquad   3.\; \mbox{Halt.}  \\
+     & 2.\; \mbox{Output }\langle P_w\rangle  \\
+\end{align}
+</script>
+
+<p>Now we construct $SELF$ in two parts $A$ and $B$. We want $SELF$ to print out
+$\langle SELF\rangle = \langle AB\rangle$.</p>
+
+<script type="math/tex; mode=display">
+\begin{align}
+A=&P_{\langle B\rangle}, \\
+B=&\mbox{On input $\langle M\rangle$, where $M$ is a portion of a TM:}\\
+  & 1.\;\mbox{Compute $q(\langle M\rangle)$.} \\
+  & 2.\;\mbox{Combine the result with $\langle M\rangle$ to make a complete TM.} \\
+  & 3.\;\mbox{Print the description of this TM and halt.} \\
+\end{align}
+</script>
+]]></content>
+  </entry>
+  
+</feed>
