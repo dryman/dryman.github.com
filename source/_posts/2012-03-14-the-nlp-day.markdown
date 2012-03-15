@@ -47,7 +47,7 @@ $$
 \end{align}
 $$
 
-For example, a dog can be represented as
+For example, a dog can be represented as [^1]
 
 {% codeblock lang:scheme %}
 (defparameter *dog*
@@ -69,3 +69,30 @@ And it can be expressed in a more complexed form:
     (:agent-of (("eat" 0.4) ("run" 0.4) ("bark" 0.4) ("pant" 0.3)))
     (:patient-of (("chase" 0.3) ("walk" 0.4) ("love" 0.4 )))))
 {% endcodeblock %}
+
+which we can visualize it as below:
+{% img /images/nlp-day/dog-context-1.png 'An example of dog context'%}
+
+Furthermore, since every node itself can be another context, we can generate a
+graph! [^2]
+{% img /images/nlp-day/dog-context-2.png 'An another example of dog context'%}
+
+### The main questions to address
+
+* Construction
+  - Do we really need tensors? Or are vectors enough?
+  - How to build them?
+  - Which relations to use? Which scores?
+  - How do we evaluate this?
+* Compositionally: How to 'add' tensors to obtain new, more complex, meanings
+  that are still tensors?
+* Dependency: How to represent and manage the underlying interconnections across
+  tensor elements?
+* Logical operators: How to handle negation, quantification models (can,
+  must...), etc.?
+
+
+* * *
+
+[^1]: I use the syntax of common lisp to express the relationship
+[^2]: The copyright of the images belongs to Eduard Hovy
