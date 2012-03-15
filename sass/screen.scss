@@ -8,3 +8,11 @@
 @import "base";
 @import "partials";
 @import "custom/styles";
+
+.footnotes {
+  font-size: 12pt;
+}
+sup > a {
+  font-size: 12pt;
+  vertical-align: super;
+}
