@@ -9,7 +9,7 @@
 @import "partials";
 @import "custom/styles";
 
-.footnotes {
+.footnotes > ol > li {
   font-size: 12pt;
 }
 sup > a {
