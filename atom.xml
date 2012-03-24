@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe dien]]></title>
   <link href="http://dryman.github.com/atom.xml" rel="self"/>
   <link href="http://dryman.github.com/"/>
-  <updated>2012-03-16T09:34:21+08:00</updated>
+  <updated>2012-03-24T18:11:16+08:00</updated>
   <id>http://dryman.github.com/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,274 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Lisp development on Mac]]></title>
+    <link href="http://dryman.github.com/blog/2012/03/24/lisp-development-on-mac/"/>
+    <updated>2012-03-24T16:46:00+08:00</updated>
+    <id>http://dryman.github.com/blog/2012/03/24/lisp-development-on-mac</id>
+    <content type="html"><![CDATA[<p>Setting up a development environment is such a pain. In short, here is my final
+configs:</p>
+
+<ul>
+  <li><a href="http://aquamacs.org/">Aquamacs emacs</a></li>
+  <li><a href="http://common-lisp.net/project/slime/">SLIME</a> without SLDB mode</li>
+  <li><a href="http://www.clisp.org/">clisp</a> with debugger commands working</li>
+  <li><a href="http://www.quicklisp.org/beta/">quicklisp</a> (lisp package manager)
+    <ul>
+      <li><a href="http://www.cliki.net/asdf">asdf.lisp</a> that ships with <a href="http://www.quicklisp.org/beta/">quicklisp</a> (Bridge between lisp and
+SLIME)</li>
+    </ul>
+  </li>
+</ul>
+
+<p>I also tried many other combinations. For example, <a href="http://www.sbcl.org/">sbcl</a> should be a faster
+alternative to <a href="http://www.clisp.org/">clisp</a>, but I can’t make its debugger work. <a href="http://www.sbcl.org/">sbcl</a> also support
+better linking to slime and sldb, but sldb isn’t working well. <a href="http://emacsformacosx.com/builds">Emacs 24</a> seems to
+be a better emacs environment because it has package manager built right into
+it. However, I tired <a href="https://github.com/technomancy/emacs-starter-kit">emacs starter-kit</a> and slime installation through its
+package manager, and it just don’t work. Any suggestions would be greatly
+welcome. ;)</p>
+
+<hr />
+
+<h3 id="instructions">Instructions</h3>
+
+<ol>
+  <li>Download <a href="https://github.com/kennethreitz/osx-gcc-installer">osx-gcc</a> if you haven’t.</li>
+  <li>Install <a href="http://mxcl.github.com/homebrew/">homebrew</a>.</li>
+  <li><code>brew install clisp</code>.</li>
+  <li>Setting up <a href="http://www.quicklisp.org/beta/">quicklisp</a>.
+    <ol>
+      <li>Download <a href="http://www.quicklisp.org/beta/">quicklisp.lisp</a></li>
+      <li><code>clisp -i quicklisp.lisp</code></li>
+      <li><code>[1]&gt; (quicklisp-quickstart:install)</code></li>
+      <li><code>[2]&gt; (ql:add-to-init-file)</code></li>
+      <li><code>[3]&gt; (quit)</code></li>
+    </ol>
+  </li>
+  <li>Download Aquamacs emacs</li>
+  <li>Install <a href="http://braeburn.aquamacs.org/plugins/">Aquamacs emacs SLIME plugin</a></li>
+  <li><code>cat '(setq inferior-lisp-program "/usr/local/bin/clisp")' &gt;&gt; ~/.emacs</code></li>
+</ol>
+
+<p>Then you can use <code>trace</code>, <code>step</code> and other debug utilities in emacs SLIME. Enjoy
+it!</p>
+
+<hr />
+
+<h3 id="debug-in-step-mode">Debug in Step Mode</h3>
+
+<p>I’m an old school debugger, and I love to use gdb like debug tools. The
+alternative debug environment in lisp is the <code>step mode</code>. To enter it, simply
+enter:</p>
+
+<pre><code>CL-USER&gt; (step (whatever-function arg1 arg2 arg3))
+step 1 --&gt; (WHATEVER-FUNCTION ARG1 ARG2 ARG3)
+Step 1 [2]&gt;
+</code></pre>
+
+<p>Now you can enter most commands you are familiar in gdb and other cool stuffs
+lisp provides to you. Try type <code>:h</code> and see what <a href="http://www.clisp.org/">clisp</a> outputs:</p>
+
+<pre><code>Commands may be abbreviated as shown in the second column.
+COMMAND        ABBR     DESCRIPTION
+Help           :h, ?    print this command list
+Error          :e       print the last error message
+Inspect        :i       inspect the last error
+Abort          :a       abort to the next recent input loop
+Unwind         :uw      abort to the next recent input loop
+Reset          :re      toggle *PACKAGE* and *READTABLE* between the
+                          local bindings and the sane values
+Quit           :q       quit to the top-level input loop
+Where          :w       inspect this frame
+Up             :u       go up one frame, inspect it
+Top            :t       go to top frame, inspect it
+Down           :d       go down one frame, inspect it
+Bottom         :b       go to bottom (most recent) frame, inspect it
+Mode mode      :m       set stack mode for Backtrace: 1=all the stack elements
+             2=all the frames                         3=only lexical frames
+             4=only EVAL and APPLY frames (default)   5=only APPLY frames
+Frame-limit n  :fl      set the frame-limit for Backtrace. This many frames
+                          will be printed in a backtrace at most.
+Backtrace [mode [limit]] :bt  inspect the stack
+Break+         :br+     set breakpoint in EVAL frame
+Break-         :br-     disable breakpoint in EVAL frame
+Redo           :rd      re-evaluate form in EVAL frame
+Return value   :rt      leave EVAL frame, prescribing the return values
+Step           :s       step into form: evaluate this form in single step mode
+Next           :n       step over form: evaluate this form at once
+Over           :o       step over this level: evaluate at once up to the next return
+Continue       :c       switch off single step mode, continue evaluation
+-- Step-until :su, Next-until :nu, Over-until :ou, Continue-until :cu --
+           same as above, specify a condition when to stop
+</code></pre>
+
+<p><strong>Voilà!</strong> Note that <code>Step</code> will step into every S-expression and <code>Next</code> will
+only evaluate the expression and return the value. The great news is you can
+do any evaluations in <code>Step mode</code>. For example, you can type in a S-expression
+to exam a variable, use <code>(inspect object)</code> to view detail information, or even
+redefine some functions at runtime!</p>
+
+<h3 id="basic-usage-of-trace">Basic usage of trace</h3>
+
+<p>The <code>trace</code> macro can save you a lot of time in debugging. For simple usage:</p>
+
+<pre><code>USER(17): (trace list-reverse-aux)
+(LIST-REVERSE-AUX)
+USER(18): (list-reverse '(1 2 3 4))
+ 0: (LIST-REVERSE (1 2 3 4))
+   1: (LIST-REVERSE-AUX (1 2 3 4) NIL)
+     2: (LIST-REVERSE-AUX (2 3 4) (1))
+       3: (LIST-REVERSE-AUX (3 4) (2 1))
+         4: (LIST-REVERSE-AUX (4) (3 2 1))
+           5: (LIST-REVERSE-AUX NIL (4 3 2 1))
+           5: returned (4 3 2 1)
+         4: returned (4 3 2 1)
+       3: returned (4 3 2 1)
+     2: returned (4 3 2 1)
+   1: returned (4 3 2 1)
+ 0: returned (4 3 2 1)
+(4 3 2 1)
+</code></pre>
+
+<h3 id="advanced-usage-of-trace">Advanced usage of trace</h3>
+
+<p>If you want more information in execution, you can tell <code>trace</code> to give your
+more. </p>
+
+<p><strong>(TRACE function-name …)</strong> makes the functions <em>function-name</em>, … traced. Each <em>function-name</em> should be either a function name or a LIST <code>(function-name &amp;KEY :SUPPRESS-IF :MAX-DEPTH :STEP-IF :BINDINGS :PRE :POST :PRE-BREAK-IF :POST-BREAK-IF :PRE-PRINT :POST-PRINT :PRINT)</code>, where</p>
+
+<ul>
+  <li><code>:SUPPRESS-IF form</code>
+    no trace output as long as form is true</li>
+  <li><code>:MAX-DEPTH form</code>
+    no trace output as long as <code>(&gt; *trace-level* form)</code>. This is useful for
+    tracing functions that are use by the tracer itself, such as PRINT-OBJECT,
+    or otherwise when tracing would lead to an infinite recursion.</li>
+  <li><code>:STEP-IF form</code>
+    invokes the stepper as soon as form is true</li>
+  <li><code>:BINDINGS ((variable form)...)</code>
+    binds variables to the result of evaluation of forms around evaluation of
+    all of the following forms</li>
+  <li><code>:PRE form</code>
+    evaluates form before calling the function</li>
+  <li><code>:POST form</code>
+    evaluates form after return from the function</li>
+  <li><code>:PRE-BREAK-IF form</code>
+    goes into the break loop before calling the function if form is true</li>
+  <li><code>:POST-BREAK-IF form</code>
+    goes into the break loop after return from the function if form is true</li>
+  <li><code>:PRE-PRINT form</code>
+    prints the values of form before calling the function</li>
+  <li><code>:POST-PRINT form</code>
+    prints the values of form after return from the function</li>
+  <li><code>:PRINT form</code>
+    prints the values of form both before calling and after return from the function</li>
+</ul>
+
+<p>In all these forms you can access the following variables:</p>
+
+<ul>
+  <li><code>EXT:*TRACE-FUNCTION*</code>
+    the traced function itself</li>
+  <li><code>EXT:*TRACE-ARGS*</code>
+    the arguments to the function</li>
+  <li><code>EXT:*TRACE-FORM*</code>
+    the function/macro call as form</li>
+  <li><code>EXT:*TRACE-VALUES*</code>
+    after return from the function: the list of return values from the function call</li>
+</ul>
+
+<p>I copied the exapmple from <a href="http://www.clisp.org/impnotes/debugger.html#trace-call-id">25.2. Debugging Utilities</a>.</p>
+
+<pre><code>(defun f0 (x)
+  (cond ((zerop x) 1)
+        ((zerop (random 2)) (* x (f0 (1- x))))
+        (t (* x (f1 (1- x))))))
+⇒ F0
+(defun f1 (x)
+  (cond ((zerop x) 1)
+        ((zerop (random 2)) (* x (f0 (1- x))))
+        (t (* x (f1 (1- x))))))
+⇒ F1
+(defvar *f0-call-count* 0)
+⇒ *F0-CALL-COUNT*
+(defvar *id0*)
+⇒ *ID0*
+(defvar *cc0*)
+⇒ *CC0*
+(defvar *f1-call-count* 0)
+⇒ *F1-CALL-COUNT*
+(defvar *id1*)
+⇒ *ID1*
+(defvar *cc1*)
+⇒ *CC1*
+(trace (f0 :bindings ((*cc0* (incf *f0-call-count*))
+                      (*id0* (gensym "F0-")))
+           :pre-print (list 'enter *id0* *cc0*)
+           :post-print (list 'exit *id0* *cc0*))
+       (f1 :bindings ((*cc1* (incf *f1-call-count*))
+                      (*id1* (gensym "F1-")))
+           :pre-print (list 'enter *id1* *cc1*)
+           :post-print (list 'exit *id1* *cc1*)))
+;; Tracing function F0.
+;; Tracing function F1.
+⇒ (F0 F1)
+(f0 10)
+1. Trace: (F0 '10)
+(ENTER #:F0-2926 1)
+2. Trace: (F1 '9)
+(ENTER #:F1-2927 1)
+3. Trace: (F0 '8)
+(ENTER #:F0-2928 2)
+4. Trace: (F1 '7)
+(ENTER #:F1-2929 2)
+5. Trace: (F1 '6)
+(ENTER #:F1-2930 3)
+6. Trace: (F1 '5)
+(ENTER #:F1-2931 4)
+7. Trace: (F1 '4)
+(ENTER #:F1-2932 5)
+8. Trace: (F0 '3)
+(ENTER #:F0-2933 3)
+9. Trace: (F1 '2)
+(ENTER #:F1-2934 6)
+10. Trace: (F0 '1)
+(ENTER #:F0-2935 4)
+11. Trace: (F1 '0)
+(ENTER #:F1-2936 7)
+(EXIT #:F1-2936 7)
+11. Trace: F1 ==&gt; 1
+(EXIT #:F0-2935 4)
+10. Trace: F0 ==&gt; 1
+(EXIT #:F1-2934 6)
+9. Trace: F1 ==&gt; 2
+(EXIT #:F0-2933 3)
+8. Trace: F0 ==&gt; 6
+(EXIT #:F1-2932 5)
+7. Trace: F1 ==&gt; 24
+(EXIT #:F1-2931 4)
+6. Trace: F1 ==&gt; 120
+(EXIT #:F1-2930 3)
+5. Trace: F1 ==&gt; 720
+(EXIT #:F1-2929 2)
+4. Trace: F1 ==&gt; 5040
+(EXIT #:F0-2928 2)
+3. Trace: F0 ==&gt; 40320
+(EXIT #:F1-2927 1)
+2. Trace: F1 ==&gt; 362880
+(EXIT #:F0-2926 1)
+1. Trace: F0 ==&gt; 3628800
+⇒ 3628800
+*f0-call-count*
+⇒ 4
+*f1-call-count*
+⇒ 7
+</code></pre>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[The NLP Day]]></title>
