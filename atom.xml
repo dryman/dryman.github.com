@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe dien]]></title>
   <link href="http://dryman.github.com/atom.xml" rel="self"/>
   <link href="http://dryman.github.com/"/>
-  <updated>2012-03-24T18:11:16+08:00</updated>
+  <updated>2012-03-26T10:09:01+08:00</updated>
   <id>http://dryman.github.com/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -14,61 +14,11 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Lisp development on Mac]]></title>
-    <link href="http://dryman.github.com/blog/2012/03/24/lisp-development-on-mac/"/>
-    <updated>2012-03-24T16:46:00+08:00</updated>
-    <id>http://dryman.github.com/blog/2012/03/24/lisp-development-on-mac</id>
-    <content type="html"><![CDATA[<p>Setting up a development environment is such a pain. In short, here is my final
-configs:</p>
-
-<ul>
-  <li><a href="http://aquamacs.org/">Aquamacs emacs</a></li>
-  <li><a href="http://common-lisp.net/project/slime/">SLIME</a> without SLDB mode</li>
-  <li><a href="http://www.clisp.org/">clisp</a> with debugger commands working</li>
-  <li><a href="http://www.quicklisp.org/beta/">quicklisp</a> (lisp package manager)
-    <ul>
-      <li><a href="http://www.cliki.net/asdf">asdf.lisp</a> that ships with <a href="http://www.quicklisp.org/beta/">quicklisp</a> (Bridge between lisp and
-SLIME)</li>
-    </ul>
-  </li>
-</ul>
-
-<p>I also tried many other combinations. For example, <a href="http://www.sbcl.org/">sbcl</a> should be a faster
-alternative to <a href="http://www.clisp.org/">clisp</a>, but I can’t make its debugger work. <a href="http://www.sbcl.org/">sbcl</a> also support
-better linking to slime and sldb, but sldb isn’t working well. <a href="http://emacsformacosx.com/builds">Emacs 24</a> seems to
-be a better emacs environment because it has package manager built right into
-it. However, I tired <a href="https://github.com/technomancy/emacs-starter-kit">emacs starter-kit</a> and slime installation through its
-package manager, and it just don’t work. Any suggestions would be greatly
-welcome. ;)</p>
-
-<hr />
-
-<h3 id="instructions">Instructions</h3>
-
-<ol>
-  <li>Download <a href="https://github.com/kennethreitz/osx-gcc-installer">osx-gcc</a> if you haven’t.</li>
-  <li>Install <a href="http://mxcl.github.com/homebrew/">homebrew</a>.</li>
-  <li><code>brew install clisp</code>.</li>
-  <li>Setting up <a href="http://www.quicklisp.org/beta/">quicklisp</a>.
-    <ol>
-      <li>Download <a href="http://www.quicklisp.org/beta/">quicklisp.lisp</a></li>
-      <li><code>clisp -i quicklisp.lisp</code></li>
-      <li><code>[1]&gt; (quicklisp-quickstart:install)</code></li>
-      <li><code>[2]&gt; (ql:add-to-init-file)</code></li>
-      <li><code>[3]&gt; (quit)</code></li>
-    </ol>
-  </li>
-  <li>Download Aquamacs emacs</li>
-  <li>Install <a href="http://braeburn.aquamacs.org/plugins/">Aquamacs emacs SLIME plugin</a></li>
-  <li><code>cat '(setq inferior-lisp-program "/usr/local/bin/clisp")' &gt;&gt; ~/.emacs</code></li>
-</ol>
-
-<p>Then you can use <code>trace</code>, <code>step</code> and other debug utilities in emacs SLIME. Enjoy
-it!</p>
-
-<hr />
-
-<h3 id="debug-in-step-mode">Debug in Step Mode</h3>
+    <title type="html"><![CDATA[Lisp Debugging Tools]]></title>
+    <link href="http://dryman.github.com/blog/2012/03/26/lisp-debugging-tools/"/>
+    <updated>2012-03-26T09:51:00+08:00</updated>
+    <id>http://dryman.github.com/blog/2012/03/26/lisp-debugging-tools</id>
+    <content type="html"><![CDATA[<h2 id="debug-in-step-mode">Debug in Step Mode</h2>
 
 <p>I’m an old school debugger, and I love to use gdb like debug tools. The
 alternative debug environment in lisp is the <code>step mode</code>. To enter it, simply
@@ -121,7 +71,7 @@ do any evaluations in <code>Step mode</code>. For example, you can type in a S-e
 to exam a variable, use <code>(inspect object)</code> to view detail information, or even
 redefine some functions at runtime!</p>
 
-<h3 id="basic-usage-of-trace">Basic usage of trace</h3>
+<h2 id="basic-usage-of-trace">Basic usage of trace</h2>
 
 <p>The <code>trace</code> macro can save you a lot of time in debugging. For simple usage:</p>
 
@@ -277,6 +227,222 @@ more. </p>
 *f1-call-count*
 ⇒ 7
 </code></pre>
+
+<h3 id="pretty-backtrace">Pretty backtrace</h3>
+
+<p>The original backtrace dump message is not good enough, thanks to <a href="http://jsnell.iki.fi/blog/archive/2007-12-19-pretty-sbcl-backtraces.html">Juho’s
+post</a>, you can put this in your <code>.sbclrc</code>:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+<span class="line-number">38</span>
+<span class="line-number">39</span>
+<span class="line-number">40</span>
+<span class="line-number">41</span>
+<span class="line-number">42</span>
+</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">backtrace-with-extra-info</span> <span class="p">(</span><span class="k">&amp;key</span> <span class="p">(</span><span class="nv">start</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nv">end</span> <span class="mi">20</span><span class="p">))</span>
+</span><span class="line">  <span class="p">(</span><span class="nv">swank-backend::call-with-debugging-environment</span>
+</span><span class="line">   <span class="p">(</span><span class="k">lambda</span> <span class="p">()</span>
+</span><span class="line">     <span class="p">(</span><span class="nb">loop</span> <span class="nv">for</span> <span class="nv">i</span> <span class="nv">from</span> <span class="nv">start</span> <span class="nv">to</span> <span class="p">(</span><span class="nb">length</span> <span class="p">(</span><span class="nv">swank-backend::compute-backtrace</span>
+</span><span class="line">                                        <span class="nv">start</span> <span class="nv">end</span><span class="p">))</span>
+</span><span class="line">           <span class="nb">do</span> <span class="p">(</span><span class="nb">ignore-errors</span> <span class="p">(</span><span class="nv">print-frame</span> <span class="nv">i</span><span class="p">))))))</span>
+</span><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">print-frame</span> <span class="p">(</span><span class="nv">i</span><span class="p">)</span>
+</span><span class="line">  <span class="p">(</span><span class="nb">destructuring-bind</span> <span class="p">(</span><span class="k">&amp;key</span> <span class="nv">file</span> <span class="nb">position</span> <span class="k">&amp;allow-other-keys</span><span class="p">)</span>
+</span><span class="line">      <span class="p">(</span><span class="nb">apply</span> <span class="nf">#&#39;</span><span class="nb">append</span>
+</span><span class="line">             <span class="p">(</span><span class="nb">remove-if</span> <span class="nf">#&#39;</span><span class="nb">atom</span>
+</span><span class="line">                        <span class="p">(</span><span class="nv">swank-backend:frame-source-location-for-emacs</span> <span class="nv">i</span><span class="p">)))</span>
+</span><span class="line">    <span class="p">(</span><span class="k">let*</span> <span class="p">((</span><span class="nv">frame</span> <span class="p">(</span><span class="nv">swank-backend::nth-frame</span> <span class="nv">i</span><span class="p">))</span>
+</span><span class="line">           <span class="p">(</span><span class="nv">line-number</span> <span class="p">(</span><span class="nv">find-line-position</span> <span class="nv">file</span> <span class="nb">position</span> <span class="nv">frame</span><span class="p">)))</span>
+</span><span class="line">      <span class="p">(</span><span class="nb">format</span> <span class="no">t</span> <span class="s">&quot;~2@a: ~s~%~</span>
+</span><span class="line"><span class="s">                   ~:[~*~;~:[~2:*    At ~a (unknown line)~*~%~;~</span>
+</span><span class="line"><span class="s">                             ~2:*    At ~a:~a~%~]~]~</span>
+</span><span class="line"><span class="s">                   ~:[~*~;    Local variables:~%~{      ~a = ~s~%~}~]&quot;</span>
+</span><span class="line">              <span class="nv">i</span>
+</span><span class="line">              <span class="p">(</span><span class="nv">sb-debug::frame-call</span> <span class="p">(</span><span class="nv">swank-backend::nth-frame</span> <span class="nv">i</span><span class="p">))</span>
+</span><span class="line">              <span class="nv">file</span> <span class="nv">line-number</span>
+</span><span class="line">              <span class="p">(</span><span class="nv">swank-backend::frame-locals</span> <span class="nv">i</span><span class="p">)</span>
+</span><span class="line">              <span class="p">(</span><span class="nb">mapcan</span> <span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="nv">x</span><span class="p">)</span>
+</span><span class="line">                        <span class="c1">;; Filter out local variables whose variables we</span>
+</span><span class="line">                        <span class="c1">;; don&#39;t know</span>
+</span><span class="line">                        <span class="p">(</span><span class="nb">unless</span> <span class="p">(</span><span class="nb">eql</span> <span class="p">(</span><span class="nb">getf</span> <span class="nv">x</span> <span class="ss">:value</span><span class="p">)</span> <span class="ss">:&lt;not-available&gt;</span><span class="p">)</span>
+</span><span class="line">                          <span class="p">(</span><span class="nb">list</span> <span class="p">(</span><span class="nb">getf</span> <span class="nv">x</span> <span class="ss">:name</span><span class="p">)</span> <span class="p">(</span><span class="nb">getf</span> <span class="nv">x</span> <span class="ss">:value</span><span class="p">))))</span>
+</span><span class="line">                      <span class="p">(</span><span class="nv">swank-backend::frame-locals</span> <span class="nv">i</span><span class="p">))))))</span>
+</span><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">find-line-position</span> <span class="p">(</span><span class="nv">file</span> <span class="nv">char-offset</span> <span class="nv">frame</span><span class="p">)</span>
+</span><span class="line">  <span class="c1">;; It would be nice if SBCL stored line number information in</span>
+</span><span class="line">  <span class="c1">;; addition to form path information by default Since it doesn&#39;t</span>
+</span><span class="line">  <span class="c1">;; we need to use Swank to map the source path to a character</span>
+</span><span class="line">  <span class="c1">;; offset, and then map the character offset to a line number</span>
+</span><span class="line">  <span class="p">(</span><span class="nb">ignore-errors</span>
+</span><span class="line">   <span class="p">(</span><span class="k">let*</span> <span class="p">((</span><span class="nv">location</span> <span class="p">(</span><span class="nv">sb-di::frame-code-location</span> <span class="nv">frame</span><span class="p">))</span>
+</span><span class="line">          <span class="p">(</span><span class="nv">debug-source</span> <span class="p">(</span><span class="nv">sb-di::code-location-debug-source</span> <span class="nv">location</span><span class="p">))</span>
+</span><span class="line">          <span class="p">(</span><span class="nv">line</span> <span class="p">(</span><span class="nb">with-open-file</span> <span class="p">(</span><span class="nc">stream</span> <span class="nv">file</span><span class="p">)</span>
+</span><span class="line">                  <span class="p">(</span><span class="nb">1+</span> <span class="p">(</span><span class="nb">loop</span> <span class="nv">repeat</span> <span class="nv">char-offset</span>
+</span><span class="line">                            <span class="nb">count</span> <span class="p">(</span><span class="nb">eql</span> <span class="p">(</span><span class="nb">read-char</span> <span class="nc">stream</span><span class="p">)</span> <span class="sc">#\Newline</span><span class="p">))))))</span>
+</span><span class="line">     <span class="p">(</span><span class="nb">format</span> <span class="no">nil</span> <span class="s">&quot;~:[~a (file modified)~;~a~]&quot;</span>
+</span><span class="line">             <span class="p">(</span><span class="nb">=</span> <span class="p">(</span><span class="nb">file-write-date</span> <span class="nv">file</span><span class="p">)</span>
+</span><span class="line">                <span class="p">(</span><span class="nv">sb-di::debug-source-created</span> <span class="nv">debug-source</span><span class="p">))</span>
+</span><span class="line">             <span class="nv">line</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>And the following code:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">declaim</span> <span class="p">(</span><span class="k">optimize</span> <span class="nv">debug</span><span class="p">))</span>
+</span><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">foo</span> <span class="p">(</span><span class="nv">x</span><span class="p">)</span>
+</span><span class="line">  <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">y</span> <span class="p">(</span><span class="nb">+</span> <span class="nv">x</span> <span class="mi">3</span><span class="p">)))</span>
+</span><span class="line">    <span class="p">(</span><span class="nv">backtrace</span><span class="p">)</span>
+</span><span class="line">    <span class="p">(</span><span class="nv">backtrace-with-extra-info</span><span class="p">)</span>
+</span><span class="line">    <span class="p">(</span><span class="nb">+</span> <span class="nv">x</span> <span class="nv">y</span><span class="p">)))</span>
+</span><span class="line"><span class="p">(</span><span class="nb">defmethod</span> <span class="nv">bar</span> <span class="p">((</span><span class="nv">n</span> <span class="kt">fixnum</span><span class="p">)</span> <span class="p">(</span><span class="nv">y</span> <span class="p">(</span><span class="nb">eql</span> <span class="mi">1</span><span class="p">)))</span>
+</span><span class="line">  <span class="p">(</span><span class="nv">foo</span> <span class="p">(</span><span class="nb">+</span> <span class="nv">y</span> <span class="nv">n</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The old backtrace would look like:</p>
+
+<pre><code>1: (FOO 4)
+2: ((SB-PCL::FAST-METHOD BAR (FIXNUM (EQL 1)))
+    #&lt;unused argument&gt;
+    #&lt;unused argument&gt;
+    3
+    1)
+3: (SB-INT:SIMPLE-EVAL-IN-LEXENV (BAR 3 1) #&lt;NULL-LEXENV&gt;)
+</code></pre>
+
+<p>And the new one:</p>
+
+<pre><code>1: FOO
+   At /tmp/testlisp:5
+   Local variables:
+     X = 4
+     Y = 7
+2: (SB-PCL::FAST-METHOD BAR (FIXNUM (EQL 1)))
+   At /tmp/testlisp:8
+   Local variables:
+     N = 3
+     Y = 1
+3: SB-INT:SIMPLE-EVAL-IN-LEXENV
+   At /scratch/src/sbcl/src/code/evallisp:93 (file modified)
+   Local variables:
+     ARG-0 = (BAR 3 1)
+     ARG-1 = #&lt;NULL-LEXENV&gt;
+</code></pre>
+
+<p><strong>Voilà!</strong> </p>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Lisp development on Mac]]></title>
+    <link href="http://dryman.github.com/blog/2012/03/24/lisp-development-on-mac/"/>
+    <updated>2012-03-24T16:46:00+08:00</updated>
+    <id>http://dryman.github.com/blog/2012/03/24/lisp-development-on-mac</id>
+    <content type="html"><![CDATA[<p>Setting up a development environment is such a pain. In short, here is my final
+configs:</p>
+
+<ul>
+  <li><a href="http://aquamacs.org/">Aquamacs emacs</a></li>
+  <li><a href="http://common-lisp.net/project/slime/">SLIME</a> without SLDB mode</li>
+  <li><a href="http://www.clisp.org/">clisp</a> with debugger commands working</li>
+  <li><a href="http://www.quicklisp.org/beta/">quicklisp</a> (lisp package manager)
+    <ul>
+      <li><a href="http://www.cliki.net/asdf">asdf.lisp</a> that ships with <a href="http://www.quicklisp.org/beta/">quicklisp</a> (Bridge between lisp and
+SLIME)</li>
+    </ul>
+  </li>
+</ul>
+
+<p>I also tried many other combinations. For example, <a href="http://www.sbcl.org/">sbcl</a> should be a faster
+alternative to <a href="http://www.clisp.org/">clisp</a>, but I can’t make its debugger work. <a href="http://www.sbcl.org/">sbcl</a> also support
+better linking to slime and sldb, but sldb isn’t working well. <a href="http://emacsformacosx.com/builds">Emacs 24</a> seems to
+be a better emacs environment because it has package manager built right into
+it. However, I tired <a href="https://github.com/technomancy/emacs-starter-kit">emacs starter-kit</a> and slime installation through its
+package manager, and it just don’t work. Any suggestions would be greatly
+welcome. ;)</p>
+
+<hr />
+
+<h3 id="instructions">Instructions</h3>
+
+<ol>
+  <li>Download <a href="https://github.com/kennethreitz/osx-gcc-installer">osx-gcc</a> if you haven’t.</li>
+  <li>Install <a href="http://mxcl.github.com/homebrew/">homebrew</a>.</li>
+  <li><code>brew install clisp</code>.</li>
+  <li>Setting up <a href="http://www.quicklisp.org/beta/">quicklisp</a>.
+    <ol>
+      <li>Download <a href="http://www.quicklisp.org/beta/">quicklisp.lisp</a></li>
+      <li><code>clisp -i quicklisp.lisp</code></li>
+      <li><code>[1]&gt; (quicklisp-quickstart:install)</code></li>
+      <li><code>[2]&gt; (ql:add-to-init-file)</code></li>
+      <li><code>[3]&gt; (quit)</code></li>
+    </ol>
+  </li>
+  <li>Download Aquamacs emacs</li>
+  <li>Install <a href="http://braeburn.aquamacs.org/plugins/">Aquamacs emacs SLIME plugin</a></li>
+  <li><code>cat '(setq inferior-lisp-program "/usr/local/bin/clisp")' &gt;&gt; ~/.emacs</code></li>
+</ol>
+
+<p>Then you can use <code>trace</code>, <code>step</code> and other debug utilities in emacs SLIME. Enjoy
+it!</p>
+
+<hr />
+
+<h3 id="update">Update</h3>
+
+<p>I found out how to enable <code>STEP-MODE</code> in <a href="http://www.sbcl.org/">sbcl</a> form <a href="http://www.lispforum.com/viewtopic.php?f=2&amp;t=628">this post</a>. 
+In short, put this in your <code>.sbclrc</code>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">declaim</span> <span class="p">(</span><span class="k">optimize</span> <span class="p">(</span><span class="nv">debug</span> <span class="mi">3</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>and in your <code>.emacs</code></p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="k">setq</span> <span class="nv">inferior-lisp-program</span> <span class="s">&quot;/usr/local/bin/sbcl&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
 
 ]]></content>
   </entry>
