@@ -266,7 +266,7 @@ post][backtrace], you can put this in your `.sbclrc`:
              line))))
 {% endcodeblock %}
 
-And the following code:
+And now in your REPL, the following code:
 
 {% codeblock lang:cl %}
 (declaim (optimize debug))
