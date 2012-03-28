@@ -1,0 +1,343 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Elementary Graph Algorithms - Carpe dien</title>
+  <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
+
+  
+  <meta name="description" content="Elementary Graph Algorithms Mar 28th, 2012 Breadth-first search BFS(G,S) \begin{align}
+& \mbox{for each vertex } u \in G.V-\{s\}\\
+& \qquad u.color &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://dryman.github.com/graph-theories/elementary-graph-algorithms.html">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Carpe dien" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Carpe dien</a></h1>
+  
+    <h2>Work hard and enjoy every moment.</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:dryman.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article role="article">
+  
+  <header>
+    <h1 class="entry-title">Elementary Graph Algorithms</h1>
+    <p class="meta">
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-03-28T11:28:00+08:00" pubdate data-updated="true">Mar 28<span>th</span>, 2012</time></p>
+  </header>
+  
+  <h3 id="breadth-first-search">Breadth-first search</h3>
+
+<p><strong>BFS(G,S)</strong></p>
+
+<script type="math/tex; mode=display">
+\begin{align}
+& \mbox{for each vertex } u \in G.V-\{s\}\\
+& \qquad u.color = WHITE\\
+& \qquad u.d = \infty\\
+& \qquad u.\pi = NIL\\
+& s.color = GRAY\\
+& s.d = 0 \\
+& s.\pi = NIL\\
+& Q=\emptyset\\
+& ENQUEUE(Q,s)\\
+& \mbox{while } Q\neq \emptyset\\
+& \qquad u = DEQUEUE(Q)\\
+& \qquad \mbox{for each } v\in G.Adj[u] \\
+& \qquad\qquad \mbox{if } v.color == WHITE \\
+& \qquad\qquad\qquad v.color=GRAY \\
+& \qquad\qquad\qquad v.d=u.d+1\\
+& \qquad\qquad\qquad v.\pi = u \\
+& \qquad\qquad\qquad ENQUEUE(Q,v) \\
+& \qquad u.color = BLACK
+\end{align}
+</script>
+
+<p>Breadth-first-search can discover shortest paths in a graph.</p>
+
+<p><strong>Shortest path distance</strong>$\delta(s,v)$ from $s$ to $v$ is the minimum number of
+edges in any path from vertex $s$ to vertex $v$.</p>
+
+<h3 id="lemma">Lemma</h3>
+<p>Let $G=(V,E)$ be a directed or undirected graph, and let $s\in V$ be an arbitary
+vertex. Then, for any edge $(u,v) \in E$,</p>
+
+<script type="math/tex; mode=display">
+\delta(s,v)\leq\delta(s,u)+1
+</script>
+
+<p>Note that $u\rightarrow v$ or $u-v$. If $s$ can reach $u$, $s$ can reach $v$. If
+$\delta(s,u)=\infty$, the inequality holds.</p>
+
+<hr />
+
+<h3 id="depth-first-search">Depth-first search</h3>
+
+<p><strong>DFS(G)</strong></p>
+
+<script type="math/tex; mode=display">
+\begin {align}
+&\mbox{for each vertex } u\in G.V \\
+&\qquad u.color = WHITE \\
+&\qquad u.\pi = NIL \\
+&time = 0 \\
+&\mbox{for each vertex } u \in G.V \\
+&\qquad \mbox{if } u.color == WHITE \\
+&\qquad\qquad \mbox{DFS-VISIT}(G,u)\\
+&\end{align}
+</script>
+
+<p><strong>DFS-VISIT(G,u)</strong></p>
+
+<script type="math/tex; mode=display">
+\begin{align}
+& time = time + 1 \\
+& u.d = time \\
+& u.color = GRAY \\
+& \mbox{for each } v\in G.Adj[u] \\
+& \qquad\mbox{if } v.color == WHITE \\
+& \qquad\qquad v.\pi = u \\
+& \qquad\qquad \mbox{DFS-VISIT}(G,v) \\
+& u.color = BLACK \\
+& time = time + 1 \\
+& u.f = time \\
+\end{align}
+</script>
+
+<p><strong>Corollary Nesting of descendants’ intervals</strong>
+Vertex $v$ is a proper descendant of vertex $u$ in the depth-first forest for a
+(directed or undirected) graph $G$ if and only if $u.d &lt; v.d &lt; v.f &lt; u.f$.</p>
+
+<h3 id="classification-of-edges">Classification of edges</h3>
+
+<ol>
+  <li><strong>Tree edges</strong> are edges in the depth-first forest $G_\pi$, Edge $(u,v)$ is a
+tree edge if $v$ was first discovered by exploring edge $(u,v)$.</li>
+  <li><strong>Back edges</strong> are those edges $(u,v)$ connecting a vertex $u$ to an ancestor $v$
+in a depth-first tree. We consider self-loops, which may occur in directed
+graphs, to be back edges.</li>
+  <li><strong>Forward edges</strong> are those non-tree-edges $(u,v)$ connecting a vertex $u$ to
+a descendant $v$.</li>
+  <li><strong>Cross edges</strong> are all other edges.</li>
+</ol>
+
+<p><img src="/images/graph-theory/Tree_edges.svg" />
+<!-- wikipedia --></p>
+
+<hr />
+
+<h3 id="topological-sort">Topological sort</h3>
+
+<p>A <strong>topological sort</strong> of a dag $G=(V,E)$ is a linear ordering of all its
+vertices such that if $G$ contains an edge $(u,v)$, then $u$ appears before $v$
+in the ordering. <em>If the graph contains a cycle, then no linear ordering is
+possible.</em></p>
+
+<p><strong>TOPOLOGICAL-SORT</strong></p>
+
+<script type="math/tex; mode=display">
+\begin{align}
+& 1.\;\mbox{Call DFS(G) to compute finishing times $v.f$ for each vertex $v$.}\\
+& 2.\;\mbox{insert it onto the front of a linked list as each vertex is finished.}\\
+& 3.\;\mbox{return the linked list.}\\
+\end{align}
+</script>
+
+<p><img src="/images/graph-theory/topoSortProfBumstead.gif" /></p>
+
+<hr />
+
+<h2 id="strongly-connected-components">Strongly connected components</h2>
+
+<p>Vertices $u$ and $v$ are reachable from each other.</p>
+
+<p><strong>SRONGLY-CONNECTED-COMPONENTS</strong></p>
+
+<script type="math/tex; mode=display">
+\begin{align}
+& 1.\;\mbox{DFS(G) to compute finishing times $u.f$ for each vertex $u$} \\
+& 2.\;\mbox{compute }G^T \\
+& 3.\;\mbox{call DFS}(G^T)\mbox{, but in order of decreasing }u.f \\
+& 4.\;\mbox{output each tree in the forest} \\
+\end{align}
+</script>
+
+  
+    <footer>
+      <p class="meta">
+        
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-03-28T11:28:00+08:00" pubdate data-updated="true">Mar 28<span>th</span>, 2012</time>
+        
+      </p>
+      
+        <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://dryman.github.com/graph-theories/elementary-graph-algorithms.html" data-via="" data-counturl="http://dryman.github.com/graph-theories/elementary-graph-algorithms.html" >Tweet</a>
+  
+  
+  
+</div>
+
+      
+    </footer>
+  
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/03/26/lisp-debugging-tools/">Lisp Debugging Tools</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/24/lisp-development-on-mac/">Lisp development on Mac</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/14/the-nlp-day/">The NLP Day</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/13/handcraft-algorithm-environment-in-kramdown/">handcraft algorithm environment in kramdown</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/12/the-recursion-theorem/">The recursion theorem</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - dryman (Felix Ren-Chyan Chern) -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+<!-- mathjax config similar to math.stackexchange -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/HTML-CSS"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+</html>
+
