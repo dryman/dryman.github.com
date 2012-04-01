@@ -1,0 +1,492 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>persistent red black tree in lisp (1) - Carpe dien</title>
+  <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
+
+  
+  <meta name="description" content="I’m a newbie to Lisp programing language. Lisp is one of the most oldest
+programming language that is still being used today. People have a lot of &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://dryman.github.com/blog/2012/03/30/persistent-red-black-tree-in-lisp-1">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Carpe dien" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Carpe dien</a></h1>
+  
+    <h2>Work hard and enjoy every moment.</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:dryman.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Persistent Red Black Tree in Lisp (1)</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-03-30T13:57:00+08:00" pubdate data-updated="true">Mar 30<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>I’m a newbie to Lisp programing language. Lisp is one of the most oldest
+programming language that is still being used today. People have a lot of
+defences on programming languages, because there are too many choices to us
+today. Every language has their strength and weakness. It is not easy to make
+the choice.</p>
+
+<p>In my opinion, the best way to decide what languages I must learn is to
+see which kinds of people are loving it. 
+For example, Ruby community does great supports for business plans; Python is
+the best open sourced language for academia uses (scientific libraries, machine
+learning, computer vision, statistics, visualizations…etc.) Many old school
+hackers (including me) still love to use Perl; Java is widely used in big
+companies; VBA is friendly for dealing excel data…etc. And <strong>Lisp</strong>, are
+highly recommended by great hackers. </p>
+
+<hr />
+
+<p>If you are also interested in Lisp, I recommend <a href="http://www.gigamonkeys.com/book/">Practical Common
+Lisp</a> written by <a href="http://www.gigamonkeys.com/">Peter Seibel</a>, and <a href="http://paulgraham.com/onlisp.html">On Lisp</a> written
+by <a href="http://paulgraham.com/">Paul Graham</a>. Both of them are free, downloadable PDF files, and
+there are also online version and epub format.</p>
+
+<hr />
+
+<h3 id="basic-thoughts">Basic thoughts</h3>
+
+<p>Let’s begin with basic structures. At first, I design the structure similar to
+what you will write in C code.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">defstruct</span> <span class="nv">rb</span>
+</span><span class="line">  <span class="nv">left</span>
+</span><span class="line">  <span class="nv">right</span>
+</span><span class="line">  <span class="nv">red</span>
+</span><span class="line">  <span class="nv">data</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Here we can see the power of Lisp. It does not only create the structure, but
+also create constructor and accessors for the structure. Now you can create the
+<code>rb</code> and access it like so:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="k">setq</span> <span class="nv">node</span>
+</span><span class="line">  <span class="p">(</span><span class="nv">make-rb</span> <span class="ss">:left</span> <span class="no">nil</span> <span class="ss">:right</span> <span class="no">nil</span> <span class="ss">:red</span> <span class="no">T</span> <span class="ss">:data</span> <span class="mi">3</span><span class="p">))</span>
+</span><span class="line">
+</span><span class="line"><span class="nv">==&gt;</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:left</span> <span class="no">nil</span> <span class="ss">:right</span> <span class="no">nil</span> <span class="ss">:red</span> <span class="no">T</span> <span class="ss">:data</span> <span class="mi">3</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="p">(</span><span class="nv">rb-left</span> <span class="nv">node</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="nv">==&gt;</span> <span class="no">nil</span>
+</span><span class="line">
+</span><span class="line"><span class="p">(</span><span class="nv">rb-data</span> <span class="nv">node</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="nv">==&gt;</span> <span class="mi">3</span>
+</span><span class="line">
+</span><span class="line"><span class="p">(</span><span class="nb">setf</span> <span class="p">(</span><span class="nv">rb-right</span> <span class="nv">node</span><span class="p">)</span> <span class="p">(</span><span class="nv">make-rb</span> <span class="ss">:data</span> <span class="mi">5</span><span class="p">))</span> <span class="c1">; Other field are default as nil</span>
+</span><span class="line">
+</span><span class="line"><span class="nv">==&gt;</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:left</span> <span class="no">nil</span>
+</span><span class="line">          <span class="ss">:right</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:left</span> <span class="no">nil</span> <span class="ss">:right</span> <span class="no">nil</span> <span class="ss">:red</span> <span class="no">nil</span> <span class="ss">:data</span> <span class="mi">5</span><span class="p">)</span>
+</span><span class="line">          <span class="ss">:red</span> <span class="no">T</span> <span class="ss">:data</span> <span class="mi">3</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>This seems to be nice. But we can rewrite it in more lispy style:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">defstruct</span> <span class="nv">rb</span>
+</span><span class="line">  <span class="p">(</span><span class="nv">red</span> <span class="no">T</span><span class="p">)</span> <span class="c1">; default value for red</span>
+</span><span class="line">  <span class="nv">data</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="c1">;; A node can be represented as</span>
+</span><span class="line"><span class="c1">;; (nil #S(RB :red T :data 3) nil)</span>
+</span><span class="line"><span class="c1">;; To generate this:</span>
+</span><span class="line"><span class="p">(</span><span class="nb">list</span> <span class="no">nil</span> <span class="p">(</span><span class="nv">make-rb</span> <span class="ss">:data</span> <span class="mi">3</span><span class="p">)</span> <span class="no">nil</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="nv">==&gt;</span> <span class="p">(</span><span class="no">nil</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:red</span> <span class="no">T</span> <span class="ss">:data</span> <span class="mi">3</span><span class="p">)</span> <span class="no">nil</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="c1">;; You can also use lisp syntax candy</span>
+</span><span class="line"><span class="o">`</span><span class="p">(</span><span class="nb">list</span> <span class="no">nil</span> <span class="o">,</span><span class="p">(</span><span class="nv">make-rb</span> <span class="ss">:data</span> <span class="mi">3</span><span class="p">)</span> <span class="no">nil</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="nv">==&gt;</span> <span class="p">(</span><span class="no">nil</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:red</span> <span class="no">T</span> <span class="ss">:data</span> <span class="mi">3</span><span class="p">)</span> <span class="no">nil</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The s-expression with a preceding <code>`</code> means that it is a expression that
+lisp don’t evaluate, except expression inside it with a preceding <code>,</code>. It is
+convenient for us to generate new list object.</p>
+
+<p>To access the elements in a list:</p>
+
+<ol>
+  <li><code>car</code> the first</li>
+  <li><code>cadr</code> the second</li>
+  <li><code>caddr</code> the third</li>
+</ol>
+
+<p>And now we can wirte a persistant basic binary insert function!</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">binary-insert-r</span> <span class="p">(</span><span class="nv">root</span> <span class="nv">data</span><span class="p">)</span>
+</span><span class="line">  <span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nb">null</span> <span class="nv">root</span><span class="p">)</span>                            <span class="c1">; cond works like &quot;switch&quot;</span>
+</span><span class="line">          <span class="o">`</span><span class="p">(</span><span class="no">nil</span> <span class="o">,</span><span class="p">(</span><span class="nv">make-rb</span> <span class="ss">:data</span> <span class="nv">data</span><span class="p">)</span> <span class="no">nil</span><span class="p">))</span>     <span class="c1">; make node when reach leaf</span>
+</span><span class="line">        <span class="p">((</span><span class="nb">=</span> <span class="nv">data</span> <span class="p">(</span><span class="nv">rb-data</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">)))</span> <span class="nv">root</span><span class="p">)</span>   <span class="c1">; return self if data is the same</span>
+</span><span class="line">        <span class="p">((</span><span class="nb">&gt;</span> <span class="nv">data</span> <span class="p">(</span><span class="nv">rb-data</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">)))</span>
+</span><span class="line">         <span class="p">(</span><span class="nb">list</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">root</span><span class="p">)</span>
+</span><span class="line">               <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">)</span>
+</span><span class="line">               <span class="p">(</span><span class="nv">binary-insert-r</span> <span class="p">(</span><span class="nb">caddr</span> <span class="nv">root</span><span class="p">)</span> <span class="nv">data</span><span class="p">)))</span> <span class="c1">; case insert to right</span>
+</span><span class="line">        <span class="p">(</span><span class="no">T</span>
+</span><span class="line">         <span class="p">(</span><span class="nb">list</span> <span class="p">(</span><span class="nv">binary-insert-r</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">root</span><span class="p">)</span> <span class="nv">data</span><span class="p">)</span>
+</span><span class="line">               <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">)</span>
+</span><span class="line">               <span class="p">(</span><span class="nb">caddr</span> <span class="nv">root</span><span class="p">)))))</span>                      <span class="c1">; case insert to left</span>
+</span><span class="line">
+</span><span class="line"><span class="p">(</span><span class="nb">defparameter</span> <span class="vg">*tree*</span> <span class="no">nil</span><span class="p">)</span>                     <span class="c1">; global variable *tree*</span>
+</span><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">binary-insert</span> <span class="p">(</span><span class="nv">data</span><span class="p">)</span>
+</span><span class="line">  <span class="p">(</span><span class="nb">setf</span> <span class="vg">*tree*</span> <span class="p">(</span><span class="nv">binary-insert-r</span> <span class="vg">*tree*</span> <span class="nv">data</span><span class="p">))</span> <span class="c1">; set *tree* as the returned tree</span>
+</span><span class="line">  <span class="vg">*tree*</span><span class="p">)</span>                                     <span class="c1">; return *tree* value</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Let’s exam the function:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="nv">BINARY-INSERT-R</span>
+</span><span class="line"><span class="nv">CL-USER&gt;</span> <span class="p">(</span><span class="nv">binary-insert</span> <span class="mi">6</span><span class="p">)</span>
+</span><span class="line"><span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">6</span><span class="p">)</span> <span class="no">NIL</span><span class="p">)</span>
+</span><span class="line"><span class="nv">CL-USER&gt;</span> <span class="p">(</span><span class="nv">binary-insert</span> <span class="mi">7</span><span class="p">)</span>
+</span><span class="line"><span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">6</span><span class="p">)</span> <span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">7</span><span class="p">)</span> <span class="no">NIL</span><span class="p">))</span>
+</span><span class="line"><span class="nv">CL-USER&gt;</span> <span class="p">(</span><span class="nv">binary-insert</span> <span class="mi">5</span><span class="p">)</span>
+</span><span class="line"><span class="p">((</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">5</span><span class="p">)</span> <span class="no">NIL</span><span class="p">)</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">6</span><span class="p">)</span>
+</span><span class="line"> <span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">7</span><span class="p">)</span> <span class="no">NIL</span><span class="p">))</span>
+</span><span class="line"><span class="nv">CL-USER&gt;</span> <span class="p">(</span><span class="nv">binary-insert</span> <span class="mi">8</span><span class="p">)</span>
+</span><span class="line"><span class="p">((</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">5</span><span class="p">)</span> <span class="no">NIL</span><span class="p">)</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">6</span><span class="p">)</span>
+</span><span class="line">  <span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">7</span><span class="p">)</span> <span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">8</span><span class="p">)</span> <span class="no">NIL</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h3 id="wait-hold-on">Wait! Hold on!</h3>
+
+<p>The code is god damn ugly! We can fix it with some utilities:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">kid</span> <span class="p">(</span><span class="nv">root</span> <span class="k">&amp;rest</span> <span class="nv">dirs</span><span class="p">)</span>
+</span><span class="line">  <span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nb">consp</span> <span class="nv">dirs</span><span class="p">)</span>
+</span><span class="line">         <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">dirs</span><span class="p">)</span>
+</span><span class="line">             <span class="p">(</span><span class="nb">apply</span> <span class="nf">#&#39;</span><span class="nv">kid</span> <span class="p">(</span><span class="nb">caddr</span> <span class="nv">root</span><span class="p">)</span> <span class="p">(</span><span class="nb">cdr</span> <span class="nv">dirs</span><span class="p">))</span>
+</span><span class="line">             <span class="p">(</span><span class="nb">apply</span> <span class="nf">#&#39;</span><span class="nv">kid</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">root</span><span class="p">)</span> <span class="p">(</span><span class="nb">cdr</span> <span class="nv">dirs</span><span class="p">))))</span>
+</span><span class="line">        <span class="p">(</span><span class="no">T</span> <span class="nv">root</span><span class="p">)))</span>
+</span><span class="line">
+</span><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">node-data</span> <span class="p">(</span><span class="nv">root</span><span class="p">)</span>
+</span><span class="line">  <span class="p">(</span><span class="nv">rb-data</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The <code>kid</code> takes a node and a series of <code>T</code> and <code>nil</code>; When it saw a <code>T</code>, it
+returns the right node, or it will return the left one. For example:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="nv">CL-USER&gt;</span> <span class="p">(</span><span class="nv">kid</span> <span class="vg">*tree*</span> <span class="no">nil</span><span class="p">)</span>            <span class="c1">; left node</span>
+</span><span class="line"><span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">5</span><span class="p">)</span> <span class="no">NIL</span><span class="p">)</span>
+</span><span class="line"><span class="nv">CL-USER&gt;</span> <span class="p">(</span><span class="nv">kid</span> <span class="vg">*tree*</span> <span class="no">T</span><span class="p">)</span>              <span class="c1">; right node</span>
+</span><span class="line"><span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">7</span><span class="p">)</span> <span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">8</span><span class="p">)</span> <span class="no">NIL</span><span class="p">))</span>
+</span><span class="line"><span class="nv">CL-USER&gt;</span> <span class="p">(</span><span class="nv">kid</span> <span class="vg">*tree*</span> <span class="no">T</span> <span class="no">T</span><span class="p">)</span>            <span class="c1">; right right node</span>
+</span><span class="line"><span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">8</span><span class="p">)</span> <span class="no">NIL</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Using <code>nil</code> and <code>T</code> as left and right dirctions, it is easier for us to rewrite
+<code>binary-insert-r</code> because we can change left and right cases into variables.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">binary-insert-r</span> <span class="p">(</span><span class="nv">root</span> <span class="nv">data</span><span class="p">)</span>
+</span><span class="line">  <span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nb">null</span> <span class="nv">root</span><span class="p">)</span> <span class="o">`</span><span class="p">(</span><span class="no">nil</span> <span class="o">,</span><span class="p">(</span><span class="nv">make-rb</span> <span class="ss">:data</span> <span class="nv">data</span><span class="p">)</span> <span class="no">nil</span><span class="p">))</span>
+</span><span class="line">        <span class="p">((</span><span class="nb">=</span> <span class="nv">data</span> <span class="p">(</span><span class="nv">node-data</span> <span class="nv">root</span><span class="p">))</span> <span class="nv">root</span><span class="p">)</span>
+</span><span class="line">        <span class="p">(</span><span class="no">T</span> <span class="p">(</span><span class="k">let*</span> <span class="p">((</span><span class="nv">dir</span> <span class="p">(</span><span class="nb">&gt;</span> <span class="nv">data</span> <span class="p">(</span><span class="nv">node-data</span> <span class="nv">root</span><span class="p">)))</span>
+</span><span class="line">                  <span class="p">(</span><span class="nv">a</span> <span class="p">(</span><span class="nv">kid</span> <span class="nv">root</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">)))</span>
+</span><span class="line">                  <span class="p">(</span><span class="nv">b</span> <span class="p">(</span><span class="nv">binary-insert-r</span> <span class="p">(</span><span class="nv">kid</span> <span class="nv">root</span> <span class="nv">dir</span><span class="p">)</span> <span class="nv">data</span><span class="p">)))</span>
+</span><span class="line">             <span class="p">(</span><span class="k">if</span> <span class="nv">dir</span>
+</span><span class="line">                 <span class="p">(</span><span class="nb">list</span> <span class="nv">a</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">)</span> <span class="nv">b</span><span class="p">)</span>
+</span><span class="line">                 <span class="p">(</span><span class="nb">list</span> <span class="nv">b</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">)</span> <span class="nv">a</span><span class="p">))))))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-03-30T13:57:00+08:00" pubdate data-updated="true">Mar 30<span>th</span>, 2012</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/algorithm/'>Algorithm</a>, <a class='category' href='/blog/categories/lisp-/'>Lisp,</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://dryman.github.com/blog/2012/03/30/persistent-red-black-tree-in-lisp-1/" data-via="" data-counturl="http://dryman.github.com/blog/2012/03/30/persistent-red-black-tree-in-lisp-1/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2012/03/26/lisp-debugging-tools/" title="Previous Post: Lisp Debugging Tools">&laquo; Lisp Debugging Tools</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2012/03/31/persistent-red-black-tree-in-lisp-2/" title="Next Post: persistent red black tree in lisp (2)">persistent red black tree in lisp (2) &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/03/31/persistent-red-black-tree-in-lisp-3/">persistent red black tree in lisp (3)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/31/persistent-red-black-tree-in-lisp-2/">persistent red black tree in lisp (2)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/30/persistent-red-black-tree-in-lisp-1/">persistent red black tree in lisp (1)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/26/lisp-debugging-tools/">Lisp Debugging Tools</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/24/lisp-development-on-mac/">Lisp development on Mac</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - dryman (Felix Ren-Chyan Chern) -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+<!-- mathjax config similar to math.stackexchange -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/HTML-CSS"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+</html>
+

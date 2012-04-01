@@ -1,0 +1,865 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Lisp, | Carpe dien]]></title>
+  <link href="http://dryman.github.com/blog/categories/lisp-/atom.xml" rel="self"/>
+  <link href="http://dryman.github.com/"/>
+  <updated>2012-04-01T10:38:37+08:00</updated>
+  <id>http://dryman.github.com/</id>
+  <author>
+    <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[persistent red black tree in lisp (3)]]></title>
+    <link href="http://dryman.github.com/blog/2012/03/31/persistent-red-black-tree-in-lisp-3/"/>
+    <updated>2012-03-31T16:33:00+08:00</updated>
+    <id>http://dryman.github.com/blog/2012/03/31/persistent-red-black-tree-in-lisp-3</id>
+    <content type="html"><![CDATA[<h2 id="red-black-tree-algorithms">Red black tree algorithms</h2>
+
+<p>There are two good articles that have good explanation on red-black tree
+algorithms. For your references:</p>
+
+<ol>
+  <li><a href="http://eternallyconfuzzled.com/tuts/datastructures/jsw_tut_rbtree.aspx">Julienne Walker’s red black tree tutorial</a></li>
+  <li><a href="http://www.mew.org/~kazu/proj/red-black-tree/">Kazu Yamamoto’s purely functional left-leaning red black trees</a></li>
+</ol>
+
+<p>Julienne wrote a beautiful review article that show us not only the algorithm of
+red black tree, but <em>how it is designed like so</em>. He also implemented an elegant
+C program that can balance the tree in bottom-up or top-down ways. My previous
+function <code>(kid root dir dir)</code> was inspired from his implementation.</p>
+
+<p>Kazu reorganized several red black tree insertion algorithms, including Chris
+Okasaki’s purely functional way. He also introduced a left-leaning insertion
+algorithm that reduces one pattern matching compare to Okasaki’s one. The
+programs are elegantly written in Haskell.</p>
+
+<h3 id="orinal-red-black-tree-algorithm">Orinal red black tree algorithm</h3>
+
+<p>In 1979, Guibas and Sedgewick published the original imperative red black trees:</p>
+
+<pre><code>Leo J. Guibas and Robert Sedgewick.
+"A dichromatic framework for balanced trees",
+In Proceedings of the 19th Annual Symposium on Computer Science,
+pp8-21,
+IEEE Computer Society,
+1978
+</code></pre>
+
+<p>The original one has eight <em>unbalanced</em> cases to deal with, while two are
+reduced in “Introduction to Algorithms”. The algorithm was derived from
+symmetric binary B-tree (2-3-4 tree) which was suggested by Rudof Bayer. All
+paths from the root to a leaf in a SBB-tree contains the same number of nodes,
+thus make it a perfectly balanced tree. However, it is not a binary search tree.
+So Rober Sedgewick and Leonidas Guibas came up with a mnemonic abstraction that
+can use red-nodes and black-nodes of a binary tree to simulate SBB-Tree. This is
+how the algorithm is formed. To know the details, see 
+<a href="http://eternallyconfuzzled.com/tuts/datastructures/jsw_tut_rbtree.aspx">Julienne’s guide</a>.</p>
+
+<p>Julienne modified the original bottom up algorithm to a no parent pointers
+style:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>Julienne’s red black tree insert implementation  </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">struct</span> <span class="n">jsw_node</span> <span class="o">*</span><span class="nf">jsw_single</span> <span class="p">(</span> <span class="k">struct</span> <span class="n">jsw_node</span> <span class="o">*</span><span class="n">root</span><span class="p">,</span> <span class="kt">int</span> <span class="n">dir</span> <span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">struct</span> <span class="n">jsw_node</span> <span class="o">*</span><span class="n">save</span> <span class="o">=</span> <span class="n">root</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">link</span><span class="p">[</span><span class="o">!</span><span class="n">dir</span><span class="p">];</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="n">root</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">link</span><span class="p">[</span><span class="o">!</span><span class="n">dir</span><span class="p">]</span> <span class="o">=</span> <span class="n">save</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">link</span><span class="p">[</span><span class="n">dir</span><span class="p">];</span>
+</span><span class='line'>  <span class="n">save</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">link</span><span class="p">[</span><span class="n">dir</span><span class="p">]</span> <span class="o">=</span> <span class="n">root</span><span class="p">;</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="n">root</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">red</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>  <span class="c1">// Note that there’s color changing here!</span>
+</span><span class='line'>  <span class="n">save</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">red</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="k">return</span> <span class="n">save</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="k">struct</span> <span class="n">jsw_node</span> <span class="o">*</span><span class="n">jsw_double</span> <span class="p">(</span> <span class="k">struct</span> <span class="n">jsw_node</span> <span class="o">*</span><span class="n">root</span><span class="p">,</span> <span class="kt">int</span> <span class="n">dir</span> <span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="n">root</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">link</span><span class="p">[</span><span class="o">!</span><span class="n">dir</span><span class="p">]</span> <span class="o">=</span> <span class="n">jsw_single</span> <span class="p">(</span> <span class="n">root</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">link</span><span class="p">[</span><span class="o">!</span><span class="n">dir</span><span class="p">],</span> <span class="o">!</span><span class="n">dir</span> <span class="p">);</span>
+</span><span class='line'>  <span class="k">return</span> <span class="n">jsw_single</span> <span class="p">(</span> <span class="n">root</span><span class="p">,</span> <span class="n">dir</span> <span class="p">);</span>
+</span><span class='line'><span class="p">}</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="k">struct</span> <span class="n">jsw_node</span> <span class="o">*</span><span class="n">jsw_insert_r</span> <span class="p">(</span> <span class="k">struct</span> <span class="n">jsw_node</span> <span class="o">*</span><span class="n">root</span><span class="p">,</span> <span class="kt">int</span> <span class="n">data</span> <span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="k">if</span> <span class="p">(</span> <span class="n">root</span> <span class="o">==</span> <span class="nb">NULL</span> <span class="p">)</span>
+</span><span class='line'>    <span class="n">root</span> <span class="o">=</span> <span class="n">make_node</span> <span class="p">(</span> <span class="n">data</span> <span class="p">);</span>
+</span><span class='line'>  <span class="k">else</span> <span class="k">if</span> <span class="p">(</span> <span class="n">data</span> <span class="o">!=</span> <span class="n">root</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">data</span> <span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kt">int</span> <span class="n">dir</span> <span class="o">=</span> <span class="n">root</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">data</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">data</span><span class="p">;</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">root</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">link</span><span class="p">[</span><span class="n">dir</span><span class="p">]</span> <span class="o">=</span> <span class="n">jsw_insert_r</span> <span class="p">(</span> <span class="n">root</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">link</span><span class="p">[</span><span class="n">dir</span><span class="p">],</span> <span class="n">data</span> <span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">if</span> <span class="p">(</span> <span class="n">is_red</span> <span class="p">(</span> <span class="n">root</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">link</span><span class="p">[</span><span class="n">dir</span><span class="p">]</span> <span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">if</span> <span class="p">(</span> <span class="n">is_red</span> <span class="p">(</span> <span class="n">root</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">link</span><span class="p">[</span><span class="o">!</span><span class="n">dir</span><span class="p">]</span> <span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="cm">/* Case 1 Color flip */</span>
+</span><span class='line'>    <span class="n">root</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">red</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">root</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">link</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">red</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">root</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">link</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">red</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>  <span class="k">else</span> <span class="p">{</span>
+</span><span class='line'>    <span class="cm">/* Cases 2 &amp;amp; 3 */</span>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span> <span class="n">is_red</span> <span class="p">(</span> <span class="n">root</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">link</span><span class="p">[</span><span class="n">dir</span><span class="p">]</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">link</span><span class="p">[</span><span class="n">dir</span><span class="p">]</span> <span class="p">)</span> <span class="p">)</span>
+</span><span class='line'>      <span class="n">root</span> <span class="o">=</span> <span class="n">jsw_single</span> <span class="p">(</span> <span class="n">root</span><span class="p">,</span> <span class="o">!</span><span class="n">dir</span> <span class="p">);</span>
+</span><span class='line'>    <span class="k">else</span> <span class="k">if</span> <span class="p">(</span> <span class="n">is_red</span> <span class="p">(</span> <span class="n">root</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">link</span><span class="p">[</span><span class="n">dir</span><span class="p">]</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">link</span><span class="p">[</span><span class="o">!</span><span class="n">dir</span><span class="p">]</span> <span class="p">)</span> <span class="p">)</span>
+</span><span class='line'>      <span class="n">root</span> <span class="o">=</span> <span class="n">jsw_double</span> <span class="p">(</span> <span class="n">root</span><span class="p">,</span> <span class="o">!</span><span class="n">dir</span> <span class="p">);</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>   <span class="p">}</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="k">return</span> <span class="n">root</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="kt">int</span> <span class="n">jsw_insert</span> <span class="p">(</span> <span class="k">struct</span> <span class="n">jsw_tree</span> <span class="o">*</span><span class="n">tree</span><span class="p">,</span> <span class="kt">int</span> <span class="n">data</span> <span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>  <span class="n">tree</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">root</span> <span class="o">=</span> <span class="n">jsw_insert_r</span> <span class="p">(</span> <span class="n">tree</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">root</span><span class="p">,</span> <span class="n">data</span> <span class="p">);</span>
+</span><span class='line'>  <span class="n">tree</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">root</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">red</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<h3 id="implementation-in-lisp">Implementation in Lisp</h3>
+
+<p>Julienne’s bottom-up algorithm can be easily to be re-written in purely
+functional style. The ugly part is the color flipping and assign new branches to
+nodes.</p>
+
+<p>Though we can do the color flipping as</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='cl'><span class='line'><span class="p">(</span><span class="nb">setf</span> <span class="p">(</span><span class="nv">rb-red</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">))</span> <span class="no">nil</span>
+</span><span class='line'>      <span class="p">(</span><span class="nv">rb-red</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">a</span><span class="p">))</span> <span class="no">T</span>
+</span><span class='line'>      <span class="p">(</span><span class="nv">rb-red</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">b</span><span class="p">))</span> <span class="no">T</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>but the tree would be non-persistent. So we need to create new node with new
+property of red or black.</p>
+
+<p>I also separate the cases into two function <code>color-flip</code> and
+<code>rb-insert-case-rest</code>. Thus the code would be easier to debug and profile.</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+</pre></td><td class='code'><pre><code class='cl'><span class='line'><span class="p">(</span><span class="nb">defun</span> <span class="nv">rotate-s</span> <span class="p">(</span><span class="nv">node</span> <span class="nv">dir</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nv">mtree-let</span> <span class="nv">dir</span> <span class="nv">node</span> <span class="p">((</span><span class="nv">a</span> <span class="nv">y</span> <span class="nv">b</span><span class="p">)</span> <span class="nv">x</span> <span class="nv">c</span><span class="p">)</span>
+</span><span class='line'>            <span class="p">((</span><span class="nv">x-r</span> <span class="p">(</span><span class="nv">to-r</span> <span class="nv">x</span><span class="p">))</span> <span class="p">(</span><span class="nv">y-b</span> <span class="p">(</span><span class="nv">to-b</span> <span class="nv">y</span><span class="p">)))</span>
+</span><span class='line'>            <span class="p">(</span><span class="nv">mtree-expand</span> <span class="nv">dir</span> <span class="p">(</span><span class="nv">a</span> <span class="nv">y-b</span> <span class="p">(</span><span class="nv">b</span> <span class="nv">x-r</span> <span class="nv">c</span><span class="p">)))))</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span><span class="p">(</span><span class="nb">defun</span> <span class="nv">rotate-d</span> <span class="p">(</span><span class="nv">node</span> <span class="nv">dir</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nv">mtree-let</span> <span class="nv">dir</span> <span class="nv">node</span> <span class="p">(</span><span class="nv">a</span> <span class="nv">x</span> <span class="nv">b</span><span class="p">)</span>
+</span><span class='line'>            <span class="p">((</span><span class="nv">a-new</span> <span class="p">(</span><span class="nv">rotate-s</span> <span class="nv">a</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">))))</span>
+</span><span class='line'>            <span class="p">(</span><span class="nv">rotate-s</span> <span class="p">(</span><span class="nv">mtree-expand</span> <span class="nv">dir</span> <span class="p">(</span><span class="nv">a-new</span> <span class="nv">x</span> <span class="nv">b</span><span class="p">))</span> <span class="nv">dir</span><span class="p">)))</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span><span class="c1">;; Color flipping utilities </span>
+</span><span class='line'><span class="p">(</span><span class="nb">defun</span> <span class="nv">to-r</span> <span class="p">(</span><span class="nv">x</span><span class="p">)</span> <span class="p">(</span><span class="nv">make-rb</span> <span class="ss">:data</span> <span class="p">(</span><span class="nv">rb-data</span> <span class="nv">x</span><span class="p">)</span> <span class="ss">:red</span> <span class="no">T</span><span class="p">))</span>
+</span><span class='line'><span class="p">(</span><span class="nb">defun</span> <span class="nv">to-b</span> <span class="p">(</span><span class="nv">x</span><span class="p">)</span> <span class="p">(</span><span class="nv">make-rb</span> <span class="ss">:data</span> <span class="p">(</span><span class="nv">rb-data</span> <span class="nv">x</span><span class="p">)</span> <span class="ss">:red</span> <span class="no">nil</span><span class="p">))</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span><span class="p">(</span><span class="nb">defun</span> <span class="nv">color-flip</span> <span class="p">(</span><span class="nv">root</span> <span class="nv">dir</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nv">mtree-let</span> <span class="nv">dir</span> <span class="nv">root</span> <span class="p">((</span><span class="nv">a</span> <span class="nv">y</span> <span class="nv">b</span><span class="p">)</span> <span class="nv">x</span> <span class="p">(</span><span class="nv">c</span> <span class="nv">z</span> <span class="nv">d</span><span class="p">))</span>
+</span><span class='line'>             <span class="p">((</span><span class="nv">x-r</span> <span class="p">(</span><span class="nv">to-r</span> <span class="nv">x</span><span class="p">))</span>
+</span><span class='line'>              <span class="p">(</span><span class="nv">y-b</span> <span class="p">(</span><span class="nv">to-b</span> <span class="nv">y</span><span class="p">))</span>
+</span><span class='line'>              <span class="p">(</span><span class="nv">z-b</span> <span class="p">(</span><span class="nv">to-b</span> <span class="nv">z</span><span class="p">)))</span>
+</span><span class='line'>             <span class="p">(</span><span class="nv">mtree-expand</span> <span class="nv">dir</span> <span class="p">((</span><span class="nv">a</span> <span class="nv">y-b</span> <span class="nv">b</span><span class="p">)</span> <span class="nv">x-r</span> <span class="p">(</span><span class="nv">c</span> <span class="nv">z-b</span> <span class="nv">d</span><span class="p">)))))</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span><span class="p">(</span><span class="nb">defun</span> <span class="nv">rb-insert-case-rest</span> <span class="p">(</span><span class="nv">root</span> <span class="nv">dir</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nv">is-red</span> <span class="p">(</span><span class="nv">kid</span> <span class="nv">root</span> <span class="nv">dir</span> <span class="nv">dir</span><span class="p">))</span> <span class="p">(</span><span class="nv">rotate-s</span> <span class="nv">root</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">)))</span>
+</span><span class='line'>        <span class="p">((</span><span class="nv">is-red</span> <span class="p">(</span><span class="nv">kid</span> <span class="nv">root</span> <span class="nv">dir</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">)))</span> <span class="p">(</span><span class="nv">rotate-d</span> <span class="nv">root</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">)))</span>
+</span><span class='line'>        <span class="p">(</span><span class="no">T</span> <span class="nv">root</span><span class="p">)))</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span><span class="p">(</span><span class="nb">defun</span> <span class="nv">rb-insert-r</span> <span class="p">(</span><span class="nv">root</span> <span class="nv">data</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">declare</span> <span class="p">(</span><span class="k">type</span> <span class="kt">fixnum</span> <span class="nv">data</span><span class="p">))</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nb">null</span> <span class="nv">root</span><span class="p">)</span> <span class="o">`</span><span class="p">(</span><span class="no">nil</span> <span class="o">,</span><span class="p">(</span><span class="nv">make-rb</span> <span class="ss">:data</span> <span class="nv">data</span><span class="p">)</span> <span class="no">nil</span><span class="p">))</span>
+</span><span class='line'>        <span class="p">((</span><span class="nb">=</span> <span class="nv">data</span> <span class="p">(</span><span class="nv">node-data</span> <span class="nv">root</span><span class="p">))</span> <span class="nv">root</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">(</span><span class="no">T</span> <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">dir</span> <span class="p">(</span><span class="nv">&amp;gt</span><span class="c1">; data (node-data root))))</span>
+</span><span class='line'>             <span class="p">(</span><span class="nv">mtree-let</span> <span class="nv">dir</span> <span class="nv">root</span> <span class="p">(</span><span class="nv">a</span> <span class="nv">x</span> <span class="nv">b</span><span class="p">)</span>
+</span><span class='line'>               <span class="p">((</span><span class="nv">b</span> <span class="p">(</span><span class="nv">rb-insert-r</span> <span class="nv">b</span> <span class="nv">data</span><span class="p">))</span>
+</span><span class='line'>                <span class="p">(</span><span class="nv">root</span> <span class="p">(</span><span class="nv">mtree-expand</span> <span class="nv">dir</span> <span class="p">(</span><span class="nv">a</span> <span class="nv">x</span> <span class="nv">b</span><span class="p">))))</span>
+</span><span class='line'>               <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nv">is-red</span> <span class="nv">b</span><span class="p">)</span>
+</span><span class='line'>                 <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nv">is-red</span> <span class="nv">a</span><span class="p">)</span>
+</span><span class='line'>                   <span class="p">(</span><span class="nv">color-flip</span> <span class="nv">root</span> <span class="nv">dir</span><span class="p">)</span>            <span class="c1">; case 1</span>
+</span><span class='line'>                   <span class="p">(</span><span class="nv">rb-insert-case-rest</span> <span class="nv">root</span> <span class="nv">dir</span><span class="p">))</span>  <span class="c1">; case 2 and 3</span>
+</span><span class='line'>                 <span class="nv">root</span><span class="p">))))))</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span><span class="p">(</span><span class="nb">defparameter</span> <span class="nv">&lt;em&gt;tree&lt;/em&gt;</span> <span class="no">nil</span><span class="p">)</span>
+</span><span class='line'><span class="p">(</span><span class="nb">defun</span> <span class="nv">rb-insert</span> <span class="p">(</span><span class="nv">data</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">declare</span> <span class="p">(</span><span class="k">type</span> <span class="kt">fixnum</span> <span class="nv">data</span><span class="p">))</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">let*</span> <span class="p">((</span><span class="nv">ret</span> <span class="p">(</span><span class="nv">rb-insert-r</span> <span class="nv">&lt;em&gt;tree&lt;/em&gt;</span> <span class="nv">data</span><span class="p">))</span>
+</span><span class='line'>         <span class="p">(</span><span class="nv">a</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">ret</span><span class="p">))</span>            <span class="c1">;; Set the root node to be black</span>
+</span><span class='line'>         <span class="p">(</span><span class="nv">x-b</span> <span class="p">(</span><span class="nv">to-b</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">ret</span><span class="p">)))</span>
+</span><span class='line'>         <span class="p">(</span><span class="nv">b</span> <span class="p">(</span><span class="nb">caddr</span> <span class="nv">ret</span><span class="p">)))</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">setf</span> <span class="nv">&lt;em&gt;tree&lt;/em&gt;</span> <span class="p">(</span><span class="nb">list</span> <span class="nv">a</span> <span class="nv">x-b</span> <span class="nv">b</span><span class="p">))</span>
+</span><span class='line'>    <span class="nv">&lt;em&gt;tree&lt;/em&gt;</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>When the cases in function are separated, it is easy to tell how the program is being called:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='cl'><span class='line'><span class="nv">CL-USER&amp;gt</span><span class="c1">; (trace rb-insert-r rb-insert-case-rest color-flip rotate-s rotate-d)&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;CL-USER&amp;gt</span><span class="c1">; (rb-insert 3)</span>
+</span><span class='line'>  <span class="nv">0:</span> <span class="p">(</span><span class="nv">RB-INSERT-R</span> <span class="p">((</span><span class="no">NIL</span> <span class="nv">5-b</span> <span class="no">NIL</span><span class="p">)</span> <span class="nv">6-b</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">7-b</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">8-r</span> <span class="no">NIL</span><span class="p">)))</span> <span class="mi">3</span><span class="p">)</span>
+</span><span class='line'>    <span class="nv">1:</span> <span class="p">(</span><span class="nv">RB-INSERT-CASE-REST</span> <span class="p">((</span><span class="no">NIL</span> <span class="nv">3-r</span> <span class="no">NIL</span><span class="p">)</span> <span class="nv">5-b</span> <span class="no">NIL</span><span class="p">)</span> <span class="no">NIL</span><span class="p">)</span>
+</span><span class='line'>    <span class="nv">1:</span> <span class="nv">RB-INSERT-CASE-REST</span> <span class="nv">returned</span> <span class="p">((</span><span class="no">NIL</span> <span class="nv">3-r</span> <span class="no">NIL</span><span class="p">)</span> <span class="nv">5-b</span> <span class="no">NIL</span><span class="p">)</span>
+</span><span class='line'>  <span class="nv">0:</span> <span class="nv">RB-INSERT-R</span> <span class="nv">returned</span> <span class="p">(((</span><span class="no">NIL</span> <span class="nv">3-r</span> <span class="no">NIL</span><span class="p">)</span> <span class="nv">5-b</span> <span class="no">NIL</span><span class="p">)</span> <span class="nv">6-b</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">7-b</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">8-r</span> <span class="no">NIL</span><span class="p">)))</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;CL-USER&amp;gt</span><span class="c1">; (rb-insert 100)</span>
+</span><span class='line'>  <span class="nv">0:</span> <span class="p">(</span><span class="nv">RB-INSERT-R</span> <span class="p">(((</span><span class="no">NIL</span> <span class="nv">3-r</span> <span class="no">NIL</span><span class="p">)</span> <span class="nv">5-b</span> <span class="no">NIL</span><span class="p">)</span> <span class="nv">6-b</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">7-b</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">8-r</span> <span class="no">NIL</span><span class="p">)))</span> <span class="mi">100</span><span class="p">)</span>
+</span><span class='line'>    <span class="nv">1:</span> <span class="p">(</span><span class="nv">RB-INSERT-CASE-REST</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">8-r</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">100-r</span> <span class="no">NIL</span><span class="p">))</span> <span class="no">T</span><span class="p">)</span>
+</span><span class='line'>    <span class="nv">1:</span> <span class="nv">RB-INSERT-CASE-REST</span> <span class="nv">returned</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">8-r</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">100-r</span> <span class="no">NIL</span><span class="p">))</span>
+</span><span class='line'>    <span class="nv">1:</span> <span class="p">(</span><span class="nv">RB-INSERT-CASE-REST</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">7-b</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">8-r</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">100-r</span> <span class="no">NIL</span><span class="p">)))</span> <span class="no">T</span><span class="p">)</span>
+</span><span class='line'>      <span class="nv">2:</span> <span class="p">(</span><span class="nv">ROTATE-S</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">7-b</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">8-r</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">100-r</span> <span class="no">NIL</span><span class="p">)))</span> <span class="no">NIL</span><span class="p">)</span>
+</span><span class='line'>      <span class="nv">2:</span> <span class="nv">ROTATE-S</span> <span class="nv">returned</span> <span class="p">((</span><span class="no">NIL</span> <span class="nv">7-r</span> <span class="no">NIL</span><span class="p">)</span> <span class="nv">8-b</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">100-r</span> <span class="no">NIL</span><span class="p">))</span>
+</span><span class='line'>    <span class="nv">1:</span> <span class="nv">RB-INSERT-CASE-REST</span> <span class="nv">returned</span> <span class="p">((</span><span class="no">NIL</span> <span class="nv">7-r</span> <span class="no">NIL</span><span class="p">)</span> <span class="nv">8-b</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">100-r</span> <span class="no">NIL</span><span class="p">))</span>
+</span><span class='line'>  <span class="nv">0:</span> <span class="nv">RB-INSERT-R</span> <span class="nv">returned</span>
+</span><span class='line'>       <span class="p">(((</span><span class="no">NIL</span> <span class="nv">3-r</span> <span class="no">NIL</span><span class="p">)</span> <span class="nv">5-b</span> <span class="no">NIL</span><span class="p">)</span> <span class="nv">6-b</span> <span class="p">((</span><span class="no">NIL</span> <span class="nv">7-r</span> <span class="no">NIL</span><span class="p">)</span> <span class="nv">8-b</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">100-r</span> <span class="no">NIL</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[persistent red black tree in lisp (2)]]></title>
+    <link href="http://dryman.github.com/blog/2012/03/31/persistent-red-black-tree-in-lisp-2/"/>
+    <updated>2012-03-31T09:22:00+08:00</updated>
+    <id>http://dryman.github.com/blog/2012/03/31/persistent-red-black-tree-in-lisp-2</id>
+    <content type="html"><![CDATA[<h3 id="single-rotate">Single rotate</h3>
+
+<p>Using the <code>kid</code> utility, we can make rotate single to be simpler too:
+<div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='cl'><span class='line'><span class="c1">;;       x              y</span>
+</span><span class='line'><span class="c1">;;     /   \          /   \</span>
+</span><span class='line'><span class="c1">;;    y     c   =&amp;gt;   a     x     &lt;br /&gt;</span>
+</span><span class='line'><span class="c1">;;  /   \                 / \</span>
+</span><span class='line'><span class="c1">;; a     b               b   c</span>
+</span><span class='line'><span class="c1">;;</span>
+</span><span class='line'><span class="p">(</span><span class="nb">defun</span> <span class="nv">rotate-s</span> <span class="p">(</span><span class="nv">root</span> <span class="nv">dir</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">x</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">))</span>
+</span><span class='line'>        <span class="p">(</span><span class="nv">y</span> <span class="p">(</span><span class="nb">cadr</span> <span class="p">(</span><span class="nv">kid</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">))))</span>
+</span><span class='line'>        <span class="p">(</span><span class="nv">a</span> <span class="p">(</span><span class="nv">kid</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">)</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">)))</span>
+</span><span class='line'>        <span class="p">(</span><span class="nv">b</span> <span class="p">(</span><span class="nv">kid</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">)</span> <span class="nv">dir</span><span class="p">))</span>
+</span><span class='line'>        <span class="p">(</span><span class="nv">c</span> <span class="p">(</span><span class="nv">kid</span> <span class="nv">dir</span><span class="p">)))</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">if</span> <span class="nv">dir</span>
+</span><span class='line'>        <span class="p">(</span><span class="nb">list</span> <span class="nv">a</span> <span class="nv">y</span> <span class="p">(</span><span class="nb">list</span> <span class="nv">b</span> <span class="nv">x</span> <span class="nv">c</span><span class="p">))</span>
+</span><span class='line'>        <span class="p">(</span><span class="nb">list</span> <span class="p">(</span><span class="nb">list</span> <span class="nv">c</span> <span class="nv">x</span> <span class="nv">b</span><span class="p">)</span> <span class="nv">y</span> <span class="nv">a</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Observe that the two return form is nested reversed. Why not write a macro that
+generate this form? Then we only need to write the right case!</p>
+
+<h3 id="reverse-the-tree">Reverse the tree</h3>
+
+<p>First we need to write a function that take a nested form and return it in
+reversed order (also nested.) To achieve this, we use double recursion.</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='cl'><span class='line'><span class="p">(</span><span class="nb">defun</span> <span class="nv">tree-to-rev</span> <span class="p">(</span><span class="nv">tree</span> <span class="nv">acc</span><span class="p">)</span>
+</span><span class='line'>   <span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nb">null</span> <span class="nv">tree</span><span class="p">)</span> <span class="nv">acc</span><span class="p">)</span>
+</span><span class='line'>         <span class="p">((</span><span class="nb">consp</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">tree</span><span class="p">))</span>
+</span><span class='line'>          <span class="p">(</span><span class="nv">tree-to-rev</span> <span class="p">(</span><span class="nb">cdr</span> <span class="nv">tree</span><span class="p">)</span>
+</span><span class='line'>               <span class="p">(</span><span class="nb">cons</span> <span class="p">(</span><span class="nv">tree-to-rev</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">tree</span><span class="p">)</span> <span class="no">nil</span><span class="p">)</span> <span class="nv">acc</span><span class="p">)))</span>
+</span><span class='line'>         <span class="p">(</span><span class="no">T</span> <span class="p">(</span><span class="nv">tree-to-rev</span> <span class="p">(</span><span class="nb">cdr</span> <span class="nv">tree</span><span class="p">)</span> <span class="p">(</span><span class="nb">cons</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">tree</span><span class="p">)</span> <span class="nv">acc</span><span class="p">)))))</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;CL-USER&amp;gt</span><span class="c1">; (tree-to-rev ‘(a b (c d e)) nil)</span>
+</span><span class='line'><span class="p">((</span><span class="nv">E</span> <span class="nv">D</span> <span class="nv">C</span><span class="p">)</span> <span class="nv">B</span> <span class="nv">A</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Recall that we need to add <code>list</code> at the beginning of returned form. So rewrite
+the function as</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+</pre></td><td class='code'><pre><code class='cl'><span class='line'><span class="p">(</span><span class="nb">defun</span> <span class="nv">tree-to-rev-list</span> <span class="p">(</span><span class="nv">tree</span> <span class="nv">acc</span><span class="p">)</span>
+</span><span class='line'>   <span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nb">null</span> <span class="nv">tree</span><span class="p">)</span> <span class="p">(</span><span class="nb">cons</span> <span class="err">‘</span><span class="nb">list</span> <span class="nv">acc</span><span class="p">))</span>
+</span><span class='line'>         <span class="p">((</span><span class="nb">consp</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">tree</span><span class="p">))</span>
+</span><span class='line'>          <span class="p">(</span><span class="nv">tree-to-rev-list</span> <span class="p">(</span><span class="nb">cdr</span> <span class="nv">tree</span><span class="p">)</span>
+</span><span class='line'>               <span class="p">(</span><span class="nb">cons</span> <span class="p">(</span><span class="nv">tree-to-rev-list</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">tree</span><span class="p">)</span> <span class="no">nil</span><span class="p">)</span> <span class="nv">acc</span><span class="p">)))</span>
+</span><span class='line'>         <span class="p">(</span><span class="no">T</span> <span class="p">(</span><span class="nv">tree-to-rev-list</span> <span class="p">(</span><span class="nb">cdr</span> <span class="nv">tree</span><span class="p">)</span> <span class="p">(</span><span class="nb">cons</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">tree</span><span class="p">)</span> <span class="nv">acc</span><span class="p">)))))</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span><span class="p">(</span><span class="nb">defun</span> <span class="nv">tree-to-list</span> <span class="p">(</span><span class="nv">tree</span> <span class="nv">acc</span><span class="p">)</span>
+</span><span class='line'>   <span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nb">null</span> <span class="nv">tree</span><span class="p">)</span> <span class="p">(</span><span class="nb">cons</span> <span class="err">‘</span><span class="nb">list</span> <span class="p">(</span><span class="nb">reverse</span> <span class="nv">acc</span><span class="p">)))</span>
+</span><span class='line'>         <span class="p">((</span><span class="nb">consp</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">tree</span><span class="p">))</span>
+</span><span class='line'>          <span class="p">(</span><span class="nv">tree-to-list</span> <span class="p">(</span><span class="nb">cdr</span> <span class="nv">tree</span><span class="p">)</span>
+</span><span class='line'>               <span class="p">(</span><span class="nb">cons</span> <span class="p">(</span><span class="nv">tree-to-list</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">tree</span><span class="p">)</span> <span class="no">nil</span><span class="p">)</span> <span class="nv">acc</span><span class="p">)))</span>
+</span><span class='line'>         <span class="p">(</span><span class="no">T</span> <span class="p">(</span><span class="nv">tree-to-list</span> <span class="p">(</span><span class="nb">cdr</span> <span class="nv">tree</span><span class="p">)</span> <span class="p">(</span><span class="nb">cons</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">tree</span><span class="p">)</span> <span class="nv">acc</span><span class="p">)))))</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;CL-USER&amp;gt</span><span class="c1">; (tree-to-rev-list ‘(a b (c d e)) nil)</span>
+</span><span class='line'><span class="p">(</span><span class="nv">LIST</span> <span class="p">(</span><span class="nv">LIST</span> <span class="nv">E</span> <span class="nv">D</span> <span class="nv">C</span><span class="p">)</span> <span class="nv">B</span> <span class="nv">A</span><span class="p">)</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;CL-USER&amp;gt</span><span class="c1">; (tree-to-list ‘(a b (c d e)) nil)</span>
+</span><span class='line'><span class="p">(</span><span class="nv">LIST</span> <span class="nv">A</span> <span class="nv">B</span> <span class="p">(</span><span class="nv">LIST</span> <span class="nv">C</span> <span class="nv">D</span> <span class="nv">E</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<h3 id="macro-that-simplify-the-return-form">Macro that simplify the return form</h3>
+
+<p>Now we write a macro that we only need to pass it the right case:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='cl'><span class='line'><span class="p">(</span><span class="nb">defmacro</span> <span class="nv">mtree-expand</span> <span class="p">(</span><span class="nv">dir</span> <span class="nv">tree</span><span class="p">)</span>
+</span><span class='line'>  <span class="o">`</span><span class="p">(</span><span class="k">if</span> <span class="o">,</span><span class="nv">dir</span>
+</span><span class='line'>      <span class="o">,</span><span class="p">(</span><span class="nv">tree-to-list</span> <span class="nv">tree</span> <span class="no">nil</span><span class="p">)</span>
+</span><span class='line'>      <span class="o">,</span><span class="p">(</span><span class="nv">tree-to-rev-list</span> <span class="nv">tree</span> <span class="no">nil</span><span class="p">)))</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;CL-USER&amp;gt</span><span class="c1">; (macroexpand-1 ‘(mtree-expand dir (a y (b x c))))</span>
+</span><span class='line'><span class="p">(</span><span class="nv">IF</span> <span class="nv">DIR</span>
+</span><span class='line'>    <span class="p">(</span><span class="nv">LIST</span> <span class="nv">A</span> <span class="nv">Y</span> <span class="p">(</span><span class="nv">LIST</span> <span class="nv">B</span> <span class="nv">X</span> <span class="nv">C</span><span class="p">))</span>
+</span><span class='line'>    <span class="p">(</span><span class="nv">LIST</span> <span class="p">(</span><span class="nv">LIST</span> <span class="nv">C</span> <span class="nv">X</span> <span class="nv">B</span><span class="p">)</span> <span class="nv">Y</span> <span class="nv">A</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Now the <code>insert-binary-r</code> and <code>rotate-s</code> can be re-written only in right form!</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='cl'><span class='line'><span class="c1">;;       x              y</span>
+</span><span class='line'><span class="c1">;;     /   \          /   \</span>
+</span><span class='line'><span class="c1">;;    y     c   =&amp;gt;   a     x     &lt;br /&gt;</span>
+</span><span class='line'><span class="c1">;;  /   \                 / \</span>
+</span><span class='line'><span class="c1">;; a     b               b   c</span>
+</span><span class='line'><span class="c1">;;</span>
+</span><span class='line'><span class="p">(</span><span class="nb">defun</span> <span class="nv">rotate-s</span> <span class="p">(</span><span class="nv">root</span> <span class="nv">dir</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">x</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">))</span>
+</span><span class='line'>        <span class="p">(</span><span class="nv">y</span> <span class="p">(</span><span class="nb">cadr</span> <span class="p">(</span><span class="nv">kid</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">))))</span>
+</span><span class='line'>        <span class="p">(</span><span class="nv">a</span> <span class="p">(</span><span class="nv">kid</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">)</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">)))</span>
+</span><span class='line'>        <span class="p">(</span><span class="nv">b</span> <span class="p">(</span><span class="nv">kid</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">)</span> <span class="nv">dir</span><span class="p">))</span>
+</span><span class='line'>        <span class="p">(</span><span class="nv">c</span> <span class="p">(</span><span class="nv">kid</span> <span class="nv">dir</span><span class="p">)))</span>
+</span><span class='line'>    <span class="p">(</span><span class="nv">mtree-expand</span> <span class="nv">dir</span> <span class="p">(</span><span class="nv">a</span> <span class="nv">y</span> <span class="p">(</span><span class="nv">b</span> <span class="nv">x</span> <span class="nv">c</span><span class="p">)))))</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span><span class="p">(</span><span class="nb">defun</span> <span class="nv">insert-binary-r</span> <span class="p">(</span><span class="nv">root</span> <span class="nv">data</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nb">null</span> <span class="nv">root</span><span class="p">)</span> <span class="o">`</span><span class="p">(</span><span class="no">nil</span> <span class="o">,</span><span class="p">(</span><span class="nv">make-rb</span> <span class="ss">:data</span> <span class="nv">data</span><span class="p">)</span> <span class="no">nil</span><span class="p">))</span>
+</span><span class='line'>        <span class="p">((</span><span class="nb">=</span> <span class="nv">data</span> <span class="p">(</span><span class="nv">node-data</span> <span class="nv">root</span><span class="p">))</span> <span class="nv">root</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">(</span><span class="no">T</span> <span class="p">(</span><span class="k">let*</span> <span class="p">((</span><span class="nv">dir</span> <span class="p">(</span><span class="nv">&amp;gt</span><span class="c1">; data (node-data root)))</span>
+</span><span class='line'>                  <span class="p">(</span><span class="nv">x</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">))</span>
+</span><span class='line'>                  <span class="p">(</span><span class="nv">a</span> <span class="p">(</span><span class="nv">kid</span> <span class="nv">root</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">)))</span>
+</span><span class='line'>                  <span class="p">(</span><span class="nv">b</span> <span class="p">(</span><span class="nv">binary-insert-r</span> <span class="p">(</span><span class="nv">kid</span> <span class="nv">root</span> <span class="nv">dir</span><span class="p">)</span> <span class="nv">data</span><span class="p">)))</span>
+</span><span class='line'>             <span class="p">(</span><span class="nv">mtree-expand</span> <span class="nv">dir</span> <span class="p">(</span><span class="nv">a</span> <span class="nv">x</span> <span class="nv">b</span><span class="p">))))))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<h3 id="macro-that-simplify-the-input-form">Macro that simplify the input form</h3>
+
+<p>We also want to simplify that ugly <code>let</code> form, so we create this function and
+macro:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='cl'><span class='line'><span class="p">(</span><span class="nb">defun</span> <span class="nv">gen-let</span> <span class="p">(</span><span class="nv">dir</span> <span class="nv">node</span> <span class="nv">form</span> <span class="nv">dirs</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nb">atom</span> <span class="nv">form</span><span class="p">)</span>
+</span><span class='line'>    <span class="nv">&lt;code&gt;</span><span class="p">((</span><span class="o">,</span><span class="nv">form</span> <span class="p">(</span><span class="nb">apply</span> <span class="nf">#&#39;</span><span class="nv">kid</span> <span class="o">,</span><span class="nv">node</span> <span class="o">,</span><span class="p">(</span><span class="nb">cons</span> <span class="ss">&#39;list</span> <span class="p">(</span><span class="nb">reverse</span> <span class="nv">dirs</span><span class="p">)))))</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">cons</span> <span class="nv">&lt;/code&gt;</span><span class="p">(</span><span class="o">,</span><span class="p">(</span><span class="nb">cadr</span> <span class="nv">form</span><span class="p">)</span>
+</span><span class='line'>            <span class="p">(</span><span class="nb">cadr</span> <span class="p">(</span><span class="nb">apply</span> <span class="err">#’</span><span class="nv">kid</span> <span class="o">,</span><span class="nv">node</span> <span class="o">,</span><span class="p">(</span><span class="nb">cons</span> <span class="err">‘</span><span class="nb">list</span> <span class="p">(</span><span class="nb">reverse</span> <span class="nv">dirs</span><span class="p">)))))</span>
+</span><span class='line'>          <span class="p">(</span><span class="nb">append</span> <span class="p">(</span><span class="nv">gen-let</span> <span class="nv">dir</span> <span class="nv">node</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">form</span><span class="p">)</span> <span class="p">(</span><span class="nb">cons</span> <span class="o">`</span><span class="p">(</span><span class="nb">not</span> <span class="o">,</span><span class="nv">dir</span><span class="p">)</span> <span class="nv">dirs</span><span class="p">))</span>
+</span><span class='line'>                  <span class="p">(</span><span class="nv">gen-let</span> <span class="nv">dir</span> <span class="nv">node</span> <span class="p">(</span><span class="nb">caddr</span> <span class="nv">form</span><span class="p">)</span> <span class="p">(</span><span class="nb">cons</span> <span class="nv">dir</span> <span class="nv">dirs</span><span class="p">))))))</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span><span class="p">(</span><span class="nb">defmacro</span> <span class="nv">mtree-let</span> <span class="p">(</span><span class="nv">dir</span> <span class="nv">node</span> <span class="nv">form</span> <span class="nv">let-var</span> <span class="nv">&amp;amp</span><span class="c1">;body body)</span>
+</span><span class='line'>   <span class="o">`</span><span class="p">(</span><span class="k">let</span> <span class="o">,</span><span class="p">(</span><span class="nv">gen-let</span> <span class="nv">dir</span> <span class="nv">node</span> <span class="nv">form</span> <span class="no">nil</span><span class="p">)</span>
+</span><span class='line'>       <span class="p">(</span><span class="k">let*</span> <span class="o">,</span><span class="nv">let-var</span>
+</span><span class='line'>           <span class="o">,@</span><span class="nv">body</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>And then you can rewrite <code>rotate-s</code>:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='cl'><span class='line'><span class="p">(</span><span class="nb">defun</span> <span class="nv">rotate-s</span> <span class="p">(</span><span class="nv">node</span> <span class="nv">dir</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nv">mtree-let</span> <span class="nv">dir</span> <span class="nv">node</span> <span class="p">((</span><span class="nv">a</span> <span class="nv">y</span> <span class="nv">b</span><span class="p">)</span> <span class="nv">x</span> <span class="nv">c</span><span class="p">)</span>
+</span><span class='line'>    <span class="no">nil</span>
+</span><span class='line'>    <span class="p">(</span><span class="nv">mtree-expand</span> <span class="p">(</span><span class="nv">a</span> <span class="nv">y</span> <span class="p">(</span><span class="nv">b</span> <span class="nv">x</span> <span class="nv">c</span><span class="p">)))))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>See? We don’t need to write the comment to remind us the relative position of
+variables. The code express itself! You can see what this code will expand
+to by expanding the macro:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='cl'><span class='line'><span class="nv">CL-USER&amp;gt</span><span class="c1">; (macroexpand-1 ‘(mtree-let dir node ((a y b) x c)</span>
+</span><span class='line'>                          <span class="no">nil</span>
+</span><span class='line'>                          <span class="p">(</span><span class="nv">mtree-expand</span> <span class="nv">dir</span> <span class="p">(</span><span class="nv">a</span> <span class="nv">y</span> <span class="p">(</span><span class="nv">b</span> <span class="nv">x</span> <span class="nv">c</span><span class="p">)))))</span>
+</span><span class='line'><span class="p">(</span><span class="nv">LET</span> <span class="p">((</span><span class="nv">X</span> <span class="p">(</span><span class="nv">CADR</span> <span class="p">(</span><span class="nv">APPLY</span> <span class="err">#’</span><span class="nv">KID</span> <span class="nv">NODE</span> <span class="p">(</span><span class="nv">LIST</span><span class="p">))))</span>
+</span><span class='line'>      <span class="p">(</span><span class="nv">Y</span> <span class="p">(</span><span class="nv">CADR</span> <span class="p">(</span><span class="nv">APPLY</span> <span class="err">#’</span><span class="nv">KID</span> <span class="nv">NODE</span> <span class="p">(</span><span class="nv">LIST</span> <span class="p">(</span><span class="nv">NOT</span> <span class="nv">DIR</span><span class="p">)))))</span>
+</span><span class='line'>      <span class="p">(</span><span class="nv">A</span> <span class="p">(</span><span class="nv">APPLY</span> <span class="err">#’</span><span class="nv">KID</span> <span class="nv">NODE</span> <span class="p">(</span><span class="nv">LIST</span> <span class="p">(</span><span class="nv">NOT</span> <span class="nv">DIR</span><span class="p">)</span> <span class="p">(</span><span class="nv">NOT</span> <span class="nv">DIR</span><span class="p">))))</span>
+</span><span class='line'>      <span class="p">(</span><span class="nv">B</span> <span class="p">(</span><span class="nv">APPLY</span> <span class="err">#’</span><span class="nv">KID</span> <span class="nv">NODE</span> <span class="p">(</span><span class="nv">LIST</span> <span class="p">(</span><span class="nv">NOT</span> <span class="nv">DIR</span><span class="p">)</span> <span class="nv">DIR</span><span class="p">)))</span>
+</span><span class='line'>      <span class="p">(</span><span class="nv">C</span> <span class="p">(</span><span class="nv">APPLY</span> <span class="err">#’</span><span class="nv">KID</span> <span class="nv">NODE</span> <span class="p">(</span><span class="nv">LIST</span> <span class="nv">DIR</span><span class="p">))))</span>
+</span><span class='line'>  <span class="p">(</span><span class="nv">LET*</span> <span class="p">()</span>
+</span><span class='line'>    <span class="p">(</span><span class="nv">MTREE-EXPAND</span> <span class="nv">DIR</span> <span class="p">(</span><span class="nv">A</span> <span class="nv">Y</span> <span class="p">(</span><span class="nv">B</span> <span class="nv">X</span> <span class="nv">C</span><span class="p">)))))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[persistent red black tree in lisp (1)]]></title>
+    <link href="http://dryman.github.com/blog/2012/03/30/persistent-red-black-tree-in-lisp-1/"/>
+    <updated>2012-03-30T13:57:00+08:00</updated>
+    <id>http://dryman.github.com/blog/2012/03/30/persistent-red-black-tree-in-lisp-1</id>
+    <content type="html"><![CDATA[<p>I’m a newbie to Lisp programing language. Lisp is one of the most oldest
+programming language that is still being used today. People have a lot of
+defences on programming languages, because there are too many choices to us
+today. Every language has their strength and weakness. It is not easy to make
+the choice.</p>
+
+<p>In my opinion, the best way to decide what languages I must learn is to
+see which kinds of people are loving it. 
+For example, Ruby community does great supports for business plans; Python is
+the best open sourced language for academia uses (scientific libraries, machine
+learning, computer vision, statistics, visualizations…etc.) Many old school
+hackers (including me) still love to use Perl; Java is widely used in big
+companies; VBA is friendly for dealing excel data…etc. And <strong>Lisp</strong>, are
+highly recommended by great hackers. </p>
+
+<hr />
+
+<p>If you are also interested in Lisp, I recommend <a href="http://www.gigamonkeys.com/book/">Practical Common
+Lisp</a> written by <a href="http://www.gigamonkeys.com/">Peter Seibel</a>, and <a href="http://paulgraham.com/onlisp.html">On Lisp</a> written
+by <a href="http://paulgraham.com/">Paul Graham</a>. Both of them are free, downloadable PDF files, and
+there are also online version and epub format.</p>
+
+<hr />
+
+<h3 id="basic-thoughts">Basic thoughts</h3>
+
+<p>Let’s begin with basic structures. At first, I design the structure similar to
+what you will write in C code.</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='cl'><span class='line'><span class="p">(</span><span class="nb">defstruct</span> <span class="nv">rb</span>
+</span><span class='line'>  <span class="nv">left</span>
+</span><span class='line'>  <span class="nv">right</span>
+</span><span class='line'>  <span class="nv">red</span>
+</span><span class='line'>  <span class="nv">data</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Here we can see the power of Lisp. It does not only create the structure, but
+also create constructor and accessors for the structure. Now you can create the
+<code>rb</code> and access it like so:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+</pre></td><td class='code'><pre><code class='cl'><span class='line'><span class="p">(</span><span class="k">setq</span> <span class="nv">node</span>
+</span><span class='line'>  <span class="p">(</span><span class="nv">make-rb</span> <span class="ss">:left</span> <span class="no">nil</span> <span class="ss">:right</span> <span class="no">nil</span> <span class="ss">:red</span> <span class="no">T</span> <span class="ss">:data</span> <span class="mi">3</span><span class="p">))</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;==&amp;gt</span><span class="c1">; #S(RB :left nil :right nil :red T :data 3)&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span><span class="p">(</span><span class="nv">rb-left</span> <span class="nv">node</span><span class="p">)</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;==&amp;gt</span><span class="c1">; nil&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span><span class="p">(</span><span class="nv">rb-data</span> <span class="nv">node</span><span class="p">)</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;==&amp;gt</span><span class="c1">; 3&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span><span class="p">(</span><span class="nb">setf</span> <span class="p">(</span><span class="nv">rb-right</span> <span class="nv">node</span><span class="p">)</span> <span class="p">(</span><span class="nv">make-rb</span> <span class="ss">:data</span> <span class="mi">5</span><span class="p">))</span> <span class="c1">; Other field are default as nil&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;==&amp;gt</span><span class="c1">; #S(RB :left nil </span>
+</span><span class='line'>          <span class="ss">:right</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:left</span> <span class="no">nil</span> <span class="ss">:right</span> <span class="no">nil</span> <span class="ss">:red</span> <span class="no">nil</span> <span class="ss">:data</span> <span class="mi">5</span><span class="p">)</span>
+</span><span class='line'>          <span class="ss">:red</span> <span class="no">T</span> <span class="ss">:data</span> <span class="mi">3</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>This seems to be nice. But we can rewrite it in more lispy style:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='cl'><span class='line'><span class="p">(</span><span class="nb">defstruct</span> <span class="nv">rb</span>
+</span><span class='line'>  <span class="p">(</span><span class="nv">red</span> <span class="no">T</span><span class="p">)</span> <span class="c1">; default value for red</span>
+</span><span class='line'>  <span class="nv">data</span><span class="p">)</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span><span class="c1">;; A node can be represented as</span>
+</span><span class='line'><span class="c1">;; (nil #S(RB :red T :data 3) nil)</span>
+</span><span class='line'><span class="c1">;; To generate this:</span>
+</span><span class='line'><span class="p">(</span><span class="nb">list</span> <span class="no">nil</span> <span class="p">(</span><span class="nv">make-rb</span> <span class="ss">:data</span> <span class="mi">3</span><span class="p">)</span> <span class="no">nil</span><span class="p">)</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;==&amp;gt</span><span class="c1">; (nil #S(RB :red T :data 3) nil)&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span><span class="c1">;; You can also use lisp syntax candy</span>
+</span><span class='line'><span class="o">`</span><span class="p">(</span><span class="nb">list</span> <span class="no">nil</span> <span class="o">,</span><span class="p">(</span><span class="nv">make-rb</span> <span class="ss">:data</span> <span class="mi">3</span><span class="p">)</span> <span class="no">nil</span><span class="p">)</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;==&amp;gt</span><span class="c1">; (nil #S(RB :red T :data 3) nil)</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>The s-expression with a preceding <code>`</code> means that it is a expression that
+lisp don’t evaluate, except expression inside it with a preceding <code>,</code>. It is
+convenient for us to generate new list object.</p>
+
+<p>To access the elements in a list:</p>
+
+<ol>
+  <li><code>car</code> the first</li>
+  <li><code>cadr</code> the second</li>
+  <li><code>caddr</code> the third</li>
+</ol>
+
+<p>And now we can wirte a persistant basic binary insert function!</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+</pre></td><td class='code'><pre><code class='cl'><span class='line'><span class="p">(</span><span class="nb">defun</span> <span class="nv">binary-insert-r</span> <span class="p">(</span><span class="nv">root</span> <span class="nv">data</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nb">null</span> <span class="nv">root</span><span class="p">)</span>                            <span class="c1">; cond works like “switch”</span>
+</span><span class='line'>          <span class="o">`</span><span class="p">(</span><span class="no">nil</span> <span class="o">,</span><span class="p">(</span><span class="nv">make-rb</span> <span class="ss">:data</span> <span class="nv">data</span><span class="p">)</span> <span class="no">nil</span><span class="p">))</span>     <span class="c1">; make node when reach leaf</span>
+</span><span class='line'>        <span class="p">((</span><span class="nb">=</span> <span class="nv">data</span> <span class="p">(</span><span class="nv">rb-data</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">)))</span> <span class="nv">root</span><span class="p">)</span>   <span class="c1">; return self if data is the same</span>
+</span><span class='line'>        <span class="p">((</span><span class="nv">&amp;gt</span><span class="c1">; data (rb-data (cadr root)))</span>
+</span><span class='line'>         <span class="p">(</span><span class="nb">list</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">root</span><span class="p">)</span>                     <span class="nv">&lt;br</span> <span class="nv">/&gt;</span>
+</span><span class='line'>               <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">)</span>
+</span><span class='line'>               <span class="p">(</span><span class="nv">binary-insert-r</span> <span class="p">(</span><span class="nb">caddr</span> <span class="nv">root</span><span class="p">)</span> <span class="nv">data</span><span class="p">)))</span> <span class="c1">; case insert to right</span>
+</span><span class='line'>        <span class="p">(</span><span class="no">T</span>
+</span><span class='line'>         <span class="p">(</span><span class="nb">list</span> <span class="p">(</span><span class="nv">binary-insert-r</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">root</span><span class="p">)</span> <span class="nv">data</span><span class="p">)</span>
+</span><span class='line'>               <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">)</span>
+</span><span class='line'>               <span class="p">(</span><span class="nb">caddr</span> <span class="nv">root</span><span class="p">)))))</span>                      <span class="c1">; case insert to left&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span><span class="p">(</span><span class="nb">defparameter</span> <span class="nv">&lt;em&gt;tree&lt;/em&gt;</span> <span class="no">nil</span><span class="p">)</span>                     <span class="c1">; global variable &lt;em&gt;tree&lt;/em&gt;</span>
+</span><span class='line'><span class="p">(</span><span class="nb">defun</span> <span class="nv">binary-insert</span> <span class="p">(</span><span class="nv">data</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">setf</span> <span class="nv">&lt;em&gt;tree&lt;/em&gt;</span> <span class="p">(</span><span class="nv">binary-insert-r</span> <span class="nv">&lt;em&gt;tree&lt;/em&gt;</span> <span class="nv">data</span><span class="p">))</span> <span class="c1">; set &lt;em&gt;tree&lt;/em&gt; as the returned tree</span>
+</span><span class='line'>  <span class="nv">&lt;em&gt;tree&lt;/em&gt;</span><span class="p">)</span>                                     <span class="c1">; return &lt;em&gt;tree&lt;/em&gt; value&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Let’s exam the function:
+<div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='cl'><span class='line'><span class="nv">BINARY-INSERT-R</span>
+</span><span class='line'><span class="nv">CL-USER&amp;gt</span><span class="c1">; (binary-insert 6)</span>
+</span><span class='line'><span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">6</span><span class="p">)</span> <span class="no">NIL</span><span class="p">)</span>
+</span><span class='line'><span class="nv">CL-USER&amp;gt</span><span class="c1">; (binary-insert 7)</span>
+</span><span class='line'><span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">6</span><span class="p">)</span> <span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">7</span><span class="p">)</span> <span class="no">NIL</span><span class="p">))</span>
+</span><span class='line'><span class="nv">CL-USER&amp;gt</span><span class="c1">; (binary-insert 5)</span>
+</span><span class='line'><span class="p">((</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">5</span><span class="p">)</span> <span class="no">NIL</span><span class="p">)</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">6</span><span class="p">)</span>
+</span><span class='line'> <span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">7</span><span class="p">)</span> <span class="no">NIL</span><span class="p">))</span>
+</span><span class='line'><span class="nv">CL-USER&amp;gt</span><span class="c1">; (binary-insert 8)</span>
+</span><span class='line'><span class="p">((</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">5</span><span class="p">)</span> <span class="no">NIL</span><span class="p">)</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">6</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">7</span><span class="p">)</span> <span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">8</span><span class="p">)</span> <span class="no">NIL</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<h3 id="wait-hold-on">Wait! Hold on!</h3>
+
+<p>The code is god damn ugly! We can fix it with some utilities:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='cl'><span class='line'><span class="p">(</span><span class="nb">defun</span> <span class="nv">kid</span> <span class="p">(</span><span class="nv">root</span> <span class="nv">&amp;amp</span><span class="c1">;rest dirs)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nb">consp</span> <span class="nv">dirs</span><span class="p">)</span>
+</span><span class='line'>         <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">dirs</span><span class="p">)</span>
+</span><span class='line'>             <span class="p">(</span><span class="nb">apply</span> <span class="err">#’</span><span class="nv">kid</span> <span class="p">(</span><span class="nb">caddr</span> <span class="nv">root</span><span class="p">)</span> <span class="p">(</span><span class="nb">cdr</span> <span class="nv">dirs</span><span class="p">))</span>
+</span><span class='line'>             <span class="p">(</span><span class="nb">apply</span> <span class="err">#’</span><span class="nv">kid</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">root</span><span class="p">)</span> <span class="p">(</span><span class="nb">cdr</span> <span class="nv">dirs</span><span class="p">))))</span>
+</span><span class='line'>        <span class="p">(</span><span class="no">T</span> <span class="nv">root</span><span class="p">)))</span><span class="nv">&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nv">&lt;p&gt;</span><span class="p">(</span><span class="nb">defun</span> <span class="nv">node-data</span> <span class="p">(</span><span class="nv">root</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nv">rb-data</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>The <code>kid</code> takes a node and a series of <code>T</code> and <code>nil</code>; When it saw a <code>T</code>, it
+returns the right node, or it will return the left one. For example:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='cl'><span class='line'><span class="nv">CL-USER&amp;gt</span><span class="c1">; (kid &lt;em&gt;tree&lt;/em&gt; nil)            ; left node</span>
+</span><span class='line'><span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">5</span><span class="p">)</span> <span class="no">NIL</span><span class="p">)</span>
+</span><span class='line'><span class="nv">CL-USER&amp;gt</span><span class="c1">; (kid &lt;em&gt;tree&lt;/em&gt; T)              ; right node</span>
+</span><span class='line'><span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">7</span><span class="p">)</span> <span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">8</span><span class="p">)</span> <span class="no">NIL</span><span class="p">))</span>
+</span><span class='line'><span class="nv">CL-USER&amp;gt</span><span class="c1">; (kid &lt;em&gt;tree&lt;/em&gt; T T)            ; right right node</span>
+</span><span class='line'><span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">8</span><span class="p">)</span> <span class="no">NIL</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Using <code>nil</code> and <code>T</code> as left and right dirctions, it is easier for us to rewrite
+<code>binary-insert-r</code> because we can change left and right cases into variables.</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='cl'><span class='line'><span class="p">(</span><span class="nb">defun</span> <span class="nv">binary-insert-r</span> <span class="p">(</span><span class="nv">root</span> <span class="nv">data</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nb">null</span> <span class="nv">root</span><span class="p">)</span> <span class="o">`</span><span class="p">(</span><span class="no">nil</span> <span class="o">,</span><span class="p">(</span><span class="nv">make-rb</span> <span class="ss">:data</span> <span class="nv">data</span><span class="p">)</span> <span class="no">nil</span><span class="p">))</span>
+</span><span class='line'>        <span class="p">((</span><span class="nb">=</span> <span class="nv">data</span> <span class="p">(</span><span class="nv">node-data</span> <span class="nv">root</span><span class="p">))</span> <span class="nv">root</span><span class="p">)</span>
+</span><span class='line'>        <span class="p">(</span><span class="no">T</span> <span class="p">(</span><span class="k">let*</span> <span class="p">((</span><span class="nv">dir</span> <span class="p">(</span><span class="nv">&amp;gt</span><span class="c1">; data (node-data root)))</span>
+</span><span class='line'>                  <span class="p">(</span><span class="nv">a</span> <span class="p">(</span><span class="nv">kid</span> <span class="nv">root</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">)))</span>
+</span><span class='line'>                  <span class="p">(</span><span class="nv">b</span> <span class="p">(</span><span class="nv">binary-insert-r</span> <span class="p">(</span><span class="nv">kid</span> <span class="nv">root</span> <span class="nv">dir</span><span class="p">)</span> <span class="nv">data</span><span class="p">)))</span>
+</span><span class='line'>             <span class="p">(</span><span class="k">if</span> <span class="nv">dir</span>
+</span><span class='line'>                 <span class="p">(</span><span class="nb">list</span> <span class="nv">a</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">)</span> <span class="nv">b</span><span class="p">)</span>
+</span><span class='line'>                 <span class="p">(</span><span class="nb">list</span> <span class="nv">b</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">)</span> <span class="nv">a</span><span class="p">))))))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+]]></content>
+  </entry>
+  
+</feed>
