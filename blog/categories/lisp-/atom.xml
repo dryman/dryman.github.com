@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Lisp, | Carpe dien]]></title>
   <link href="http://dryman.github.com/blog/categories/lisp-/atom.xml" rel="self"/>
   <link href="http://dryman.github.com/"/>
-  <updated>2012-04-02T13:27:45+08:00</updated>
+  <updated>2012-04-02T13:29:14+08:00</updated>
   <id>http://dryman.github.com/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -14,7 +14,7 @@
 
   
   <entry>
-    <title type="html"><![CDATA[persistent red black tree (4)]]></title>
+    <title type="html"><![CDATA[persistent red black tree in lisp (4)]]></title>
     <link href="http://dryman.github.com/blog/2012/04/01/persistent-red-black-tree-4/"/>
     <updated>2012-04-01T14:48:00+08:00</updated>
     <id>http://dryman.github.com/blog/2012/04/01/persistent-red-black-tree-4</id>
