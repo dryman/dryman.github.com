@@ -203,5 +203,22 @@ CL-USER> (rb-insert 100)
        (((NIL 3-r NIL) 5-b NIL) 6-b ((NIL 7-r NIL) 8-b (NIL 100-r NIL)))
 {% endcodeblock %}
 
+* * *
+
+I modified the definition of `rb` structure to make it print prettier:
+
+{% codeblock lang:cl %}
+(defstruct 
+  (rb (:print-function 
+        (lambda (p s k) 
+          (declare (ignore k)(type stream s))
+          (format s "~d-~:[b~;r~]" (rb-data p) (rb-red p)))))
+  (red T :read-only T)
+  (data 0 :type fixnum :read-only T))
+{% endcodeblock %}
+
+So that when `Lisp` want to print a `rb` with data is `8` and red is `nil`, it
+would print `8-b` instead of `#S(RB :data 8 :red nil)`.
+
 [jsw rbtree]: http://eternallyconfuzzled.com/tuts/datastructures/jsw_tut_rbtree.aspx
 [fp rbtree]: http://www.mew.org/~kazu/proj/red-black-tree/
