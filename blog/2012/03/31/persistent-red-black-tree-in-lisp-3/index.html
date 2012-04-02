@@ -411,6 +411,29 @@ property of red or black.</p>
 </span><span class="line">       <span class="p">(((</span><span class="no">NIL</span> <span class="nv">3-r</span> <span class="no">NIL</span><span class="p">)</span> <span class="nv">5-b</span> <span class="no">NIL</span><span class="p">)</span> <span class="nv">6-b</span> <span class="p">((</span><span class="no">NIL</span> <span class="nv">7-r</span> <span class="no">NIL</span><span class="p">)</span> <span class="nv">8-b</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">100-r</span> <span class="no">NIL</span><span class="p">)))</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
+<hr />
+
+<p>I modified the definition of <code>rb</code> structure to make it print prettier:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">defstruct</span>
+</span><span class="line">  <span class="p">(</span><span class="nv">rb</span> <span class="p">(</span><span class="ss">:print-function</span>
+</span><span class="line">        <span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="nv">p</span> <span class="nv">s</span> <span class="nv">k</span><span class="p">)</span>
+</span><span class="line">          <span class="p">(</span><span class="k">declare</span> <span class="p">(</span><span class="k">ignore</span> <span class="nv">k</span><span class="p">)(</span><span class="k">type</span> <span class="nc">stream</span> <span class="nv">s</span><span class="p">))</span>
+</span><span class="line">          <span class="p">(</span><span class="nb">format</span> <span class="nv">s</span> <span class="s">&quot;~d-~:[b~;r~]&quot;</span> <span class="p">(</span><span class="nv">rb-data</span> <span class="nv">p</span><span class="p">)</span> <span class="p">(</span><span class="nv">rb-red</span> <span class="nv">p</span><span class="p">)))))</span>
+</span><span class="line">  <span class="p">(</span><span class="nv">red</span> <span class="no">T</span> <span class="ss">:read-only</span> <span class="no">T</span><span class="p">)</span>
+</span><span class="line">  <span class="p">(</span><span class="nv">data</span> <span class="mi">0</span> <span class="ss">:type</span> <span class="kt">fixnum</span> <span class="ss">:read-only</span> <span class="no">T</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>So that when <code>Lisp</code> want to print a <code>rb</code> with data is <code>8</code> and red is <code>nil</code>, it
+would print <code>8-b</code> instead of <code>#S(RB :data 8 :red nil)</code>.</p>
+
 </div>
 
 
@@ -459,6 +482,8 @@ property of red or black.</p>
         <a class="basic-alignment left" href="/blog/2012/03/31/persistent-red-black-tree-in-lisp-2/" title="Previous Post: persistent red black tree in lisp (2)">&laquo; persistent red black tree in lisp (2)</a>
       
       
+        <a class="basic-alignment right" href="/blog/2012/04/01/persistent-red-black-tree-4/" title="Next Post: persistent red black tree (4)">persistent red black tree (4) &raquo;</a>
+      
     </p>
   </footer>
 </article>
@@ -470,6 +495,10 @@ property of red or black.</p>
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/04/01/persistent-red-black-tree-4/">persistent red black tree (4)</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2012/03/31/persistent-red-black-tree-in-lisp-3/">persistent red black tree in lisp (3)</a>
@@ -485,10 +514,6 @@ property of red or black.</p>
     
       <li class="post">
         <a href="/blog/2012/03/26/lisp-debugging-tools/">Lisp Debugging Tools</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/03/24/lisp-development-on-mac/">Lisp development on Mac</a>
       </li>
     
   </ul>

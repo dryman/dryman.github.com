@@ -1,0 +1,411 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>persistent red black tree (4) - Carpe dien</title>
+  <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
+
+  
+  <meta name="description" content="Okasaki’s purely functional red black tree The peristent red black tree in last post works ok, but the rotate functions and
+color flip is not &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://dryman.github.com/blog/2012/04/01/persistent-red-black-tree-4">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Carpe dien" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Carpe dien</a></h1>
+  
+    <h2>Work hard and enjoy every moment.</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:dryman.github.com" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Persistent Red Black Tree (4)</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-04-01T14:48:00+08:00" pubdate data-updated="true">Apr 1<span>st</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h3 id="okasakis-purely-functional-red-black-tree">Okasaki’s purely functional red black tree</h3>
+
+<p>The peristent red black tree in last post works ok, but the rotate functions and
+color flip is not efficient for purely functional data sturctures.
+In 1999, Okasaki introduced a new way to balance the insertion, and the function
+only takes care of four unbalanced cases.</p>
+
+<pre><code>Chris Okasaki,
+"Red-Black Trees in a Functional Setting",
+Journal of Functional Programming, 9(4),
+pp471-477,
+July 1999
+</code></pre>
+
+<p>The algorithm is easy to present in Haskell code:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>Okasaki&#8217;s red black tree insertion</span><a href="http://www.mew.org/~kazu/proj/red-black-tree/">Copied from Kazu Yamamoto&#8217;s website</a></figcaption> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+</pre></td><td class="code"><pre><code class="hs"><span class="line"><span class="kr">data</span> <span class="kt">RBTree</span> <span class="n">a</span> <span class="ow">=</span> <span class="kt">Leaf</span> <span class="o">|</span> <span class="kt">Fork</span> <span class="kt">Color</span> <span class="p">(</span><span class="kt">RBTree</span> <span class="n">a</span><span class="p">)</span> <span class="n">a</span> <span class="p">(</span><span class="kt">RBTree</span> <span class="n">a</span><span class="p">)</span>
+</span><span class="line"><span class="kr">data</span> <span class="kt">Color</span> <span class="ow">=</span> <span class="kt">R</span> <span class="o">|</span> <span class="kt">B</span>
+</span><span class="line">
+</span><span class="line"><span class="nf">insert</span> <span class="ow">::</span> <span class="kt">Ord</span> <span class="n">a</span> <span class="ow">=&gt;</span> <span class="n">a</span> <span class="ow">-&gt;</span> <span class="kt">RBTree</span> <span class="n">a</span> <span class="ow">-&gt;</span> <span class="kt">RBTree</span> <span class="n">a</span>
+</span><span class="line"><span class="nf">insert</span> <span class="n">a</span> <span class="n">b</span> <span class="ow">=</span> <span class="kt">Fork</span> <span class="kt">B</span> <span class="n">d</span> <span class="n">e</span> <span class="n">f</span>
+</span><span class="line">  <span class="kr">where</span>
+</span><span class="line">    <span class="kt">Fork</span> <span class="kr">_</span> <span class="n">d</span> <span class="n">e</span> <span class="n">f</span> <span class="ow">=</span> <span class="n">ins</span> <span class="n">a</span> <span class="n">b</span>
+</span><span class="line">    <span class="n">ins</span> <span class="n">x</span> <span class="kt">Leaf</span> <span class="ow">=</span> <span class="kt">Fork</span> <span class="kt">R</span> <span class="kt">Leaf</span> <span class="n">x</span> <span class="kt">Leaf</span>
+</span><span class="line">    <span class="n">ins</span> <span class="n">x</span> <span class="n">t</span><span class="o">@</span><span class="p">(</span><span class="kt">Fork</span> <span class="n">c</span> <span class="n">l</span> <span class="n">y</span> <span class="n">r</span><span class="p">)</span> <span class="ow">=</span> <span class="kr">case</span> <span class="n">compare</span> <span class="n">x</span> <span class="n">y</span> <span class="kr">of</span>
+</span><span class="line">        <span class="kt">LT</span> <span class="ow">-&gt;</span> <span class="n">balanceL</span> <span class="n">c</span> <span class="p">(</span><span class="n">ins</span> <span class="n">x</span> <span class="n">l</span><span class="p">)</span> <span class="n">y</span> <span class="n">r</span>
+</span><span class="line">        <span class="kt">GT</span> <span class="ow">-&gt;</span> <span class="n">balanceR</span> <span class="n">c</span> <span class="n">l</span> <span class="n">y</span> <span class="p">(</span><span class="n">ins</span> <span class="n">x</span> <span class="n">r</span><span class="p">)</span>
+</span><span class="line">        <span class="kt">EQ</span> <span class="ow">-&gt;</span> <span class="n">t</span>
+</span><span class="line">
+</span><span class="line"><span class="nf">balanceL</span> <span class="ow">::</span> <span class="kt">Color</span> <span class="ow">-&gt;</span> <span class="kt">RBTree</span> <span class="n">a</span> <span class="ow">-&gt;</span> <span class="n">a</span> <span class="ow">-&gt;</span> <span class="kt">RBTree</span> <span class="n">a</span> <span class="ow">-&gt;</span> <span class="kt">RBTree</span> <span class="n">a</span>
+</span><span class="line"><span class="nf">balanceL</span> <span class="kt">B</span> <span class="p">(</span><span class="kt">Fork</span> <span class="kt">R</span> <span class="p">(</span><span class="kt">Fork</span> <span class="kt">R</span> <span class="n">a</span> <span class="n">x</span> <span class="n">b</span><span class="p">)</span> <span class="n">y</span> <span class="n">c</span><span class="p">)</span> <span class="n">z</span> <span class="n">d</span> <span class="ow">=</span> <span class="kt">Fork</span> <span class="kt">R</span> <span class="p">(</span><span class="kt">Fork</span> <span class="kt">B</span> <span class="n">a</span> <span class="n">x</span> <span class="n">b</span><span class="p">)</span> <span class="n">y</span> <span class="p">(</span><span class="kt">Fork</span> <span class="kt">B</span> <span class="n">c</span> <span class="n">z</span> <span class="n">d</span><span class="p">)</span>
+</span><span class="line"><span class="nf">balanceL</span> <span class="kt">B</span> <span class="p">(</span><span class="kt">Fork</span> <span class="kt">R</span> <span class="n">a</span> <span class="n">x</span> <span class="p">(</span><span class="kt">Fork</span> <span class="kt">R</span> <span class="n">b</span> <span class="n">y</span> <span class="n">c</span><span class="p">))</span> <span class="n">z</span> <span class="n">d</span> <span class="ow">=</span> <span class="kt">Fork</span> <span class="kt">R</span> <span class="p">(</span><span class="kt">Fork</span> <span class="kt">B</span> <span class="n">a</span> <span class="n">x</span> <span class="n">b</span><span class="p">)</span> <span class="n">y</span> <span class="p">(</span><span class="kt">Fork</span> <span class="kt">B</span> <span class="n">c</span> <span class="n">z</span> <span class="n">d</span><span class="p">)</span>
+</span><span class="line"><span class="nf">balanceL</span> <span class="n">k</span> <span class="n">a</span> <span class="n">x</span> <span class="n">b</span>                           <span class="ow">=</span> <span class="kt">Fork</span> <span class="n">k</span> <span class="n">a</span> <span class="n">x</span> <span class="n">b</span>
+</span><span class="line">
+</span><span class="line"><span class="nf">balanceR</span> <span class="ow">::</span> <span class="kt">Color</span> <span class="ow">-&gt;</span> <span class="kt">RBTree</span> <span class="n">a</span> <span class="ow">-&gt;</span> <span class="n">a</span> <span class="ow">-&gt;</span> <span class="kt">RBTree</span> <span class="n">a</span> <span class="ow">-&gt;</span> <span class="kt">RBTree</span> <span class="n">a</span>
+</span><span class="line"><span class="nf">balanceR</span> <span class="kt">B</span> <span class="n">a</span> <span class="n">x</span> <span class="p">(</span><span class="kt">Fork</span> <span class="kt">R</span> <span class="n">b</span> <span class="n">y</span> <span class="p">(</span><span class="kt">Fork</span> <span class="kt">R</span> <span class="n">c</span> <span class="n">z</span> <span class="n">d</span><span class="p">))</span> <span class="ow">=</span> <span class="kt">Fork</span> <span class="kt">R</span> <span class="p">(</span><span class="kt">Fork</span> <span class="kt">B</span> <span class="n">a</span> <span class="n">x</span> <span class="n">b</span><span class="p">)</span> <span class="n">y</span> <span class="p">(</span><span class="kt">Fork</span> <span class="kt">B</span> <span class="n">c</span> <span class="n">z</span> <span class="n">d</span><span class="p">)</span>
+</span><span class="line"><span class="nf">balanceR</span> <span class="kt">B</span> <span class="n">a</span> <span class="n">x</span> <span class="p">(</span><span class="kt">Fork</span> <span class="kt">R</span> <span class="p">(</span><span class="kt">Fork</span> <span class="kt">R</span> <span class="n">b</span> <span class="n">y</span> <span class="n">c</span><span class="p">)</span> <span class="n">z</span> <span class="n">d</span><span class="p">)</span> <span class="ow">=</span> <span class="kt">Fork</span> <span class="kt">R</span> <span class="p">(</span><span class="kt">Fork</span> <span class="kt">B</span> <span class="n">a</span> <span class="n">x</span> <span class="n">b</span><span class="p">)</span> <span class="n">y</span> <span class="p">(</span><span class="kt">Fork</span> <span class="kt">B</span> <span class="n">c</span> <span class="n">z</span> <span class="n">d</span><span class="p">)</span>
+</span><span class="line"><span class="nf">balanceR</span> <span class="n">k</span> <span class="n">a</span> <span class="n">x</span> <span class="n">b</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Cool! This can be even reduced to only two cases in our <code>mtree-expand</code> and
+<code>mtree-let</code> macro!</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">balance-o</span> <span class="p">(</span><span class="nv">root</span> <span class="nv">dir</span><span class="p">)</span>
+</span><span class="line">  <span class="p">(</span><span class="nv">mtree-let</span> <span class="nv">dir</span> <span class="nv">root</span> <span class="p">(</span><span class="nv">a</span> <span class="nv">x</span> <span class="p">(</span><span class="nv">b</span> <span class="nv">y</span> <span class="p">(</span><span class="nv">c</span> <span class="nv">z</span> <span class="nv">d</span><span class="p">)))</span>
+</span><span class="line">             <span class="p">((</span><span class="nv">z-b</span> <span class="p">(</span><span class="nv">to-b</span> <span class="nv">z</span><span class="p">)))</span>
+</span><span class="line">             <span class="p">(</span><span class="nv">mtree-expand</span> <span class="nv">dir</span> <span class="p">((</span><span class="nv">a</span> <span class="nv">x</span> <span class="nv">b</span><span class="p">)</span> <span class="nv">y</span> <span class="p">(</span><span class="nv">c</span> <span class="nv">z-b</span> <span class="nv">d</span><span class="p">)))))</span>
+</span><span class="line">
+</span><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">balance-i</span> <span class="p">(</span><span class="nv">root</span> <span class="nv">dir</span><span class="p">)</span>
+</span><span class="line">  <span class="p">(</span><span class="nv">mtree-let</span> <span class="nv">dir</span> <span class="nv">root</span> <span class="p">(</span><span class="nv">a</span> <span class="nv">x</span> <span class="p">((</span><span class="nv">b</span> <span class="nv">z</span> <span class="nv">c</span><span class="p">)</span> <span class="nv">y</span> <span class="nv">d</span><span class="p">))</span>
+</span><span class="line">             <span class="p">((</span><span class="nv">y-b</span> <span class="p">(</span><span class="nv">to-b</span> <span class="nv">y</span><span class="p">)))</span>
+</span><span class="line">             <span class="p">(</span><span class="nv">mtree-expand</span> <span class="nv">dir</span> <span class="p">((</span><span class="nv">a</span> <span class="nv">x</span> <span class="nv">b</span><span class="p">)</span> <span class="nv">z</span> <span class="p">(</span><span class="nv">c</span> <span class="nv">y-b</span> <span class="nv">d</span><span class="p">)))))</span>
+</span><span class="line">
+</span><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">insert-oka</span> <span class="p">(</span><span class="nv">root</span> <span class="nv">data</span><span class="p">)</span>
+</span><span class="line">  <span class="p">(</span><span class="k">declare</span> <span class="p">(</span><span class="k">type</span> <span class="kt">fixnum</span> <span class="nv">data</span><span class="p">))</span>
+</span><span class="line">  <span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nb">null</span> <span class="nv">root</span><span class="p">)</span> <span class="o">`</span><span class="p">(</span><span class="no">nil</span> <span class="o">,</span><span class="p">(</span><span class="nv">make-rb</span> <span class="ss">:data</span> <span class="nv">data</span><span class="p">)</span> <span class="no">nil</span><span class="p">))</span>
+</span><span class="line">        <span class="p">((</span><span class="nb">=</span> <span class="p">(</span><span class="nv">node-data</span> <span class="nv">root</span><span class="p">)</span> <span class="nv">data</span><span class="p">)</span> <span class="nv">root</span><span class="p">)</span>
+</span><span class="line">        <span class="p">(</span><span class="no">T</span> <span class="p">(</span><span class="k">let*</span> <span class="p">((</span><span class="nv">dir</span> <span class="p">(</span><span class="nb">&gt;</span> <span class="nv">data</span> <span class="p">(</span><span class="nv">node-data</span> <span class="nv">root</span><span class="p">)))</span>
+</span><span class="line">                 <span class="p">(</span><span class="nv">a</span> <span class="p">(</span><span class="nv">kid</span> <span class="nv">root</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">)))</span>
+</span><span class="line">                 <span class="p">(</span><span class="nv">b</span> <span class="p">(</span><span class="nv">insert-oka</span> <span class="p">(</span><span class="nv">kid</span> <span class="nv">root</span> <span class="nv">dir</span><span class="p">)</span> <span class="nv">data</span><span class="p">))</span>
+</span><span class="line">                 <span class="p">(</span><span class="nv">root</span> <span class="p">(</span><span class="k">if</span> <span class="nv">dir</span> <span class="p">(</span><span class="nb">list</span> <span class="nv">a</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">)</span> <span class="nv">b</span><span class="p">)</span> <span class="p">(</span><span class="nb">list</span> <span class="nv">b</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">)</span> <span class="nv">a</span><span class="p">))))</span>
+</span><span class="line">            <span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nv">is-red</span> <span class="nv">root</span><span class="p">)</span> <span class="nv">root</span><span class="p">)</span>
+</span><span class="line">                  <span class="p">((</span><span class="nb">and</span> <span class="p">(</span><span class="nv">is-red</span> <span class="nv">b</span><span class="p">)</span> <span class="p">(</span><span class="nv">is-red</span> <span class="p">(</span><span class="nv">kid</span> <span class="nv">b</span> <span class="nv">dir</span><span class="p">)))</span> <span class="p">(</span><span class="nv">balance-o</span> <span class="nv">root</span> <span class="nv">dir</span><span class="p">))</span>
+</span><span class="line">                  <span class="p">((</span><span class="nb">and</span> <span class="p">(</span><span class="nv">is-red</span> <span class="nv">b</span><span class="p">)</span> <span class="p">(</span><span class="nv">is-red</span> <span class="p">(</span><span class="nv">kid</span> <span class="nv">b</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">))))</span> <span class="p">(</span><span class="nv">balance-i</span> <span class="nv">root</span> <span class="nv">dir</span><span class="p">))</span>
+</span><span class="line">                  <span class="p">(</span><span class="no">T</span> <span class="nv">root</span><span class="p">))))))</span>
+</span><span class="line">
+</span><span class="line"><span class="p">(</span><span class="nb">defparameter</span> <span class="vg">*tree*</span> <span class="no">nil</span><span class="p">)</span>
+</span><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">rb-insert</span> <span class="p">(</span><span class="nv">data</span><span class="p">)</span>
+</span><span class="line">  <span class="p">(</span><span class="k">declare</span> <span class="p">(</span><span class="k">type</span> <span class="kt">fixnum</span> <span class="nv">data</span><span class="p">))</span>
+</span><span class="line">  <span class="p">(</span><span class="k">setq</span> <span class="vg">*tree*</span> <span class="p">(</span><span class="nv">insert-oka</span> <span class="vg">*tree*</span> <span class="nv">data</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>To test the running time:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">time</span> <span class="p">(</span><span class="nb">loop</span> <span class="nv">for</span> <span class="nv">i</span> <span class="nv">from</span> <span class="mi">1</span> <span class="nv">to</span> <span class="mi">1000000</span> <span class="nb">do</span> <span class="p">(</span><span class="nv">rb-insert</span> <span class="nv">i</span><span class="p">)))</span>
+</span><span class="line">
+</span><span class="line"><span class="c1">;; The original algorithm using rotate-s and rotate-d</span>
+</span><span class="line">  <span class="mf">19.796</span> <span class="nv">seconds</span> <span class="nv">of</span> <span class="nc">real</span> <span class="nb">time</span>
+</span><span class="line">  <span class="mf">18.570645</span> <span class="nv">seconds</span> <span class="nv">of</span> <span class="nv">total</span> <span class="nv">run</span> <span class="nb">time</span> <span class="p">(</span><span class="mf">17.423563</span> <span class="nv">user,</span> <span class="mf">1.147082</span> <span class="nv">system</span><span class="p">)</span>
+</span><span class="line">  <span class="nv">[</span> <span class="nv">Run</span> <span class="nv">times</span> <span class="nv">consist</span> <span class="nv">of</span> <span class="mf">3.043</span> <span class="nv">seconds</span> <span class="nv">GC</span> <span class="nv">time,</span> <span class="nb">and</span> <span class="mf">15.528</span> <span class="nv">seconds</span> <span class="nv">non-GC</span> <span class="nv">time.</span> <span class="nv">]</span>
+</span><span class="line">  <span class="nv">93.81%</span> <span class="nv">CPU</span>
+</span><span class="line">  <span class="mi">47</span><span class="o">,</span><span class="mi">299</span><span class="o">,</span><span class="mi">915</span><span class="o">,</span><span class="mi">377</span> <span class="nv">processor</span> <span class="nv">cycles</span>
+</span><span class="line">  <span class="mi">6</span><span class="o">,</span><span class="mi">522</span><span class="o">,</span><span class="mi">724</span><span class="o">,</span><span class="mi">144</span> <span class="nv">bytes</span> <span class="nv">consed</span>
+</span><span class="line">
+</span><span class="line"><span class="c1">;; The Okasaki&#39;s algorithm</span>
+</span><span class="line">  <span class="mf">13.005</span> <span class="nv">seconds</span> <span class="nv">of</span> <span class="nc">real</span> <span class="nb">time</span>
+</span><span class="line">  <span class="mf">12.193227</span> <span class="nv">seconds</span> <span class="nv">of</span> <span class="nv">total</span> <span class="nv">run</span> <span class="nb">time</span> <span class="p">(</span><span class="mf">11.213534</span> <span class="nv">user,</span> <span class="mf">0.979693</span> <span class="nv">system</span><span class="p">)</span>
+</span><span class="line">  <span class="nv">[</span> <span class="nv">Run</span> <span class="nv">times</span> <span class="nv">consist</span> <span class="nv">of</span> <span class="mf">2.513</span> <span class="nv">seconds</span> <span class="nv">GC</span> <span class="nv">time,</span> <span class="nb">and</span> <span class="mf">9.681</span> <span class="nv">seconds</span> <span class="nv">non-GC</span> <span class="nv">time.</span> <span class="nv">]</span>
+</span><span class="line">  <span class="nv">93.76%</span> <span class="nv">CPU</span>
+</span><span class="line">  <span class="mi">31</span><span class="o">,</span><span class="mi">073</span><span class="o">,</span><span class="mi">022</span><span class="o">,</span><span class="mi">018</span> <span class="nv">processor</span> <span class="nv">cycles</span>
+</span><span class="line">  <span class="mi">4</span><span class="o">,</span><span class="mi">278</span><span class="o">,</span><span class="mi">336</span><span class="o">,</span><span class="mi">384</span> <span class="nv">bytes</span> <span class="nv">consed</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="conclusions">Conclusions</h2>
+
+<p>Lisp is designed for bottom-up programming. You first draft what you want to do,
+then you can start to write some functions and macros to simplify it. When there
+are more and more utilities you written, you can use it to experiment more
+complicated algorithms, in a more elegant and self expressive style.</p>
+
+<p>In purely functional structure, Haskell code  seems to be more elegant because
+it has built in pattern matching, while we have to write one for Lisp. But Lisp
+provides things more than functional programming, it can also be written in
+procedure style, object-oriented style, or any other DSL that is best sutable
+for your objective.</p>
+
+<p>The macro system in lisp can also improve your thinking of designing a program.
+Because you can always abstract your program structure as you writing it. In
+other language you are trained to think top-down, while in lisp you are
+encouraged to think back and forth. This process can shorten required time to
+get enough experiences of programming. You don’t need a lot experiences to build
+a complex algorithm in a bottom-up design process. It’s just come up natually.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-04-01T14:48:00+08:00" pubdate data-updated="true">Apr 1<span>st</span>, 2012</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/algorithm/'>Algorithm</a>, <a class='category' href='/blog/categories/lisp-/'>Lisp,</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://dryman.github.com/blog/2012/04/01/persistent-red-black-tree-4/" data-via="" data-counturl="http://dryman.github.com/blog/2012/04/01/persistent-red-black-tree-4/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2012/03/31/persistent-red-black-tree-in-lisp-3/" title="Previous Post: persistent red black tree in lisp (3)">&laquo; persistent red black tree in lisp (3)</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/04/01/persistent-red-black-tree-4/">persistent red black tree (4)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/31/persistent-red-black-tree-in-lisp-3/">persistent red black tree in lisp (3)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/31/persistent-red-black-tree-in-lisp-2/">persistent red black tree in lisp (2)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/30/persistent-red-black-tree-in-lisp-1/">persistent red black tree in lisp (1)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/26/lisp-debugging-tools/">Lisp Debugging Tools</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - dryman (Felix Ren-Chyan Chern) -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+<!-- mathjax config similar to math.stackexchange -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/HTML-CSS"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+</html>
+
