@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe dien]]></title>
   <link href="http://dryman.github.com/atom.xml" rel="self"/>
   <link href="http://dryman.github.com/"/>
-  <updated>2012-04-02T13:29:14+08:00</updated>
+  <updated>2012-04-04T17:54:18+08:00</updated>
   <id>http://dryman.github.com/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,41 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[jekyll graphviz plugin]]></title>
+    <link href="http://dryman.github.com/blog/2012/04/04/jekyll-graphviz-plugin/"/>
+    <updated>2012-04-04T17:37:00+08:00</updated>
+    <id>http://dryman.github.com/blog/2012/04/04/jekyll-graphviz-plugin</id>
+    <content type="html"><![CDATA[<p>I created a graphviz plugin for Octopress/Jekyll today. For example:</p>
+
+<pre><code>{% graphviz %}
+digraph G {
+  compound=true;
+  subgraph cluster0 {
+  a -&gt; b;
+  a -&gt; c;
+  b -&gt; d;
+  c -&gt; d;
+  }
+  subgraph cluster1 {
+  e -&gt; g;
+  e -&gt; f;
+  }
+  b -&gt; f [lhead=cluster1];
+  d -&gt; e;
+  c -&gt; g [ltail=cluster0, lhead=cluster1];
+  c -&gt; e [ltail=cluster0];
+  d -&gt; h;
+}
+{% endgraphviz %}
+</code></pre>
+
+<p>will produce:</p>
+
+<p><img src="http://dryman.github.com/images/graphviz/g-3feb8846aa4bb9767add244df8bed05a.svg" /></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[persistent red black tree in lisp (4)]]></title>
@@ -187,7 +222,7 @@ complicated algorithms, in a more elegant and self expressive style.</p>
 <p>In purely functional structure, Haskell code  seems to be more elegant because
 it has built in pattern matching, while we have to write one for Lisp. But Lisp
 provides things more than functional programming, it can also be written in
-procedure style, object-oriented style, or any other DSL that is best sutable
+procedure style, object-oriented style, or any other DSL that is best suitable
 for your objective.</p>
 
 <p>The macro system in lisp can also improve your thinking of designing a program.
@@ -195,7 +230,8 @@ Because you can always abstract your program structure as you writing it. In
 other language you are trained to think top-down, while in lisp you are
 encouraged to think back and forth. This process can shorten required time to
 get enough experiences of programming. You don’t need a lot experiences to build
-a complex algorithm in a bottom-up design process. It’s just come up natually.</p>
+a complex algorithm in a bottom-up design process. It’s just come up naturally.</p>
+
 ]]></content>
   </entry>
   

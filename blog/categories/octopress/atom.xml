@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Octopress | Carpe dien]]></title>
   <link href="http://dryman.github.com/blog/categories/octopress/atom.xml" rel="self"/>
   <link href="http://dryman.github.com/"/>
-  <updated>2012-04-02T13:29:14+08:00</updated>
+  <updated>2012-04-04T17:54:18+08:00</updated>
   <id>http://dryman.github.com/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,42 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[jekyll graphviz plugin]]></title>
+    <link href="http://dryman.github.com/blog/2012/04/04/jekyll-graphviz-plugin/"/>
+    <updated>2012-04-04T17:37:00+08:00</updated>
+    <id>http://dryman.github.com/blog/2012/04/04/jekyll-graphviz-plugin</id>
+    <content type="html"><![CDATA[<p>I created a graphviz plugin for Octopress/Jekyll today. For example:</p>
+
+<p>
+    {% graphviz %}
+    digraph G {
+      compound=true;
+      subgraph cluster0 {
+      a -&gt; b;
+      a -&gt; c;
+      b -&gt; d;
+      c -&gt; d;
+      }
+      subgraph cluster1 {
+      e -&gt; g;
+      e -&gt; f;
+      }
+      b -&gt; f [lhead=cluster1];
+      d -&gt; e;
+      c -&gt; g [ltail=cluster0, lhead=cluster1];
+      c -&gt; e [ltail=cluster0];
+      d -&gt; h;
+    }
+    {% endgraphviz %}
+</p>
+
+<p>will produce:</p>
+
+<p></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[handcraft algorithm environment in kramdown]]></title>

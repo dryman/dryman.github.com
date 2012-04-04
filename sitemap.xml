@@ -44,11 +44,15 @@
     </url>
     <url>
         <loc>http://dryman.github.com/blog/2012/04/01/persistent-red-black-tree-4/</loc>
-        <lastmod>2012-04-02T13:28:49+08:00</lastmod>
+        <lastmod>2012-04-04T17:50:59+08:00</lastmod>
+    </url>
+    <url>
+        <loc>http://dryman.github.com/blog/2012/04/04/jekyll-graphviz-plugin/</loc>
+        <lastmod>2012-04-04T17:51:19+08:00</lastmod>
     </url>
     <url>
         <loc>http://dryman.github.com/blog/archives/</loc>
-        <lastmod>2012-04-02T13:28:49+08:00</lastmod>
+        <lastmod>2012-04-04T17:51:19+08:00</lastmod>
     </url>
     <url>
         <loc>http://dryman.github.com/graph-theories/elementary-graph-algorithms.html</loc>
@@ -60,6 +64,6 @@
     </url>
     <url>
         <loc>http://dryman.github.com/</loc>
-        <lastmod>2012-04-02T13:28:49+08:00</lastmod>
+        <lastmod>2012-04-04T17:51:19+08:00</lastmod>
     </url>
 </urlset>
