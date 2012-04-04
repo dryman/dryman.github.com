@@ -54,3 +54,13 @@ digraph G {
   d -> h;
 }
 {% endgraphviz %}
+
+### Installation:
+
+1. Download the file from [here](https://github.com/dryman/dryman.github.com/blob/src/plugins/graphviz_block.rb).
+2. Put it into your `my_octopress/plugin` folder.
+3. Add one line `source/images/graphviz` into your `.gitignore` file
+
+Remeber that you should have graphviz installed in your system. Else it will
+raise an error.
+
