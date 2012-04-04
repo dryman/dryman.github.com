@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "persistent red black tree (4)"
+title: "persistent red black tree in lisp (4)"
 date: 2012-04-01 14:48
 comments: true
 categories: Lisp, Algorithm
@@ -112,7 +112,7 @@ complicated algorithms, in a more elegant and self expressive style.
 In purely functional structure, Haskell code  seems to be more elegant because
 it has built in pattern matching, while we have to write one for Lisp. But Lisp
 provides things more than functional programming, it can also be written in
-procedure style, object-oriented style, or any other DSL that is best sutable
+procedure style, object-oriented style, or any other DSL that is best suitable
 for your objective.
 
 The macro system in lisp can also improve your thinking of designing a program.
@@ -120,4 +120,6 @@ Because you can always abstract your program structure as you writing it. In
 other language you are trained to think top-down, while in lisp you are
 encouraged to think back and forth. This process can shorten required time to
 get enough experiences of programming. You don't need a lot experiences to build
-a complex algorithm in a bottom-up design process. It's just come up natually.
+a complex algorithm in a bottom-up design process. It's just come up naturally.
+
+
