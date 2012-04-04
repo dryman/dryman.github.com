@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby, | Carpe dien]]></title>
   <link href="http://dryman.github.com/blog/categories/ruby-/atom.xml" rel="self"/>
   <link href="http://dryman.github.com/"/>
-  <updated>2012-04-04T17:54:18+08:00</updated>
+  <updated>2012-04-04T18:01:36+08:00</updated>
   <id>http://dryman.github.com/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -46,6 +46,15 @@
 <p>will produce:</p>
 
 <p></p>
+
+<h3 id="installation">Installation:</h3>
+
+<ol>
+  <li>Download the file from <a href="https://github.com/dryman/dryman.github.com/blob/src/plugins/graphviz_block.rb">here</a>.</li>
+  <li>Put it into your <code>my_octopress/plugin</code> folder.</li>
+  <li>Add one line <code>source/images/graphviz</code> into your <code>.gitignore</code> file</li>
+</ol>
+
 ]]></content>
   </entry>
   
