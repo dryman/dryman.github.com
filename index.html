@@ -9,8 +9,8 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="I created a graphviz plugin for Octopress/Jekyll today. For example: {% graphviz %}
-digraph G { compound=true; subgraph cluster0 { a -&gt; b; a -&gt &hellip;">
+  <meta name="description" content="Inspiration I found out that some cool blogs have a cute hacker news like button on each of its
+posts. The service is HN Like Button, created by &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -31,6 +31,18 @@ digraph G { compound=true; subgraph cluster0 { a -&gt; b; a -&gt &hellip;">
 <link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
 
   
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-23425996-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
 
 </head>
 
@@ -38,7 +50,7 @@ digraph G { compound=true; subgraph cluster0 { a -&gt; b; a -&gt &hellip;">
   <header role="banner"><hgroup>
   <h1><a href="/">Carpe dien</a></h1>
   
-    <h2>Work hard and enjoy every moment -- Dryman's (Felix's) blog </h2>
+    <h2>Work hard and enjoy every moment -- Dryman's (Felix Ren-Chyan Chern) blog </h2>
   
 </hgroup>
 
@@ -65,6 +77,158 @@ digraph G { compound=true; subgraph cluster0 { a -&gt; b; a -&gt &hellip;">
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/04/05/jekyll-octopress-hacker-news-plugin/">Jekyll/Octopress Hacker News Plugin</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-04-05T14:49:00+08:00" pubdate data-updated="true">Apr 5<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h3 id="inspiration">Inspiration</h3>
+
+<p>I found out that some cool blogs have a cute <em>hacker news like button</em> on each of its
+posts. </p>
+
+<p><img src="/images/hn_like.png" /></p>
+
+<p>The service is <a href="http://hnlike.com/">HN Like Button</a>, created by <a href="http://hacksandthoughts.posterous.com/">shashyal</a>.
+To use it you can use the generator like so:</p>
+
+<p><img src="/images/gen_hn_like.png" /></p>
+
+<p>However, we don’t want to do that every time, right? So I decided to write a
+small Jekyll plugin to generate the button automatically. Hope you can enjoy it!</p>
+
+<h3 id="the-hidden-api-of-hnlike">The hidden API of HNLike</h3>
+
+<p>Well…not really. The generated html snippet looks like this:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="html"><span class="line"><span class="nt">&lt;iframe</span> <span class="na">frameborder=</span><span class="s">&quot;no&quot;</span> <span class="na">scrolling=</span><span class="s">&quot;no&quot;</span> <span class="na">height=</span><span class="s">&quot;50px&quot;</span> <span class="na">width=</span><span class="s">&quot;350px&quot;</span>
+</span><span class="line"> <span class="na">src=</span><span class="s">&quot;http://hnlike.com/upvote.php?link=http%3A%2F%2Fdryman.github.com%2Fblog%2F2012%2F04%2F04%2Fjekyll-graphviz-plugin%2F&amp;title=Jekyll%20Graphviz%20Plugin&quot;</span>
+</span><span class="line"> <span class="nt">&gt;</span>iframes not supported by your browser<span class="nt">&lt;/iframe&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Observe that in the <code>src</code> after the <code>upvote.php?</code> there are only two
+key valure pairs:</p>
+
+<ol>
+  <li><code>link=</code><strong>html link</strong></li>
+  <li><code>&amp;title=</code><strong>title text</strong></li>
+</ol>
+
+<p>We just need to replace the <strong>html link</strong> and <strong>title text</strong> to our URL-escaped
+string and it is done.</p>
+
+<h3 id="integrate-with-jekyll">Integrate with Jekyll</h3>
+
+<p>Jekyll/Octopress is designed to extend its functionality by users. For details
+you can take a look at <a href="http://octopress.org/docs/theme/template/">Theming and Customization - Octopress</a>. Follow
+the instructions, I simply added a new html snippet in <code>source/_includes/</code>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>hn_like.html </span><a href="https://github.com/dryman/dryman.github.com/blob/src/source/_includes/hn_like.html">link </a></figcaption> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+</pre></td><td class="code"><pre><code class="html"><span class="line">{% if site.hn_like_button %}
+</span><span class="line">  <span class="nt">&lt;script </span><span class="na">type=</span><span class="s">&quot;text/javascript&quot;</span><span class="nt">&gt;</span>
+</span><span class="line">    <span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
+</span><span class="line">      <span class="kd">var</span> <span class="nx">hn_like</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">&#39;iframe&#39;</span><span class="p">);</span>
+</span><span class="line">      <span class="nx">hn_like</span><span class="p">.</span><span class="nx">frameborder</span><span class="o">=</span><span class="s2">&quot;no&quot;</span><span class="p">;</span>
+</span><span class="line">      <span class="nx">hn_like</span><span class="p">.</span><span class="nx">scrolling</span><span class="o">=</span><span class="s2">&quot;no&quot;</span><span class="p">;</span>
+</span><span class="line">      <span class="nx">hn_like</span><span class="p">.</span><span class="nx">height</span><span class="o">=</span><span class="s2">&quot;28px&quot;</span><span class="p">;</span>
+</span><span class="line">      <span class="nx">hn_like</span><span class="p">.</span><span class="nx">width</span><span class="o">=</span><span class="s2">&quot;115px&quot;</span><span class="p">;</span>
+</span><span class="line">      <span class="nx">hn_like</span><span class="p">.</span><span class="nx">src</span> <span class="o">=</span> <span class="s2">&quot;http://hnlike.com/upvote.php?link=&quot;</span>
+</span><span class="line">                    <span class="o">+</span> <span class="nb">encodeURIComponent</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">location</span><span class="p">)</span>
+</span><span class="line">                    <span class="o">+</span> <span class="s2">&quot;&amp;title=&quot;</span>
+</span><span class="line">                    <span class="o">+</span> <span class="nb">encodeURIComponent</span><span class="p">(</span><span class="s2">&quot;{{ page.title }}&quot;</span><span class="p">);</span>
+</span><span class="line">      <span class="nx">hn_like</span><span class="p">.</span><span class="nx">innerHTML</span><span class="o">=</span><span class="s2">&quot;iframes not supported by your browser&quot;</span><span class="p">;</span>
+</span><span class="line">      <span class="kd">var</span> <span class="nx">twitter</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByClassName</span><span class="p">(</span><span class="s2">&quot;twitter-share-button&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
+</span><span class="line">
+</span><span class="line">      <span class="nx">twitter</span><span class="p">.</span><span class="nx">parentNode</span><span class="p">.</span><span class="nx">insertBefore</span><span class="p">(</span>
+</span><span class="line">        <span class="nx">hn_like</span><span class="p">,</span>
+</span><span class="line">        <span class="nx">twitter</span>
+</span><span class="line">      <span class="p">);</span>
+</span><span class="line">    <span class="p">})();</span>
+</span><span class="line">  <span class="nt">&lt;/script&gt;</span>
+</span><span class="line">{% endif %}
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>I modified the height and width otherwise it will be too big. Also I use jekyll
+liquid helpers instead of <code>document.title</code> to form title text. Finally I use the
+<code>twitter-share-button</code> element to position where I should insert the button in.</p>
+
+<h3 id="installation-steps">Installation steps</h3>
+
+<ol>
+  <li>
+    <p>To extend the built in snippet, download <a href="https://github.com/dryman/dryman.github.com/blob/src/source/_includes/hn_like.html">hn_like.html</a> into your 
+<code>source/_includes</code> directory</p>
+  </li>
+  <li>
+    <p>Add one line  <code>{% include hn_like.html %}</code>  into <code>source/_includes/after_footer.html</code>.</p>
+  </li>
+  <li>
+    <p>Add</p>
+  </li>
+</ol>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="yaml"><span class="line"><span class="c1"># hacker news like button</span>
+</span><span class="line"><span class="l-Scalar-Plain">hn_like_button</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">true</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>into your <code>_config.yml</code>.</p>
+
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -2034,97 +2198,6 @@ So, I discovered some tricks to form algorithm-like typesettings.</p>
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/03/12/the-recursion-theorem/">The Recursion Theorem</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-03-12T08:42:00+08:00" pubdate data-updated="true">Mar 12<span>th</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>I’m studying theorem of computation myself. Theorem of computation is an
-interesting field. It addresses questions as: What is a theorem? What is a
-proof? What is truth? Can an algorithm decide which statements are true? Can
-a computer calculates everything in the universe? These questions are linked by
-the question:</p>
-
-<blockquote>
-  <p>What are the fundamental capabilities and limitations of computers?</p>
-</blockquote>
-
-<p>This question goes back to the 1930s when mathematical logicians first began to
-explore the meaning of computation. Thus, three major theorem of computation has
-born: <em>automata</em>, <em>computability</em>, and <em>complexity</em>. There are a lot of algebras
-and proofs in this field. Of all the theorems, I love the <strong>recursion
-theorem</strong> the most.</p>
-
-<hr />
-
-<h3 id="self-reference">SELF-REFERENCE</h3>
-
-<p>First we introduce a Turing Machine that <em>ignores its input and prints out a
-copy of its own description</em>. We call this machine $SELF$.</p>
-
-<dl>
-  <dt><strong>LEMMA</strong></dt>
-  <dd>There is a computable function $q: \Sigma^\ast\longrightarrow\Sigma^\ast$,</dd>
-  <dd>where if $w$ is any string, $q(w)$ is the description of a Turing machine $P_w$</dd>
-  <dd>that prints out $w$ and then halts.</dd>
-  <dt><strong>PROOF</strong></dt>
-  <dd>The following TM $Q$ computes $q(w)$</dd>
-</dl>
-
-<script type="math/tex; mode=display">
-\begin{align}
-   Q=& \mbox{On input string $w$:} \\
-     & 1.\; \mbox{Construct the following Turing machine $P_w$} \\
-     & \quad    P_w = \mbox{On any input:} \\
-     & \qquad   1.\; \mbox{Erase input.} \\
-     & \qquad   2.\; \mbox{Write w on the tape.} \\
-     & \qquad   3.\; \mbox{Halt.}  \\
-     & 2.\; \mbox{Output }\langle P_w\rangle  \\
-\end{align}
-</script>
-
-<p>Now we construct $SELF$ in two parts $A$ and $B$. We want $SELF$ to print out
-$\langle SELF\rangle = \langle AB\rangle$.</p>
-
-<script type="math/tex; mode=display">
-\begin{align}
-A=&P_{\langle B\rangle}, \\
-B=&\mbox{On input $\langle M\rangle$, where $M$ is a portion of a TM:}\\
-  & 1.\;\mbox{Compute $q(\langle M\rangle)$.} \\
-  & 2.\;\mbox{Combine the result with $\langle M\rangle$ to make a complete TM.} \\
-  & 3.\;\mbox{Print the description of this TM and halt.} \\
-\end{align}
-</script>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -2140,6 +2213,10 @@ B=&\mbox{On input $\langle M\rangle$, where $M$ is a portion of a TM:}\\
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2012/04/05/jekyll-octopress-hacker-news-plugin/">Jekyll/Octopress hacker news plugin</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2012/04/04/jekyll-graphviz-plugin/">jekyll graphviz plugin</a>
       </li>
     
@@ -2153,10 +2230,6 @@ B=&\mbox{On input $\langle M\rangle$, where $M$ is a portion of a TM:}\\
     
       <li class="post">
         <a href="/blog/2012/03/31/persistent-red-black-tree-in-lisp-2/">persistent red black tree in lisp (2)</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/03/30/persistent-red-black-tree-in-lisp-1/">persistent red black tree in lisp (1)</a>
       </li>
     
   </ul>
@@ -2211,15 +2284,6 @@ B=&\mbox{On input $\langle M\rangle$, where $M$ is a portion of a TM:}\\
 
 
 
-<div id="fb-root"></div>
-<script>(function(d, s, id) {
-  var js, fjs = d.getElementsByTagName(s)[0];
-  if (d.getElementById(id)) {return;}
-  js = d.createElement(s); js.id = id;
-  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
-  fjs.parentNode.insertBefore(js, fjs);
-}(document, 'script', 'facebook-jssdk'));</script>
-
 
 
   <script type="text/javascript">
@@ -2244,26 +2308,56 @@ B=&\mbox{On input $\langle M\rangle$, where $M$ is a portion of a TM:}\\
 
 
 
+<!--
+hn like button plugin for jekyll/octopress
+Author: dryman (Felix Ren-Chyan Chern)
+
+Inpired from http://hnlike.com/ written by sbashyal
+
+(The MIT License)
+
+Copyright © 2012-2013 Felix Ren-Chyan Chern
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the ‘Software’), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED ‘AS IS’, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
   <script type="text/javascript">
     (function(){
       var hn_like = document.createElement('iframe');
-      var x = document.documentElement;
       hn_like.frameborder="no";
       hn_like.scrolling="no";
-      hn_like.height="50px";
-      hn_like.width="350px";
+      hn_like.height="28px";
+      hn_like.width="115px";
       hn_like.src = "http://hnlike.com/upvote.php?link="
                     + encodeURIComponent(document.location)
-                    + "&titile="
-                    + encodeURIComponent(document.title);
+                    + "&title="
+                    + encodeURIComponent("");
       hn_like.innerHTML="iframes not supported by your browser";
-      x.insertBefore(
+      var twitter = document.getElementsByClassName("twitter-share-button")[0];
+
+      twitter.parentNode.insertBefore(
         hn_like,
-        document.getElementsByClassName('twitter-share-button')[0]
+        twitter
       );
     })();
   </script>
 
+<!-- end of hn like button -->
 
 
 

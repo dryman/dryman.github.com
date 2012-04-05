@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Octopress | Carpe dien]]></title>
   <link href="http://dryman.github.com/blog/categories/octopress/atom.xml" rel="self"/>
   <link href="http://dryman.github.com/"/>
-  <updated>2012-04-05T13:26:07+08:00</updated>
+  <updated>2012-04-05T16:48:07+08:00</updated>
   <id>http://dryman.github.com/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,127 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Jekyll/Octopress hacker news plugin]]></title>
+    <link href="http://dryman.github.com/blog/2012/04/05/jekyll-octopress-hacker-news-plugin/"/>
+    <updated>2012-04-05T14:49:00+08:00</updated>
+    <id>http://dryman.github.com/blog/2012/04/05/jekyll-octopress-hacker-news-plugin</id>
+    <content type="html"><![CDATA[<h3 id="inspiration">Inspiration</h3>
+
+<p>I found out that some cool blogs have a cute <em>hacker news like button</em> on each of its
+posts. </p>
+
+<p><img src="/images/hn_like.png"></p>
+
+<p>The service is <a href="http://hnlike.com/">HN Like Button</a>, created by <a href="http://hacksandthoughts.posterous.com/">shashyal</a>.
+To use it you can use the generator like so:</p>
+
+<p><img src="/images/gen_hn_like.png"></p>
+
+<p>However, we don’t want to do that every time, right? So I decided to write a
+small Jekyll plugin to generate the button automatically. Hope you can enjoy it!</p>
+
+<h3 id="the-hidden-api-of-hnlike">The hidden API of HNLike</h3>
+
+<p>Well…not really. The generated html snippet looks like this:
+<div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="ni">&amp;lt;</span>iframe frameborder=&quot;no&quot; scrolling=&quot;no&quot; height=&quot;50px&quot; width=&quot;350px&quot;
+</span><span class='line'> src=&quot;http://hnlike.com/upvote.php?link=http%3A%2F%2Fdryman.github.com%2Fblog%2F2012%2F04%2F04%2Fjekyll-graphviz-plugin%2F<span class="ni">&amp;amp;</span>title=Jekyll%20Graphviz%20Plugin&quot;
+</span><span class='line'> <span class="ni">&amp;gt;</span>iframes not supported by your browser<span class="ni">&amp;lt;</span>/iframe<span class="ni">&amp;gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Observe that in the <code>src</code> after the <code>upvote.php?</code> there are only two
+key valure pairs:</p>
+
+<ol>
+  <li><code>link=</code><strong>html link</strong></li>
+  <li><code>&amp;title=</code><strong>title text</strong></li>
+</ol>
+
+<p>We just need to replace the <strong>html link</strong> and <strong>title text</strong> to our URL-escaped
+string and it is done.</p>
+
+<h3 id="integrate-with-jekyll">Integrate with Jekyll</h3>
+
+<p>Jekyll/Octopress is designed to extend its functionality by users. For details
+you can take a look at <a href="http://octopress.org/docs/theme/template/">Theming and Customization - Octopress</a>. Follow
+the instructions, I simply added a new html snippet in <code>source/_includes/</code>.</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>hn_like.html </span><a href='https://github.com/dryman/dryman.github.com/blob/src/source/_includes/hn_like.html'>link </a></figcaption> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>{% if site.hn_like_button %}
+</span><span class='line'>  <span class="nt">&lt;script </span><span class="na">type=</span><span class="s">&quot;text/javascript&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">hn_like</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">&#39;iframe&#39;</span><span class="p">);</span>
+</span><span class='line'>      <span class="nx">hn_like</span><span class="p">.</span><span class="nx">frameborder</span><span class="o">=</span><span class="s2">&quot;no&quot;</span><span class="p">;</span>
+</span><span class='line'>      <span class="nx">hn_like</span><span class="p">.</span><span class="nx">scrolling</span><span class="o">=</span><span class="s2">&quot;no&quot;</span><span class="p">;</span>
+</span><span class='line'>      <span class="nx">hn_like</span><span class="p">.</span><span class="nx">height</span><span class="o">=</span><span class="s2">&quot;28px&quot;</span><span class="p">;</span>
+</span><span class='line'>      <span class="nx">hn_like</span><span class="p">.</span><span class="nx">width</span><span class="o">=</span><span class="s2">&quot;115px&quot;</span><span class="p">;</span>
+</span><span class='line'>      <span class="nx">hn_like</span><span class="p">.</span><span class="nx">src</span> <span class="o">=</span> <span class="s2">&quot;http://hnlike.com/upvote.php?link=&quot;</span>
+</span><span class='line'>                    <span class="o">+</span> <span class="nb">encodeURIComponent</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">location</span><span class="p">)</span>
+</span><span class='line'>                    <span class="o">+</span> <span class="s2">&quot;&amp;amp;title=&quot;</span>
+</span><span class='line'>                    <span class="o">+</span> <span class="nb">encodeURIComponent</span><span class="p">(</span><span class="s2">&quot;{{ page.title }}&quot;</span><span class="p">);</span>
+</span><span class='line'>      <span class="nx">hn_like</span><span class="p">.</span><span class="nx">innerHTML</span><span class="o">=</span><span class="s2">&quot;iframes not supported by your browser&quot;</span><span class="p">;</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">twitter</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByClassName</span><span class="p">(</span><span class="s2">&quot;twitter-share-button&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span><span class="nt">&lt;/script&gt;&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;pre&gt;&lt;code&gt;</span>  twitter.parentNode.insertBefore(
+</span><span class='line'>    hn_like,
+</span><span class='line'>    twitter
+</span><span class='line'>  );
+</span><span class='line'>})();   <span class="ni">&amp;lt;</span>/script<span class="ni">&amp;gt;</span> {% endif %}
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+</code></pre>
+
+<p>I modified the height and width otherwise it will be too big. Also I use jekyll
+liquid helpers instead of <code>document.title</code> to form title text. Finally I use the
+<code>twitter-share-button</code> element to position where I should insert the button in.</p>
+
+<h3 id="installation-steps">Installation steps</h3>
+
+<ol>
+  <li>
+    <p>To extend the built in snippet, download <a href="https://github.com/dryman/dryman.github.com/blob/src/source/_includes/hn_like.html">hn_like.html</a> into your 
+<code>source/_includes</code> directory</p>
+  </li>
+  <li>
+    <p>Add one line  <code>{% include hn_like.html %}</code>  into <code>source/_includes/after_footer.html</code>.</p>
+  </li>
+  <li>
+    <p>Add</p>
+  </li>
+</ol>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='yaml'><span class='line'><span class="c1"># hacker news like button</span>
+</span><span class='line'><span class="l-Scalar-Plain">hn_like_button</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">true</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>into your <code>_config.yml</code>.</p>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[jekyll graphviz plugin]]></title>
