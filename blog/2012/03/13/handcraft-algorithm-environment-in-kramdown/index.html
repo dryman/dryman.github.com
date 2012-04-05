@@ -338,7 +338,10 @@ So, I discovered some tricks to form algorithm-like typesettings.</p>
                     + "&titile="
                     + encodeURIComponent(document.title);
       hn_like.innerHTML="iframes not supported by your browser";
-      document.getElementsByTagName('head')[0].appendChild(hn_like);
+      document.documentElement.insertBefore(
+        hn_like,
+        document.getElementsByClass('twitter-share-button')[0]
+      );
     })();
   </script>
 
