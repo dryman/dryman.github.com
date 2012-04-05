@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby, | Carpe dien (Dryman's blog)]]></title>
   <link href="http://dryman.github.com/blog/categories/ruby-/atom.xml" rel="self"/>
   <link href="http://dryman.github.com/"/>
-  <updated>2012-04-05T17:31:07+08:00</updated>
+  <updated>2012-04-05T17:45:49+08:00</updated>
   <id>http://dryman.github.com/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -14,7 +14,7 @@
 
   
   <entry>
-    <title type="html"><![CDATA[jekyll graphviz plugin]]></title>
+    <title type="html"><![CDATA[Jekyll/Octopress graphviz plugin]]></title>
     <link href="http://dryman.github.com/blog/2012/04/04/jekyll-graphviz-plugin/"/>
     <updated>2012-04-04T17:37:00+08:00</updated>
     <id>http://dryman.github.com/blog/2012/04/04/jekyll-graphviz-plugin</id>
