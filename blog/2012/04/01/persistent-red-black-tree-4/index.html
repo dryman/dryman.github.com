@@ -454,6 +454,7 @@ a complex algorithm in a bottom-up design process. It’s just come up naturally
   <script type="text/javascript">
     (function(){
       var hn_like = document.createElement('iframe');
+      var x = document.documentElement;
       hn_like.frameborder="no";
       hn_like.scrolling="no";
       hn_like.height="50px";
@@ -463,9 +464,9 @@ a complex algorithm in a bottom-up design process. It’s just come up naturally
                     + "&titile="
                     + encodeURIComponent(document.title);
       hn_like.innerHTML="iframes not supported by your browser";
-      document.documentElement.insertBefore(
+      x.insertBefore(
         hn_like,
-        document.getElementsByClass('twitter-share-button')[0]
+        document.getElementsByClassName('twitter-share-button')[0]
       );
     })();
   </script>
