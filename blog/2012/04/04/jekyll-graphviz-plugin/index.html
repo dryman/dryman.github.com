@@ -166,7 +166,7 @@ raise an error.</p>
     
       <div class="sharing">
   
-  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://dryman.github.com/blog/2012/04/04/jekyll-graphviz-plugin/" data-via="" data-counturl="http://dryman.github.com/blog/2012/04/04/jekyll-graphviz-plugin/" >Tweet</a>
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://dryman.github.com/blog/2012/04/04/jekyll-graphviz-plugin/" data-via="idryman" data-counturl="http://dryman.github.com/blog/2012/04/04/jekyll-graphviz-plugin/" >Tweet</a>
   
   
   <div class="g-plusone" data-size="medium"></div>
@@ -223,6 +223,22 @@ raise an error.</p>
   </ul>
 </section>
 
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("idryman", 4, false);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/idryman" class="twitter-follow-button" data-show-count="false">Follow @idryman</a>
+  
+</section>
 
 
 
@@ -290,6 +306,25 @@ raise an error.</p>
       document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
     })();
   </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var hn_like = document.createElement('iframe');
+      hn_like.frameborder="no";
+      hn_like.scrolling="no";
+      hn_like.height="50px";
+      hn_like.width="350px";
+      hn_like.src = "http://hnlike.com/upvote.php?link="
+                    + encodeURIComponent(document.location)
+                    + "&titile="
+                    + encodeURIComponent(document.title);
+      hn_like.innerHTML="iframes not supported by your browser";
+      document.getElementsByTagName('head')[0].appendChild(hn_like);
+    })();
+  </script>
+
 
 
 
