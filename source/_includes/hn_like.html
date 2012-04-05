@@ -1,3 +1,4 @@
+{% if site.hn_like_button %}
 <!--
 hn like button plugin for jekyll/octopress
 Author: dryman (Felix Ren-Chyan Chern)
@@ -26,7 +27,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 -->
-{% if site.hn_like_button %}
   <script type="text/javascript">
     (function(){
       var hn_like = document.createElement('iframe');
@@ -47,6 +47,6 @@ SOFTWARE.
       );
     })();
   </script>
-{% endif %}
 
 <!-- end of hn like button -->
+{% endif %}
