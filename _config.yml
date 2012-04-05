@@ -4,7 +4,7 @@
 
 url: http://dryman.github.com
 title: "Carpe dien"
-subtitle: "Work hard and enjoy every moment."
+subtitle: "Work hard and enjoy every moment -- Dryman's (Felix's) blog "
 author: "dryman (Felix Ren-Chyan Chern)"
 simple_search: http://google.com/search
 description:
@@ -64,7 +64,7 @@ github_show_profile_link: true
 github_skip_forks: true
 
 # Twitter
-twitter_user:
+twitter_user: idryman
 twitter_tweet_count: 4
 twitter_show_replies: false
 twitter_follow_button: true
@@ -96,4 +96,7 @@ disqus_show_comment_count: false
 google_analytics_tracking_id:
 
 # Facebook Like
-facebook_like: true
+facebook_like: false
+
+# Hacker News Like
+hn_like_button: true
