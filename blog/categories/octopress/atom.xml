@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Octopress | Carpe dien]]></title>
   <link href="http://dryman.github.com/blog/categories/octopress/atom.xml" rel="self"/>
   <link href="http://dryman.github.com/"/>
-  <updated>2012-04-05T16:48:07+08:00</updated>
+  <updated>2012-04-05T17:19:14+08:00</updated>
   <id>http://dryman.github.com/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -130,6 +130,11 @@ liquid helpers instead of <code>document.title</code> to form title text. Finall
 </span></code></pre></td></tr></table></div></figure></notextile></div></p>
 
 <p>into your <code>_config.yml</code>.</p>
+
+<h2 id="edit">Edit:</h2>
+
+<p>The vote won’t update immediately, because the HNLike uses Hacker News search
+API to update the number. </p>
 
 ]]></content>
   </entry>
