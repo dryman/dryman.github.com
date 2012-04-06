@@ -5,12 +5,12 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Writing math equations on Octopress - Carpe diem (Felix's blog)</title>
+  <title>Carpe diem (Felix's blog)</title>
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="Octopress is a wonderful blogging framework for hackers, but it does not support
-math typesetting by default. What hacker doesn’t use Latex math? The &hellip;">
+  <meta name="description" content="I’m studying theorem of computation myself. Theorem of computation is an
+interesting field. It addresses questions as: What is a theorem? What is a &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -19,7 +19,7 @@ math typesetting by default. What hacker doesn’t use Latex math? The &hellip;"
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://dryman.github.com/blog/2012/03/10/writing-math-equations-on-octopress">
+  <link rel="canonical" href="http://dryman.github.com/blog/page/3">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -75,12 +75,106 @@ math typesetting by default. What hacker doesn’t use Latex math? The &hellip;"
 </nav>
   <div id="main">
     <div id="content">
-      <div>
-<article class="hentry" role="article">
+      <div class="blog-index">
   
+  
+  
+    <article>
+      
   <header>
     
-      <h1 class="entry-title">Writing Math Equations on Octopress</h1>
+      <h1 class="entry-title"><a href="/blog/2012/03/12/the-recursion-theorem/">The Recursion Theorem</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-03-12T08:42:00+08:00" pubdate data-updated="true">Mar 12<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I’m studying theorem of computation myself. Theorem of computation is an
+interesting field. It addresses questions as: What is a theorem? What is a
+proof? What is truth? Can an algorithm decide which statements are true? Can
+a computer calculates everything in the universe? These questions are linked by
+the question:</p>
+
+<blockquote>
+  <p>What are the fundamental capabilities and limitations of computers?</p>
+</blockquote>
+
+<p>This question goes back to the 1930s when mathematical logicians first began to
+explore the meaning of computation. Thus, three major theorem of computation has
+born: <em>automata</em>, <em>computability</em>, and <em>complexity</em>. There are a lot of algebras
+and proofs in this field. Of all the theorems, I love the <strong>recursion
+theorem</strong> the most.</p>
+
+<hr />
+
+<h3 id="self-reference">SELF-REFERENCE</h3>
+
+<p>First we introduce a Turing Machine that <em>ignores its input and prints out a
+copy of its own description</em>. We call this machine $SELF$.</p>
+
+<dl>
+  <dt><strong>LEMMA</strong></dt>
+  <dd>There is a computable function $q: \Sigma^\ast\longrightarrow\Sigma^\ast$,</dd>
+  <dd>where if $w$ is any string, $q(w)$ is the description of a Turing machine $P_w$</dd>
+  <dd>that prints out $w$ and then halts.</dd>
+  <dt><strong>PROOF</strong></dt>
+  <dd>The following TM $Q$ computes $q(w)$</dd>
+</dl>
+
+<script type="math/tex; mode=display">
+\begin{align}
+   Q=& \mbox{On input string $w$:} \\
+     & 1.\; \mbox{Construct the following Turing machine $P_w$} \\
+     & \quad    P_w = \mbox{On any input:} \\
+     & \qquad   1.\; \mbox{Erase input.} \\
+     & \qquad   2.\; \mbox{Write w on the tape.} \\
+     & \qquad   3.\; \mbox{Halt.}  \\
+     & 2.\; \mbox{Output }\langle P_w\rangle  \\
+\end{align}
+</script>
+
+<p>Now we construct $SELF$ in two parts $A$ and $B$. We want $SELF$ to print out
+$\langle SELF\rangle = \langle AB\rangle$.</p>
+
+<script type="math/tex; mode=display">
+\begin{align}
+A=&P_{\langle B\rangle}, \\
+B=&\mbox{On input $\langle M\rangle$, where $M$ is a portion of a TM:}\\
+  & 1.\;\mbox{Compute $q(\langle M\rangle)$.} \\
+  & 2.\;\mbox{Combine the result with $\langle M\rangle$ to make a complete TM.} \\
+  & 3.\;\mbox{Print the description of this TM and halt.} \\
+\end{align}
+</script>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/03/10/writing-math-equations-on-octopress/">Writing Math Equations on Octopress</a></h1>
     
     
       <p class="meta">
@@ -103,7 +197,7 @@ math typesetting by default. What hacker doesn’t use Latex math? The &hellip;"
   </header>
 
 
-<div class="entry-content"><p>Octopress is a wonderful blogging framework for hackers, but it does not support
+  <div class="entry-content"><p>Octopress is a wonderful blogging framework for hackers, but it does not support
 math typesetting by default. What hacker doesn’t use Latex math?</p>
 
 <p>The followings are configs to make you write latex math equations in Octopress.
@@ -235,71 +329,116 @@ change <code>rdiscount</code> to <code>kramdown</code></p>
   </ol>
 </div>
 </div>
+  
+  
 
 
-  <footer>
-    <p class="meta">
+    </article>
+  
+  
+    <article>
       
-  
-
-<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
-
-      
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-03-10T16:23:00+08:00" pubdate data-updated="true">Mar 10<span>th</span>, 2012</time>
-      
-
-<span class="categories">
-  
-    <a class='category' href='/blog/categories/math/'>Math</a>, <a class='category' href='/blog/categories/octopress/'>Octopress</a>
-  
-</span>
-
-
-    </p>
+  <header>
     
-      <div class="sharing">
-  
-  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://dryman.github.com/blog/2012/03/10/writing-math-equations-on-octopress/" data-via="idryman" data-counturl="http://dryman.github.com/blog/2012/03/10/writing-math-equations-on-octopress/" >Tweet</a>
-  
-  
-  <div class="g-plusone" data-size="medium"></div>
-  
-  
-    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
-  
-</div>
-
+      <h1 class="entry-title"><a href="/blog/2012/03/10/my-octopress-configs/">My Octopress Configs</a></h1>
     
-    <p class="meta">
-      
-        <a class="basic-alignment left" href="/blog/2012/03/10/my-octopress-configs/" title="Previous Post: My Octopress configs">&laquo; My Octopress configs</a>
-      
-      
-        <a class="basic-alignment right" href="/blog/2012/03/12/the-recursion-theorem/" title="Next Post: The recursion theorem">The recursion theorem &raquo;</a>
-      
-    </p>
-  </footer>
-</article>
+    
+      <p class="meta">
+        
 
-  <section>
-    <h1>Comments</h1>
-    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-03-10T16:12:00+08:00" pubdate data-updated="true">Mar 10<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="installation-note">installation note</h2>
+
+<p>This is an installation note for <a href="http://octopress.org">Octopress</a> blogging framework. My configuration is developed on OSX with ruby 1.9.2, and xcode 4.2.</p>
+
+<h2 id="required-developement-tools">Required developement tools</h2>
+
+<ol>
+  <li><a href="https://github.com/kennethreitz/osx-gcc-installer">osx-gcc installer</a></li>
+  <li>install <a href="http://mxcl.github.com/homebrew/">homebrew</a> if not yet installed</li>
+</ol>
+
+<h2 id="manage-rubies-with-rvmhttpbeginrescueendcom">Manage Rubies with <a href="http://beginrescueend.com/">RVM</a></h2>
+
+<p>Install RVM</p>
+
+<pre><code>bash -s stable &lt; &lt;(curl -s https://raw.github.com/wayneeseguin/rvm/master/binscripts/rvm-installer)
+</code></pre>
+
+<p>Reload your Shell environment:</p>
+
+<pre><code>source ~/.bash_profile
+</code></pre>
+
+<p>Install ruby:</p>
+
+<pre><code>rvm install 1.9.2 --with-gcc=gcc-4.2
+</code></pre>
+
+<p>Note: Octopress requires ruby 1.9.2</p>
+
+<p>Use ruby 1.9.2</p>
+
+<pre><code>rvm use 1.9.2 --default
+</code></pre>
+
+<h2 id="setup-octopresshttpoctopressorg">Setup <a href="http://octopress.org">Octopress</a></h2>
+
+<pre><code>git clone git://github.com/imathis/octopress.git your-blog
+cd your-blog
+gem install bundler
+bundle install
+rake install
+</code></pre>
+
+<h2 id="setup-github-pages">Setup github pages</h2>
+<p>add new repository as <em>your-name.github.com</em></p>
+
+<pre><code>rake setup_github_pages
+Enter the read/write url for your repository: git@github.com:your-name/your-name.github.com.git
+rake generate
+rake deploy
+</code></pre>
+
+<p>Now you can go to github.com/your-name.github.com to see your repository</p>
+
+<pre><code>git add .
+git commit -m 'blog init'
+git push origin source
+</code></pre>
+
+<p>Wait about 10 minutes and you can see your inited blog on your-name.github.com!</p>
 </div>
-  </section>
+  
+  
 
+
+    </article>
+  
+  <div class="pagination">
+    
+    <a href="/blog/archives">Blog Archives</a>
+    
+    <a class="next" href="/blog/page/2/">Newer &rarr;</a>
+    
+  </div>
 </div>
-
 <aside class="sidebar">
   
     <section>
@@ -353,7 +492,7 @@ change <code>rdiscount</code> to <code>kramdown</code></p>
 <section>
   <h1>Latest Tweets</h1>
   <ul id="tweets">
-    <li class="loading">Status updating...</li>
+    <li class="loading">Status updating&#8230;</li>
   </ul>
   <script type="text/javascript">
     $.domReady(function(){
@@ -373,7 +512,6 @@ change <code>rdiscount</code> to <code>kramdown</code></p>
   
 </aside>
 
-
     </div>
   </div>
   <footer role="contentinfo"><p>
@@ -388,10 +526,7 @@ change <code>rdiscount</code> to <code>kramdown</code></p>
       var disqus_shortname = 'dryblog';
       
         
-        // var disqus_developer = 1;
-        var disqus_identifier = 'http://dryman.github.com/blog/2012/03/10/writing-math-equations-on-octopress/';
-        var disqus_url = 'http://dryman.github.com/blog/2012/03/10/writing-math-equations-on-octopress/';
-        var disqus_script = 'embed.js';
+        var disqus_script = 'count.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
@@ -473,7 +608,7 @@ SOFTWARE.
       hn_like.src = "http://hnlike.com/upvote.php?link="
                     + encodeURIComponent(document.location)
                     + "&title="
-                    + encodeURIComponent("Writing math equations on Octopress");
+                    + encodeURIComponent("");
       hn_like.innerHTML="iframes not supported by your browser";
       var twitter = document.getElementsByClassName("twitter-share-button")[0];
 
