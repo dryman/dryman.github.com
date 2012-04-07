@@ -20,6 +20,8 @@ born: *automata*, *computability*, and *complexity*. There are a lot of algebras
 and proofs in this field. Of all the theorems, I love the **recursion
 theorem** the most.
 
+<!-- more -->
+
 * * *
 
 ### SELF-REFERENCE

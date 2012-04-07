@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "jekyll graphviz plugin"
+title: "Jekyll/Octopress graphviz plugin"
 date: 2012-04-04 17:37
 comments: true
 categories: Ruby, Octopress
@@ -54,6 +54,8 @@ digraph G {
   d -> h;
 }
 {% endgraphviz %}
+
+<!-- more -->
 
 ### Installation:
 

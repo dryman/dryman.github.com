@@ -24,6 +24,8 @@ Okasaki's purely functional way. He also introduced a left-leaning insertion
 algorithm that reduces one pattern matching compare to Okasaki's one. The
 programs are elegantly written in Haskell.
 
+<!-- more -->
+
 ### Orinal red black tree algorithm
 
 In 1979, Guibas and Sedgewick published the original imperative red black trees:

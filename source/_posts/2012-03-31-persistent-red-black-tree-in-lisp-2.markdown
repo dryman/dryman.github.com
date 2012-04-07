@@ -30,6 +30,8 @@ Using the `kid` utility, we can make rotate single to be simpler too:
 Observe that the two return form is nested reversed. Why not write a macro that
 generate this form? Then we only need to write the right case!
 
+<!-- more -->
+
 ### Reverse the tree
 
 First we need to write a function that take a nested form and return it in

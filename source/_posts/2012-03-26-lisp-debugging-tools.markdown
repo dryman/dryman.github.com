@@ -53,6 +53,9 @@ Continue       :c       switch off single step mode, continue evaluation
            same as above, specify a condition when to stop
 ~~~~~
 
+<!-- more -->
+
+
 **Voilà!** Note that `Step` will step into every S-expression and `Next` will
 only evaluate the expression and return the value. The great news is you can
 do any evaluations in `Step mode`. For example, you can type in a S-expression

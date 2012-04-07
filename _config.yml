@@ -2,9 +2,9 @@
 #      Main Configs       #
 # ----------------------- #
 
-url: http://dryman.github.com
-title: "Carpe dien"
-subtitle: "Work hard and enjoy every moment -- Dryman's (Felix Ren-Chyan Chern) blog "
+url: http://idryman.org
+title: "Carpe diem (Felix's blog)"
+subtitle: "Work hard and enjoy every moments..."
 author: "dryman (Felix Ren-Chyan Chern)"
 simple_search: http://google.com/search
 description:
@@ -38,7 +38,7 @@ pygments: false # default python pygments have been replaced by pygments.rb
 
 paginate: 10          # Posts per page on the blog index
 pagination_dir: blog  # Directory base for pagination URLs eg. /blog/page/2/
-recent_posts: 5       # Posts in the sidebar Recent Posts section
+recent_posts: 10      # Posts in the sidebar Recent Posts section
 excerpt_link: "Read on &rarr;"  # "Continue reading" link text at the bottom of excerpted articles
 
 titlecase: true       # Converts page and post titles to titlecase
@@ -66,7 +66,7 @@ github_skip_forks: true
 # Twitter
 twitter_user: idryman
 twitter_tweet_count: 4
-twitter_show_replies: false
+twitter_show_replies: true
 twitter_follow_button: true
 twitter_show_follower_count: false
 twitter_tweet_button: true
@@ -96,7 +96,7 @@ disqus_show_comment_count: false
 google_analytics_tracking_id: "UA-23425996-1"
 
 # Facebook Like
-facebook_like: false
+facebook_like: true
 
 # Hacker News Like
 hn_like_button: true

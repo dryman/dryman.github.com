@@ -23,6 +23,8 @@ interesting topics to write down, but for mow, I'll focus on the second talk
 first. You can find the slide for the second talk 
 [here](http://projects.ict.usc.edu/rwt2011/presentations/hovy.pdf).
 
+<!-- more -->
+
 Though machine learning told us that "you don't have to be smart, you just need
 enough training data," deep in our heart, we still believe that all of our human
 behaviors is not a huge training table. There must be some rules that guide us,

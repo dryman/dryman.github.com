@@ -11,6 +11,8 @@ installation note
 
 This is an installation note for [Octopress](http://octopress.org) blogging framework. My configuration is developed on OSX with ruby 1.9.2, and xcode 4.2.
 
+<!-- more -->
+
 Required developement tools
 ---------------------------
 

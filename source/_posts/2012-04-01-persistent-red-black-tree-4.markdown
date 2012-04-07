@@ -48,6 +48,8 @@ balanceR B a x (Fork R (Fork R b y c) z d) = Fork R (Fork B a x b) y (Fork B c z
 balanceR k a x b 
 {% endcodeblock %}
 
+<!-- more -->
+
 Cool! This can be even reduced to only two cases in our `mtree-expand` and
 `mtree-let` macro!
 

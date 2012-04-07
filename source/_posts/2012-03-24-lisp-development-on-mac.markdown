@@ -16,6 +16,8 @@ configs:
   * [asdf.lisp] that ships with [quicklisp][quicklisp] (Bridge between lisp and
     SLIME)
 
+<!-- more -->
+
 I also tried many other combinations. For example, [sbcl] should be a faster
 alternative to [clisp], but I can't make its debugger work. [sbcl] also support
 better linking to slime and sldb, but sldb isn't working well. [Emacs 24] seems to

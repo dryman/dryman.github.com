@@ -21,6 +21,8 @@ hackers (including me) still love to use Perl; Java is widely used in big
 companies; VBA is friendly for dealing excel data...etc. And **Lisp**, are
 highly recommended by great hackers. 
 
+<!-- more -->
+
 * * *
 
 If you are also interested in Lisp, I recommend [Practical Common

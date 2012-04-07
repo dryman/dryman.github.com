@@ -14,6 +14,8 @@ However, I missed some features in $\LaTeX$. One of those is [Algorithm and
 Pseudocode packages](http://en.wikibooks.org/wiki/LaTeX/Algorithms_and_Pseudocode).
 So, I discovered some tricks to form algorithm-like typesettings.
 
+<!-- more -->
+
 1. Use `\begin{align}` to align the lines.
 2. Use `\mbox{text...}` to put descriptions in.
 3. Use `\quad` and `\qquad` to make indentions.

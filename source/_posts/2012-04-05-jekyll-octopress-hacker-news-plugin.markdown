@@ -21,6 +21,8 @@ To use it you can use the generator like so:
 However, we don't want to do that every time, right? So I decided to write a
 small Jekyll plugin to generate the button automatically. Hope you can enjoy it!
 
+<!-- more -->
+
 ### The hidden API of HNLike
 
 Well...not really. The generated html snippet looks like this:
@@ -93,6 +95,10 @@ hn_like_button: true
 
 into your `_config.yml`.
 
+## Edit:
+
+The vote won't update immediately. It will show up until hacker news index the
+post and can be reached via HN search API.
 
 
 [hnlike]: http://hnlike.com/
