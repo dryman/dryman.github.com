@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Math | Carpe diem (Felix's blog)]]></title>
   <link href="http://dryman.github.com/blog/categories/math/atom.xml" rel="self"/>
   <link href="http://dryman.github.com/"/>
-  <updated>2012-04-06T22:44:42+08:00</updated>
+  <updated>2012-04-07T09:50:36+08:00</updated>
   <id>http://dryman.github.com/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -25,6 +25,8 @@ wiki/markup languages, because $\LaTeX$ doesn’t perform well in HTML output.
 However, I missed some features in $\LaTeX$. One of those is <a href="http://en.wikibooks.org/wiki/LaTeX/Algorithms_and_Pseudocode">Algorithm and
 Pseudocode packages</a>.
 So, I discovered some tricks to form algorithm-like typesettings.</p>
+
+<!-- more -->
 
 <ol>
   <li>Use <code>\begin{align}</code> to align the lines.</li>
@@ -111,6 +113,8 @@ Then you can translate this</p>
 \mbox{Star: } & A^\star  = \{x_1x_2\ldots x_k \mid  k\geq 0 \mbox{ and each } x_i\in A\} \\
 \end{align}
 </script>
+
+<!-- more -->
 
 <p><strong>Voilà!</strong></p>
 

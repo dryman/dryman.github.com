@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://dryman.github.com/atom.xml" rel="self"/>
   <link href="http://dryman.github.com/"/>
-  <updated>2012-04-06T22:44:42+08:00</updated>
+  <updated>2012-04-07T09:50:36+08:00</updated>
   <id>http://dryman.github.com/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -32,6 +32,8 @@ To use it you can use the generator like so:</p>
 
 <p>However, we don’t want to do that every time, right? So I decided to write a
 small Jekyll plugin to generate the button automatically. Hope you can enjoy it!</p>
+
+<!-- more -->
 
 <h3 id="the-hidden-api-of-hnlike">The hidden API of HNLike</h3>
 
@@ -176,6 +178,8 @@ digraph G {
 
 <p><img src="http://dryman.github.com/images/graphviz/g-3feb8846aa4bb9767add244df8bed05a.svg" /></p>
 
+<!-- more -->
+
 <h3 id="installation">Installation:</h3>
 
 <ol>
@@ -256,6 +260,8 @@ July 1999
 </span><span class="line"><span class="nf">balanceR</span> <span class="kt">B</span> <span class="n">a</span> <span class="n">x</span> <span class="p">(</span><span class="kt">Fork</span> <span class="kt">R</span> <span class="p">(</span><span class="kt">Fork</span> <span class="kt">R</span> <span class="n">b</span> <span class="n">y</span> <span class="n">c</span><span class="p">)</span> <span class="n">z</span> <span class="n">d</span><span class="p">)</span> <span class="ow">=</span> <span class="kt">Fork</span> <span class="kt">R</span> <span class="p">(</span><span class="kt">Fork</span> <span class="kt">B</span> <span class="n">a</span> <span class="n">x</span> <span class="n">b</span><span class="p">)</span> <span class="n">y</span> <span class="p">(</span><span class="kt">Fork</span> <span class="kt">B</span> <span class="n">c</span> <span class="n">z</span> <span class="n">d</span><span class="p">)</span>
 </span><span class="line"><span class="nf">balanceR</span> <span class="n">k</span> <span class="n">a</span> <span class="n">x</span> <span class="n">b</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<!-- more -->
 
 <p>Cool! This can be even reduced to only two cases in our <code>mtree-expand</code> and
 <code>mtree-let</code> macro!</p>
@@ -401,6 +407,8 @@ function <code>(kid root dir dir)</code> was inspired from his implementation.</
 Okasaki’s purely functional way. He also introduced a left-leaning insertion
 algorithm that reduces one pattern matching compare to Okasaki’s one. The
 programs are elegantly written in Haskell.</p>
+
+<!-- more -->
 
 <h3 id="orinal-red-black-tree-algorithm">Orinal red black tree algorithm</h3>
 
@@ -772,6 +780,8 @@ would print <code>8-b</code> instead of <code>#S(RB :data 8 :red nil)</code>.</p
 <p>Observe that the two return form is nested reversed. Why not write a macro that
 generate this form? Then we only need to write the right case!</p>
 
+<!-- more -->
+
 <h3 id="reverse-the-tree">Reverse the tree</h3>
 
 <p>First we need to write a function that take a nested form and return it in
@@ -1005,6 +1015,8 @@ learning, computer vision, statistics, visualizations…etc.) Many old school
 hackers (including me) still love to use Perl; Java is widely used in big
 companies; VBA is friendly for dealing excel data…etc. And <strong>Lisp</strong>, are
 highly recommended by great hackers. </p>
+
+<!-- more -->
 
 <hr />
 
@@ -1302,6 +1314,8 @@ Continue       :c       switch off single step mode, continue evaluation
 -- Step-until :su, Next-until :nu, Over-until :ou, Continue-until :cu --
            same as above, specify a condition when to stop
 </code></pre>
+
+<!-- more -->
 
 <p><strong>Voilà!</strong> Note that <code>Step</code> will step into every S-expression and <code>Next</code> will
 only evaluate the expression and return the value. The great news is you can
@@ -1632,6 +1646,8 @@ SLIME)</li>
   </li>
 </ul>
 
+<!-- more -->
+
 <p>I also tried many other combinations. For example, <a href="http://www.sbcl.org/">sbcl</a> should be a faster
 alternative to <a href="http://www.clisp.org/">clisp</a>, but I can’t make its debugger work. <a href="http://www.sbcl.org/">sbcl</a> also support
 better linking to slime and sldb, but sldb isn’t working well. <a href="http://emacsformacosx.com/builds">Emacs 24</a> seems to
@@ -1706,6 +1722,8 @@ plus, much more than any relationships in existing wordnets! There are so many
 interesting topics to write down, but for mow, I’ll focus on the second talk
 first. You can find the slide for the second talk 
 <a href="http://projects.ict.usc.edu/rwt2011/presentations/hovy.pdf">here</a>.</p>
+
+<!-- more -->
 
 <p>Though machine learning told us that “you don’t have to be smart, you just need
 enough training data,” deep in our heart, we still believe that all of our human
@@ -1819,6 +1837,8 @@ However, I missed some features in $\LaTeX$. One of those is <a href="http://en.
 Pseudocode packages</a>.
 So, I discovered some tricks to form algorithm-like typesettings.</p>
 
+<!-- more -->
+
 <ol>
   <li>Use <code>\begin{align}</code> to align the lines.</li>
   <li>Use <code>\mbox{text...}</code> to put descriptions in.</li>
@@ -1888,6 +1908,8 @@ explore the meaning of computation. Thus, three major theorem of computation has
 born: <em>automata</em>, <em>computability</em>, and <em>complexity</em>. There are a lot of algebras
 and proofs in this field. Of all the theorems, I love the <strong>recursion
 theorem</strong> the most.</p>
+
+<!-- more -->
 
 <hr />
 
@@ -1968,6 +1990,8 @@ Then you can translate this</p>
 \mbox{Star: } & A^\star  = \{x_1x_2\ldots x_k \mid  k\geq 0 \mbox{ and each } x_i\in A\} \\
 \end{align}
 </script>
+
+<!-- more -->
 
 <p><strong>Voilà!</strong></p>
 
@@ -2079,6 +2103,8 @@ change <code>rdiscount</code> to <code>kramdown</code></p>
     <content type="html"><![CDATA[<h2 id="installation-note">installation note</h2>
 
 <p>This is an installation note for <a href="http://octopress.org">Octopress</a> blogging framework. My configuration is developed on OSX with ruby 1.9.2, and xcode 4.2.</p>
+
+<!-- more -->
 
 <h2 id="required-developement-tools">Required developement tools</h2>
 

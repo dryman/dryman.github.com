@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Algorithm | Carpe diem (Felix's blog)]]></title>
   <link href="http://dryman.github.com/blog/categories/algorithm/atom.xml" rel="self"/>
   <link href="http://dryman.github.com/"/>
-  <updated>2012-04-06T22:44:42+08:00</updated>
+  <updated>2012-04-07T09:50:36+08:00</updated>
   <id>http://dryman.github.com/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -79,6 +79,8 @@ July 1999
 </span><span class='line'><span class="nf">balanceR</span> <span class="kt">B</span> <span class="n">a</span> <span class="n">x</span> <span class="p">(</span><span class="kt">Fork</span> <span class="kt">R</span> <span class="p">(</span><span class="kt">Fork</span> <span class="kt">R</span> <span class="n">b</span> <span class="n">y</span> <span class="n">c</span><span class="p">)</span> <span class="n">z</span> <span class="n">d</span><span class="p">)</span> <span class="ow">=</span> <span class="kt">Fork</span> <span class="kt">R</span> <span class="p">(</span><span class="kt">Fork</span> <span class="kt">B</span> <span class="n">a</span> <span class="n">x</span> <span class="n">b</span><span class="p">)</span> <span class="n">y</span> <span class="p">(</span><span class="kt">Fork</span> <span class="kt">B</span> <span class="n">c</span> <span class="n">z</span> <span class="n">d</span><span class="p">)</span>
 </span><span class='line'><span class="nf">balanceR</span> <span class="n">k</span> <span class="n">a</span> <span class="n">x</span> <span class="n">b</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<!-- more -->
 
 <p>Cool! This can be even reduced to only two cases in our <code>mtree-expand</code> and
 <code>mtree-let</code> macro!</p>
@@ -223,6 +225,8 @@ function <code>(kid root dir dir)</code> was inspired from his implementation.</
 Okasaki’s purely functional way. He also introduced a left-leaning insertion
 algorithm that reduces one pattern matching compare to Okasaki’s one. The
 programs are elegantly written in Haskell.</p>
+
+<!-- more -->
 
 <h3 id="orinal-red-black-tree-algorithm">Orinal red black tree algorithm</h3>
 
@@ -591,6 +595,8 @@ would print <code>8-b</code> instead of <code>#S(RB :data 8 :red nil)</code>.</p
 <p>Observe that the two return form is nested reversed. Why not write a macro that
 generate this form? Then we only need to write the right case!</p>
 
+<!-- more -->
+
 <h3 id="reverse-the-tree">Reverse the tree</h3>
 
 <p>First we need to write a function that take a nested form and return it in
@@ -822,6 +828,8 @@ learning, computer vision, statistics, visualizations…etc.) Many old school
 hackers (including me) still love to use Perl; Java is widely used in big
 companies; VBA is friendly for dealing excel data…etc. And <strong>Lisp</strong>, are
 highly recommended by great hackers. </p>
+
+<!-- more -->
 
 <hr />
 

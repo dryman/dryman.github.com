@@ -4,7 +4,7 @@
   <title><![CDATA[Category: NLP | Carpe diem (Felix's blog)]]></title>
   <link href="http://dryman.github.com/blog/categories/nlp/atom.xml" rel="self"/>
   <link href="http://dryman.github.com/"/>
-  <updated>2012-04-06T22:44:42+08:00</updated>
+  <updated>2012-04-07T09:50:36+08:00</updated>
   <id>http://dryman.github.com/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -34,6 +34,8 @@ plus, much more than any relationships in existing wordnets! There are so many
 interesting topics to write down, but for mow, I’ll focus on the second talk
 first. You can find the slide for the second talk 
 <a href="http://projects.ict.usc.edu/rwt2011/presentations/hovy.pdf">here</a>.</p>
+
+<!-- more -->
 
 <p>Though machine learning told us that “you don’t have to be smart, you just need
 enough training data,” deep in our heart, we still believe that all of our human

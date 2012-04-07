@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Octopress | Carpe diem (Felix's blog)]]></title>
   <link href="http://dryman.github.com/blog/categories/octopress/atom.xml" rel="self"/>
   <link href="http://dryman.github.com/"/>
-  <updated>2012-04-06T22:44:42+08:00</updated>
+  <updated>2012-04-07T09:50:36+08:00</updated>
   <id>http://dryman.github.com/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -32,6 +32,8 @@ To use it you can use the generator like so:</p>
 
 <p>However, we don’t want to do that every time, right? So I decided to write a
 small Jekyll plugin to generate the button automatically. Hope you can enjoy it!</p>
+
+<!-- more -->
 
 <h3 id="the-hidden-api-of-hnlike">The hidden API of HNLike</h3>
 
@@ -173,6 +175,8 @@ post and can be reached via HN search API.</p>
 
 <p></p>
 
+<!-- more -->
+
 <h3 id="installation">Installation:</h3>
 
 <ol>
@@ -199,6 +203,8 @@ wiki/markup languages, because $\LaTeX$ doesn’t perform well in HTML output.
 However, I missed some features in $\LaTeX$. One of those is <a href="http://en.wikibooks.org/wiki/LaTeX/Algorithms_and_Pseudocode">Algorithm and
 Pseudocode packages</a>.
 So, I discovered some tricks to form algorithm-like typesettings.</p>
+
+<!-- more -->
 
 <ol>
   <li>Use <code>\begin{align}</code> to align the lines.</li>
@@ -285,6 +291,8 @@ Then you can translate this</p>
 \mbox{Star: } & A^\star  = \{x_1x_2\ldots x_k \mid  k\geq 0 \mbox{ and each } x_i\in A\} \\
 \end{align}
 </script>
+
+<!-- more -->
 
 <p><strong>Voilà!</strong></p>
 
@@ -396,6 +404,8 @@ change <code>rdiscount</code> to <code>kramdown</code></p>
     <content type="html"><![CDATA[<h2 id="installation-note">installation note</h2>
 
 <p>This is an installation note for <a href="http://octopress.org">Octopress</a> blogging framework. My configuration is developed on OSX with ruby 1.9.2, and xcode 4.2.</p>
+
+<!-- more -->
 
 <h2 id="required-developement-tools">Required developement tools</h2>
 
