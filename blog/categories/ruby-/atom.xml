@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: Ruby, | Carpe diem (Felix's blog)]]></title>
-  <link href="http://idryman.org/blog/categories/ruby-/atom.xml" rel="self"/>
-  <link href="http://idryman.org/"/>
-  <updated>2012-04-07T20:11:11+08:00</updated>
-  <id>http://idryman.org/</id>
+  <link href="http://www.idryman.org/blog/categories/ruby-/atom.xml" rel="self"/>
+  <link href="http://www.idryman.org/"/>
+  <updated>2012-04-07T20:19:36+08:00</updated>
+  <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
     
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[Jekyll/Octopress graphviz plugin]]></title>
-    <link href="http://idryman.org/blog/2012/04/04/jekyll-graphviz-plugin/"/>
+    <link href="http://www.idryman.org/blog/2012/04/04/jekyll-graphviz-plugin/"/>
     <updated>2012-04-04T17:37:00+08:00</updated>
-    <id>http://idryman.org/blog/2012/04/04/jekyll-graphviz-plugin</id>
+    <id>http://www.idryman.org/blog/2012/04/04/jekyll-graphviz-plugin</id>
     <content type="html"><![CDATA[<p>I created a graphviz plugin for Octopress/Jekyll today. For example:</p>
 
 <p>

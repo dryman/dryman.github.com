@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
-  <link href="http://idryman.org/atom.xml" rel="self"/>
-  <link href="http://idryman.org/"/>
-  <updated>2012-04-07T20:11:11+08:00</updated>
-  <id>http://idryman.org/</id>
+  <link href="http://www.idryman.org/atom.xml" rel="self"/>
+  <link href="http://www.idryman.org/"/>
+  <updated>2012-04-07T20:19:36+08:00</updated>
+  <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
     
@@ -15,20 +15,20 @@
   
   <entry>
     <title type="html"><![CDATA[Jekyll/Octopress hacker news plugin]]></title>
-    <link href="http://idryman.org/blog/2012/04/05/jekyll-octopress-hacker-news-plugin/"/>
+    <link href="http://www.idryman.org/blog/2012/04/05/jekyll-octopress-hacker-news-plugin/"/>
     <updated>2012-04-05T14:49:00+08:00</updated>
-    <id>http://idryman.org/blog/2012/04/05/jekyll-octopress-hacker-news-plugin</id>
+    <id>http://www.idryman.org/blog/2012/04/05/jekyll-octopress-hacker-news-plugin</id>
     <content type="html"><![CDATA[<h3 id="inspiration">Inspiration</h3>
 
 <p>I found out that some cool blogs have a cute <em>hacker news like button</em> on each of its
 posts. </p>
 
-<p><img src="http://idryman.org/images/hn_like.png" /></p>
+<p><img src="http://www.idryman.org/images/hn_like.png" /></p>
 
 <p>The service is <a href="http://hnlike.com/">HN Like Button</a>, created by <a href="http://hacksandthoughts.posterous.com/">shashyal</a>.
 To use it you can use the generator like so:</p>
 
-<p><img src="http://idryman.org/images/gen_hn_like.png" /></p>
+<p><img src="http://www.idryman.org/images/gen_hn_like.png" /></p>
 
 <p>However, we don’t want to do that every time, right? So I decided to write a
 small Jekyll plugin to generate the button automatically. Hope you can enjoy it!</p>
@@ -147,9 +147,9 @@ post and can be reached via HN search API.</p>
   
   <entry>
     <title type="html"><![CDATA[Jekyll/Octopress graphviz plugin]]></title>
-    <link href="http://idryman.org/blog/2012/04/04/jekyll-graphviz-plugin/"/>
+    <link href="http://www.idryman.org/blog/2012/04/04/jekyll-graphviz-plugin/"/>
     <updated>2012-04-04T17:37:00+08:00</updated>
-    <id>http://idryman.org/blog/2012/04/04/jekyll-graphviz-plugin</id>
+    <id>http://www.idryman.org/blog/2012/04/04/jekyll-graphviz-plugin</id>
     <content type="html"><![CDATA[<p>I created a graphviz plugin for Octopress/Jekyll today. For example:</p>
 
 <pre><code>{% graphviz %}
@@ -176,7 +176,7 @@ digraph G {
 
 <p>will produce:</p>
 
-<p><img src="http://idryman.org/images/graphviz/g-3feb8846aa4bb9767add244df8bed05a.svg" /></p>
+<p><img src="http://www.idryman.org/images/graphviz/g-3feb8846aa4bb9767add244df8bed05a.svg" /></p>
 
 <!-- more -->
 
@@ -196,9 +196,9 @@ raise an error.</p>
   
   <entry>
     <title type="html"><![CDATA[persistent red black tree in lisp (4)]]></title>
-    <link href="http://idryman.org/blog/2012/04/01/persistent-red-black-tree-4/"/>
+    <link href="http://www.idryman.org/blog/2012/04/01/persistent-red-black-tree-4/"/>
     <updated>2012-04-01T14:48:00+08:00</updated>
-    <id>http://idryman.org/blog/2012/04/01/persistent-red-black-tree-4</id>
+    <id>http://www.idryman.org/blog/2012/04/01/persistent-red-black-tree-4</id>
     <content type="html"><![CDATA[<h3 id="okasakis-purely-functional-red-black-tree">Okasaki’s purely functional red black tree</h3>
 
 <p>The peristent red black tree in last post works ok, but the rotate functions and
@@ -385,9 +385,9 @@ a complex algorithm in a bottom-up design process. It’s just come up naturally
   
   <entry>
     <title type="html"><![CDATA[persistent red black tree in lisp (3)]]></title>
-    <link href="http://idryman.org/blog/2012/03/31/persistent-red-black-tree-in-lisp-3/"/>
+    <link href="http://www.idryman.org/blog/2012/03/31/persistent-red-black-tree-in-lisp-3/"/>
     <updated>2012-03-31T16:33:00+08:00</updated>
-    <id>http://idryman.org/blog/2012/03/31/persistent-red-black-tree-in-lisp-3</id>
+    <id>http://www.idryman.org/blog/2012/03/31/persistent-red-black-tree-in-lisp-3</id>
     <content type="html"><![CDATA[<h2 id="red-black-tree-algorithms">Red black tree algorithms</h2>
 
 <p>There are two good articles that have good explanation on red-black tree
@@ -738,9 +738,9 @@ would print <code>8-b</code> instead of <code>#S(RB :data 8 :red nil)</code>.</p
   
   <entry>
     <title type="html"><![CDATA[persistent red black tree in lisp (2)]]></title>
-    <link href="http://idryman.org/blog/2012/03/31/persistent-red-black-tree-in-lisp-2/"/>
+    <link href="http://www.idryman.org/blog/2012/03/31/persistent-red-black-tree-in-lisp-2/"/>
     <updated>2012-03-31T09:22:00+08:00</updated>
-    <id>http://idryman.org/blog/2012/03/31/persistent-red-black-tree-in-lisp-2</id>
+    <id>http://www.idryman.org/blog/2012/03/31/persistent-red-black-tree-in-lisp-2</id>
     <content type="html"><![CDATA[<h3 id="single-rotate">Single rotate</h3>
 
 <p>Using the <code>kid</code> utility, we can make rotate single to be simpler too:</p>
@@ -998,9 +998,9 @@ to by expanding the macro:</p>
   
   <entry>
     <title type="html"><![CDATA[persistent red black tree in lisp (1)]]></title>
-    <link href="http://idryman.org/blog/2012/03/30/persistent-red-black-tree-in-lisp-1/"/>
+    <link href="http://www.idryman.org/blog/2012/03/30/persistent-red-black-tree-in-lisp-1/"/>
     <updated>2012-03-30T13:57:00+08:00</updated>
-    <id>http://idryman.org/blog/2012/03/30/persistent-red-black-tree-in-lisp-1</id>
+    <id>http://www.idryman.org/blog/2012/03/30/persistent-red-black-tree-in-lisp-1</id>
     <content type="html"><![CDATA[<p>I’m a newbie to Lisp programing language. Lisp is one of the most oldest
 programming language that is still being used today. People have a lot of
 defences on programming languages, because there are too many choices to us
@@ -1265,9 +1265,9 @@ returns the right node, or it will return the left one. For example:</p>
   
   <entry>
     <title type="html"><![CDATA[Lisp Debugging Tools]]></title>
-    <link href="http://idryman.org/blog/2012/03/26/lisp-debugging-tools/"/>
+    <link href="http://www.idryman.org/blog/2012/03/26/lisp-debugging-tools/"/>
     <updated>2012-03-26T09:51:00+08:00</updated>
-    <id>http://idryman.org/blog/2012/03/26/lisp-debugging-tools</id>
+    <id>http://www.idryman.org/blog/2012/03/26/lisp-debugging-tools</id>
     <content type="html"><![CDATA[<h2 id="debug-in-step-mode">Debug in Step Mode</h2>
 
 <p>I’m an old school debugger, and I love to use gdb like debug tools. The
@@ -1628,9 +1628,9 @@ post</a>, you can put this in your <code>.sbclrc</code>:</p>
   
   <entry>
     <title type="html"><![CDATA[Lisp development on Mac]]></title>
-    <link href="http://idryman.org/blog/2012/03/24/lisp-development-on-mac/"/>
+    <link href="http://www.idryman.org/blog/2012/03/24/lisp-development-on-mac/"/>
     <updated>2012-03-24T16:46:00+08:00</updated>
-    <id>http://idryman.org/blog/2012/03/24/lisp-development-on-mac</id>
+    <id>http://www.idryman.org/blog/2012/03/24/lisp-development-on-mac</id>
     <content type="html"><![CDATA[<p>Setting up a development environment is such a pain. In short, here is my final
 configs:</p>
 
@@ -1703,9 +1703,9 @@ In short, put this in your <code>.sbclrc</code>.</p>
   
   <entry>
     <title type="html"><![CDATA[The NLP Day]]></title>
-    <link href="http://idryman.org/blog/2012/03/14/the-nlp-day/"/>
+    <link href="http://www.idryman.org/blog/2012/03/14/the-nlp-day/"/>
     <updated>2012-03-14T19:55:00+08:00</updated>
-    <id>http://idryman.org/blog/2012/03/14/the-nlp-day</id>
+    <id>http://www.idryman.org/blog/2012/03/14/the-nlp-day</id>
     <content type="html"><![CDATA[<p>Yesterday (3/13) was the NLP day, and we have the honor to invite Eduard Hovy to
 give us three talks about the current status and future of NLP researches.
 The talks were excellent! The first talk was about how machine learning perform
@@ -1784,11 +1784,11 @@ C=\left\{(r_1w_1s_1),(r_2w_2s_2),(r_3w_3s_3)\right\}
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
 <p>which we can visualize it as below:
-<img src="http://idryman.org/images/nlp-day/dog-context-1.png" title="'An example of dog context'" /></p>
+<img src="http://www.idryman.org/images/nlp-day/dog-context-1.png" title="'An example of dog context'" /></p>
 
 <p>Furthermore, since every node itself can be another context, we can generate a
 graph! <sup id="fnref:2"><a href="#fn:2" rel="footnote">2</a></sup>
-<img src="http://idryman.org/images/nlp-day/dog-context-2.png" title="'An another example of dog context'" /></p>
+<img src="http://www.idryman.org/images/nlp-day/dog-context-2.png" title="'An another example of dog context'" /></p>
 
 <h3 id="the-main-questions-to-address">The main questions to address</h3>
 
@@ -1826,9 +1826,9 @@ must…), etc.?</li>
   
   <entry>
     <title type="html"><![CDATA[handcraft algorithm environment in kramdown]]></title>
-    <link href="http://idryman.org/blog/2012/03/13/handcraft-algorithm-environment-in-kramdown/"/>
+    <link href="http://www.idryman.org/blog/2012/03/13/handcraft-algorithm-environment-in-kramdown/"/>
     <updated>2012-03-13T09:13:00+08:00</updated>
-    <id>http://idryman.org/blog/2012/03/13/handcraft-algorithm-environment-in-kramdown</id>
+    <id>http://www.idryman.org/blog/2012/03/13/handcraft-algorithm-environment-in-kramdown</id>
     <content type="html"><![CDATA[<p>I love $\LaTeX$. The typesetting in $\LaTeX$ is so beautiful that that no other
 typesetting system can compete with. Unfortunately, I cannot write $\LaTeX$ for blog
 post. I have to use <a href="http://kramdown.rubyforge.org/">kramdown</a> or other
@@ -1890,9 +1890,9 @@ So, I discovered some tricks to form algorithm-like typesettings.</p>
   
   <entry>
     <title type="html"><![CDATA[The recursion theorem]]></title>
-    <link href="http://idryman.org/blog/2012/03/12/the-recursion-theorem/"/>
+    <link href="http://www.idryman.org/blog/2012/03/12/the-recursion-theorem/"/>
     <updated>2012-03-12T08:42:00+08:00</updated>
-    <id>http://idryman.org/blog/2012/03/12/the-recursion-theorem</id>
+    <id>http://www.idryman.org/blog/2012/03/12/the-recursion-theorem</id>
     <content type="html"><![CDATA[<p>I’m studying theorem of computation myself. Theorem of computation is an
 interesting field. It addresses questions as: What is a theorem? What is a
 proof? What is truth? Can an algorithm decide which statements are true? Can
@@ -1956,9 +1956,9 @@ B=&\mbox{On input $\langle M\rangle$, where $M$ is a portion of a TM:}\\
   
   <entry>
     <title type="html"><![CDATA[Writing math equations on Octopress]]></title>
-    <link href="http://idryman.org/blog/2012/03/10/writing-math-equations-on-octopress/"/>
+    <link href="http://www.idryman.org/blog/2012/03/10/writing-math-equations-on-octopress/"/>
     <updated>2012-03-10T16:23:00+08:00</updated>
-    <id>http://idryman.org/blog/2012/03/10/writing-math-equations-on-octopress</id>
+    <id>http://www.idryman.org/blog/2012/03/10/writing-math-equations-on-octopress</id>
     <content type="html"><![CDATA[<p>Octopress is a wonderful blogging framework for hackers, but it does not support
 math typesetting by default. What hacker doesn’t use Latex math?</p>
 
@@ -2097,9 +2097,9 @@ change <code>rdiscount</code> to <code>kramdown</code></p>
   
   <entry>
     <title type="html"><![CDATA[My Octopress configs]]></title>
-    <link href="http://idryman.org/blog/2012/03/10/my-octopress-configs/"/>
+    <link href="http://www.idryman.org/blog/2012/03/10/my-octopress-configs/"/>
     <updated>2012-03-10T16:12:00+08:00</updated>
-    <id>http://idryman.org/blog/2012/03/10/my-octopress-configs</id>
+    <id>http://www.idryman.org/blog/2012/03/10/my-octopress-configs</id>
     <content type="html"><![CDATA[<h2 id="installation-note">installation note</h2>
 
 <p>This is an installation note for <a href="http://octopress.org">Octopress</a> blogging framework. My configuration is developed on OSX with ruby 1.9.2, and xcode 4.2.</p>

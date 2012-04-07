@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: Lisp | Carpe diem (Felix's blog)]]></title>
-  <link href="http://idryman.org/blog/categories/lisp/atom.xml" rel="self"/>
-  <link href="http://idryman.org/"/>
-  <updated>2012-04-07T20:11:11+08:00</updated>
-  <id>http://idryman.org/</id>
+  <link href="http://www.idryman.org/blog/categories/lisp/atom.xml" rel="self"/>
+  <link href="http://www.idryman.org/"/>
+  <updated>2012-04-07T20:19:36+08:00</updated>
+  <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
     
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[Lisp Debugging Tools]]></title>
-    <link href="http://idryman.org/blog/2012/03/26/lisp-debugging-tools/"/>
+    <link href="http://www.idryman.org/blog/2012/03/26/lisp-debugging-tools/"/>
     <updated>2012-03-26T09:51:00+08:00</updated>
-    <id>http://idryman.org/blog/2012/03/26/lisp-debugging-tools</id>
+    <id>http://www.idryman.org/blog/2012/03/26/lisp-debugging-tools</id>
     <content type="html"><![CDATA[<h2 id="debug-in-step-mode">Debug in Step Mode</h2>
 
 <p>I’m an old school debugger, and I love to use gdb like debug tools. The
@@ -378,9 +378,9 @@ post</a>, you can put this in your <code>.sbclrc</code>:</p>
   
   <entry>
     <title type="html"><![CDATA[Lisp development on Mac]]></title>
-    <link href="http://idryman.org/blog/2012/03/24/lisp-development-on-mac/"/>
+    <link href="http://www.idryman.org/blog/2012/03/24/lisp-development-on-mac/"/>
     <updated>2012-03-24T16:46:00+08:00</updated>
-    <id>http://idryman.org/blog/2012/03/24/lisp-development-on-mac</id>
+    <id>http://www.idryman.org/blog/2012/03/24/lisp-development-on-mac</id>
     <content type="html"><![CDATA[<p>Setting up a development environment is such a pain. In short, here is my final
 configs:</p>
 

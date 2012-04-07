@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Category: Lisp, | Carpe diem (Felix's blog)]]></title>
-  <link href="http://idryman.org/blog/categories/lisp-/atom.xml" rel="self"/>
-  <link href="http://idryman.org/"/>
-  <updated>2012-04-07T20:11:11+08:00</updated>
-  <id>http://idryman.org/</id>
+  <link href="http://www.idryman.org/blog/categories/lisp-/atom.xml" rel="self"/>
+  <link href="http://www.idryman.org/"/>
+  <updated>2012-04-07T20:19:36+08:00</updated>
+  <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
     
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[persistent red black tree in lisp (4)]]></title>
-    <link href="http://idryman.org/blog/2012/04/01/persistent-red-black-tree-4/"/>
+    <link href="http://www.idryman.org/blog/2012/04/01/persistent-red-black-tree-4/"/>
     <updated>2012-04-01T14:48:00+08:00</updated>
-    <id>http://idryman.org/blog/2012/04/01/persistent-red-black-tree-4</id>
+    <id>http://www.idryman.org/blog/2012/04/01/persistent-red-black-tree-4</id>
     <content type="html"><![CDATA[<h3 id="okasakis-purely-functional-red-black-tree">Okasaki’s purely functional red black tree</h3>
 
 <p>The peristent red black tree in last post works ok, but the rotate functions and
@@ -203,9 +203,9 @@ a complex algorithm in a bottom-up design process. It’s just come up naturally
   
   <entry>
     <title type="html"><![CDATA[persistent red black tree in lisp (3)]]></title>
-    <link href="http://idryman.org/blog/2012/03/31/persistent-red-black-tree-in-lisp-3/"/>
+    <link href="http://www.idryman.org/blog/2012/03/31/persistent-red-black-tree-in-lisp-3/"/>
     <updated>2012-03-31T16:33:00+08:00</updated>
-    <id>http://idryman.org/blog/2012/03/31/persistent-red-black-tree-in-lisp-3</id>
+    <id>http://www.idryman.org/blog/2012/03/31/persistent-red-black-tree-in-lisp-3</id>
     <content type="html"><![CDATA[<h2 id="red-black-tree-algorithms">Red black tree algorithms</h2>
 
 <p>There are two good articles that have good explanation on red-black tree
@@ -554,9 +554,9 @@ would print <code>8-b</code> instead of <code>#S(RB :data 8 :red nil)</code>.</p
   
   <entry>
     <title type="html"><![CDATA[persistent red black tree in lisp (2)]]></title>
-    <link href="http://idryman.org/blog/2012/03/31/persistent-red-black-tree-in-lisp-2/"/>
+    <link href="http://www.idryman.org/blog/2012/03/31/persistent-red-black-tree-in-lisp-2/"/>
     <updated>2012-03-31T09:22:00+08:00</updated>
-    <id>http://idryman.org/blog/2012/03/31/persistent-red-black-tree-in-lisp-2</id>
+    <id>http://www.idryman.org/blog/2012/03/31/persistent-red-black-tree-in-lisp-2</id>
     <content type="html"><![CDATA[<h3 id="single-rotate">Single rotate</h3>
 
 <p>Using the <code>kid</code> utility, we can make rotate single to be simpler too:
@@ -811,9 +811,9 @@ to by expanding the macro:</p>
   
   <entry>
     <title type="html"><![CDATA[persistent red black tree in lisp (1)]]></title>
-    <link href="http://idryman.org/blog/2012/03/30/persistent-red-black-tree-in-lisp-1/"/>
+    <link href="http://www.idryman.org/blog/2012/03/30/persistent-red-black-tree-in-lisp-1/"/>
     <updated>2012-03-30T13:57:00+08:00</updated>
-    <id>http://idryman.org/blog/2012/03/30/persistent-red-black-tree-in-lisp-1</id>
+    <id>http://www.idryman.org/blog/2012/03/30/persistent-red-black-tree-in-lisp-1</id>
     <content type="html"><![CDATA[<p>I’m a newbie to Lisp programing language. Lisp is one of the most oldest
 programming language that is still being used today. People have a lot of
 defences on programming languages, because there are too many choices to us
