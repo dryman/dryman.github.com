@@ -1,0 +1,635 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Practical software verification using SPIN - Carpe diem (Felix's blog)</title>
+  <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
+
+  
+  <meta name="description" content="This is a note for the talk New frontiers in formal software verification spoken by Gerard J. Holzmann, software verification architect for NASA
+Jet &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="google-site-verification" content="3YTeX29pvBJAPOeFiQIErcMeNQsYIuFMNBGsXur9gyQ" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://www.idryman.org/blog/2012/04/10/practical-software-verification-using-SPIN">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Carpe diem (Felix's blog)" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-23425996-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Carpe diem (Felix's blog)</a></h1>
+  
+    <h2>Work hard and enjoy every moments...</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:www.idryman.org" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="http://idryman.tumblr.com/">Drawings</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Practical Software Verification Using SPIN</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-04-10T10:31:00+08:00" pubdate data-updated="true">Apr 10<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>This is a note for the talk <a href="http://www.iis.sinica.edu.tw/page/events/FILE/120409.pdf">New frontiers in formal software verification</a> 
+spoken by <a href="http://spinroot.com/gerard/">Gerard J. Holzmann</a>, software verification architect for <a href="http://www.jpl.nasa.gov/index.cfm">NASA
+Jet Propulsion Laboratory (JPL)</a>. He introduced a fast automatic software
+verification tool for distributed software system – <a href="http://spinroot.com/spin/whatispin.html">SPIN</a>.</p>
+
+<p><img src="/images/graphviz/g-f44bd3841c23d32cc5d46f28821bf434.svg" />
+<!-- more --></p>
+
+<h3 id="background">Background</h3>
+
+<p>After some ~30 years of development, formal software verification is still
+rarely used on industrial applications. A typical computer science verification
+proof would take 300+ of pages, much more than other mathematical proofs.</p>
+
+<p>It is considered to be too difficult, and takes too long (months to years) to
+verify a software (like UNIX, IBM360, garbage collectors…etc.) Even in safety
+critical applications, software verification is often restricted to the
+verification of models of software, instead of software.</p>
+
+<blockquote>
+  <p>Goal: Make software verification as simple as testing, and as fast as
+  compilation.</p>
+</blockquote>
+
+<h3 id="practical-software-verification">Practical software verification</h3>
+
+<p><a href="http://spinroot.com/gerard/">Holzmann</a> is the author of <a href="http://spinroot.com/spin/whatispin.html">SPIN</a>, a popular open-source software
+tool, used for the formal verification of distributed software systems. It has
+been applied at different fields:</p>
+
+<ul>
+  <li>Commercial phone switch</li>
+  <li>Spacecraft for Mars mission</li>
+  <li>Flood Control </li>
+  <li>Toyota Camry MY05</li>
+  <li>Medical device transmission protocols</li>
+</ul>
+
+<p>Back in 1999, SPIN can verify 4 million lines of code of phone switch system
+within 40 minutes. And now it is used in spacecraft system and many other
+mission critical softwares.</p>
+
+<h3 id="pathstar-switch-1999">PathStar switch (1999)</h3>
+
+<p>SPIN was designed for PathStar switch, it is</p>
+
+<ul>
+  <li>A commercial data/phone switch designed in Bell Labs research (for Lucent
+Technologies)</li>
+  <li>Newly written code for the core call processing engine</li>
+  <li>The first commercial call processing code that is formally verified</li>
+  <li>After the product is released, in decades every updates of the product 
+code was proofed in fully automated procedure</li>
+</ul>
+
+<p>In a complex feature precedence relations detecting <strong>undesired feature</strong>
+interaction is a serious problem. The verification system has to deal with:</p>
+
+<ul>
+  <li>feature interaction</li>
+  <li>feature breakage</li>
+  <li>concurrency problems</li>
+  <li>race conditions</li>
+  <li>deadlock scenarios</li>
+  <li>non compliance with legal requirements…etc.</li>
+</ul>
+
+<p>SPIN breaks the whole verification problem into five steps<sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup> :</p>
+
+<p><img src="/images/graphviz/g-e6e8d45d4f940e9bbe1ee18190f2e7f6.svg" /></p>
+
+<h4 id="building-the-model">Building the model</h4>
+
+<p>The first step is one of the hardest part in SPIN system. SPIN is not a silver
+bullet that can analysis any input of C code. They designed a subset of ANSI C
+with <a href="http://spinroot.com/spin/Man/Manual.html">some rules</a>, to make the program as a distributed finite state
+machine.</p>
+
+<p>For example, the following code</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line">    <span class="err">@</span><span class="n">dial</span><span class="o">:</span>
+</span><span class="line">      <span class="k">switch</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">      <span class="nl">default:</span> <span class="k">goto</span> <span class="n">error</span><span class="p">;</span> <span class="cm">/* unexpected input */</span>
+</span><span class="line">      <span class="k">case</span> <span class="n">Crdtmf</span>:         <span class="cm">/* digit collector ready */</span>
+</span><span class="line">        <span class="n">x</span><span class="o">-&gt;</span><span class="n">drv</span><span class="o">-&gt;</span><span class="n">progress</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Tdial</span><span class="p">);</span>
+</span><span class="line">        <span class="n">time</span> <span class="o">=</span> <span class="n">MSEC</span><span class="p">(</span><span class="mi">16000</span><span class="p">);</span> <span class="cm">/* set timmer and wait event */</span>
+</span><span class="line">
+</span><span class="line">      <span class="cm">/* continue here */</span>
+</span><span class="line">      <span class="err">@</span><span class="n">dial1</span><span class="o">:</span> <span class="k">switch</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">        <span class="nl">default:</span> <span class="k">goto</span> <span class="n">error</span><span class="p">;</span>
+</span><span class="line">        <span class="k">case</span> <span class="n">crconn</span>: <span class="k">goto</span> <span class="n">B</span><span class="err">@</span><span class="n">lb</span><span class="p">;</span>
+</span><span class="line">        <span class="k">case</span> <span class="n">Cronhook</span>: <span class="cm">/* caller hangs up */</span>
+</span><span class="line">          <span class="n">x</span><span class="o">-&gt;</span><span class="n">drv</span><span class="o">-&gt;</span><span class="n">disconnect</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+</span><span class="line">      <span class="err">@</span><span class="n">dial2</span><span class="o">:</span>  <span class="k">if</span><span class="p">(</span><span class="n">op</span><span class="o">!=</span><span class="n">Crconn</span> <span class="o">&amp;&amp;</span> <span class="n">op</span><span class="o">!=</span> <span class="n">rdis</span><span class="p">)</span>
+</span><span class="line">            <span class="k">goto</span> <span class="n">Aidle</span><span class="p">;</span>
+</span><span class="line">            <span class="c1">// ...etc</span>
+</span><span class="line">      <span class="p">}</span>
+</span><span class="line">    <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>can generate this FSM:</p>
+
+<p><img src="/images/graphviz/g-2ba67537d29e5b408a448b873c67ff4a.svg" /></p>
+
+<h3 id="abstraction-and-context-of-spin-model">Abstraction and context of SPIN model</h3>
+
+<p>To verify the code we convert it into an automation: a labeled transition
+system. The labels (transitions) are the basic statements from C.
+Each statement can be converted via an abstraction – which is encoded as a
+lookup table. While analysing the code, SPIN doesn’t care how the C code runs,
+but deal with the abstracted FSM and tokenized input. This is why we call it
+a “model analyser.”</p>
+
+<p>The context of a SPIN looks like this:</p>
+
+<p><img src="/images/graphviz/g-f44bd3841c23d32cc5d46f28821bf434.svg" /></p>
+
+<p>Note that the <em>environment model</em> is not that hard to define. You just need to
+declare that how many outlets of a switch: switch-to-switch, telephone inputs,
+the amount of switches…etc.</p>
+
+<h3 id="the-linear-time-temporal-logic-formulae-ltl">The linear time temporal logic formulae (LTL)</h3>
+
+<p>For example, a requirement statement<sup id="fnref:2"><a href="#fn:2" rel="footnote">2</a></sup>:</p>
+
+<blockquote>
+  <p>When the phone goes <em>offhook</em>, a <em>dialtone</em> should occur.</p>
+</blockquote>
+
+<p>It can be expressed in LTL:</p>
+
+<pre><code>!( !offhook U (offhook /\ X [] (!dialtone /\ !onhook)) )
+</code></pre>
+
+<ul>
+  <li>U $\bigcup$ is strong until</li>
+  <li>X $\bigcirc$ is next</li>
+  <li>[] $\Box$ is always<sup id="fnref:3"><a href="#fn:3" rel="footnote">3</a></sup></li>
+</ul>
+
+<p>You can also express it in formal symbols:</p>
+
+<script type="math/tex; mode=display">
+    \neg\left(\neg offhook \bigcup 
+    \left( offhook \wedge \bigcirc \;\Box \left(\neg dialtone \bigcirc \neg onhook
+    \right)\right)\right)
+</script>
+
+<p>If the requirement changed:</p>
+
+<blockquote>
+  <p>Assume, an $event_i$ should be added in between <em>offhook</em> and <em>response</em></p>
+</blockquote>
+
+<p>In ITL:</p>
+
+<pre><code>X((eventi /\ !onhook) U (eventi /\ !onhook))
+</code></pre>
+
+<p>In formal logic:</p>
+
+<script type="math/tex; mode=display">
+    \bigcirc \left(\left(event_i \wedge \neg onhook\right) \bigcup 
+    \left(event_i \wedge \neg onhook\right)\right)
+</script>
+
+<p>Once we have every thing prepared, SPIN will analysis the context using the
+$\omega-automation$ technique and find out in what situations will cause bugs.</p>
+
+<h2 id="fast-verification">Fast verification</h2>
+
+<p>Traditionally we uses breadth first search or depth first search to iterate the
+execution model for finding bugs. Since the execution is a non-determinism
+model, the possible paths are in exponential order thus will cause stack
+overflow before we find bugs.</p>
+
+<p>Holzmann introduced <a href="http://spinroot.com/swarm/index.html">swarm verification preparation script</a> that can
+separate the problem into small pieces of jobs and can be executed in parallel.</p>
+
+<blockquote>
+  <p>Swarm generates a script that performs many small verification jobs in
+parallel, that can increase the problem coverage for very large verification
+problems by about an order of magnitude compared to standard bitstate
+verification runs. It is meant to be used on models for which standard
+verification with exhaustive, bitstate, hash-compaction etc. either runs out
+of memory, or takes more time than is available (e.g., days or weeks). Swarm
+uses parallelism and search diversification to reach its objectives.</p>
+</blockquote>
+
+<blockquote>
+  <p>The user can use a configuration file to define how many processing cores are
+available, how much memory can be used, and how much time is maximally
+available, among a range of other optional parameter settings. Based on this
+information, swarm generates the script that runs as many independent jobs as
+possible in parallel, without exceeding any of the user-defined constraints.
+Swarm can run jobs using local CPU cores or remote machines in a grid network.</p>
+</blockquote>
+
+<hr />
+
+<p>Holzmann also showed us swarm’s performance on NASA/JDL’s code:</p>
+
+<ul>
+  <li>11 bugs reports (50% of total) after 1 seconds. Faster than compilation!</li>
+  <li>10 seconds and 90% of bugs are found.</li>
+</ul>
+
+<p>That is truly amazing!</p>
+
+<h2 id="conclusion">Conclusion:</h2>
+
+<p>Human brains are not perfect. It is easy to convince ourselves something is true
+even it isn’t. A verification system like SPIN is not a project in ivory towel.
+Instead, it can reproduce critical bugs in zero-failure missions (like mission to
+Mars) or serious business programs. </p>
+
+<p>Distributed system is a really hard problem and it is playing a important role
+in cloud computing and parallel systems. For now we have bunch of map reduce
+frameworks and no-SQL databases, but sometimes they just fails. How do we use a
+good algorithm to check the consistency of the data? How do we verify our model
+is correct? With SPIN, we can now verify the code within seconds ,and no more bug
+tracing at 3:00AM. :D</p>
+
+<hr />
+
+<div class="footnotes">
+  <ol>
+    <li id="fn:1">
+      <p>All the plots are generated by my <a href="/blog/2012/04/04/jekyll-graphviz-plugin/">graphviz plugin</a><a href="#fnref:1" rev="footnote">&#8617;</a></p>
+    </li>
+    <li id="fn:2">
+      <p>The example is referenced from <a href="http://www.sable.mcgill.ca/~ebodde/mcs/timeline.ppt">this slide</a><a href="#fnref:2" rev="footnote">&#8617;</a></p>
+    </li>
+    <li id="fn:3">
+      <p>Check <a href="http://spinroot.com/spin/Man/ltl.html">SPIN ITL reference</a><a href="#fnref:3" rev="footnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-04-10T10:31:00+08:00" pubdate data-updated="true">Apr 10<span>th</span>, 2012</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/talk/'>Talk</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2012/04/10/practical-software-verification-using-SPIN/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2012/04/10/practical-software-verification-using-SPIN/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2012/04/05/jekyll-octopress-hacker-news-plugin/" title="Previous Post: Jekyll/Octopress hacker news plugin">&laquo; Jekyll/Octopress hacker news plugin</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/04/10/practical-software-verification-using-SPIN/">Practical software verification using SPIN</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/05/jekyll-octopress-hacker-news-plugin/">Jekyll/Octopress hacker news plugin</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/04/jekyll-graphviz-plugin/">Jekyll/Octopress graphviz plugin</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/01/persistent-red-black-tree-4/">persistent red black tree in lisp (4)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/31/persistent-red-black-tree-in-lisp-3/">persistent red black tree in lisp (3)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/31/persistent-red-black-tree-in-lisp-2/">persistent red black tree in lisp (2)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/30/persistent-red-black-tree-in-lisp-1/">persistent red black tree in lisp (1)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/26/lisp-debugging-tools/">Lisp Debugging Tools</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/24/lisp-development-on-mac/">Lisp development on Mac</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/14/the-nlp-day/">The NLP Day</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("idryman", 4, true);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/idryman" class="twitter-follow-button" data-show-count="false">Follow @idryman</a>
+  
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - dryman (Felix Ren-Chyan Chern) -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'dryblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.idryman.org/blog/2012/04/10/practical-software-verification-using-SPIN/';
+        var disqus_url = 'http://www.idryman.org/blog/2012/04/10/practical-software-verification-using-SPIN/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+<!--
+hn like button plugin for jekyll/octopress
+Author: dryman (Felix Ren-Chyan Chern)
+
+Inpired from http://hnlike.com/ written by sbashyal
+
+(The MIT License)
+
+Copyright © 2012-2013 Felix Ren-Chyan Chern
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the ‘Software’), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED ‘AS IS’, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+  <script type="text/javascript">
+    (function(){
+      var hn_like = document.createElement('iframe');
+      hn_like.frameborder="no";
+      hn_like.scrolling="no";
+      hn_like.height="28px";
+      hn_like.width="115px";
+      hn_like.src = "http://hnlike.com/upvote.php?link="
+                    + encodeURIComponent(document.location)
+                    + "&title="
+                    + encodeURIComponent("Practical software verification using SPIN");
+      hn_like.innerHTML="iframes not supported by your browser";
+      var twitter = document.getElementsByClassName("twitter-share-button")[0];
+
+      twitter.parentNode.insertBefore(
+        hn_like,
+        twitter
+      );
+    })();
+  </script>
+
+<!-- end of hn like button -->
+
+
+
+
+
+</body>
+<!-- mathjax config similar to math.stackexchange -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/HTML-CSS"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+</html>
+

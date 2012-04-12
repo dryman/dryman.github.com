@@ -55,8 +55,14 @@
         <lastmod>2012-04-07T21:44:58+08:00</lastmod>
     </url>
     <url>
+        <loc>
+            http://www.idryman.org/blog/2012/04/10/practical-software-verification-using-SPIN/
+        </loc>
+        <lastmod>2012-04-12T11:09:43+08:00</lastmod>
+    </url>
+    <url>
         <loc>http://www.idryman.org/blog/archives/</loc>
-        <lastmod>2012-04-07T21:44:58+08:00</lastmod>
+        <lastmod>2012-04-12T11:09:43+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/graph-theories/elementary-graph-algorithms.html</loc>
@@ -68,6 +74,6 @@
     </url>
     <url>
         <loc>http://www.idryman.org/</loc>
-        <lastmod>2012-04-07T21:44:58+08:00</lastmod>
+        <lastmod>2012-04-12T11:09:43+08:00</lastmod>
     </url>
 </urlset>
