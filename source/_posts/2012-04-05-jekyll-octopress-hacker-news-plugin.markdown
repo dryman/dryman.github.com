@@ -100,6 +100,11 @@ into your `_config.yml`.
 The vote won't update immediately. It will show up until hacker news index the
 post and can be reached via HN search API.
 
+## Edit: 2012-04-07
+
+I changed my domain name and all HN/Twitter/FB/G+ counts reset to zero. So I
+submit the post to HN again.
+
 
 [hnlike]: http://hnlike.com/
 [shashyal]: http://hacksandthoughts.posterous.com/
