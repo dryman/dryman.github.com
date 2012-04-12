@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-04-12T11:15:43+08:00</updated>
+  <updated>2012-04-12T11:27:08+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -190,7 +190,7 @@ the amount of switches…etc.</p>
   <p>Assume, an $event_i$ should be added in between <em>offhook</em> and <em>response</em></p>
 </blockquote>
 
-<p>In ITL:</p>
+<p>In LTL:</p>
 
 <pre><code>X((eventi /\ !onhook) U (eventi /\ !onhook))
 </code></pre>
@@ -270,7 +270,7 @@ tracing at 3:00AM. :D</p>
       <p>The example is referenced from <a href="http://www.sable.mcgill.ca/~ebodde/mcs/timeline.ppt">this slide</a><a href="#fnref:2" rev="footnote">&#8617;</a></p>
     </li>
     <li id="fn:3">
-      <p>Check <a href="http://spinroot.com/spin/Man/ltl.html">SPIN ITL reference</a><a href="#fnref:3" rev="footnote">&#8617;</a></p>
+      <p>Check <a href="http://spinroot.com/spin/Man/ltl.html">SPIN LTL reference</a><a href="#fnref:3" rev="footnote">&#8617;</a></p>
     </li>
   </ol>
 </div>
