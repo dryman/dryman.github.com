@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Talk | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/talk/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-04-12T11:13:31+08:00</updated>
+  <updated>2012-04-12T11:15:43+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -19,8 +19,8 @@
     <updated>2012-04-10T10:31:00+08:00</updated>
     <id>http://www.idryman.org/blog/2012/04/10/practical-software-verification-using-SPIN</id>
     <content type="html"><![CDATA[<p>This is a note for the talk <a href="http://www.iis.sinica.edu.tw/page/events/FILE/120409.pdf">New frontiers in formal software verification</a> 
-spoken by <a href="http://spinroot.com/gerard/">Gerard J. Holzmann</a>, software verification architect for <a href="http://www.jpl.nasa.gov/index.cfm">NASA
-Jet Propulsion Laboratory (JPL)</a>. He introduced a fast automatic software
+spoken by <a href="http://spinroot.com/gerard/">Gerard J. Holzmann</a>, software verification architect for 
+<a href="http://www.jpl.nasa.gov/index.cfm">NASA Jet Propulsion Laboratory (JPL)</a>. He introduced a fast automatic software
 verification tool for distributed software system – <a href="http://spinroot.com/spin/whatispin.html">SPIN</a>.</p>
 
 <p> &lt;!-- more --&gt;
