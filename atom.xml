@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-04-15T02:14:08+08:00</updated>
+  <updated>2012-04-15T06:59:56+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -817,6 +817,15 @@ digraph G {
 <p><img src="http://www.idryman.org/images/graphviz/g-3feb8846aa4bb9767add244df8bed05a.svg" /></p>
 
 <!-- more -->
+
+<p>You can see how it works on real post:</p>
+
+<ol>
+  <li><a href="http://www.idryman.org/blog/2012/04/10/practical-software-verification-using-SPIN/">Practical Software Verification Using SPIN</a></li>
+  <li><a href="http://www.idryman.org/blog/2012/04/14/recursion-best-practices/">Recursion Best Practices</a></li>
+</ol>
+
+<hr />
 
 <h3 id="installation">Installation:</h3>
 
