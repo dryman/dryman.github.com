@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-04-12T11:27:08+08:00</updated>
+  <updated>2012-04-15T02:13:10+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,375 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Recursion best practices]]></title>
+    <link href="http://www.idryman.org/blog/2012/04/14/recursion-best-practices/"/>
+    <updated>2012-04-14T08:26:00+08:00</updated>
+    <id>http://www.idryman.org/blog/2012/04/14/recursion-best-practices</id>
+    <content type="html"><![CDATA[<p>There are many programming languages that support recursion. However, recursion
+is hard to write, and even harder to write it well.</p>
+
+<blockquote>
+  <p>To iterate is human, to recurse, divine.</p>
+</blockquote>
+
+<p>If you also surveyed deeply in FP area, you will find a lot of patterns, such as
+tail recursion, continuous passing style, combination of higher order functions,
+fixed point y-combinator, memoization, and many more. You can see that a simple
+factorial can be written in <a href="http://www.willamette.edu/~fruehr/haskell/evolution.html">23 different forms</a>. How do we
+pick a better one?</p>
+
+<blockquote>
+  <p>In short, the only pattern you should use heavily is <em>tail recursion</em>. Use
+other patterns only when necessary.</p>
+</blockquote>
+
+<!-- more -->
+
+<h2 id="straight-body-recursion-the-problem">Straight (body) recursion, the problem</h2>
+
+<p>Let’s begin with mostly seen recursions: factorial and fibonacci.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>Haskell </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="haskell"><span class="line"><span class="nf">fac</span> <span class="mi">0</span> <span class="ow">=</span> <span class="mi">1</span>
+</span><span class="line"><span class="nf">fac</span> <span class="n">n</span> <span class="ow">=</span> <span class="n">n</span> <span class="o">*</span> <span class="n">fac</span> <span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="nf">fib</span> <span class="mi">0</span> <span class="ow">=</span> <span class="mi">1</span>
+</span><span class="line"><span class="nf">fib</span> <span class="mi">1</span> <span class="ow">=</span> <span class="mi">1</span>
+</span><span class="line"><span class="nf">fib</span> <span class="n">n</span> <span class="ow">=</span> <span class="n">fib</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">fib</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>When you are programming in functional style, keep in mind of “non-functional”
+execution.</p>
+
+<pre><code>fac (5) = 5 * fac (4)
+        = 5 * 4 * fac (3)
+        = 5 * 4 * 3 * fac (2)
+        = 5 * 4 * 3 * 2 * fac (1)
+        = 5 * 4 * 3 * 2 * 1 * fac (0)
+        = 5 * 4 * 3 * 2 * 1 * 1
+        = 5 * 4 * 3 * 2 * 1
+        = 5 * 4 * 3 * 2
+        = 5 * 4 * 6
+        = 5 * 24
+        = 120
+</code></pre>
+
+<p>The problem is that the function has to use stack to hold number and multiply
+to the value returned by the recursive function.<sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup></p>
+
+<p>Also the fibonacci executing model:</p>
+
+<p><img src="http://www.idryman.org/images/graphviz/g-ff6b576e3a2600dd84a36f0059875404.svg" /></p>
+
+<p>This is even worse, the complexity of fibonacci function cost $O(\phi^n)$ where
+$\phi=\frac{1+\sqrt{5}}{2}$. </p>
+
+<blockquote>
+  <p>Whenever you use a returned value in your function body, there is a cost.</p>
+</blockquote>
+
+<p>We can reduce both factorial and fibonacci in tail recursion style using some
+<em>accumulators</em>.</p>
+
+<h2 id="tail-recursion">Tail recursion</h2>
+
+<p>The common way to translate a body recursion into a tail recursion is to add a
+accumulator in argument list.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="haskell"><span class="line"><span class="nf">fac</span> <span class="mi">0</span> <span class="n">acc</span> <span class="ow">=</span> <span class="n">acc</span>
+</span><span class="line"><span class="nf">fac</span> <span class="n">n</span> <span class="n">acc</span> <span class="ow">=</span> <span class="n">fac</span> <span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="n">n</span><span class="o">*</span><span class="n">acc</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<pre><code>fac 5 1 = fac 4 5
+        = fac 3 20
+        = fac 2 60
+        = fac 1 120
+        = fac 0 120
+        = 120
+</code></pre>
+
+<p>We reduce the execution steps from $2 n$ to $n$, and there is no stack variables
+any more! Moreover, in assembly level, it only have to use <code>goto</code> to the front
+of the function and no need to set up environment again.</p>
+
+<p>Fibonacci can be transformed to tail recursive function like this<sup id="fnref:2"><a href="#fn:2" rel="footnote">2</a></sup>:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="haskell"><span class="line"><span class="nf">fib&#39;</span> <span class="mi">0</span> <span class="n">f1</span> <span class="n">f2</span> <span class="ow">=</span> <span class="n">f1</span>
+</span><span class="line"><span class="nf">fib&#39;</span> <span class="n">n</span> <span class="n">f1</span> <span class="n">f2</span> <span class="ow">=</span> <span class="n">fib&#39;</span> <span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="n">f2</span> <span class="p">(</span><span class="n">f1</span><span class="o">+</span><span class="n">f2</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="nf">fib</span> <span class="n">n</span> <span class="ow">=</span> <span class="n">fib&#39;</span> <span class="n">n</span> <span class="mi">1</span> <span class="mi">1</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<pre><code>fib' 5 1 1 = fib' 4 1 2
+           = fib' 3 2 3
+           = fib' 2 3 5
+           = fib' 1 5 8
+           = fib' 0 8 13
+           = 8
+</code></pre>
+
+<p>This time we use two accumulator <code>f1</code> and <code>f2</code> to record the state and make it
+more “iterative”. The original input <code>n</code> is treated as a “counter.”</p>
+
+<blockquote>
+  <p>Use multiple accumulators to make double recursion (like fibonacci) tail
+recursive</p>
+</blockquote>
+
+<p>For different kinds of functional programming languages, you can abstract the
+interface and hide details in language suggested ways:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>Haskell </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="haskell"><span class="line"><span class="nf">fib</span> <span class="n">n</span> <span class="ow">=</span> <span class="n">fib&#39;</span> <span class="n">n</span> <span class="mi">1</span> <span class="mi">1</span>
+</span><span class="line">    <span class="kr">where</span>
+</span><span class="line">      <span class="n">fib&#39;</span> <span class="mi">0</span> <span class="n">f1</span> <span class="n">f2</span> <span class="ow">=</span> <span class="n">f1</span>
+</span><span class="line">      <span class="n">fib&#39;</span> <span class="n">n</span> <span class="n">f1</span> <span class="n">f2</span> <span class="ow">=</span> <span class="n">fib&#39;</span> <span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="n">f2</span> <span class="p">(</span><span class="n">f1</span><span class="o">+</span><span class="n">f2</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>Erlang </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="erlang"><span class="line"><span class="nf">fib</span><span class="p">(</span><span class="nv">N</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">fib</span><span class="p">(</span><span class="nv">N</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">).</span>
+</span><span class="line">
+</span><span class="line"><span class="nf">fib</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nv">F1</span><span class="p">,</span><span class="nv">F2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nv">F1</span><span class="p">;</span>
+</span><span class="line"><span class="nf">fib</span><span class="p">(</span><span class="nv">N</span><span class="p">,</span><span class="nv">F1</span><span class="p">,</span><span class="nv">F2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">fib</span><span class="p">(</span><span class="nv">N</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="nv">F2</span><span class="p">,</span><span class="nv">F1</span><span class="o">+</span><span class="nv">F2</span><span class="p">).</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>Common Lisp </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">fib</span> <span class="p">(</span><span class="nv">n</span><span class="p">)</span>
+</span><span class="line">  <span class="p">(</span><span class="k">labels</span> <span class="p">((</span><span class="nv">rec</span> <span class="p">(</span><span class="nv">n</span> <span class="nv">f1</span> <span class="nv">f2</span><span class="p">)</span>
+</span><span class="line">             <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nb">zerop</span> <span class="nv">n</span><span class="p">)</span> <span class="nv">f1</span>
+</span><span class="line">                 <span class="p">(</span><span class="nv">rec</span> <span class="p">(</span><span class="nb">1-</span> <span class="nv">n</span><span class="p">)</span> <span class="nv">f2</span> <span class="p">(</span><span class="nb">+</span> <span class="nv">f1</span> <span class="nv">f2</span><span class="p">)))))</span>
+</span><span class="line">    <span class="p">(</span><span class="nv">rec</span> <span class="nv">n</span> <span class="mi">1</span> <span class="mi">1</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="returning-a-list">Returning a list</h2>
+
+<p>When using tail recursion, we can also construct a returning list instead of a
+atom:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="haskell"><span class="line"><span class="nf">naive_reverse</span> <span class="kt">[]</span>     <span class="ow">=</span> <span class="kt">[]</span>
+</span><span class="line"><span class="nf">naive_reverse</span> <span class="p">(</span><span class="n">x</span><span class="kt">:</span><span class="n">xs</span><span class="p">)</span> <span class="ow">=</span> <span class="p">(</span><span class="n">naive_reverse</span> <span class="n">xs</span><span class="p">)</span> <span class="o">++</span> <span class="n">x</span> <span class="c1">-- oops, used ++ operator!</span>
+</span><span class="line">
+</span><span class="line"><span class="nf">good_reverse</span> <span class="kt">[]</span>     <span class="n">acc</span> <span class="ow">=</span> <span class="n">acc</span>
+</span><span class="line"><span class="nf">good_reverse</span> <span class="p">(</span><span class="n">x</span><span class="kt">:</span><span class="n">xs</span><span class="p">)</span> <span class="n">acc</span> <span class="ow">=</span> <span class="n">good_reverse</span> <span class="n">xs</span> <span class="p">(</span><span class="n">x</span><span class="kt">:</span><span class="n">acc</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Or, in common lisp:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">good-reverse</span> <span class="p">(</span><span class="nb">rest</span> <span class="nv">acc</span><span class="p">)</span>
+</span><span class="line">  <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nb">null</span> <span class="nb">rest</span><span class="p">)</span> <span class="nv">acc</span>
+</span><span class="line">      <span class="p">(</span><span class="nv">good-reverse</span> <span class="p">(</span><span class="nb">cdr</span> <span class="nb">rest</span><span class="p">)</span> <span class="p">(</span><span class="nb">cons</span> <span class="p">(</span><span class="nb">car</span> <span class="nb">rest</span><span class="p">)</span> <span class="nv">acc</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The key is to use <code>cons</code> (<code>:</code> in haskell, <code>|</code> in erlang) instead of list
+concatenation operator (<code>++</code> in haskell and erlang.) The result of the left hand
+side of the operator would be copied again and again and cause a quadratic
+space and time complexity.</p>
+
+<blockquote>
+  <p>In common practices, use cons to build a reversed list, then reverse it at the
+  end of recursion</p>
+</blockquote>
+
+<p>For example, if we want to return a list of fibonacci numbers<sup id="fnref:3"><a href="#fn:3" rel="footnote">3</a></sup>:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="haskell"><span class="line"><span class="nf">bad_fibs</span> <span class="mi">0</span> <span class="n">f1</span> <span class="n">f2</span> <span class="n">fibs</span> <span class="ow">=</span> <span class="n">fibs</span>
+</span><span class="line"><span class="nf">bad_fibs</span> <span class="n">n</span> <span class="n">f1</span> <span class="n">f2</span> <span class="n">fibs</span> <span class="ow">=</span> <span class="n">bad_fibs</span> <span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="n">f2</span> <span class="p">(</span><span class="n">f1</span><span class="o">+</span><span class="n">f2</span><span class="p">)</span> <span class="p">(</span><span class="n">fibs</span><span class="o">++</span><span class="n">f1</span><span class="p">)</span> <span class="c1">-- oops</span>
+</span><span class="line">
+</span><span class="line"><span class="nf">good_fibs</span> <span class="mi">0</span> <span class="n">f1</span> <span class="n">f2</span> <span class="n">fibs</span> <span class="ow">=</span> <span class="n">reverse</span> <span class="n">fibs</span> <span class="c1">-- here is the magic</span>
+</span><span class="line"><span class="nf">good_fibs</span> <span class="n">n</span> <span class="n">f1</span> <span class="n">f2</span> <span class="n">fibs</span> <span class="ow">=</span> <span class="n">good_fibs</span> <span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="n">f2</span> <span class="p">(</span><span class="n">f1</span><span class="o">+</span><span class="n">f2</span><span class="p">)</span> <span class="p">(</span><span class="n">f1</span><span class="kt">:</span><span class="n">fibs</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="manipulating-a-tree">Manipulating a tree</h2>
+
+<p>This is the best part of this article, it might be a little bit hard to
+understand at the first time. But once you get the idea, you’d just love it as I
+did. I first saw this idea in <a href="http://www.bookshelf.jp/texi/onlisp/onlisp_5.html#SEC32">Paul Graham’s on lisp</a>. He named this
+pattern as “doubly recursion.” Later on I saw people use this pattern in
+<a href="http://en.literateprograms.org/Quicksort_(Erlang)">Quicksort (Erlang) - LiteratePrograms</a>, without naming the pattern. For
+convenience I’d just use the term “doubly recursive” to express the idea :)</p>
+
+<blockquote>
+  <p>The key idea of doubly recursive is to use a returned accumulator as another
+recursion’s accumulator</p>
+</blockquote>
+
+<p>I want to write the flattening function that takes a nested list and return a
+flatten one in haskell, however different depths of list are different types and
+thus you cannot simply write a general function to deal it. So I turned back to
+use lisp to express it:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">flatten</span> <span class="p">(</span><span class="nv">x</span><span class="p">)</span>
+</span><span class="line">  <span class="p">(</span><span class="k">labels</span> <span class="p">((</span><span class="nv">rec</span> <span class="p">(</span><span class="nv">x</span> <span class="nv">acc</span><span class="p">)</span>
+</span><span class="line">                <span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nb">null</span> <span class="nv">x</span><span class="p">)</span> <span class="nv">acc</span><span class="p">)</span>
+</span><span class="line">                      <span class="p">((</span><span class="nb">atom</span> <span class="nv">x</span><span class="p">)</span> <span class="p">(</span><span class="nb">cons</span> <span class="nv">x</span> <span class="nv">acc</span><span class="p">))</span>
+</span><span class="line">                      <span class="p">(</span><span class="no">t</span> <span class="p">(</span><span class="nv">rec</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">x</span><span class="p">)</span>
+</span><span class="line">                              <span class="p">(</span><span class="nv">rec</span> <span class="p">(</span><span class="nb">cdr</span> <span class="nv">x</span><span class="p">)</span> <span class="nv">acc</span><span class="p">))))))</span> <span class="c1">; use the returned acc as</span>
+</span><span class="line">                                                     <span class="c1">; another rec&#39;s acc arg</span>
+</span><span class="line">    <span class="p">(</span><span class="nv">rec</span> <span class="nv">x</span> <span class="no">nil</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Note that <code>labels</code> are like <code>where</code> clause in haskell. The <code>rec</code> function will
+take a input x and return a reversed order of flatten list.</p>
+
+<p>You can also apply this pattern on quick sort<sup id="fnref:4"><a href="#fn:4" rel="footnote">4</a></sup>:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="haskell"><span class="line"><span class="nf">qsort</span> <span class="p">(</span><span class="n">x</span><span class="kt">:</span><span class="n">xs</span><span class="p">)</span> <span class="n">acc</span> <span class="ow">=</span> <span class="n">partition</span> <span class="n">xs</span> <span class="kt">[]</span> <span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="kt">[]</span>
+</span><span class="line">    <span class="kr">where</span>
+</span><span class="line">      <span class="n">partition</span> <span class="kt">[]</span> <span class="n">less</span> <span class="n">equal</span> <span class="n">greater</span> <span class="ow">=</span> <span class="n">qsort</span> <span class="n">less</span> <span class="p">(</span><span class="n">equal</span> <span class="o">++</span> <span class="p">(</span><span class="n">qsort</span> <span class="n">greater</span> <span class="n">acc</span><span class="p">))</span>
+</span><span class="line">      <span class="n">partition</span> <span class="p">(</span><span class="n">y</span><span class="kt">:</span><span class="n">ys</span><span class="p">)</span> <span class="n">less</span> <span class="n">equal</span> <span class="n">greater</span>
+</span><span class="line">          <span class="o">|</span> <span class="n">y</span> <span class="o">&gt;</span> <span class="n">x</span>     <span class="ow">=</span> <span class="n">partition</span> <span class="n">ys</span> <span class="n">less</span>     <span class="n">equal</span>     <span class="p">(</span><span class="n">y</span><span class="kt">:</span><span class="n">greater</span><span class="p">)</span>
+</span><span class="line">          <span class="o">|</span> <span class="n">y</span> <span class="o">&lt;</span> <span class="n">x</span>     <span class="ow">=</span> <span class="n">partition</span> <span class="n">ys</span> <span class="p">(</span><span class="n">y</span><span class="kt">:</span><span class="n">less</span><span class="p">)</span> <span class="n">equal</span>     <span class="n">greater</span>
+</span><span class="line">          <span class="o">|</span> <span class="n">otherwise</span> <span class="ow">=</span> <span class="n">partition</span> <span class="n">ys</span> <span class="n">less</span>     <span class="p">(</span><span class="n">y</span><span class="kt">:</span><span class="n">equal</span><span class="p">)</span> <span class="n">greater</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="other-patterns">Other patterns</h2>
+
+<h4 id="continuous-passing-style-cps">1. Continuous passing style (CPS)</h4>
+
+<p>CPS is to pass a exit function to a function and let it call it at the end. The
+concept is similar to tail recursion, but I think it is better to “make no
+assumption about what user will do with your functions.” Leave your function
+interface simple and elegant, because using CPS is <strong>micro optimization</strong>. </p>
+
+<p>CPS is a powerful techniques, but you must use it wisely. For example, you can use it
+in regular expression back tracing or garbage collection generation step. In
+those example the function has to <em>jump</em> back to somewhere in the control flow,
+and CPS can make the job done nice and clean.</p>
+
+<p>But please don’t use CPS like this:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="scheme"><span class="line"><span class="p">(</span><span class="k">define </span><span class="p">(</span><span class="nf">fib</span> <span class="nv">k</span> <span class="nv">n</span><span class="p">)</span> <span class="p">(</span><span class="k">if </span><span class="p">(</span><span class="nb">&lt; </span><span class="nv">n</span> <span class="mi">2</span><span class="p">)</span> <span class="p">(</span><span class="nf">k</span> <span class="mi">1</span><span class="p">)</span>
+</span><span class="line">  <span class="p">(</span><span class="nf">fib</span> <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">fib-of-n-1</span><span class="p">)</span>
+</span><span class="line">         <span class="p">(</span><span class="nf">fib</span> <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">fib-of-n-2</span><span class="p">)</span>
+</span><span class="line">                <span class="p">(</span><span class="nf">k</span> <span class="p">(</span><span class="nb">+ </span><span class="nv">fib-of-n-1</span> <span class="nv">fib-of-n-2</span><span class="p">)))</span> <span class="c1">; CPS</span>
+</span><span class="line">              <span class="p">(</span><span class="nb">- </span><span class="nv">n</span> <span class="mi">2</span><span class="p">)))</span>   <span class="c1">; inner fib</span>
+</span><span class="line">       <span class="p">(</span><span class="nb">- </span><span class="nv">n</span> <span class="mi">1</span><span class="p">))))</span>         <span class="c1">; outer fib</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The CPS above will still cause $O(\phi^n)$ time and space order to do the
+calculation!</p>
+
+<h4 id="fixed-point-y-combinator">2. Fixed point y-combinator</h4>
+
+<p>If you don’t know about y-combinator, just skip it.</p>
+
+<p><a href="http://www.willamette.edu/~fruehr/haskell/evolution.html">The evolution of Haskell</a> suggested that fixed point
+y-combinator is the fastest implementation of writing factorial in haskell, even
+faster than tail recursion. However, it depends. In my benchmark it made no
+differences on factorial function. And why do you want to make your function
+hard to debug in a y-combinator? It is even hard to trace function calls in
+Lisp’s <code>trace</code> commands.</p>
+
+<h4 id="memoization">3. Memoization</h4>
+
+<p>Memoization is also a powerful techniques that can benefit on rapid function
+calls. It is a trade off of memory and speed. As CPS mentioned before, use it
+wisely and not just for <strong>cool</strong>.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>There are not much design patterns on functional programming. I hope these
+guidelines can be a start:</p>
+
+<ol>
+  <li>Whenever you use a returned value in your function body, there is a cost.</li>
+  <li>Use multiple accumulators to make double recursion (like fibonacci) tail
+recursive</li>
+  <li>In common practices, use cons to build a reversed list, then reverse it at the
+end of recursion</li>
+  <li>The key idea of doubly recursive is to use a returned accumulator as another
+recursion’s accumulator</li>
+  <li>CPS and Memoization are powerful, but use it wisely</li>
+</ol>
+
+<p>Any discussion and suggestions are welcome! Thanks!</p>
+
+<hr />
+
+<div class="footnotes">
+  <ol>
+    <li id="fn:1">
+      <p>In modern compiler the trivial straight recursion such as factorial will be
+  optimized and make no big performance difference compare to the one written in
+  tail recursion form.<a href="#fnref:1" rev="footnote">&#8617;</a></p>
+    </li>
+    <li id="fn:2">
+      <p>Take a look at how many possible ways to write 
+  <a href="http://www.cliki.net/Fibonacci">fibonacci in common lisp</a>. There is also
+  a way to write fibonacci in $O(log(n))$ order.<a href="#fnref:2" rev="footnote">&#8617;</a></p>
+    </li>
+    <li id="fn:3">
+      <p>The example is taken from 
+  <a href="http://www.erlang.org/doc/efficiency_guide/listHandling.html">Erlang performance tuning – List handling</a>.<a href="#fnref:3" rev="footnote">&#8617;</a></p>
+    </li>
+    <li id="fn:4">
+      <p>Example taken from <a href="http://en.literateprograms.org/Quicksort_(Haskell)">Quicksort (haskell) - Literate Programs</a>.<a href="#fnref:4" rev="footnote">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Practical software verification using SPIN]]></title>
