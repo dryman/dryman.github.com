@@ -3,7 +3,7 @@ layout: post
 title: "Recursion best practices"
 date: 2012-04-14 08:26
 comments: true
-categories: 
+categories: FP
 ---
 
 There are many programming languages that support recursion. However, recursion

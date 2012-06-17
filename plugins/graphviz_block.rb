@@ -35,7 +35,11 @@ module Jekyll
 
     def render(context)
       non_markdown = /(&amp|&lt|&nbsp|&quot|&gt|<\/p>|<\/h.>)/m
-      code = super.join
+      code = super
+      # Used for debug..
+      # fd = IO.sysopen "/dev/tty", "w"
+      # ios = IO.new(fd,"w")
+      # ios.puts code
       unless non_markdown.match(code)
         local_svg = File.join(GRAPHVIZ_DIR, "g-#{Digest::MD5.hexdigest(code)}.svg")
         web_svg = "/images/graphviz/g-#{Digest::MD5.hexdigest(code)}.svg"

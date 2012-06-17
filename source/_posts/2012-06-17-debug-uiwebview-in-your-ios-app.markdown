@@ -11,6 +11,10 @@ powerful webkit inspector by default. Nathan de Vries has written a
 [post][reference] to solve the problem, but the solution didn't work on my XCode
 4 with Clang front end.
 
+<!-- more -->
+
+This is Nathan's solution:
+
 {% codeblock lang:objc Nathan's solution %}
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // ...Snipped...
