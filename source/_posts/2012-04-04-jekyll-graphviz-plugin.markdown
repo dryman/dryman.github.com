@@ -57,6 +57,13 @@ digraph G {
 
 <!-- more -->
 
+You can see how it works on real post:
+
+1. [Practical Software Verification Using SPIN][spin]
+2. [Recursion Best Practices][recursion]
+
+* * *
+
 ### Installation:
 
 1. Download the file from [here](https://github.com/dryman/dryman.github.com/blob/src/plugins/graphviz_block.rb).
@@ -66,3 +73,5 @@ digraph G {
 Remeber that you should have graphviz installed in your system. Else it will
 raise an error.
 
+[spin]: http://www.idryman.org/blog/2012/04/10/practical-software-verification-using-SPIN/
+[recursion]: http://www.idryman.org/blog/2012/04/14/recursion-best-practices/

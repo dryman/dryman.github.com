@@ -8,13 +8,3 @@
 @import "base";
 @import "partials";
 @import "custom/styles";
-
-.footnotes > ol > li {
-  font-size: 12pt;
-}
-sup > a {
-  font-size: 12pt;
-  vertical-align: super;
-}
-
-em { color: lighten(#222,30%); }
