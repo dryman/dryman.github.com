@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Octopress | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/octopress/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-06-17T16:22:28+08:00</updated>
+  <updated>2012-06-17T16:25:24+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -23,12 +23,12 @@
 <p>I found out that some cool blogs have a cute <em>hacker news like button</em> on each of its
 posts. </p>
 
-<p>{% img /images/hn_like.png %}</p>
+<p><img src="/images/hn_like.png"></p>
 
 <p>The service is <a href="http://hnlike.com/">HN Like Button</a>, created by <a href="http://hacksandthoughts.posterous.com/">shashyal</a>.
 To use it you can use the generator like so:</p>
 
-<p>{% img /images/gen_hn_like.png %}</p>
+<p><img src="/images/gen_hn_like.png"></p>
 
 <p>However, we don’t want to do that every time, right? So I decided to write a
 small Jekyll plugin to generate the button automatically. Hope you can enjoy it!</p>
@@ -38,11 +38,13 @@ small Jekyll plugin to generate the button automatically. Hope you can enjoy it!
 <h3 id="the-hidden-api-of-hnlike">The hidden API of HNLike</h3>
 
 <p>Well…not really. The generated html snippet looks like this:
-{% codeblock lang:html %}
-&lt;iframe frameborder="no" scrolling="no" height="50px" width="350px"
- src="http://hnlike.com/upvote.php?link=http%3A%2F%2Fdryman.github.com%2Fblog%2F2012%2F04%2F04%2Fjekyll-graphviz-plugin%2F&amp;title=Jekyll%20Graphviz%20Plugin"
- &gt;iframes not supported by your browser&lt;/iframe&gt;
-{% endcodeblock %}</p>
+<div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="ni">&amp;lt;</span>iframe frameborder=&quot;no&quot; scrolling=&quot;no&quot; height=&quot;50px&quot; width=&quot;350px&quot;
+</span><span class='line'> src=&quot;http://hnlike.com/upvote.php?link=http%3A%2F%2Fdryman.github.com%2Fblog%2F2012%2F04%2F04%2Fjekyll-graphviz-plugin%2F<span class="ni">&amp;amp;</span>title=Jekyll%20Graphviz%20Plugin&quot;
+</span><span class='line'> <span class="ni">&amp;gt;</span>iframes not supported by your browser<span class="ni">&amp;lt;</span>/iframe<span class="ni">&amp;gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
 
 <p>Observe that in the <code>src</code> after the <code>upvote.php?</code> there are only two
 key valure pairs:</p>
@@ -61,28 +63,47 @@ string and it is done.</p>
 you can take a look at <a href="http://octopress.org/docs/theme/template/">Theming and Customization - Octopress</a>. Follow
 the instructions, I simply added a new html snippet in <code>source/_includes/</code>.</p>
 
-<p>{% codeblock hn_like.html lang:html https://github.com/dryman/dryman.github.com/blob/src/source/_includes/hn_like.html link %}
-{% raw %}
-{% if site.hn_like_button %}
-  <script type="text/javascript">
-    (function(){
-      var hn_like = document.createElement('iframe');
-      hn_like.frameborder="no";
-      hn_like.scrolling="no";
-      hn_like.height="28px";
-      hn_like.width="115px";
-      hn_like.src = "http://hnlike.com/upvote.php?link="
-                    + encodeURIComponent(document.location)
-                    + "&amp;title="
-                    + encodeURIComponent("{{ page.title }}");
-      hn_like.innerHTML="iframes not supported by your browser";
-      var twitter = document.getElementsByClassName("twitter-share-button")[0];</script></p>
-
-<pre><code>  twitter.parentNode.insertBefore(
-    hn_like,
-    twitter
-  );
-})();   &lt;/script&gt; {% endif %} {% endraw %} {% endcodeblock %}
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>hn_like.html </span><a href='https://github.com/dryman/dryman.github.com/blob/src/source/_includes/hn_like.html'>link </a></figcaption> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'>{% if site.hn_like_button %}
+</span><span class='line'>  <span class="nt">&lt;script </span><span class="na">type=</span><span class="s">&quot;text/javascript&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'>    <span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">hn_like</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">&#39;iframe&#39;</span><span class="p">);</span>
+</span><span class='line'>      <span class="nx">hn_like</span><span class="p">.</span><span class="nx">frameborder</span><span class="o">=</span><span class="s2">&quot;no&quot;</span><span class="p">;</span>
+</span><span class='line'>      <span class="nx">hn_like</span><span class="p">.</span><span class="nx">scrolling</span><span class="o">=</span><span class="s2">&quot;no&quot;</span><span class="p">;</span>
+</span><span class='line'>      <span class="nx">hn_like</span><span class="p">.</span><span class="nx">height</span><span class="o">=</span><span class="s2">&quot;28px&quot;</span><span class="p">;</span>
+</span><span class='line'>      <span class="nx">hn_like</span><span class="p">.</span><span class="nx">width</span><span class="o">=</span><span class="s2">&quot;115px&quot;</span><span class="p">;</span>
+</span><span class='line'>      <span class="nx">hn_like</span><span class="p">.</span><span class="nx">src</span> <span class="o">=</span> <span class="s2">&quot;http://hnlike.com/upvote.php?link=&quot;</span>
+</span><span class='line'>                    <span class="o">+</span> <span class="nb">encodeURIComponent</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">location</span><span class="p">)</span>
+</span><span class='line'>                    <span class="o">+</span> <span class="s2">&quot;&amp;amp;title=&quot;</span>
+</span><span class='line'>                    <span class="o">+</span> <span class="nb">encodeURIComponent</span><span class="p">(</span><span class="s2">&quot;{{ page.title }}&quot;</span><span class="p">);</span>
+</span><span class='line'>      <span class="nx">hn_like</span><span class="p">.</span><span class="nx">innerHTML</span><span class="o">=</span><span class="s2">&quot;iframes not supported by your browser&quot;</span><span class="p">;</span>
+</span><span class='line'>      <span class="kd">var</span> <span class="nx">twitter</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByClassName</span><span class="p">(</span><span class="s2">&quot;twitter-share-button&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span><span class="nt">&lt;/script&gt;&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="nt">&lt;pre&gt;&lt;code&gt;</span>  twitter.parentNode.insertBefore(
+</span><span class='line'>    hn_like,
+</span><span class='line'>    twitter
+</span><span class='line'>  );
+</span><span class='line'>})();   <span class="ni">&amp;lt;</span>/script<span class="ni">&amp;gt;</span> {% endif %}
+</span></code></pre></td></tr></table></div></figure></notextile></div>
 </code></pre>
 
 <p>I modified the height and width otherwise it will be too big. Also I use jekyll
@@ -97,17 +118,18 @@ liquid helpers instead of <code>document.title</code> to form title text. Finall
 <code>source/_includes</code> directory</p>
   </li>
   <li>
-    <p>Add one line {% raw %} <code>{% include hn_like.html %}</code> {% endraw %} into <code>source/_includes/after_footer.html</code>.</p>
+    <p>Add one line  <code>{% include hn_like.html %}</code>  into <code>source/_includes/after_footer.html</code>.</p>
   </li>
   <li>
     <p>Add</p>
   </li>
 </ol>
 
-<p>{% codeblock lang:yaml %}
-# hacker news like button
-hn_like_button: true
-{% endcodeblock %}</p>
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='yaml'><span class='line'><span class="c1"># hacker news like button</span>
+</span><span class='line'><span class="l-Scalar-Plain">hn_like_button</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">true</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
 
 <p>into your <code>_config.yml</code>.</p>
 
@@ -131,7 +153,7 @@ submit the post to HN again.</p>
     <id>http://www.idryman.org/blog/2012/04/04/jekyll-graphviz-plugin</id>
     <content type="html"><![CDATA[<p>I created a graphviz plugin for Octopress/Jekyll today. For example:</p>
 
-<p>{% raw %}
+<p>
     {% graphviz %}
     digraph G {
       compound=true;
@@ -152,31 +174,11 @@ submit the post to HN again.</p>
       d -&gt; h;
     }
     {% endgraphviz %}
-{% endraw %}</p>
+</p>
 
 <p>will produce:</p>
 
-<p>{% graphviz %}
-digraph G {
-  compound=true;
-  subgraph cluster0 {
-  a -&gt; b;
-  a -&gt; c;
-  b -&gt; d;
-  c -&gt; d;
-  }
-  subgraph cluster1 {
-  e -&gt; g;
-  e -&gt; f;
-  }</p>
-
-<p>b -&gt; f [lhead=cluster1];
-  d -&gt; e;
-  c -&gt; g [ltail=cluster0, lhead=cluster1];
-  c -&gt; e [ltail=cluster0];
-  d -&gt; h;
-}
-{% endgraphviz %}</p>
+<p>Liquid error: undefined method `join' for #<String:0x007fc13463e870></p>
 
 <!-- more -->
 
@@ -226,19 +228,29 @@ So, I discovered some tricks to form algorithm-like typesettings.</p>
 
 <p>Here is the example input:</p>
 
-<p>{% codeblock lang:latex%}
-$$
-\begin{align}
-   Q=&amp; \mbox{On input string $w$:} <br />
-     &amp; 1.\; \mbox{Construct the following Turing machine $P_w$} <br />
-     &amp; \quad    P_w = \mbox{On any input:} <br />
-     &amp; \qquad   1.\; \mbox{Erase input.} <br />
-     &amp; \qquad   2.\; \mbox{Write w on the tape.} <br />
-     &amp; \qquad   3.\; \mbox{Halt.}  <br />
-     &amp; 2.\; \mbox{Output }\langle P_w\rangle  <br />
-\end{align}
-$$
-{% endcodeblock %}</p>
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='latex'><span class='line'><span class="sb">$$</span><span class="nb"></span>
+</span><span class='line'><span class="nv">\begin</span><span class="nb">{align}</span>
+</span><span class='line'><span class="nb">   Q</span><span class="o">=</span><span class="nb">&amp;amp; </span><span class="nv">\mbox</span><span class="nb">{On input string $w$:} &lt;br </span><span class="o">/</span><span class="nb">&gt;</span>
+</span><span class='line'><span class="nb">     &amp;amp; </span><span class="m">1</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Construct the following Turing machine $P_w$} &lt;br </span><span class="o">/</span><span class="nb">&gt;</span>
+</span><span class='line'><span class="nb">     &amp;amp; </span><span class="nv">\quad</span><span class="nb">    P_w </span><span class="o">=</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{On any input:} &lt;br </span><span class="o">/</span><span class="nb">&gt;</span>
+</span><span class='line'><span class="nb">     &amp;amp; </span><span class="nv">\qquad</span><span class="nb">   </span><span class="m">1</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Erase input.} &lt;br </span><span class="o">/</span><span class="nb">&gt;</span>
+</span><span class='line'><span class="nb">     &amp;amp; </span><span class="nv">\qquad</span><span class="nb">   </span><span class="m">2</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Write w on the tape.} &lt;br </span><span class="o">/</span><span class="nb">&gt;</span>
+</span><span class='line'><span class="nb">     &amp;amp; </span><span class="nv">\qquad</span><span class="nb">   </span><span class="m">3</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Halt.}  &lt;br </span><span class="o">/</span><span class="nb">&gt;</span>
+</span><span class='line'><span class="nb">     &amp;amp; </span><span class="m">2</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Output }</span><span class="nv">\langle</span><span class="nb"> P_w</span><span class="nv">\rangle</span><span class="nb">  &lt;br </span><span class="o">/</span><span class="nb">&gt;</span>
+</span><span class='line'><span class="nv">\end</span><span class="nb">{align}</span>
+</span><span class='line'><span class="s">$$</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
 
 <p>and <strong>Voilà</strong>!</p>
 
@@ -269,15 +281,21 @@ math typesetting by default. What hacker doesn’t use Latex math?</p>
 <p>The followings are configs to make you write latex math equations in Octopress.
 Then you can translate this</p>
 
-<p>{% codeblock lang:latex %}
-$$
-\begin{align}
-\mbox{Union: } &amp; A\cup B = {x\mid x\in A \mbox{ or } x\in B} <br />
-\mbox{Concatenation: } &amp; A\circ B  = {xy\mid x\in A \mbox{ and } y\in B} <br />
-\mbox{Star: } &amp; A^\star  = {x<em>1x</em>2\ldots x_k \mid  k\geq 0 \mbox{ and each } x_i\in A} <br />
-\end{align}
-$$
-{% endcodeblock %}</p>
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='latex'><span class='line'><span class="sb">$$</span><span class="nb"></span>
+</span><span class='line'><span class="nv">\begin</span><span class="nb">{align}</span>
+</span><span class='line'><span class="nv">\mbox</span><span class="nb">{Union: } &amp;amp; A</span><span class="nv">\cup</span><span class="nb"> B </span><span class="o">=</span><span class="nb"> {x</span><span class="nv">\mid</span><span class="nb"> x</span><span class="nv">\in</span><span class="nb"> A </span><span class="nv">\mbox</span><span class="nb">{ or } x</span><span class="nv">\in</span><span class="nb"> B} &lt;br </span><span class="o">/</span><span class="nb">&gt;</span>
+</span><span class='line'><span class="nv">\mbox</span><span class="nb">{Concatenation: } &amp;amp; A</span><span class="nv">\circ</span><span class="nb"> B  </span><span class="o">=</span><span class="nb"> {xy</span><span class="nv">\mid</span><span class="nb"> x</span><span class="nv">\in</span><span class="nb"> A </span><span class="nv">\mbox</span><span class="nb">{ and } y</span><span class="nv">\in</span><span class="nb"> B} &lt;br </span><span class="o">/</span><span class="nb">&gt;</span>
+</span><span class='line'><span class="nv">\mbox</span><span class="nb">{Star: } &amp;amp; A^</span><span class="nv">\star</span><span class="nb">  </span><span class="o">=</span><span class="nb"> {x&lt;em&gt;</span><span class="m">1</span><span class="nb">x&lt;</span><span class="o">/</span><span class="nb">em&gt;</span><span class="m">2</span><span class="nv">\ldots</span><span class="nb"> x_k </span><span class="nv">\mid</span><span class="nb">  k</span><span class="nv">\geq</span><span class="nb"> </span><span class="m">0</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{ and each } x_i</span><span class="nv">\in</span><span class="nb"> A} &lt;br </span><span class="o">/</span><span class="nb">&gt;</span>
+</span><span class='line'><span class="nv">\end</span><span class="nb">{align}</span>
+</span><span class='line'><span class="s">$$</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
 
 <p>into this</p>
 
@@ -326,23 +344,37 @@ change <code>rdiscount</code> to <code>kramdown</code></p>
   </li>
 </ol>
 
-<p>{% codeblock lang:html %}
-<!-- mathjax config similar to math.stackexchange -->
-<script type="text/x-mathjax-config">
-MathJax.Hub.Config({
-  jax: ["input/TeX", "output/HTML-CSS"],
-  tex2jax: {
-    inlineMath: [ ['$', '$'] ],
-    displayMath: [ ['$$', '$$']],
-    processEscapes: true,
-    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
-  },
-  messageStyle: "none",
-  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
-});
-</script>
-<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
-{% endcodeblock %}</p>
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+</pre></td><td class='code'><pre><code class='html'><span class='line'><span class="c">&lt;!-- mathjax config similar to math.stackexchange --&gt;</span>
+</span><span class='line'><span class="nt">&lt;script </span><span class="na">type=</span><span class="s">&quot;text/x-mathjax-config&quot;</span><span class="nt">&gt;</span>
+</span><span class='line'><span class="nx">MathJax</span><span class="p">.</span><span class="nx">Hub</span><span class="p">.</span><span class="nx">Config</span><span class="p">({</span>
+</span><span class='line'>  <span class="nx">jax</span><span class="o">:</span> <span class="p">[</span><span class="s2">&quot;input/TeX&quot;</span><span class="p">,</span> <span class="s2">&quot;output/HTML-CSS&quot;</span><span class="p">],</span>
+</span><span class='line'>  <span class="nx">tex2jax</span><span class="o">:</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">inlineMath</span><span class="o">:</span> <span class="p">[</span> <span class="p">[</span><span class="s1">&#39;$&#39;</span><span class="p">,</span> <span class="s1">&#39;$&#39;</span><span class="p">]</span> <span class="p">],</span>
+</span><span class='line'>    <span class="nx">displayMath</span><span class="o">:</span> <span class="p">[</span> <span class="p">[</span><span class="s1">&#39;$$&#39;</span><span class="p">,</span> <span class="s1">&#39;$$&#39;</span><span class="p">]],</span>
+</span><span class='line'>    <span class="nx">processEscapes</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+</span><span class='line'>    <span class="nx">skipTags</span><span class="o">:</span> <span class="p">[</span><span class="s1">&#39;script&#39;</span><span class="p">,</span> <span class="s1">&#39;noscript&#39;</span><span class="p">,</span> <span class="s1">&#39;style&#39;</span><span class="p">,</span> <span class="s1">&#39;textarea&#39;</span><span class="p">,</span> <span class="s1">&#39;pre&#39;</span><span class="p">,</span> <span class="s1">&#39;code&#39;</span><span class="p">]</span>
+</span><span class='line'>  <span class="p">},</span>
+</span><span class='line'>  <span class="nx">messageStyle</span><span class="o">:</span> <span class="s2">&quot;none&quot;</span><span class="p">,</span>
+</span><span class='line'>  <span class="s2">&quot;HTML-CSS&quot;</span><span class="o">:</span> <span class="p">{</span> <span class="nx">preferredFont</span><span class="o">:</span> <span class="s2">&quot;TeX&quot;</span><span class="p">,</span> <span class="nx">availableFonts</span><span class="o">:</span> <span class="p">[</span><span class="s2">&quot;STIX&quot;</span><span class="p">,</span><span class="s2">&quot;TeX&quot;</span><span class="p">]</span> <span class="p">}</span>
+</span><span class='line'><span class="p">});</span>
+</span><span class='line'><span class="nt">&lt;/script&gt;</span>
+</span><span class='line'><span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML&quot;</span> <span class="na">type=</span><span class="s">&quot;text/javascript&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
 
 <ol>
   <li>Fix <a href="http://www.mathjax.org/">MathJax</a> right-click bug</li>
@@ -350,19 +382,23 @@ MathJax.Hub.Config({
 
 <p>I found the solution on <a href="http://luikore.github.com/2011/09/good-things-learned-from-octopress/">luikore’s blog</a>. The problem was when you right-click on a MathJax formula, the whole browser becomes white. To fix it, open <code>sass/base/_theme.scss</code> and change the div under body from</p>
 
-<p>{% codeblock lang:scss %}
-body {
-  &gt; div {
-    background: $sidebar-bg $noise-bg;
-{% endcodeblock %}</p>
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='scss'><span class='line'><span class="nt">body</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">&amp;</span><span class="nt">gt</span><span class="o">;</span> <span class="nt">div</span> <span class="p">{</span>
+</span><span class='line'>    <span class="na">background</span><span class="o">:</span> <span class="nv">$sidebar-bg</span> <span class="nv">$noise-bg</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
 
 <p>to</p>
 
-<p>{% codeblock lang:scss %}
-body {
-  &gt; div#main {
-    background: $sidebar-bg $noise-bg;
-{% endcodeblock %}</p>
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='scss'><span class='line'><span class="nt">body</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">&amp;</span><span class="nt">gt</span><span class="o">;</span> <span class="nt">div</span><span class="nn">#main</span> <span class="p">{</span>
+</span><span class='line'>    <span class="na">background</span><span class="o">:</span> <span class="nv">$sidebar-bg</span> <span class="nv">$noise-bg</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
 
 <p>and it is done.</p>
 

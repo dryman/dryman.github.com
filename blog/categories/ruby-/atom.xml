@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ruby, | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/ruby-/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-06-17T16:22:28+08:00</updated>
+  <updated>2012-06-17T16:25:24+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -20,7 +20,7 @@
     <id>http://www.idryman.org/blog/2012/04/04/jekyll-graphviz-plugin</id>
     <content type="html"><![CDATA[<p>I created a graphviz plugin for Octopress/Jekyll today. For example:</p>
 
-<p>{% raw %}
+<p>
     {% graphviz %}
     digraph G {
       compound=true;
@@ -41,31 +41,11 @@
       d -&gt; h;
     }
     {% endgraphviz %}
-{% endraw %}</p>
+</p>
 
 <p>will produce:</p>
 
-<p>{% graphviz %}
-digraph G {
-  compound=true;
-  subgraph cluster0 {
-  a -&gt; b;
-  a -&gt; c;
-  b -&gt; d;
-  c -&gt; d;
-  }
-  subgraph cluster1 {
-  e -&gt; g;
-  e -&gt; f;
-  }</p>
-
-<p>b -&gt; f [lhead=cluster1];
-  d -&gt; e;
-  c -&gt; g [ltail=cluster0, lhead=cluster1];
-  c -&gt; e [ltail=cluster0];
-  d -&gt; h;
-}
-{% endgraphviz %}</p>
+<p>Liquid error: undefined method `join' for #<String:0x007fc135ae1b60></p>
 
 <!-- more -->
 

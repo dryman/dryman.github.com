@@ -4,7 +4,7 @@
   <title><![CDATA[Category: NLP | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/nlp/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-06-17T16:22:28+08:00</updated>
+  <updated>2012-06-17T16:25:24+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -64,33 +64,44 @@ C=\left\{(r_1w_1s_1),(r_2w_2s_2),(r_3w_3s_3)\right\}
 
 <p>For example, a dog can be represented as <sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup></p>
 
-<p>{% codeblock lang:scheme %}
-(defparameter <em>dog</em>
-  ‘((:type “Jack Russel” 0.2)
-    (:type “Retriever” 0.4)
-    (:color “brown” 0.4)
-    (:color “black” 0.3)
-    (:agent-of “eat” 0.4)
-    (:patient-of “chase” 0.3)))
-{% endcodeblock %}</p>
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="nf">defparameter</span> <span class="nv">&lt;em&gt;dog&lt;/em&gt;</span>
+</span><span class='line'>  <span class="err">‘</span><span class="p">((</span><span class="nf">:type</span> <span class="err">“</span><span class="nv">Jack</span> <span class="nv">Russel</span><span class="err">”</span> <span class="mf">0.2</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">:type</span> <span class="err">“</span><span class="nv">Retriever</span><span class="err">”</span> <span class="mf">0.4</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">:color</span> <span class="err">“</span><span class="nv">brown</span><span class="err">”</span> <span class="mf">0.4</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">:color</span> <span class="err">“</span><span class="nv">black</span><span class="err">”</span> <span class="mf">0.3</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">:agent-of</span> <span class="err">“</span><span class="nv">eat</span><span class="err">”</span> <span class="mf">0.4</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">:patient-of</span> <span class="err">“</span><span class="nv">chase</span><span class="err">”</span> <span class="mf">0.3</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
 
 <p>And it can be expressed in a more complexed form:</p>
 
-<p>{% codeblock lang:scheme %}
-(defparameter <em>dog</em>
-  ‘((:type ((“Retriever” 0.4) (“Jack Russel” 0.2) (“Terrier” 0.4)))
-    (:color ((“brown” 0.4) (“black” 0.3) (“patched” 0.3) (“white” 0.2)))
-    (:name ((“Spot” 0.3) (“Lassie” 0.2)))
-    (:agent-of ((“eat” 0.4) (“run” 0.4) (“bark” 0.4) (“pant” 0.3)))
-    (:patient-of ((“chase” 0.3) (“walk” 0.4) (“love” 0.4 )))))
-{% endcodeblock %}</p>
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='scheme'><span class='line'><span class="p">(</span><span class="nf">defparameter</span> <span class="nv">&lt;em&gt;dog&lt;/em&gt;</span>
+</span><span class='line'>  <span class="err">‘</span><span class="p">((</span><span class="nf">:type</span> <span class="p">((</span><span class="err">“</span><span class="nv">Retriever</span><span class="err">”</span> <span class="mf">0.4</span><span class="p">)</span> <span class="p">(</span><span class="err">“</span><span class="nv">Jack</span> <span class="nv">Russel</span><span class="err">”</span> <span class="mf">0.2</span><span class="p">)</span> <span class="p">(</span><span class="err">“</span><span class="nv">Terrier</span><span class="err">”</span> <span class="mf">0.4</span><span class="p">)))</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">:color</span> <span class="p">((</span><span class="err">“</span><span class="nv">brown</span><span class="err">”</span> <span class="mf">0.4</span><span class="p">)</span> <span class="p">(</span><span class="err">“</span><span class="nv">black</span><span class="err">”</span> <span class="mf">0.3</span><span class="p">)</span> <span class="p">(</span><span class="err">“</span><span class="nv">patched</span><span class="err">”</span> <span class="mf">0.3</span><span class="p">)</span> <span class="p">(</span><span class="err">“</span><span class="nv">white</span><span class="err">”</span> <span class="mf">0.2</span><span class="p">)))</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">:name</span> <span class="p">((</span><span class="err">“</span><span class="nv">Spot</span><span class="err">”</span> <span class="mf">0.3</span><span class="p">)</span> <span class="p">(</span><span class="err">“</span><span class="nv">Lassie</span><span class="err">”</span> <span class="mf">0.2</span><span class="p">)))</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">:agent-of</span> <span class="p">((</span><span class="err">“</span><span class="nv">eat</span><span class="err">”</span> <span class="mf">0.4</span><span class="p">)</span> <span class="p">(</span><span class="err">“</span><span class="nv">run</span><span class="err">”</span> <span class="mf">0.4</span><span class="p">)</span> <span class="p">(</span><span class="err">“</span><span class="nv">bark</span><span class="err">”</span> <span class="mf">0.4</span><span class="p">)</span> <span class="p">(</span><span class="err">“</span><span class="nv">pant</span><span class="err">”</span> <span class="mf">0.3</span><span class="p">)))</span>
+</span><span class='line'>    <span class="p">(</span><span class="nf">:patient-of</span> <span class="p">((</span><span class="err">“</span><span class="nv">chase</span><span class="err">”</span> <span class="mf">0.3</span><span class="p">)</span> <span class="p">(</span><span class="err">“</span><span class="nv">walk</span><span class="err">”</span> <span class="mf">0.4</span><span class="p">)</span> <span class="p">(</span><span class="err">“</span><span class="nv">love</span><span class="err">”</span> <span class="mf">0.4</span> <span class="p">)))))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
 
 <p>which we can visualize it as below:
-{% img /images/nlp-day/dog-context-1.png ‘An example of dog context’%}</p>
+<img src="/images/nlp-day/dog-context-1.png" title="‘An example of dog context’" ></p>
 
 <p>Furthermore, since every node itself can be another context, we can generate a
 graph! <sup id="fnref:2"><a href="#fn:2" rel="footnote">2</a></sup>
-{% img /images/nlp-day/dog-context-2.png ‘An another example of dog context’%}</p>
+<img src="/images/nlp-day/dog-context-2.png" title="‘An another example of dog context’" ></p>
 
 <h3 id="the-main-questions-to-address">The main questions to address</h3>
 

@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Lisp | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/lisp/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-06-17T16:22:28+08:00</updated>
+  <updated>2012-06-17T16:25:24+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -235,63 +235,111 @@ more. </p>
 <p>The original backtrace dump message is not good enough, thanks to <a href="http://jsnell.iki.fi/blog/archive/2007-12-19-pretty-sbcl-backtraces.html">Juho’s
 post</a>, you can put this in your <code>.sbclrc</code>:</p>
 
-<p>{% codeblock lang:cl %}
-(defun backtrace-with-extra-info (&amp;key (start 1) (end 20))
-  (swank-backend::call-with-debugging-environment
-   (lambda ()
-     (loop for i from start to (length (swank-backend::compute-backtrace
-                                        start end))
-           do (ignore-errors (print-frame i))))))
-(defun print-frame (i)
-  (destructuring-bind (&amp;key file position &amp;allow-other-keys)
-      (apply #’append
-             (remove-if #’atom
-                        (swank-backend:frame-source-location-for-emacs i)))
-    (let* ((frame (swank-backend::nth-frame i))
-           (line-number (find-line-position file position frame)))
-      (format t “~2@a: ~s~%~
-                   ~:[~<em>~;~:[~2:</em>    At ~a (unknown line)~<em>~%~;~
-                             ~2:</em>    At ~a:~a~%~]~]~
-                   ~:[~*~;    Local variables:~%~{      ~a = ~s~%~}~]”
-              i
-              (sb-debug::frame-call (swank-backend::nth-frame i))
-              file line-number
-              (swank-backend::frame-locals i)
-              (mapcan (lambda (x)
-                        ;; Filter out local variables whose variables we
-                        ;; don’t know
-                        (unless (eql (getf x :value) :<not-available>)
-                          (list (getf x :name) (getf x :value))))
-                      (swank-backend::frame-locals i))))))
-(defun find-line-position (file char-offset frame)
-  ;; It would be nice if SBCL stored line number information in
-  ;; addition to form path information by default Since it doesn't
-  ;; we need to use Swank to map the source path to a character
-  ;; offset, and then map the character offset to a line number
-  (ignore-errors
-   (let* ((location (sb-di::frame-code-location frame))
-          (debug-source (sb-di::code-location-debug-source location))
-          (line (with-open-file (stream file)
-                  (1+ (loop repeat char-offset
-                            count (eql (read-char stream) #\Newline))))))
-     (format nil "~:[~a (file modified)~;~a~]"
-             (= (file-write-date file)
-                (sb-di::debug-source-created debug-source))
-             line))))
-{% endcodeblock %}</not-available></p>
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+</pre></td><td class='code'><pre><code class='cl'><span class='line'><span class="p">(</span><span class="nb">defun</span> <span class="nv">backtrace-with-extra-info</span> <span class="p">(</span><span class="nv">&amp;amp</span><span class="c1">;key (start 1) (end 20))</span>
+</span><span class='line'>  <span class="p">(</span><span class="nv">swank-backend::call-with-debugging-environment</span>
+</span><span class='line'>   <span class="p">(</span><span class="k">lambda</span> <span class="p">()</span>
+</span><span class='line'>     <span class="p">(</span><span class="nb">loop</span> <span class="nv">for</span> <span class="nv">i</span> <span class="nv">from</span> <span class="nv">start</span> <span class="nv">to</span> <span class="p">(</span><span class="nb">length</span> <span class="p">(</span><span class="nv">swank-backend::compute-backtrace</span>
+</span><span class='line'>                                        <span class="nv">start</span> <span class="nv">end</span><span class="p">))</span>
+</span><span class='line'>           <span class="nb">do</span> <span class="p">(</span><span class="nb">ignore-errors</span> <span class="p">(</span><span class="nv">print-frame</span> <span class="nv">i</span><span class="p">))))))</span>
+</span><span class='line'><span class="p">(</span><span class="nb">defun</span> <span class="nv">print-frame</span> <span class="p">(</span><span class="nv">i</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">destructuring-bind</span> <span class="p">(</span><span class="nv">&amp;amp</span><span class="c1">;key file position &amp;amp;allow-other-keys)</span>
+</span><span class='line'>      <span class="p">(</span><span class="nb">apply</span> <span class="err">#’</span><span class="nb">append</span>
+</span><span class='line'>             <span class="p">(</span><span class="nb">remove-if</span> <span class="err">#’</span><span class="nb">atom</span>
+</span><span class='line'>                        <span class="p">(</span><span class="nv">swank-backend:frame-source-location-for-emacs</span> <span class="nv">i</span><span class="p">)))</span>
+</span><span class='line'>    <span class="p">(</span><span class="k">let*</span> <span class="p">((</span><span class="nv">frame</span> <span class="p">(</span><span class="nv">swank-backend::nth-frame</span> <span class="nv">i</span><span class="p">))</span>
+</span><span class='line'>           <span class="p">(</span><span class="nv">line-number</span> <span class="p">(</span><span class="nv">find-line-position</span> <span class="nv">file</span> <span class="nb">position</span> <span class="nv">frame</span><span class="p">)))</span>
+</span><span class='line'>      <span class="p">(</span><span class="nb">format</span> <span class="no">t</span> <span class="err">“</span><span class="nv">~2@a:</span> <span class="nv">~s~%~</span>
+</span><span class='line'>                   <span class="nv">~:[~&lt;em&gt;~</span><span class="c1">;~:[~2:&lt;/em&gt;    At ~a (unknown line)~&lt;em&gt;~%~;~</span>
+</span><span class='line'>                             <span class="nv">~2:&lt;/em&gt;</span>    <span class="nv">At</span> <span class="nv">~a:~a~%~]~]~</span>
+</span><span class='line'>                   <span class="nv">~:[~*~</span><span class="c1">;    Local variables:~%~{      ~a = ~s~%~}~]”</span>
+</span><span class='line'>              <span class="nv">i</span>
+</span><span class='line'>              <span class="p">(</span><span class="nv">sb-debug::frame-call</span> <span class="p">(</span><span class="nv">swank-backend::nth-frame</span> <span class="nv">i</span><span class="p">))</span>
+</span><span class='line'>              <span class="nv">file</span> <span class="nv">line-number</span>
+</span><span class='line'>              <span class="p">(</span><span class="nv">swank-backend::frame-locals</span> <span class="nv">i</span><span class="p">)</span>
+</span><span class='line'>              <span class="p">(</span><span class="nb">mapcan</span> <span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="nv">x</span><span class="p">)</span>
+</span><span class='line'>                        <span class="c1">;; Filter out local variables whose variables we</span>
+</span><span class='line'>                        <span class="c1">;; don’t know</span>
+</span><span class='line'>                        <span class="p">(</span><span class="nb">unless</span> <span class="p">(</span><span class="nb">eql</span> <span class="p">(</span><span class="nb">getf</span> <span class="nv">x</span> <span class="ss">:value</span><span class="p">)</span> <span class="ss">:&lt;not-available&gt;</span><span class="p">)</span>
+</span><span class='line'>                          <span class="p">(</span><span class="nb">list</span> <span class="p">(</span><span class="nb">getf</span> <span class="nv">x</span> <span class="ss">:name</span><span class="p">)</span> <span class="p">(</span><span class="nb">getf</span> <span class="nv">x</span> <span class="ss">:value</span><span class="p">))))</span>
+</span><span class='line'>                      <span class="p">(</span><span class="nv">swank-backend::frame-locals</span> <span class="nv">i</span><span class="p">))))))</span>
+</span><span class='line'><span class="p">(</span><span class="nb">defun</span> <span class="nv">find-line-position</span> <span class="p">(</span><span class="nv">file</span> <span class="nv">char-offset</span> <span class="nv">frame</span><span class="p">)</span>
+</span><span class='line'>  <span class="c1">;; It would be nice if SBCL stored line number information in</span>
+</span><span class='line'>  <span class="c1">;; addition to form path information by default Since it doesn&#39;t</span>
+</span><span class='line'>  <span class="c1">;; we need to use Swank to map the source path to a character</span>
+</span><span class='line'>  <span class="c1">;; offset, and then map the character offset to a line number</span>
+</span><span class='line'>  <span class="p">(</span><span class="nb">ignore-errors</span>
+</span><span class='line'>   <span class="p">(</span><span class="k">let*</span> <span class="p">((</span><span class="nv">location</span> <span class="p">(</span><span class="nv">sb-di::frame-code-location</span> <span class="nv">frame</span><span class="p">))</span>
+</span><span class='line'>          <span class="p">(</span><span class="nv">debug-source</span> <span class="p">(</span><span class="nv">sb-di::code-location-debug-source</span> <span class="nv">location</span><span class="p">))</span>
+</span><span class='line'>          <span class="p">(</span><span class="nv">line</span> <span class="p">(</span><span class="nb">with-open-file</span> <span class="p">(</span><span class="nc">stream</span> <span class="nv">file</span><span class="p">)</span>
+</span><span class='line'>                  <span class="p">(</span><span class="nb">1+</span> <span class="p">(</span><span class="nb">loop</span> <span class="nv">repeat</span> <span class="nv">char-offset</span>
+</span><span class='line'>                            <span class="nb">count</span> <span class="p">(</span><span class="nb">eql</span> <span class="p">(</span><span class="nb">read-char</span> <span class="nc">stream</span><span class="p">)</span> <span class="sc">#\Newline</span><span class="p">))))))</span>
+</span><span class='line'>     <span class="p">(</span><span class="nb">format</span> <span class="no">nil</span> <span class="s">&quot;~:[~a (file modified)~;~a~]&quot;</span>
+</span><span class='line'>             <span class="p">(</span><span class="nb">=</span> <span class="p">(</span><span class="nb">file-write-date</span> <span class="nv">file</span><span class="p">)</span>
+</span><span class='line'>                <span class="p">(</span><span class="nv">sb-di::debug-source-created</span> <span class="nv">debug-source</span><span class="p">))</span>
+</span><span class='line'>             <span class="nv">line</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></not-available></p>
 
 <p>And now in your REPL, the following code:</p>
 
-<p>{% codeblock lang:cl %}
-(declaim (optimize debug))
-(defun foo (x)
-  (let ((y (+ x 3)))
-    (backtrace)
-    (backtrace-with-extra-info)
-    (+ x y)))
-(defmethod bar ((n fixnum) (y (eql 1)))
-  (foo (+ y n)))
-{% endcodeblock %}</p>
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='cl'><span class='line'><span class="p">(</span><span class="nb">declaim</span> <span class="p">(</span><span class="k">optimize</span> <span class="nv">debug</span><span class="p">))</span>
+</span><span class='line'><span class="p">(</span><span class="nb">defun</span> <span class="nv">foo</span> <span class="p">(</span><span class="nv">x</span><span class="p">)</span>
+</span><span class='line'>  <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">y</span> <span class="p">(</span><span class="nb">+</span> <span class="nv">x</span> <span class="mi">3</span><span class="p">)))</span>
+</span><span class='line'>    <span class="p">(</span><span class="nv">backtrace</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nv">backtrace-with-extra-info</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">(</span><span class="nb">+</span> <span class="nv">x</span> <span class="nv">y</span><span class="p">)))</span>
+</span><span class='line'><span class="p">(</span><span class="nb">defmethod</span> <span class="nv">bar</span> <span class="p">((</span><span class="nv">n</span> <span class="kt">fixnum</span><span class="p">)</span> <span class="p">(</span><span class="nv">y</span> <span class="p">(</span><span class="nb">eql</span> <span class="mi">1</span><span class="p">)))</span>
+</span><span class='line'>  <span class="p">(</span><span class="nv">foo</span> <span class="p">(</span><span class="nb">+</span> <span class="nv">y</span> <span class="nv">n</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
 
 <p>The old backtrace would look like:</p>
 
@@ -390,15 +438,15 @@ it!</p>
 <p>I found out how to enable <code>STEP-MODE</code> in <a href="http://www.sbcl.org/">sbcl</a> form <a href="http://www.lispforum.com/viewtopic.php?f=2&amp;t=628">this post</a>. 
 In short, put this in your <code>.sbclrc</code>.</p>
 
-<p>{% codeblock lang:cl %}
-(declaim (optimize (debug 3)))
-{% endcodeblock %}</p>
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='cl'><span class='line'><span class="p">(</span><span class="nb">declaim</span> <span class="p">(</span><span class="k">optimize</span> <span class="p">(</span><span class="nv">debug</span> <span class="mi">3</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
 
 <p>and in your <code>.emacs</code></p>
 
-<p>{% codeblock lang:cl %}
-(setq inferior-lisp-program “/usr/local/bin/sbcl”)
-{% endcodeblock %}</p>
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='cl'><span class='line'><span class="p">(</span><span class="k">setq</span> <span class="nv">inferior-lisp-program</span> <span class="err">“</span><span class="nv">/usr/local/bin/sbcl</span><span class="err">”</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
 
 ]]></content>
   </entry>

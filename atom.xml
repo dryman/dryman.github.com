@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-06-17T16:22:06+08:00</updated>
+  <updated>2012-06-17T16:25:24+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -22,6 +22,10 @@
 powerful webkit inspector by default. Nathan de Vries has written a
 <a href="http://atnan.com/blog/2011/11/17/enabling-remote-debugging-via-private-apis-in-mobile-safari/">post</a> to solve the problem, but the solution didn’t work on my XCode
 4 with Clang front end.</p>
+
+<!-- more -->
+
+<p>This is Nathan’s solution:</p>
 
 <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>Nathan&#8217;s solution </span></figcaption>
  <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
@@ -126,7 +130,7 @@ to the value returned by the recursive function.<sup id="fnref:1"><a href="#fn:1
 
 <p>Also the fibonacci executing model:</p>
 
-<p>Liquid error: undefined method `join’ for #<string:0x007fc9746d7848 /></p>
+<p>Liquid error: undefined method `join’ for #<string:0x007fc134718840 /></p>
 
 <p>This is even worse, the complexity of fibonacci function cost $O(\phi^n)$ where
 $\phi=\frac{1+\sqrt{5}}{2}$. </p>
@@ -444,8 +448,8 @@ spoken by <a href="http://spinroot.com/gerard/">Gerard J. Holzmann</a>, software
 <a href="http://www.jpl.nasa.gov/index.cfm">NASA Jet Propulsion Laboratory (JPL)</a>. He introduced a fast automatic software
 verification tool for distributed software system – <a href="http://spinroot.com/spin/whatispin.html">SPIN</a>.</p>
 
-<p>Liquid error: undefined method `join’ for #<string:0x007fc9745c59f0>
-<!-- more --></string:0x007fc9745c59f0></p>
+<p>Liquid error: undefined method `join’ for #<string:0x007fc1345bc258>
+<!-- more --></string:0x007fc1345bc258></p>
 
 <h3 id="background">Background</h3>
 
@@ -508,7 +512,7 @@ interaction is a serious problem. The verification system has to deal with:</p>
 
 <p>SPIN breaks the whole verification problem into five steps<sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup> :</p>
 
-<p>Liquid error: undefined method `join’ for #<string:0x007fc9745c5540 /></p>
+<p>Liquid error: undefined method `join’ for #<string:0x007fc1345bbda8 /></p>
 
 <h4 id="building-the-model">Building the model</h4>
 
@@ -559,7 +563,7 @@ machine.</p>
 
 <p>can generate this FSM:</p>
 
-<p>Liquid error: undefined method `join’ for #<string:0x007fc9745c2ac0 /></p>
+<p>Liquid error: undefined method `join’ for #<string:0x007fc1345b3338 /></p>
 
 <h3 id="abstraction-and-context-of-spin-model">Abstraction and context of SPIN model</h3>
 
@@ -572,7 +576,7 @@ a “model analyser.”</p>
 
 <p>The context of a SPIN looks like this:</p>
 
-<p>Liquid error: undefined method `join’ for #<string:0x007fc9745c2610 /></p>
+<p>Liquid error: undefined method `join’ for #<string:0x007fc1345b2e88 /></p>
 
 <p>Note that the <em>environment model</em> is not that hard to define. You just need to
 declare that how many outlets of a switch: switch-to-switch, telephone inputs,
@@ -866,7 +870,7 @@ digraph G {
 
 <p>will produce:</p>
 
-<p>Liquid error: undefined method `join’ for #<string:0x007fc9745ab0a0 /></p>
+<p>Liquid error: undefined method `join’ for #<string:0x007fc1345a5940 /></p>
 
 <!-- more -->
 
