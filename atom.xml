@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-06-17T17:53:36+08:00</updated>
+  <updated>2012-06-17T21:48:42+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -61,6 +61,11 @@ of direct method call. Guess what? The compiler accept the hack. Awesome!</p>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
 <p>Now simply run your iphone simulator and open the url <code>localhost:9999</code> to view your inspector. <strong>Voilà!</strong></p>
+
+<h3 id="edit">Edit</h3>
+
+<p><a href="https://github.com/brainlock">brainlock</a> shared his <a href="https://github.com/brainlock/ios-remote-inspector">remote inspector</a> that can use proxy
+to debug <em>on the device</em>. Awesome!</p>
 
 ]]></content>
   </entry>
