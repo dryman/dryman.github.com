@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Talk | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/talk/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-04-17T21:33:56+08:00</updated>
+  <updated>2012-06-17T16:22:28+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -23,7 +23,25 @@ spoken by <a href="http://spinroot.com/gerard/">Gerard J. Holzmann</a>, software
 <a href="http://www.jpl.nasa.gov/index.cfm">NASA Jet Propulsion Laboratory (JPL)</a>. He introduced a fast automatic software
 verification tool for distributed software system – <a href="http://spinroot.com/spin/whatispin.html">SPIN</a>.</p>
 
-<p> &lt;!-- more --&gt;
+<p>{% graphviz %}</p>
+
+<pre><code>digraph {
+  ltl [label="LTL\n requirement"];
+  logic [label="Logical\n negation"];
+  model [label="Model\n extractor"];
+  c [label="C code"];
+  abs [label="Abstraction\n map"];
+  env [label="Environment\n model"];
+  automata [label="Omega\n automation"];
+  bug [label="Bug report" shape=doublecircle];
+
+  ltl -&gt; logic;
+  logic -&gt; model;
+  c -&gt; abs -&gt; model;
+  env -&gt; model;
+  model -&gt; automata;
+  automata -&gt; bug;
+} {% endgraphviz %} &lt;!-- more --&gt;
 </code></pre>
 
 <h3 id="background">Background</h3>
@@ -87,7 +105,23 @@ interaction is a serious problem. The verification system has to deal with:</p>
 
 <p>SPIN breaks the whole verification problem into five steps<sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup> :</p>
 
-<p>
+<p>{% graphviz %}
+    digraph {
+        code    [label=”ANSI C code”];
+        spin    [label=”SPIN”];
+        abs     [label=”Abstraction Map”];
+        context [label=”Context”];
+        feature [label=”Feature requirements”];
+        bug     [label=”Bug reports, property violations”];
+        user    [label=”Users/Developers”];</p>
+
+<pre><code>    code -&gt; spin     [label=" 1. build model"];
+    spin -&gt; abs      [label="2"];
+    spin -&gt; context  [label="3"];
+    spin -&gt; feature  [label="4"];
+    spin -&gt; bug      [label="5"];
+    bug  -&gt; user;
+} {% endgraphviz %}
 </code></pre>
 
 <h4 id="building-the-model">Building the model</h4>
@@ -99,48 +133,39 @@ machine.</p>
 
 <p>For example, the following code</p>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'>    <span class="err">@</span><span class="n">dial</span><span class="o">:</span>
-</span><span class='line'>      <span class="k">switch</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>      <span class="nl">default:</span> <span class="k">goto</span> <span class="n">error</span><span class="p">;</span> <span class="cm">/* unexpected input &lt;em&gt;/</span>
-</span><span class='line'><span class="cm">      case Crdtmf:         /&lt;/em&gt; digit collector ready &lt;em&gt;/</span>
-</span><span class='line'><span class="cm">        x-&amp;gt;drv-&amp;gt;progress(x, Tdial);</span>
-</span><span class='line'><span class="cm">        time = MSEC(16000); /&lt;/em&gt; set timmer and wait event */</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span>  <span class="cm">/* continue here */</span>
-</span><span class='line'>  <span class="err">@</span><span class="n">dial1</span><span class="o">:</span> <span class="k">switch</span><span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>    <span class="nl">default:</span> <span class="k">goto</span> <span class="n">error</span><span class="p">;</span>
-</span><span class='line'>    <span class="k">case</span> <span class="n">crconn</span>: <span class="k">goto</span> <span class="n">B</span><span class="err">@</span><span class="n">lb</span><span class="p">;</span>
-</span><span class='line'>    <span class="k">case</span> <span class="n">Cronhook</span>: <span class="cm">/* caller hangs up */</span>
-</span><span class='line'>      <span class="n">x</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">drv</span><span class="o">-&amp;</span><span class="n">gt</span><span class="p">;</span><span class="n">disconnect</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
-</span><span class='line'>  <span class="err">@</span><span class="n">dial2</span><span class="o">:</span>  <span class="k">if</span><span class="p">(</span><span class="n">op</span><span class="o">!=</span><span class="n">Crconn</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span> <span class="n">op</span><span class="o">!=</span> <span class="n">rdis</span><span class="p">)</span>
-</span><span class='line'>        <span class="k">goto</span> <span class="n">Aidle</span><span class="p">;</span>
-</span><span class='line'>        <span class="c1">// ...etc</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
+<p>{% codeblock lang:c %}
+    @dial:
+      switch(op) {
+      default: goto error; /* unexpected input <em>/
+      case Crdtmf:         /</em> digit collector ready <em>/
+        x-&gt;drv-&gt;progress(x, Tdial);
+        time = MSEC(16000); /</em> set timmer and wait event */</p>
+
+<pre><code>  /* continue here */
+  @dial1: switch(op) {
+    default: goto error;
+    case crconn: goto B@lb;
+    case Cronhook: /* caller hangs up */
+      x-&gt;drv-&gt;disconnect(x);
+  @dial2:  if(op!=Crconn &amp;&amp; op!= rdis)
+        goto Aidle;
+        // ...etc
+  }
+} {% endcodeblock %}
 </code></pre>
 
 <p>can generate this FSM:</p>
 
-<p></p>
+<p>{% graphviz %}
+    digraph {
+      dial-&gt;dial1 [label=”Crdtmf”];
+      dial1-&gt;dial1 [label=”Cronn”];
+      dial1-&gt;dial2 [label=”Cronhook”];
+      dial-&gt;error [label=”else”];
+      dial1-&gt;error [label=”else”];
+      dial2-&gt;error [label=”else”];
+    }
+{% endgraphviz %}</p>
 
 <h3 id="abstraction-and-context-of-spin-model">Abstraction and context of SPIN model</h3>
 
@@ -153,7 +178,25 @@ a “model analyser.”</p>
 
 <p>The context of a SPIN looks like this:</p>
 
-<p>
+<p>{% graphviz %}</p>
+
+<pre><code>digraph {
+  ltl [label="LTL\n requirement"];
+  logic [label="Logical\n negation"];
+  model [label="Model\n extractor"];
+  c [label="C code"];
+  abs [label="Abstraction\n map"];
+  env [label="Environment\n model"];
+  automata [label="Omega\n automation"];
+  bug [label="Bug report" shape=doublecircle];
+
+  ltl -&gt; logic;
+  logic -&gt; model;
+  c -&gt; abs -&gt; model;
+  env -&gt; model;
+  model -&gt; automata;
+  automata -&gt; bug;
+} {% endgraphviz %}
 </code></pre>
 
 <p>Note that the <em>environment model</em> is not that hard to define. You just need to
@@ -267,13 +310,13 @@ tracing at 3:00AM. :D</p>
 <div class="footnotes">
   <ol>
     <li id="fn:1">
-      <p>All the plots are generated by my <a href="/blog/2012/04/04/jekyll-graphviz-plugin/">graphviz plugin</a><a href="#fnref:1" rev="footnote">&#8617;</a></p>
+      <p>All the plots are generated by my <a href="{{ root_url }}/blog/2012/04/04/jekyll-graphviz-plugin/">graphviz plugin</a><a href="#fnref:1" rel="reference">&#8617;</a></p>
     </li>
     <li id="fn:2">
-      <p>The example is referenced from <a href="http://www.sable.mcgill.ca/~ebodde/mcs/timeline.ppt">this slide</a><a href="#fnref:2" rev="footnote">&#8617;</a></p>
+      <p>The example is referenced from <a href="http://www.sable.mcgill.ca/~ebodde/mcs/timeline.ppt">this slide</a><a href="#fnref:2" rel="reference">&#8617;</a></p>
     </li>
     <li id="fn:3">
-      <p>Check <a href="http://spinroot.com/spin/Man/ltl.html">SPIN LTL reference</a><a href="#fnref:3" rev="footnote">&#8617;</a></p>
+      <p>Check <a href="http://spinroot.com/spin/Man/ltl.html">SPIN LTL reference</a><a href="#fnref:3" rel="reference">&#8617;</a></p>
     </li>
   </ol>
 </div>

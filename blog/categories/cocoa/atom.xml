@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Cocoa | Carpe diem (Felix's blog)]]></title>
+  <link href="http://www.idryman.org/blog/categories/cocoa/atom.xml" rel="self"/>
+  <link href="http://www.idryman.org/"/>
+  <updated>2012-06-17T16:22:28+08:00</updated>
+  <id>http://www.idryman.org/</id>
+  <author>
+    <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Debug UIWebView in your iOS app]]></title>
+    <link href="http://www.idryman.org/blog/2012/06/17/debug-uiwebview-in-your-ios-app/"/>
+    <updated>2012-06-17T15:44:00+08:00</updated>
+    <id>http://www.idryman.org/blog/2012/06/17/debug-uiwebview-in-your-ios-app</id>
+    <content type="html"><![CDATA[<p>It is often to embed a UIWebView in an iOS app. However it doesn’t provide the
+powerful webkit inspector by default. Nathan de Vries has written a
+<a href="http://atnan.com/blog/2011/11/17/enabling-remote-debugging-via-private-apis-in-mobile-safari/">post</a> to solve the problem, but the solution didn’t work on my XCode
+4 with Clang front end.</p>
+
+<p>{% codeblock lang:objc Nathan’s solution %}
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    // …Snipped…
+    [NSClassFromString(@”WebView”) _enableRemoteInspector];
+    // …Snipped…
+}
+{% endcodeblock %}</p>
+
+<p>The compiler will complain that you can’t force <code>WebView</code> to perform private
+method <code>_enableRemoteInspector</code>. Thus, I use <code>performSelector:@selector()</code> instead
+of direct method call. Guess what? The compiler accept the hack. Awesome!</p>
+
+<p>{% codeblock lang:objc %}
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    // enable the hack only when we use simulator
+#if (TARGET_IPHONE_SIMULATOR)
+    [NSClassFromString(@”WebView”) performSelector:@selector(_enableRemoteInspector)];
+#endif
+    // …Snipped…
+}
+{% endcodeblock %}</p>
+
+<p>Now simply run your iphone simulator and open the url <code>localhost:9999</code> to view your inspector. <strong>Voilà!</strong></p>
+
+]]></content>
+  </entry>
+  
+</feed>

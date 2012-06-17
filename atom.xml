@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-04-17T21:33:56+08:00</updated>
+  <updated>2012-06-17T16:22:06+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,54 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Debug UIWebView in your iOS app]]></title>
+    <link href="http://www.idryman.org/blog/2012/06/17/debug-uiwebview-in-your-ios-app/"/>
+    <updated>2012-06-17T15:44:00+08:00</updated>
+    <id>http://www.idryman.org/blog/2012/06/17/debug-uiwebview-in-your-ios-app</id>
+    <content type="html"><![CDATA[<p>It is often to embed a UIWebView in an iOS app. However it doesn’t provide the
+powerful webkit inspector by default. Nathan de Vries has written a
+<a href="http://atnan.com/blog/2011/11/17/enabling-remote-debugging-via-private-apis-in-mobile-safari/">post</a> to solve the problem, but the solution didn’t work on my XCode
+4 with Clang front end.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>Nathan&#8217;s solution </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">BOOL</span><span class="p">)</span><span class="nf">application:</span><span class="p">(</span><span class="n">UIApplication</span> <span class="o">*</span><span class="p">)</span><span class="nv">application</span> <span class="nf">didFinishLaunchingWithOptions:</span><span class="p">(</span><span class="n">NSDictionary</span> <span class="o">*</span><span class="p">)</span><span class="nv">launchOptions</span> <span class="p">{</span>
+</span><span class="line">    <span class="c1">// ...Snipped...</span>
+</span><span class="line">    <span class="p">[</span><span class="n">NSClassFromString</span><span class="p">(</span><span class="s">@&quot;WebView&quot;</span><span class="p">)</span> <span class="n">_enableRemoteInspector</span><span class="p">];</span>
+</span><span class="line">    <span class="c1">// ...Snipped...</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The compiler will complain that you can’t force <code>WebView</code> to perform private
+method <code>_enableRemoteInspector</code>. Thus, I use <code>performSelector:@selector()</code> instead
+of direct method call. Guess what? The compiler accept the hack. Awesome!</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">BOOL</span><span class="p">)</span><span class="nf">application:</span><span class="p">(</span><span class="n">UIApplication</span> <span class="o">*</span><span class="p">)</span><span class="nv">application</span> <span class="nf">didFinishLaunchingWithOptions:</span><span class="p">(</span><span class="n">NSDictionary</span> <span class="o">*</span><span class="p">)</span><span class="nv">launchOptions</span> <span class="p">{</span>
+</span><span class="line"><span class="cp">    // enable the hack only when we use simulator</span>
+</span><span class="line"><span class="cp">#if (TARGET_IPHONE_SIMULATOR)</span>
+</span><span class="line">    <span class="p">[</span><span class="n">NSClassFromString</span><span class="p">(</span><span class="s">@&quot;WebView&quot;</span><span class="p">)</span> <span class="nl">performSelector:</span><span class="k">@selector</span><span class="p">(</span><span class="n">_enableRemoteInspector</span><span class="p">)];</span>
+</span><span class="line"><span class="cp">#endif</span>
+</span><span class="line">    <span class="c1">// ...Snipped...</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Now simply run your iphone simulator and open the url <code>localhost:9999</code> to view your inspector. <strong>Voilà!</strong></p>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Recursion best practices]]></title>
@@ -78,7 +126,7 @@ to the value returned by the recursive function.<sup id="fnref:1"><a href="#fn:1
 
 <p>Also the fibonacci executing model:</p>
 
-<p><img src="http://www.idryman.org/images/graphviz/g-ff6b576e3a2600dd84a36f0059875404.svg" /></p>
+<p>Liquid error: undefined method `join’ for #<string:0x007fc9746d7848 /></p>
 
 <p>This is even worse, the complexity of fibonacci function cost $O(\phi^n)$ where
 $\phi=\frac{1+\sqrt{5}}{2}$. </p>
@@ -367,19 +415,19 @@ recursion’s accumulator</li>
     <li id="fn:1">
       <p>In modern compiler the trivial straight recursion such as factorial will be
   optimized and make no big performance difference compare to the one written in
-  tail recursion form.<a href="#fnref:1" rev="footnote">&#8617;</a></p>
+  tail recursion form.<a href="#fnref:1" rel="reference">&#8617;</a></p>
     </li>
     <li id="fn:2">
       <p>Take a look at how many possible ways to write 
   <a href="http://www.cliki.net/Fibonacci">fibonacci in common lisp</a>. There is also
-  a way to write fibonacci in $O(log(n))$ order.<a href="#fnref:2" rev="footnote">&#8617;</a></p>
+  a way to write fibonacci in $O(log(n))$ order.<a href="#fnref:2" rel="reference">&#8617;</a></p>
     </li>
     <li id="fn:3">
       <p>The example is taken from 
-  <a href="http://www.erlang.org/doc/efficiency_guide/listHandling.html">Erlang performance tuning – List handling</a>.<a href="#fnref:3" rev="footnote">&#8617;</a></p>
+  <a href="http://www.erlang.org/doc/efficiency_guide/listHandling.html">Erlang performance tuning – List handling</a>.<a href="#fnref:3" rel="reference">&#8617;</a></p>
     </li>
     <li id="fn:4">
-      <p>Example taken from <a href="http://en.literateprograms.org/Quicksort_(Haskell)">Quicksort (haskell) - Literate Programs</a>.<a href="#fnref:4" rev="footnote">&#8617;</a></p>
+      <p>Example taken from <a href="http://en.literateprograms.org/Quicksort_(Haskell)">Quicksort (haskell) - Literate Programs</a>.<a href="#fnref:4" rel="reference">&#8617;</a></p>
     </li>
   </ol>
 </div>
@@ -396,8 +444,8 @@ spoken by <a href="http://spinroot.com/gerard/">Gerard J. Holzmann</a>, software
 <a href="http://www.jpl.nasa.gov/index.cfm">NASA Jet Propulsion Laboratory (JPL)</a>. He introduced a fast automatic software
 verification tool for distributed software system – <a href="http://spinroot.com/spin/whatispin.html">SPIN</a>.</p>
 
-<p><img src="http://www.idryman.org/images/graphviz/g-f44bd3841c23d32cc5d46f28821bf434.svg" />
-<!-- more --></p>
+<p>Liquid error: undefined method `join’ for #<string:0x007fc9745c59f0>
+<!-- more --></string:0x007fc9745c59f0></p>
 
 <h3 id="background">Background</h3>
 
@@ -460,7 +508,7 @@ interaction is a serious problem. The verification system has to deal with:</p>
 
 <p>SPIN breaks the whole verification problem into five steps<sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup> :</p>
 
-<p><img src="http://www.idryman.org/images/graphviz/g-e6e8d45d4f940e9bbe1ee18190f2e7f6.svg" /></p>
+<p>Liquid error: undefined method `join’ for #<string:0x007fc9745c5540 /></p>
 
 <h4 id="building-the-model">Building the model</h4>
 
@@ -511,7 +559,7 @@ machine.</p>
 
 <p>can generate this FSM:</p>
 
-<p><img src="http://www.idryman.org/images/graphviz/g-2ba67537d29e5b408a448b873c67ff4a.svg" /></p>
+<p>Liquid error: undefined method `join’ for #<string:0x007fc9745c2ac0 /></p>
 
 <h3 id="abstraction-and-context-of-spin-model">Abstraction and context of SPIN model</h3>
 
@@ -524,7 +572,7 @@ a “model analyser.”</p>
 
 <p>The context of a SPIN looks like this:</p>
 
-<p><img src="http://www.idryman.org/images/graphviz/g-f44bd3841c23d32cc5d46f28821bf434.svg" /></p>
+<p>Liquid error: undefined method `join’ for #<string:0x007fc9745c2610 /></p>
 
 <p>Note that the <em>environment model</em> is not that hard to define. You just need to
 declare that how many outlets of a switch: switch-to-switch, telephone inputs,
@@ -637,13 +685,13 @@ tracing at 3:00AM. :D</p>
 <div class="footnotes">
   <ol>
     <li id="fn:1">
-      <p>All the plots are generated by my <a href="http://www.idryman.org/blog/2012/04/04/jekyll-graphviz-plugin/">graphviz plugin</a><a href="#fnref:1" rev="footnote">&#8617;</a></p>
+      <p>All the plots are generated by my <a href="http://www.idryman.org/blog/2012/04/04/jekyll-graphviz-plugin/">graphviz plugin</a><a href="#fnref:1" rel="reference">&#8617;</a></p>
     </li>
     <li id="fn:2">
-      <p>The example is referenced from <a href="http://www.sable.mcgill.ca/~ebodde/mcs/timeline.ppt">this slide</a><a href="#fnref:2" rev="footnote">&#8617;</a></p>
+      <p>The example is referenced from <a href="http://www.sable.mcgill.ca/~ebodde/mcs/timeline.ppt">this slide</a><a href="#fnref:2" rel="reference">&#8617;</a></p>
     </li>
     <li id="fn:3">
-      <p>Check <a href="http://spinroot.com/spin/Man/ltl.html">SPIN LTL reference</a><a href="#fnref:3" rev="footnote">&#8617;</a></p>
+      <p>Check <a href="http://spinroot.com/spin/Man/ltl.html">SPIN LTL reference</a><a href="#fnref:3" rel="reference">&#8617;</a></p>
     </li>
   </ol>
 </div>
@@ -818,7 +866,7 @@ digraph G {
 
 <p>will produce:</p>
 
-<p><img src="http://www.idryman.org/images/graphviz/g-3feb8846aa4bb9767add244df8bed05a.svg" /></p>
+<p>Liquid error: undefined method `join’ for #<string:0x007fc9745ab0a0 /></p>
 
 <!-- more -->
 
@@ -2392,13 +2440,14 @@ statistical analysis.</p>
 C=\left\{(r_1w_1s_1),(r_2w_2s_2),(r_3w_3s_3)\right\}
 </script>
 
-<script type="math/tex; mode=display">
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
 \begin{align}
 \mbox{where } &r_i\varepsilon\;\{Relations\}=&\mbox{e.g., :subj, :agent, :color-of}\\
 & w_i\varepsilon\;\{Words\}=&\mbox{e.g., happy, run, apple}\\
 & s_i\varepsilon\;[0,1]=&\mbox{normalized weight}
 \end{align}
-</script>
+ %]]&gt;</script>
 
 <p>For example, a dog can be represented as <sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup></p>
 
@@ -2465,10 +2514,10 @@ must…), etc.?</li>
 <div class="footnotes">
   <ol>
     <li id="fn:1">
-      <p>I use the syntax of common lisp to express the relationship<a href="#fnref:1" rev="footnote">&#8617;</a></p>
+      <p>I use the syntax of common lisp to express the relationship<a href="#fnref:1" rel="reference">&#8617;</a></p>
     </li>
     <li id="fn:2">
-      <p>The copyright of the images belongs to Eduard Hovy<a href="#fnref:2" rev="footnote">&#8617;</a></p>
+      <p>The copyright of the images belongs to Eduard Hovy<a href="#fnref:2" rel="reference">&#8617;</a></p>
     </li>
   </ol>
 </div>
@@ -2509,22 +2558,23 @@ So, I discovered some tricks to form algorithm-like typesettings.</p>
 <span class="line-number">9</span>
 <span class="line-number">10</span>
 <span class="line-number">11</span>
-</pre></td><td class="code"><pre><code class="latex"><span class="line"><span class="sb">$$</span><span class="nb" />
+</pre></td><td class="code"><pre><code class="latex"><span class="line"><span class="sb">$$</span><span class="nb"></span>
 </span><span class="line"><span class="nv">\begin</span><span class="nb">{align}</span>
-</span><span class="line"><span class="nb">   Q</span><span class="o">=</span><span class="nb">&amp; </span><span class="nv">\mbox</span><span class="nb">{On input string $w$:} </span><span class="nv">\\</span><span class="nb" />
-</span><span class="line"><span class="nb">     &amp; </span><span class="m">1</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Construct the following Turing machine $P_w$} </span><span class="nv">\\</span><span class="nb" />
-</span><span class="line"><span class="nb">     &amp; </span><span class="nv">\quad</span><span class="nb">    P_w </span><span class="o">=</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{On any input:} </span><span class="nv">\\</span><span class="nb" />
-</span><span class="line"><span class="nb">     &amp; </span><span class="nv">\qquad</span><span class="nb">   </span><span class="m">1</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Erase input.} </span><span class="nv">\\</span><span class="nb" />
-</span><span class="line"><span class="nb">     &amp; </span><span class="nv">\qquad</span><span class="nb">   </span><span class="m">2</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Write w on the tape.} </span><span class="nv">\\</span><span class="nb" />
-</span><span class="line"><span class="nb">     &amp; </span><span class="nv">\qquad</span><span class="nb">   </span><span class="m">3</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Halt.}  </span><span class="nv">\\</span><span class="nb" />
-</span><span class="line"><span class="nb">     &amp; </span><span class="m">2</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Output }</span><span class="nv">\langle</span><span class="nb"> P_w</span><span class="nv">\rangle</span><span class="nb">  </span><span class="nv">\\</span><span class="nb" />
+</span><span class="line"><span class="nb">   Q</span><span class="o">=</span><span class="nb">&amp; </span><span class="nv">\mbox</span><span class="nb">{On input string $w$:} </span><span class="nv">\\</span><span class="nb"></span>
+</span><span class="line"><span class="nb">     &amp; </span><span class="m">1</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Construct the following Turing machine $P_w$} </span><span class="nv">\\</span><span class="nb"></span>
+</span><span class="line"><span class="nb">     &amp; </span><span class="nv">\quad</span><span class="nb">    P_w </span><span class="o">=</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{On any input:} </span><span class="nv">\\</span><span class="nb"></span>
+</span><span class="line"><span class="nb">     &amp; </span><span class="nv">\qquad</span><span class="nb">   </span><span class="m">1</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Erase input.} </span><span class="nv">\\</span><span class="nb"></span>
+</span><span class="line"><span class="nb">     &amp; </span><span class="nv">\qquad</span><span class="nb">   </span><span class="m">2</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Write w on the tape.} </span><span class="nv">\\</span><span class="nb"></span>
+</span><span class="line"><span class="nb">     &amp; </span><span class="nv">\qquad</span><span class="nb">   </span><span class="m">3</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Halt.}  </span><span class="nv">\\</span><span class="nb"></span>
+</span><span class="line"><span class="nb">     &amp; </span><span class="m">2</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Output }</span><span class="nv">\langle</span><span class="nb"> P_w</span><span class="nv">\rangle</span><span class="nb">  </span><span class="nv">\\</span><span class="nb"></span>
 </span><span class="line"><span class="nv">\end</span><span class="nb">{align}</span>
 </span><span class="line"><span class="s">$$</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
 <p>and <strong>Voilà</strong>!</p>
 
-<script type="math/tex; mode=display">
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
 \begin{align}
    Q=& \mbox{On input string $w$:} \\
      & 1.\; \mbox{Construct the following Turing machine $P_w$} \\
@@ -2534,7 +2584,7 @@ So, I discovered some tricks to form algorithm-like typesettings.</p>
      & \qquad   3.\; \mbox{Halt.}  \\
      & 2.\; \mbox{Output }\langle P_w\rangle  \\
 \end{align}
-</script>
+ %]]&gt;</script>
 
 ]]></content>
   </entry>
@@ -2578,7 +2628,8 @@ copy of its own description</em>. We call this machine $SELF$.</p>
   <dd>The following TM $Q$ computes $q(w)$</dd>
 </dl>
 
-<script type="math/tex; mode=display">
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
 \begin{align}
    Q=& \mbox{On input string $w$:} \\
      & 1.\; \mbox{Construct the following Turing machine $P_w$} \\
@@ -2588,12 +2639,13 @@ copy of its own description</em>. We call this machine $SELF$.</p>
      & \qquad   3.\; \mbox{Halt.}  \\
      & 2.\; \mbox{Output }\langle P_w\rangle  \\
 \end{align}
-</script>
+ %]]&gt;</script>
 
 <p>Now we construct $SELF$ in two parts $A$ and $B$. We want $SELF$ to print out
 $\langle SELF\rangle = \langle AB\rangle$.</p>
 
-<script type="math/tex; mode=display">
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
 \begin{align}
 A=&P_{\langle B\rangle}, \\
 B=&\mbox{On input $\langle M\rangle$, where $M$ is a portion of a TM:}\\
@@ -2601,7 +2653,7 @@ B=&\mbox{On input $\langle M\rangle$, where $M$ is a portion of a TM:}\\
   & 2.\;\mbox{Combine the result with $\langle M\rangle$ to make a complete TM.} \\
   & 3.\;\mbox{Print the description of this TM and halt.} \\
 \end{align}
-</script>
+ %]]&gt;</script>
 ]]></content>
   </entry>
   
@@ -2623,24 +2675,25 @@ Then you can translate this</p>
 <span class="line-number">5</span>
 <span class="line-number">6</span>
 <span class="line-number">7</span>
-</pre></td><td class="code"><pre><code class="latex"><span class="line"><span class="sb">$$</span><span class="nb" />
+</pre></td><td class="code"><pre><code class="latex"><span class="line"><span class="sb">$$</span><span class="nb"></span>
 </span><span class="line"><span class="nv">\begin</span><span class="nb">{align}</span>
-</span><span class="line"><span class="nv">\mbox</span><span class="nb">{Union: } &amp; A</span><span class="nv">\cup</span><span class="nb"> B </span><span class="o">=</span><span class="nb"> </span><span class="nv">\{</span><span class="nb">x</span><span class="nv">\mid</span><span class="nb"> x</span><span class="nv">\in</span><span class="nb"> A </span><span class="nv">\mbox</span><span class="nb">{ or } x</span><span class="nv">\in</span><span class="nb"> B</span><span class="nv">\}</span><span class="nb"> </span><span class="nv">\\</span><span class="nb" />
-</span><span class="line"><span class="nv">\mbox</span><span class="nb">{Concatenation: } &amp; A</span><span class="nv">\circ</span><span class="nb"> B  </span><span class="o">=</span><span class="nb"> </span><span class="nv">\{</span><span class="nb">xy</span><span class="nv">\mid</span><span class="nb"> x</span><span class="nv">\in</span><span class="nb"> A </span><span class="nv">\mbox</span><span class="nb">{ and } y</span><span class="nv">\in</span><span class="nb"> B</span><span class="nv">\}</span><span class="nb"> </span><span class="nv">\\</span><span class="nb" />
-</span><span class="line"><span class="nv">\mbox</span><span class="nb">{Star: } &amp; A^</span><span class="nv">\star</span><span class="nb">  </span><span class="o">=</span><span class="nb"> </span><span class="nv">\{</span><span class="nb">x_</span><span class="m">1</span><span class="nb">x_</span><span class="m">2</span><span class="nv">\ldots</span><span class="nb"> x_k </span><span class="nv">\mid</span><span class="nb">  k</span><span class="nv">\geq</span><span class="nb"> </span><span class="m">0</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{ and each } x_i</span><span class="nv">\in</span><span class="nb"> A</span><span class="nv">\}</span><span class="nb"> </span><span class="nv">\\</span><span class="nb" />
+</span><span class="line"><span class="nv">\mbox</span><span class="nb">{Union: } &amp; A</span><span class="nv">\cup</span><span class="nb"> B </span><span class="o">=</span><span class="nb"> </span><span class="nv">\{</span><span class="nb">x</span><span class="nv">\mid</span><span class="nb"> x</span><span class="nv">\in</span><span class="nb"> A </span><span class="nv">\mbox</span><span class="nb">{ or } x</span><span class="nv">\in</span><span class="nb"> B</span><span class="nv">\}</span><span class="nb"> </span><span class="nv">\\</span><span class="nb"></span>
+</span><span class="line"><span class="nv">\mbox</span><span class="nb">{Concatenation: } &amp; A</span><span class="nv">\circ</span><span class="nb"> B  </span><span class="o">=</span><span class="nb"> </span><span class="nv">\{</span><span class="nb">xy</span><span class="nv">\mid</span><span class="nb"> x</span><span class="nv">\in</span><span class="nb"> A </span><span class="nv">\mbox</span><span class="nb">{ and } y</span><span class="nv">\in</span><span class="nb"> B</span><span class="nv">\}</span><span class="nb"> </span><span class="nv">\\</span><span class="nb"></span>
+</span><span class="line"><span class="nv">\mbox</span><span class="nb">{Star: } &amp; A^</span><span class="nv">\star</span><span class="nb">  </span><span class="o">=</span><span class="nb"> </span><span class="nv">\{</span><span class="nb">x_</span><span class="m">1</span><span class="nb">x_</span><span class="m">2</span><span class="nv">\ldots</span><span class="nb"> x_k </span><span class="nv">\mid</span><span class="nb">  k</span><span class="nv">\geq</span><span class="nb"> </span><span class="m">0</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{ and each } x_i</span><span class="nv">\in</span><span class="nb"> A</span><span class="nv">\}</span><span class="nb"> </span><span class="nv">\\</span><span class="nb"></span>
 </span><span class="line"><span class="nv">\end</span><span class="nb">{align}</span>
 </span><span class="line"><span class="s">$$</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
 <p>into this</p>
 
-<script type="math/tex; mode=display">
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
 \begin{align}
 \mbox{Union: } & A\cup B = \{x\mid x\in A \mbox{ or } x\in B\} \\
 \mbox{Concatenation: } & A\circ B  = \{xy\mid x\in A \mbox{ and } y\in B\} \\
 \mbox{Star: } & A^\star  = \{x_1x_2\ldots x_k \mid  k\geq 0 \mbox{ and each } x_i\in A\} \\
 \end{align}
-</script>
+ %]]&gt;</script>
 
 <!-- more -->
 
@@ -2739,7 +2792,7 @@ change <code>rdiscount</code> to <code>kramdown</code></p>
 <div class="footnotes">
   <ol>
     <li id="fn:1">
-      <p>It’s useful if you want to depoloy your code on differnt machines.<a href="#fnref:1" rev="footnote">&#8617;</a></p>
+      <p>It’s useful if you want to depoloy your code on differnt machines.<a href="#fnref:1" rel="reference">&#8617;</a></p>
     </li>
   </ol>
 </div>

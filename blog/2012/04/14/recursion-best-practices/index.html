@@ -16,11 +16,10 @@ is hard to write, and even harder to write it well. To iterate is &hellip;">
   <!-- http://t.co/dKP3o1e -->
   <meta name="HandheldFriendly" content="True">
   <meta name="MobileOptimized" content="320">
-  <meta name="google-site-verification" content="3YTeX29pvBJAPOeFiQIErcMeNQsYIuFMNBGsXur9gyQ" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.idryman.org/blog/2012/04/14/recursion-best-practices">
+  <link rel="canonical" href="http://www.idryman.org/blog/2012/04/14/recursion-best-practices/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -165,7 +164,7 @@ to the value returned by the recursive function.<sup id="fnref:1"><a href="#fn:1
 
 <p>Also the fibonacci executing model:</p>
 
-<p><img src="/images/graphviz/g-ff6b576e3a2600dd84a36f0059875404.svg" /></p>
+<p>Liquid error: undefined method `join’ for #<string:0x007fc9746d7848 /></p>
 
 <p>This is even worse, the complexity of fibonacci function cost $O(\phi^n)$ where
 $\phi=\frac{1+\sqrt{5}}{2}$. </p>
@@ -454,19 +453,19 @@ recursion’s accumulator</li>
     <li id="fn:1">
       <p>In modern compiler the trivial straight recursion such as factorial will be
   optimized and make no big performance difference compare to the one written in
-  tail recursion form.<a href="#fnref:1" rev="footnote">&#8617;</a></p>
+  tail recursion form.<a href="#fnref:1" rel="reference">&#8617;</a></p>
     </li>
     <li id="fn:2">
       <p>Take a look at how many possible ways to write 
   <a href="http://www.cliki.net/Fibonacci">fibonacci in common lisp</a>. There is also
-  a way to write fibonacci in $O(log(n))$ order.<a href="#fnref:2" rev="footnote">&#8617;</a></p>
+  a way to write fibonacci in $O(log(n))$ order.<a href="#fnref:2" rel="reference">&#8617;</a></p>
     </li>
     <li id="fn:3">
       <p>The example is taken from 
-  <a href="http://www.erlang.org/doc/efficiency_guide/listHandling.html">Erlang performance tuning – List handling</a>.<a href="#fnref:3" rev="footnote">&#8617;</a></p>
+  <a href="http://www.erlang.org/doc/efficiency_guide/listHandling.html">Erlang performance tuning – List handling</a>.<a href="#fnref:3" rel="reference">&#8617;</a></p>
     </li>
     <li id="fn:4">
-      <p>Example taken from <a href="http://en.literateprograms.org/Quicksort_(Haskell)">Quicksort (haskell) - Literate Programs</a>.<a href="#fnref:4" rev="footnote">&#8617;</a></p>
+      <p>Example taken from <a href="http://en.literateprograms.org/Quicksort_(Haskell)">Quicksort (haskell) - Literate Programs</a>.<a href="#fnref:4" rel="reference">&#8617;</a></p>
     </li>
   </ol>
 </div>
@@ -516,6 +515,8 @@ recursion’s accumulator</li>
         <a class="basic-alignment left" href="/blog/2012/04/10/practical-software-verification-using-SPIN/" title="Previous Post: Practical software verification using SPIN">&laquo; Practical software verification using SPIN</a>
       
       
+        <a class="basic-alignment right" href="/blog/2012/06/17/debug-uiwebview-in-your-ios-app/" title="Next Post: Debug UIWebView in your iOS app">Debug UIWebView in your iOS app &raquo;</a>
+      
     </p>
   </footer>
 </article>
@@ -533,6 +534,10 @@ recursion’s accumulator</li>
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/06/17/debug-uiwebview-in-your-ios-app/">Debug UIWebView in your iOS app</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2012/04/14/recursion-best-practices/">Recursion best practices</a>
@@ -568,10 +573,6 @@ recursion’s accumulator</li>
     
       <li class="post">
         <a href="/blog/2012/03/26/lisp-debugging-tools/">Lisp Debugging Tools</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/03/24/lisp-development-on-mac/">Lisp development on Mac</a>
       </li>
     
   </ul>
@@ -630,39 +631,6 @@ recursion’s accumulator</li>
 
 
 
-<div id="fb-root"></div>
-<script>(function(d, s, id) {
-  var js, fjs = d.getElementsByTagName(s)[0];
-  if (d.getElementById(id)) {return;}
-  js = d.createElement(s); js.id = id;
-  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
-  fjs.parentNode.insertBefore(js, fjs);
-}(document, 'script', 'facebook-jssdk'));</script>
-
-
-
-  <script type="text/javascript">
-    (function() {
-      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
-      script.src = 'https://apis.google.com/js/plusone.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
-    })();
-  </script>
-
-
-
-  <script type="text/javascript">
-    (function(){
-      var twitterWidgets = document.createElement('script');
-      twitterWidgets.type = 'text/javascript';
-      twitterWidgets.async = true;
-      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
-      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
-    })();
-  </script>
-
-
-
 <!--
 hn like button plugin for jekyll/octopress
 Author: dryman (Felix Ren-Chyan Chern)
@@ -716,23 +684,40 @@ SOFTWARE.
 
 
 
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
 
 
 </body>
-<!-- mathjax config similar to math.stackexchange -->
-<script type="text/x-mathjax-config">
-MathJax.Hub.Config({
-  jax: ["input/TeX", "output/HTML-CSS"],
-  tex2jax: {
-    inlineMath: [ ['$', '$'] ],
-    displayMath: [ ['$$', '$$']],
-    processEscapes: true,
-    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
-  },
-  messageStyle: "none",
-  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
-});
-</script>
-<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
 </html>
-

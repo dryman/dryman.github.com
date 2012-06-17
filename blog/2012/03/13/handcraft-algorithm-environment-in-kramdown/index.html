@@ -16,11 +16,10 @@ typesetting system can compete with. Unfortunately, I cannot write $\ &hellip;">
   <!-- http://t.co/dKP3o1e -->
   <meta name="HandheldFriendly" content="True">
   <meta name="MobileOptimized" content="320">
-  <meta name="google-site-verification" content="3YTeX29pvBJAPOeFiQIErcMeNQsYIuFMNBGsXur9gyQ" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.idryman.org/blog/2012/03/13/handcraft-algorithm-environment-in-kramdown">
+  <link rel="canonical" href="http://www.idryman.org/blog/2012/03/13/handcraft-algorithm-environment-in-kramdown/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -134,22 +133,23 @@ So, I discovered some tricks to form algorithm-like typesettings.</p>
 <span class="line-number">9</span>
 <span class="line-number">10</span>
 <span class="line-number">11</span>
-</pre></td><td class="code"><pre><code class="latex"><span class="line"><span class="sb">$$</span><span class="nb" />
+</pre></td><td class="code"><pre><code class="latex"><span class="line"><span class="sb">$$</span><span class="nb"></span>
 </span><span class="line"><span class="nv">\begin</span><span class="nb">{align}</span>
-</span><span class="line"><span class="nb">   Q</span><span class="o">=</span><span class="nb">&amp; </span><span class="nv">\mbox</span><span class="nb">{On input string $w$:} </span><span class="nv">\\</span><span class="nb" />
-</span><span class="line"><span class="nb">     &amp; </span><span class="m">1</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Construct the following Turing machine $P_w$} </span><span class="nv">\\</span><span class="nb" />
-</span><span class="line"><span class="nb">     &amp; </span><span class="nv">\quad</span><span class="nb">    P_w </span><span class="o">=</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{On any input:} </span><span class="nv">\\</span><span class="nb" />
-</span><span class="line"><span class="nb">     &amp; </span><span class="nv">\qquad</span><span class="nb">   </span><span class="m">1</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Erase input.} </span><span class="nv">\\</span><span class="nb" />
-</span><span class="line"><span class="nb">     &amp; </span><span class="nv">\qquad</span><span class="nb">   </span><span class="m">2</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Write w on the tape.} </span><span class="nv">\\</span><span class="nb" />
-</span><span class="line"><span class="nb">     &amp; </span><span class="nv">\qquad</span><span class="nb">   </span><span class="m">3</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Halt.}  </span><span class="nv">\\</span><span class="nb" />
-</span><span class="line"><span class="nb">     &amp; </span><span class="m">2</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Output }</span><span class="nv">\langle</span><span class="nb"> P_w</span><span class="nv">\rangle</span><span class="nb">  </span><span class="nv">\\</span><span class="nb" />
+</span><span class="line"><span class="nb">   Q</span><span class="o">=</span><span class="nb">&amp; </span><span class="nv">\mbox</span><span class="nb">{On input string $w$:} </span><span class="nv">\\</span><span class="nb"></span>
+</span><span class="line"><span class="nb">     &amp; </span><span class="m">1</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Construct the following Turing machine $P_w$} </span><span class="nv">\\</span><span class="nb"></span>
+</span><span class="line"><span class="nb">     &amp; </span><span class="nv">\quad</span><span class="nb">    P_w </span><span class="o">=</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{On any input:} </span><span class="nv">\\</span><span class="nb"></span>
+</span><span class="line"><span class="nb">     &amp; </span><span class="nv">\qquad</span><span class="nb">   </span><span class="m">1</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Erase input.} </span><span class="nv">\\</span><span class="nb"></span>
+</span><span class="line"><span class="nb">     &amp; </span><span class="nv">\qquad</span><span class="nb">   </span><span class="m">2</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Write w on the tape.} </span><span class="nv">\\</span><span class="nb"></span>
+</span><span class="line"><span class="nb">     &amp; </span><span class="nv">\qquad</span><span class="nb">   </span><span class="m">3</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Halt.}  </span><span class="nv">\\</span><span class="nb"></span>
+</span><span class="line"><span class="nb">     &amp; </span><span class="m">2</span><span class="nb">.</span><span class="nv">\;</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{Output }</span><span class="nv">\langle</span><span class="nb"> P_w</span><span class="nv">\rangle</span><span class="nb">  </span><span class="nv">\\</span><span class="nb"></span>
 </span><span class="line"><span class="nv">\end</span><span class="nb">{align}</span>
 </span><span class="line"><span class="s">$$</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
 <p>and <strong>Voilà</strong>!</p>
 
-<script type="math/tex; mode=display">
+<script type="math/tex; mode=display">% <![CDATA[
+
 \begin{align}
    Q=& \mbox{On input string $w$:} \\
      & 1.\; \mbox{Construct the following Turing machine $P_w$} \\
@@ -159,7 +159,7 @@ So, I discovered some tricks to form algorithm-like typesettings.</p>
      & \qquad   3.\; \mbox{Halt.}  \\
      & 2.\; \mbox{Output }\langle P_w\rangle  \\
 \end{align}
-</script>
+ %]]></script>
 
 </div>
 
@@ -234,6 +234,10 @@ So, I discovered some tricks to form algorithm-like typesettings.</p>
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2012/06/17/debug-uiwebview-in-your-ios-app/">Debug UIWebView in your iOS app</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2012/04/14/recursion-best-practices/">Recursion best practices</a>
       </li>
     
@@ -267,10 +271,6 @@ So, I discovered some tricks to form algorithm-like typesettings.</p>
     
       <li class="post">
         <a href="/blog/2012/03/26/lisp-debugging-tools/">Lisp Debugging Tools</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/03/24/lisp-development-on-mac/">Lisp development on Mac</a>
       </li>
     
   </ul>
@@ -329,39 +329,6 @@ So, I discovered some tricks to form algorithm-like typesettings.</p>
 
 
 
-<div id="fb-root"></div>
-<script>(function(d, s, id) {
-  var js, fjs = d.getElementsByTagName(s)[0];
-  if (d.getElementById(id)) {return;}
-  js = d.createElement(s); js.id = id;
-  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
-  fjs.parentNode.insertBefore(js, fjs);
-}(document, 'script', 'facebook-jssdk'));</script>
-
-
-
-  <script type="text/javascript">
-    (function() {
-      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
-      script.src = 'https://apis.google.com/js/plusone.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
-    })();
-  </script>
-
-
-
-  <script type="text/javascript">
-    (function(){
-      var twitterWidgets = document.createElement('script');
-      twitterWidgets.type = 'text/javascript';
-      twitterWidgets.async = true;
-      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
-      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
-    })();
-  </script>
-
-
-
 <!--
 hn like button plugin for jekyll/octopress
 Author: dryman (Felix Ren-Chyan Chern)
@@ -415,23 +382,40 @@ SOFTWARE.
 
 
 
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
 
 
 </body>
-<!-- mathjax config similar to math.stackexchange -->
-<script type="text/x-mathjax-config">
-MathJax.Hub.Config({
-  jax: ["input/TeX", "output/HTML-CSS"],
-  tex2jax: {
-    inlineMath: [ ['$', '$'] ],
-    displayMath: [ ['$$', '$$']],
-    processEscapes: true,
-    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
-  },
-  messageStyle: "none",
-  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
-});
-</script>
-<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
 </html>
-

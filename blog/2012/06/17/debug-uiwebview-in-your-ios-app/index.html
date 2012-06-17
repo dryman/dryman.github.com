@@ -5,12 +5,12 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>The NLP Day - Carpe diem (Felix's blog)</title>
+  <title>Debug UIWebView in your iOS app - Carpe diem (Felix's blog)</title>
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="Yesterday (3/13) was the NLP day, and we have the honor to invite Eduard Hovy to
-give us three talks about the current status and future of NLP &hellip;">
+  <meta name="description" content="It is often to embed a UIWebView in an iOS app. However it doesn’t provide the
+powerful webkit inspector by default. Nathan de Vries has written a &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -19,7 +19,7 @@ give us three talks about the current status and future of NLP &hellip;">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.idryman.org/blog/2012/03/14/the-nlp-day/">
+  <link rel="canonical" href="http://www.idryman.org/blog/2012/06/17/debug-uiwebview-in-your-ios-app/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -81,7 +81,7 @@ give us three talks about the current status and future of NLP &hellip;">
   
   <header>
     
-      <h1 class="entry-title">The NLP Day</h1>
+      <h1 class="entry-title">Debug UIWebView in Your iOS App</h1>
     
     
       <p class="meta">
@@ -97,58 +97,34 @@ give us three talks about the current status and future of NLP &hellip;">
   
 
 
-<time datetime="2012-03-14T19:55:00+08:00" pubdate data-updated="true">Mar 14<span>th</span>, 2012</time>
+<time datetime="2012-06-17T15:44:00+08:00" pubdate data-updated="true">Jun 17<span>th</span>, 2012</time>
         
       </p>
     
   </header>
 
 
-<div class="entry-content"><p>Yesterday (3/13) was the NLP day, and we have the honor to invite Eduard Hovy to
-give us three talks about the current status and future of NLP researches.
-The talks were excellent! The first talk was about how machine learning perform
-so well then previous AI systems. It seems that computer can be more intelligent
-not because it is smart, but to be trained trained by huge amount of data. The
-second talk was “A new semantics: merging propositional and distributional
-information”. Eduard introduced a new model that combine theories and
-computability that can be used in machine learning. The third talk was “Text
-harvesting and ontology constructing using a powerful new method.” Using a
-simple “$N_p \mbox{ such as } N_p \mbox{ and } N_p * $” query and search on Google
-seems to be trivial, but the results are awesomely incredible! Thus we can mark
-the “is-a” relationship automatically and the data is satisfying and robust,
-plus, much more than any relationships in existing wordnets! There are so many
-interesting topics to write down, but for mow, I’ll focus on the second talk
-first. You can find the slide for the second talk 
-<a href="http://projects.ict.usc.edu/rwt2011/presentations/hovy.pdf">here</a>.</p>
+<div class="entry-content"><p>It is often to embed a UIWebView in an iOS app. However it doesn’t provide the
+powerful webkit inspector by default. Nathan de Vries has written a
+<a href="http://atnan.com/blog/2011/11/17/enabling-remote-debugging-via-private-apis-in-mobile-safari/">post</a> to solve the problem, but the solution didn’t work on my XCode
+4 with Clang front end.</p>
 
-<!-- more -->
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>Nathan&#8217;s solution </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">BOOL</span><span class="p">)</span><span class="nf">application:</span><span class="p">(</span><span class="n">UIApplication</span> <span class="o">*</span><span class="p">)</span><span class="nv">application</span> <span class="nf">didFinishLaunchingWithOptions:</span><span class="p">(</span><span class="n">NSDictionary</span> <span class="o">*</span><span class="p">)</span><span class="nv">launchOptions</span> <span class="p">{</span>
+</span><span class="line">    <span class="c1">// ...Snipped...</span>
+</span><span class="line">    <span class="p">[</span><span class="n">NSClassFromString</span><span class="p">(</span><span class="s">@&quot;WebView&quot;</span><span class="p">)</span> <span class="n">_enableRemoteInspector</span><span class="p">];</span>
+</span><span class="line">    <span class="c1">// ...Snipped...</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
 
-<p>Though machine learning told us that “you don’t have to be smart, you just need
-enough training data,” deep in our heart, we still believe that all of our human
-behaviors is not a huge training table. There must be some rules that guide us,
-as a theory, to know what we will do and what wouldn’t. We believe that there
-are theories that can measure info contents, not only treat input strings as
-meaningless characters that the only purpose is to be sent to machine to do
-statistical analysis.</p>
-
-<h3 id="defining-a-concept-in-a-new-way">Defining a concept in a new way</h3>
-
-<p>A concept $C$ is a list of triples</p>
-
-<script type="math/tex; mode=display">
-C=\left\{(r_1w_1s_1),(r_2w_2s_2),(r_3w_3s_3)\right\}
-</script>
-
-<script type="math/tex; mode=display">% <![CDATA[
-
-\begin{align}
-\mbox{where } &r_i\varepsilon\;\{Relations\}=&\mbox{e.g., :subj, :agent, :color-of}\\
-& w_i\varepsilon\;\{Words\}=&\mbox{e.g., happy, run, apple}\\
-& s_i\varepsilon\;[0,1]=&\mbox{normalized weight}
-\end{align}
- %]]></script>
-
-<p>For example, a dog can be represented as <sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup></p>
+<p>The compiler will complain that you can’t force <code>WebView</code> to perform private
+method <code>_enableRemoteInspector</code>. Thus, I use <code>performSelector:@selector()</code> instead
+of direct method call. Guess what? The compiler accept the hack. Awesome!</p>
 
 <div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
@@ -157,69 +133,17 @@ C=\left\{(r_1w_1s_1),(r_2w_2s_2),(r_3w_3s_3)\right\}
 <span class="line-number">5</span>
 <span class="line-number">6</span>
 <span class="line-number">7</span>
-</pre></td><td class="code"><pre><code class="scheme"><span class="line"><span class="p">(</span><span class="nf">defparameter</span> <span class="nv">*dog*</span>
-</span><span class="line">  <span class="o">&#39;</span><span class="p">((</span><span class="nf">:type</span> <span class="s">&quot;Jack Russel&quot;</span> <span class="mf">0.2</span><span class="p">)</span>
-</span><span class="line">    <span class="p">(</span><span class="nf">:type</span> <span class="s">&quot;Retriever&quot;</span> <span class="mf">0.4</span><span class="p">)</span>
-</span><span class="line">    <span class="p">(</span><span class="nf">:color</span> <span class="s">&quot;brown&quot;</span> <span class="mf">0.4</span><span class="p">)</span>
-</span><span class="line">    <span class="p">(</span><span class="nf">:color</span> <span class="s">&quot;black&quot;</span> <span class="mf">0.3</span><span class="p">)</span>
-</span><span class="line">    <span class="p">(</span><span class="nf">:agent-of</span> <span class="s">&quot;eat&quot;</span> <span class="mf">0.4</span><span class="p">)</span>
-</span><span class="line">    <span class="p">(</span><span class="nf">:patient-of</span> <span class="s">&quot;chase&quot;</span> <span class="mf">0.3</span><span class="p">)))</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">BOOL</span><span class="p">)</span><span class="nf">application:</span><span class="p">(</span><span class="n">UIApplication</span> <span class="o">*</span><span class="p">)</span><span class="nv">application</span> <span class="nf">didFinishLaunchingWithOptions:</span><span class="p">(</span><span class="n">NSDictionary</span> <span class="o">*</span><span class="p">)</span><span class="nv">launchOptions</span> <span class="p">{</span>
+</span><span class="line"><span class="cp">    // enable the hack only when we use simulator</span>
+</span><span class="line"><span class="cp">#if (TARGET_IPHONE_SIMULATOR)</span>
+</span><span class="line">    <span class="p">[</span><span class="n">NSClassFromString</span><span class="p">(</span><span class="s">@&quot;WebView&quot;</span><span class="p">)</span> <span class="nl">performSelector:</span><span class="k">@selector</span><span class="p">(</span><span class="n">_enableRemoteInspector</span><span class="p">)];</span>
+</span><span class="line"><span class="cp">#endif</span>
+</span><span class="line">    <span class="c1">// ...Snipped...</span>
+</span><span class="line"><span class="p">}</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
-<p>And it can be expressed in a more complexed form:</p>
+<p>Now simply run your iphone simulator and open the url <code>localhost:9999</code> to view your inspector. <strong>Voilà!</strong></p>
 
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-</pre></td><td class="code"><pre><code class="scheme"><span class="line"><span class="p">(</span><span class="nf">defparameter</span> <span class="nv">*dog*</span>
-</span><span class="line">  <span class="o">&#39;</span><span class="p">((</span><span class="nf">:type</span> <span class="p">((</span><span class="s">&quot;Retriever&quot;</span> <span class="mf">0.4</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;Jack Russel&quot;</span> <span class="mf">0.2</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;Terrier&quot;</span> <span class="mf">0.4</span><span class="p">)))</span>
-</span><span class="line">    <span class="p">(</span><span class="nf">:color</span> <span class="p">((</span><span class="s">&quot;brown&quot;</span> <span class="mf">0.4</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;black&quot;</span> <span class="mf">0.3</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;patched&quot;</span> <span class="mf">0.3</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;white&quot;</span> <span class="mf">0.2</span><span class="p">)))</span>
-</span><span class="line">    <span class="p">(</span><span class="nf">:name</span> <span class="p">((</span><span class="s">&quot;Spot&quot;</span> <span class="mf">0.3</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;Lassie&quot;</span> <span class="mf">0.2</span><span class="p">)))</span>
-</span><span class="line">    <span class="p">(</span><span class="nf">:agent-of</span> <span class="p">((</span><span class="s">&quot;eat&quot;</span> <span class="mf">0.4</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;run&quot;</span> <span class="mf">0.4</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;bark&quot;</span> <span class="mf">0.4</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;pant&quot;</span> <span class="mf">0.3</span><span class="p">)))</span>
-</span><span class="line">    <span class="p">(</span><span class="nf">:patient-of</span> <span class="p">((</span><span class="s">&quot;chase&quot;</span> <span class="mf">0.3</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;walk&quot;</span> <span class="mf">0.4</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;love&quot;</span> <span class="mf">0.4</span> <span class="p">)))))</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>which we can visualize it as below:
-<img src="/images/nlp-day/dog-context-1.png" title="'An example of dog context'" /></p>
-
-<p>Furthermore, since every node itself can be another context, we can generate a
-graph! <sup id="fnref:2"><a href="#fn:2" rel="footnote">2</a></sup>
-<img src="/images/nlp-day/dog-context-2.png" title="'An another example of dog context'" /></p>
-
-<h3 id="the-main-questions-to-address">The main questions to address</h3>
-
-<ul>
-  <li>Construction
-    <ul>
-      <li>Do we really need tensors? Or are vectors enough?</li>
-      <li>How to build them?</li>
-      <li>Which relations to use? Which scores?</li>
-      <li>How do we evaluate this?</li>
-    </ul>
-  </li>
-  <li>Compositionally: How to ‘add’ tensors to obtain new, more complex, meanings
-that are still tensors?</li>
-  <li>Dependency: How to represent and manage the underlying interconnections across
-tensor elements?</li>
-  <li>Logical operators: How to handle negation, quantification models (can,
-must…), etc.?</li>
-</ul>
-
-<hr />
-
-<div class="footnotes">
-  <ol>
-    <li id="fn:1">
-      <p>I use the syntax of common lisp to express the relationship<a href="#fnref:1" rel="reference">&#8617;</a></p>
-    </li>
-    <li id="fn:2">
-      <p>The copyright of the images belongs to Eduard Hovy<a href="#fnref:2" rel="reference">&#8617;</a></p>
-    </li>
-  </ol>
-</div>
 </div>
 
 
@@ -242,12 +166,12 @@ must…), etc.?</li>
   
 
 
-<time datetime="2012-03-14T19:55:00+08:00" pubdate data-updated="true">Mar 14<span>th</span>, 2012</time>
+<time datetime="2012-06-17T15:44:00+08:00" pubdate data-updated="true">Jun 17<span>th</span>, 2012</time>
       
 
 <span class="categories">
   
-    <a class='category' href='/blog/categories/nlp/'>NLP</a>
+    <a class='category' href='/blog/categories/cocoa/'>Cocoa</a>
   
 </span>
 
@@ -256,7 +180,7 @@ must…), etc.?</li>
     
       <div class="sharing">
   
-  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2012/03/14/the-nlp-day/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2012/03/14/the-nlp-day/" >Tweet</a>
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2012/06/17/debug-uiwebview-in-your-ios-app/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2012/06/17/debug-uiwebview-in-your-ios-app/" >Tweet</a>
   
   
   <div class="g-plusone" data-size="medium"></div>
@@ -269,10 +193,8 @@ must…), etc.?</li>
     
     <p class="meta">
       
-        <a class="basic-alignment left" href="/blog/2012/03/13/handcraft-algorithm-environment-in-kramdown/" title="Previous Post: handcraft algorithm environment in kramdown">&laquo; handcraft algorithm environment in kramdown</a>
+        <a class="basic-alignment left" href="/blog/2012/04/14/recursion-best-practices/" title="Previous Post: Recursion best practices">&laquo; Recursion best practices</a>
       
-      
-        <a class="basic-alignment right" href="/blog/2012/03/24/lisp-development-on-mac/" title="Next Post: Lisp development on Mac">Lisp development on Mac &raquo;</a>
       
     </p>
   </footer>
@@ -375,8 +297,8 @@ must…), etc.?</li>
       
         
         // var disqus_developer = 1;
-        var disqus_identifier = 'http://www.idryman.org/blog/2012/03/14/the-nlp-day/';
-        var disqus_url = 'http://www.idryman.org/blog/2012/03/14/the-nlp-day/';
+        var disqus_identifier = 'http://www.idryman.org/blog/2012/06/17/debug-uiwebview-in-your-ios-app/';
+        var disqus_url = 'http://www.idryman.org/blog/2012/06/17/debug-uiwebview-in-your-ios-app/';
         var disqus_script = 'embed.js';
       
     (function () {
@@ -426,7 +348,7 @@ SOFTWARE.
       hn_like.src = "http://hnlike.com/upvote.php?link="
                     + encodeURIComponent(document.location)
                     + "&title="
-                    + encodeURIComponent("The NLP Day");
+                    + encodeURIComponent("Debug UIWebView in your iOS app");
       hn_like.innerHTML="iframes not supported by your browser";
       var twitter = document.getElementsByClassName("twitter-share-button")[0];
 

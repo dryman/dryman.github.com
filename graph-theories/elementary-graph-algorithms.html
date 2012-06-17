@@ -9,15 +9,14 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="Elementary Graph Algorithms Mar 28th, 2012 Breadth-first search BFS(G,S) \begin{align}
+  <meta name="description" content="Elementary Graph Algorithms Mar 28th, 2012 Breadth-first search BFS(G,S) % <![CDATA[ \begin{align}
 & \mbox{for each vertex } u \in G.V-\{s\}\\
-& \qquad u.color &hellip;">
+& \ &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
   <meta name="HandheldFriendly" content="True">
   <meta name="MobileOptimized" content="320">
-  <meta name="google-site-verification" content="3YTeX29pvBJAPOeFiQIErcMeNQsYIuFMNBGsXur9gyQ" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
@@ -102,7 +101,8 @@
 
 <p><strong>BFS(G,S)</strong></p>
 
-<script type="math/tex; mode=display">
+<script type="math/tex; mode=display">% <![CDATA[
+
 \begin{align}
 & \mbox{for each vertex } u \in G.V-\{s\}\\
 & \qquad u.color = WHITE\\
@@ -123,7 +123,7 @@
 & \qquad\qquad\qquad ENQUEUE(Q,v) \\
 & \qquad u.color = BLACK
 \end{align}
-</script>
+ %]]></script>
 
 <p>Breadth-first-search can discover shortest paths in a graph.</p>
 
@@ -147,7 +147,8 @@ $\delta(s,u)=\infty$, the inequality holds.</p>
 
 <p><strong>DFS(G)</strong></p>
 
-<script type="math/tex; mode=display">
+<script type="math/tex; mode=display">% <![CDATA[
+
 \begin {align}
 &\mbox{for each vertex } u\in G.V \\
 &\qquad u.color = WHITE \\
@@ -157,11 +158,12 @@ $\delta(s,u)=\infty$, the inequality holds.</p>
 &\qquad \mbox{if } u.color == WHITE \\
 &\qquad\qquad \mbox{DFS-VISIT}(G,u)\\
 &\end{align}
-</script>
+ %]]></script>
 
 <p><strong>DFS-VISIT(G,u)</strong></p>
 
-<script type="math/tex; mode=display">
+<script type="math/tex; mode=display">% <![CDATA[
+
 \begin{align}
 & time = time + 1 \\
 & u.d = time \\
@@ -174,7 +176,7 @@ $\delta(s,u)=\infty$, the inequality holds.</p>
 & time = time + 1 \\
 & u.f = time \\
 \end{align}
-</script>
+ %]]></script>
 
 <p><strong>Corollary Nesting of descendants’ intervals</strong>
 Vertex $v$ is a proper descendant of vertex $u$ in the depth-first forest for a
@@ -207,13 +209,14 @@ possible.</em></p>
 
 <p><strong>TOPOLOGICAL-SORT</strong></p>
 
-<script type="math/tex; mode=display">
+<script type="math/tex; mode=display">% <![CDATA[
+
 \begin{align}
 & 1.\;\mbox{Call DFS(G) to compute finishing times $v.f$ for each vertex $v$.}\\
 & 2.\;\mbox{insert it onto the front of a linked list as each vertex is finished.}\\
 & 3.\;\mbox{return the linked list.}\\
 \end{align}
-</script>
+ %]]></script>
 
 <p><img src="/images/graph-theory/topoSortProfBumstead.gif" /></p>
 
@@ -225,14 +228,15 @@ possible.</em></p>
 
 <p><strong>SRONGLY-CONNECTED-COMPONENTS</strong></p>
 
-<script type="math/tex; mode=display">
+<script type="math/tex; mode=display">% <![CDATA[
+
 \begin{align}
 & 1.\;\mbox{DFS(G) to compute finishing times $u.f$ for each vertex $u$} \\
 & 2.\;\mbox{compute }G^T \\
 & 3.\;\mbox{call DFS}(G^T)\mbox{, but in order of decreasing }u.f \\
 & 4.\;\mbox{output each tree in the forest} \\
 \end{align}
-</script>
+ %]]></script>
 
   
     <footer>
@@ -286,6 +290,10 @@ possible.</em></p>
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2012/06/17/debug-uiwebview-in-your-ios-app/">Debug UIWebView in your iOS app</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2012/04/14/recursion-best-practices/">Recursion best practices</a>
       </li>
     
@@ -319,10 +327,6 @@ possible.</em></p>
     
       <li class="post">
         <a href="/blog/2012/03/26/lisp-debugging-tools/">Lisp Debugging Tools</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/03/24/lisp-development-on-mac/">Lisp development on Mac</a>
       </li>
     
   </ul>
@@ -381,39 +385,6 @@ possible.</em></p>
 
 
 
-<div id="fb-root"></div>
-<script>(function(d, s, id) {
-  var js, fjs = d.getElementsByTagName(s)[0];
-  if (d.getElementById(id)) {return;}
-  js = d.createElement(s); js.id = id;
-  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
-  fjs.parentNode.insertBefore(js, fjs);
-}(document, 'script', 'facebook-jssdk'));</script>
-
-
-
-  <script type="text/javascript">
-    (function() {
-      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
-      script.src = 'https://apis.google.com/js/plusone.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
-    })();
-  </script>
-
-
-
-  <script type="text/javascript">
-    (function(){
-      var twitterWidgets = document.createElement('script');
-      twitterWidgets.type = 'text/javascript';
-      twitterWidgets.async = true;
-      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
-      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
-    })();
-  </script>
-
-
-
 <!--
 hn like button plugin for jekyll/octopress
 Author: dryman (Felix Ren-Chyan Chern)
@@ -467,23 +438,40 @@ SOFTWARE.
 
 
 
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
 
 
 </body>
-<!-- mathjax config similar to math.stackexchange -->
-<script type="text/x-mathjax-config">
-MathJax.Hub.Config({
-  jax: ["input/TeX", "output/HTML-CSS"],
-  tex2jax: {
-    inlineMath: [ ['$', '$'] ],
-    displayMath: [ ['$$', '$$']],
-    processEscapes: true,
-    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
-  },
-  messageStyle: "none",
-  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
-});
-</script>
-<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
 </html>
-

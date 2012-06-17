@@ -9,18 +9,17 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="There are many programming languages that support recursion. However, recursion
-is hard to write, and even harder to write it well. To iterate is &hellip;">
+  <meta name="description" content="It is often to embed a UIWebView in an iOS app. However it doesn’t provide the
+powerful webkit inspector by default. Nathan de Vries has written a &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
   <meta name="HandheldFriendly" content="True">
   <meta name="MobileOptimized" content="320">
-  <meta name="google-site-verification" content="3YTeX29pvBJAPOeFiQIErcMeNQsYIuFMNBGsXur9gyQ" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.idryman.org">
+  <link rel="canonical" href="http://www.idryman.org/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -79,6 +78,81 @@ is hard to write, and even harder to write it well. To iterate is &hellip;">
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/06/17/debug-uiwebview-in-your-ios-app/">Debug UIWebView in Your iOS App</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-06-17T15:44:00+08:00" pubdate data-updated="true">Jun 17<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>It is often to embed a UIWebView in an iOS app. However it doesn’t provide the
+powerful webkit inspector by default. Nathan de Vries has written a
+<a href="http://atnan.com/blog/2011/11/17/enabling-remote-debugging-via-private-apis-in-mobile-safari/">post</a> to solve the problem, but the solution didn’t work on my XCode
+4 with Clang front end.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>Nathan&#8217;s solution </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">BOOL</span><span class="p">)</span><span class="nf">application:</span><span class="p">(</span><span class="n">UIApplication</span> <span class="o">*</span><span class="p">)</span><span class="nv">application</span> <span class="nf">didFinishLaunchingWithOptions:</span><span class="p">(</span><span class="n">NSDictionary</span> <span class="o">*</span><span class="p">)</span><span class="nv">launchOptions</span> <span class="p">{</span>
+</span><span class="line">    <span class="c1">// ...Snipped...</span>
+</span><span class="line">    <span class="p">[</span><span class="n">NSClassFromString</span><span class="p">(</span><span class="s">@&quot;WebView&quot;</span><span class="p">)</span> <span class="n">_enableRemoteInspector</span><span class="p">];</span>
+</span><span class="line">    <span class="c1">// ...Snipped...</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The compiler will complain that you can’t force <code>WebView</code> to perform private
+method <code>_enableRemoteInspector</code>. Thus, I use <code>performSelector:@selector()</code> instead
+of direct method call. Guess what? The compiler accept the hack. Awesome!</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">BOOL</span><span class="p">)</span><span class="nf">application:</span><span class="p">(</span><span class="n">UIApplication</span> <span class="o">*</span><span class="p">)</span><span class="nv">application</span> <span class="nf">didFinishLaunchingWithOptions:</span><span class="p">(</span><span class="n">NSDictionary</span> <span class="o">*</span><span class="p">)</span><span class="nv">launchOptions</span> <span class="p">{</span>
+</span><span class="line"><span class="cp">    // enable the hack only when we use simulator</span>
+</span><span class="line"><span class="cp">#if (TARGET_IPHONE_SIMULATOR)</span>
+</span><span class="line">    <span class="p">[</span><span class="n">NSClassFromString</span><span class="p">(</span><span class="s">@&quot;WebView&quot;</span><span class="p">)</span> <span class="nl">performSelector:</span><span class="k">@selector</span><span class="p">(</span><span class="n">_enableRemoteInspector</span><span class="p">)];</span>
+</span><span class="line"><span class="cp">#endif</span>
+</span><span class="line">    <span class="c1">// ...Snipped...</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Now simply run your iphone simulator and open the url <code>localhost:9999</code> to view your inspector. <strong>Voilà!</strong></p>
+
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -170,7 +244,7 @@ spoken by <a href="http://spinroot.com/gerard/">Gerard J. Holzmann</a>, software
 <a href="http://www.jpl.nasa.gov/index.cfm">NASA Jet Propulsion Laboratory (JPL)</a>. He introduced a fast automatic software
 verification tool for distributed software system – <a href="http://spinroot.com/spin/whatispin.html">SPIN</a>.</p>
 
-<p><img src="/images/graphviz/g-f44bd3841c23d32cc5d46f28821bf434.svg" />
+<p>Liquid error: undefined method `join’ for #<string:0x007fc9745c59f0>
 </div>
   
   
@@ -290,7 +364,7 @@ digraph G {
 
 <p>will produce:</p>
 
-<p><img src="/images/graphviz/g-3feb8846aa4bb9767add244df8bed05a.svg" /></p>
+<p>Liquid error: undefined method `join’ for #<string:0x007fc9745ab0a0 /></p>
 
 </div>
   
@@ -681,60 +755,6 @@ Continue       :c       switch off single step mode, continue evaluation
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/03/24/lisp-development-on-mac/">Lisp Development on Mac</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-03-24T16:46:00+08:00" pubdate data-updated="true">Mar 24<span>th</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Setting up a development environment is such a pain. In short, here is my final
-configs:</p>
-
-<ul>
-  <li><a href="http://aquamacs.org/">Aquamacs emacs</a></li>
-  <li><a href="http://common-lisp.net/project/slime/">SLIME</a> without SLDB mode</li>
-  <li><a href="http://www.clisp.org/">clisp</a> with debugger commands working</li>
-  <li><a href="http://www.quicklisp.org/beta/">quicklisp</a> (lisp package manager)
-    <ul>
-      <li><a href="http://www.cliki.net/asdf">asdf.lisp</a> that ships with <a href="http://www.quicklisp.org/beta/">quicklisp</a> (Bridge between lisp and
-SLIME)</li>
-    </ul>
-  </li>
-</ul>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/03/24/lisp-development-on-mac/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -748,6 +768,10 @@ SLIME)</li>
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/06/17/debug-uiwebview-in-your-ios-app/">Debug UIWebView in your iOS app</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2012/04/14/recursion-best-practices/">Recursion best practices</a>
@@ -783,10 +807,6 @@ SLIME)</li>
     
       <li class="post">
         <a href="/blog/2012/03/26/lisp-debugging-tools/">Lisp Debugging Tools</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/03/24/lisp-development-on-mac/">Lisp development on Mac</a>
       </li>
     
   </ul>
@@ -838,39 +858,6 @@ SLIME)</li>
       (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
     }());
 </script>
-
-
-
-<div id="fb-root"></div>
-<script>(function(d, s, id) {
-  var js, fjs = d.getElementsByTagName(s)[0];
-  if (d.getElementById(id)) {return;}
-  js = d.createElement(s); js.id = id;
-  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
-  fjs.parentNode.insertBefore(js, fjs);
-}(document, 'script', 'facebook-jssdk'));</script>
-
-
-
-  <script type="text/javascript">
-    (function() {
-      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
-      script.src = 'https://apis.google.com/js/plusone.js';
-      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
-    })();
-  </script>
-
-
-
-  <script type="text/javascript">
-    (function(){
-      var twitterWidgets = document.createElement('script');
-      twitterWidgets.type = 'text/javascript';
-      twitterWidgets.async = true;
-      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
-      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
-    })();
-  </script>
 
 
 
@@ -927,23 +914,40 @@ SOFTWARE.
 
 
 
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
 
 
 </body>
-<!-- mathjax config similar to math.stackexchange -->
-<script type="text/x-mathjax-config">
-MathJax.Hub.Config({
-  jax: ["input/TeX", "output/HTML-CSS"],
-  tex2jax: {
-    inlineMath: [ ['$', '$'] ],
-    displayMath: [ ['$$', '$$']],
-    processEscapes: true,
-    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
-  },
-  messageStyle: "none",
-  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
-});
-</script>
-<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
 </html>
-
