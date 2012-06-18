@@ -1,0 +1,639 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Handle touch events in UIWebView - Carpe diem (Felix's blog)</title>
+  <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
+
+  
+  <meta name="description" content="This is an annoying problem that related to my recent project. The goal is
+simple: handle single touch event in UIWebView and let it handle other &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://www.idryman.org/blog/2012/06/18/handle-touch-events-in-uiwebview/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Carpe diem (Felix's blog)" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-23425996-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Carpe diem (Felix's blog)</a></h1>
+  
+    <h2>Work hard and enjoy every moments...</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:www.idryman.org" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="http://idryman.tumblr.com/">Drawings</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Handle Touch Events in UIWebView</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-06-18T17:53:00+08:00" pubdate data-updated="true">Jun 18<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>This is an annoying problem that related to my recent project. The goal is
+simple: </p>
+
+<blockquote>
+  <p>handle <strong>single touch event</strong> in <code>UIWebView</code> and let it handle other touch
+events as defaults.</p>
+</blockquote>
+
+<p>However this is really hard to achive…</p>
+
+<!-- more -->
+
+<h3 id="responder-chain">responder chain</h3>
+
+<p>First we need to review cocoa event responder chain, aka event delivery paths.
+According to apple <a href="http://developer.apple.com/library/ios/#documentation/EventHandling/Conceptual/EventHandlingiPhoneOS/EventsiPhoneOS/EventsiPhoneOS.html#//apple_ref/doc/uid/TP40009541-CH2-SW1">Event Handling Guide for iOS</a>:</p>
+
+<blockquote>
+  <p>The window object uses hit-testing and the responder chain to find the view to
+receive the touch event. In hit-testing, a window calls <code>hitTest:withEvent:</code> on
+the top-most view of the view hierarchy; this method proceeds by recursively
+calling <code>pointInside:withEvent:</code> on each view in the view hierarchy that returns
+<code>YES</code>, proceeding down the hierarchy until it finds the subview within whose
+bounds the touch took place. That view becomes the hit-test view.</p>
+</blockquote>
+
+<p>For example, we have a single view application with a <code>UIWebView</code> in it. The
+touch event on UIWebView will be delivered in following order:</p>
+
+<ol>
+  <li>UIWebView</li>
+  <li>Container view</li>
+  <li>Custom view controller</li>
+  <li>Singleton application delegate</li>
+</ol>
+
+<p>Even if we added a <code>UIGestureRecognizer</code> on top of <code>UIWebVIew</code> in Interface
+Builder, it would not be on the event deliver path.</p>
+
+<h3 id="add-uigesturerecognizer-programmatically">Add <code>UIGestureRecognizer</code> programmatically</h3>
+
+<p>The standard way to add touch event listener goes as follows:</p>
+
+<ol>
+  <li>alloc and init <code>UITapGestureRecognizer</code>, setup tap count and delegate</li>
+  <li>attach the recognizer to container view</li>
+  <li>adopt <code>&lt;UIGestureRecognizerDelegate&gt;</code> protocol and return <code>YES</code> on method <code>- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGesture    Recognizer:(UIGestureRecognizer *)otherGestureRecognizer</code></li>
+</ol>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">viewDidLoad</span>
+</span><span class="line"><span class="p">{</span>
+</span><span class="line">    <span class="p">[</span><span class="n">super</span> <span class="n">viewDidLoad</span><span class="p">];</span>
+</span><span class="line">    <span class="c1">// init your view here</span>
+</span><span class="line">    <span class="n">UITapGestureRecognizer</span> <span class="o">*</span><span class="n">singleTap</span> <span class="o">=</span> <span class="p">[[</span><span class="n">UITapGestureRecognizer</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithTarget:</span><span class="n">self</span> <span class="nl">action:</span><span class="nb">nil</span><span class="p">];</span>
+</span><span class="line">    <span class="n">singleTap</span><span class="p">.</span><span class="n">numberOfTapsRequired</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</span><span class="line">    <span class="n">singleTap</span><span class="p">.</span><span class="n">delegate</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span>
+</span><span class="line">    <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">view</span> <span class="nl">addGestureRecognizer:</span><span class="n">singleTap</span><span class="p">];</span>
+</span><span class="line"><span class="p">}</span>
+</span><span class="line">
+</span><span class="line"><span class="c1">// UIGestureRecognizerDelegate</span>
+</span><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">BOOL</span><span class="p">)</span><span class="nf">gestureRecognizer:</span><span class="p">(</span><span class="n">UIGestureRecognizer</span> <span class="o">*</span><span class="p">)</span><span class="nv">gestureRecognizer</span> <span class="nf">shouldRecognizeSimultaneouslyWithGestureRecognizer:</span><span class="p">(</span><span class="n">UIGestureRecognizer</span> <span class="o">*</span><span class="p">)</span><span class="nv">otherGestureRecognizer</span><span class="p">{</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">YES</span><span class="p">;</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The last step we let cocoa event system pass the event through every possible
+handler in the responder chain. Thus both <code>UIWebView</code> and
+<code>UITapGestureRecognizer</code> will handle the touch event. Now we only have to make
+sure it handles single tap event, not long touch, double tap, or drag event.</p>
+
+<h3 id="problem-of-uitapgesturerecognizer">Problem of <code>UITapGestureRecognizer</code></h3>
+
+<p>At first, I tried to implement my event handler with cocoa target action
+mechanism, and use <code>requireGestureRecognizerToFail</code> to tell cocoa that I don’t
+want it to trigger double tap nor triple tap events.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">viewDidLoad</span>
+</span><span class="line">    <span class="c1">// Touch event handler</span>
+</span><span class="line">    <span class="n">UITapGestureRecognizer</span> <span class="o">*</span><span class="n">tripleTap</span> <span class="o">=</span> <span class="p">[[</span><span class="n">UITapGestureRecognizer</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithTarget:</span><span class="n">self</span> <span class="nl">action:</span><span class="nb">nil</span><span class="p">];</span>
+</span><span class="line">    <span class="n">UITapGestureRecognizer</span> <span class="o">*</span><span class="n">doubleTap</span> <span class="o">=</span> <span class="p">[[</span><span class="n">UITapGestureRecognizer</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithTarget:</span><span class="n">self</span> <span class="nl">action:</span><span class="nb">nil</span><span class="p">];</span>
+</span><span class="line">
+</span><span class="line">    <span class="n">UITapGestureRecognizer</span> <span class="o">*</span><span class="n">singleTap</span> <span class="o">=</span> <span class="p">[[</span><span class="n">UITapGestureRecognizer</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithTarget:</span><span class="n">self</span> <span class="nl">action:</span><span class="k">@selector</span><span class="p">(</span><span class="nl">singleTap:</span><span class="p">)];</span>
+</span><span class="line">    <span class="n">tripleTap</span><span class="p">.</span><span class="n">numberOfTapsRequired</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+</span><span class="line">    <span class="n">doubleTap</span><span class="p">.</span><span class="n">numberOfTapsRequired</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+</span><span class="line">    <span class="n">singleTap</span><span class="p">.</span><span class="n">numberOfTapsRequired</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</span><span class="line">    <span class="n">tripleTap</span><span class="p">.</span><span class="n">delegate</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span>
+</span><span class="line">    <span class="n">doubleTap</span><span class="p">.</span><span class="n">delegate</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span>
+</span><span class="line">    <span class="n">singleTap</span><span class="p">.</span><span class="n">delegate</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span>
+</span><span class="line">    <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">view</span> <span class="nl">addGestureRecognizer:</span><span class="n">tripleTap</span><span class="p">];</span>
+</span><span class="line">    <span class="p">[</span><span class="n">doubleTap</span> <span class="nl">requireGestureRecognizerToFail:</span><span class="n">tripleTap</span><span class="p">];</span>
+</span><span class="line">    <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">view</span> <span class="nl">addGestureRecognizer:</span><span class="n">doubleTap</span><span class="p">];</span>
+</span><span class="line">    <span class="p">[</span><span class="n">singleTap</span> <span class="nl">requireGestureRecognizerToFail:</span><span class="n">doubleTap</span><span class="p">];</span>
+</span><span class="line">    <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">view</span> <span class="nl">addGestureRecognizer:</span><span class="n">singleTap</span><span class="p">];{</span>
+</span><span class="line"><span class="p">}</span>
+</span><span class="line"><span class="o">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="nl">singleTap:</span><span class="p">(</span><span class="n">UITapGestureRecognizer</span><span class="o">*</span><span class="p">)</span><span class="n">gesture</span> <span class="p">{</span>
+</span><span class="line"><span class="c1">// handle event</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>However, <strong>it just don’t work!!</strong> It always triggered the <code>singleTap:</code> method
+when I tapped twice or more. I need to find another way to fix the problem.</p>
+
+<h3 id="hack-on-uigesturerecognizerdelegate">Hack on <code>&lt;UIGestureRecognizerDelegate&gt;</code></h3>
+
+<p>There are two useful instance method in <code>&lt;UIGestureRecognizerDelegate&gt;</code>:</p>
+
+<ol>
+  <li>
+    <p><code>- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch</code>
+  return <code>YES</code> (the default) to allow the gesture recognizer to examine the touch object,
+  NO to prevent the gesture recognizer from seeing this touch object.
+  This method is called before <code>touchesBegan:withEvent:</code> is called on the gesture
+  recognizer for a new touch.</p>
+  </li>
+  <li>
+    <p><code>- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer</code>
+  return <code>YES</code> to allow both gestureRecognizer and otherGestureRecognizer to recognize
+  their gestures simultaneously. The default implementation returns <code>NO</code>—-no two
+  gestures can be recognized simultaneously. This method would be called
+  frequently during long touch, drag, double tapped or any other kinds of
+  events.</p>
+  </li>
+</ol>
+
+<p>The <code>(UITouch *) touch</code> in first method has property <code>tapCount</code>, which is what
+we want. Sadly this method is called immediately as user tap on the device.
+That is, if we log out the message like this:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">BOOL</span><span class="p">)</span><span class="nf">gestureRecognizer:</span><span class="p">(</span><span class="n">UIGestureRecognizer</span> <span class="o">*</span><span class="p">)</span><span class="nv">gestureRecognizer</span> <span class="nf">shouldReceiveTouch:</span><span class="p">(</span><span class="n">UITouch</span> <span class="o">*</span><span class="p">)</span><span class="nv">touch</span> <span class="p">{</span>
+</span><span class="line">      <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;gestureRecognizer shouldReceiveTouch: tapCount = %d&quot;</span><span class="p">,(</span><span class="kt">int</span><span class="p">)</span><span class="n">touch</span><span class="p">.</span><span class="n">tapCount</span><span class="p">);</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>And tap twice, it will print out</p>
+
+<pre><code>gestureRecognizer shouldReceiveTouch: tapCount = 1
+gestureRecognizer shouldReceiveTouch: tapCount = 2
+</code></pre>
+
+<p>because <code>gestureRecognizer shouldReceiveTouch:</code> will be triggered every time
+you touch the screen.</p>
+
+<p>The way to differ single tap and others is to use a <code>NSTimer</code> that triggers the
+handler later and cancel the timer if <code>tapCount &gt;= 2</code>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="k">@interface</span> <span class="nc">WTViewController</span> <span class="p">()</span>
+</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span><span class="n">strong</span><span class="p">)</span> <span class="n">NSTimer</span> <span class="o">*</span><span class="n">timer</span><span class="p">;</span>
+</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span><span class="n">assign</span><span class="p">)</span> <span class="n">UIGestureRecognizerState</span> <span class="n">gestureState</span><span class="p">;</span>
+</span><span class="line"><span class="k">@end</span>
+</span><span class="line">
+</span><span class="line"><span class="k">@implementation</span> <span class="nc">WTViewController</span>
+</span><span class="line"><span class="k">@synthesize</span> <span class="n">timer</span><span class="p">;</span>
+</span><span class="line"><span class="k">@synthesize</span> <span class="n">gestureState</span><span class="p">;</span>
+</span><span class="line">
+</span><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">BOOL</span><span class="p">)</span><span class="nf">gestureRecognizer:</span><span class="p">(</span><span class="n">UIGestureRecognizer</span> <span class="o">*</span><span class="p">)</span><span class="nv">gestureRecognizer</span> <span class="nf">shouldReceiveTouch:</span><span class="p">(</span><span class="n">UITouch</span> <span class="o">*</span><span class="p">)</span><span class="nv">touch</span> <span class="p">{</span>
+</span><span class="line">    <span class="k">if</span> <span class="p">(</span><span class="n">touch</span><span class="p">.</span><span class="n">tapCount</span> <span class="o">==</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">        <span class="n">self</span><span class="p">.</span><span class="n">timer</span> <span class="o">=</span> <span class="p">[</span><span class="n">NSTimer</span> <span class="nl">timerWithTimeInterval:</span><span class="mf">0.5</span> <span class="nl">target:</span><span class="n">self</span> <span class="nl">selector:</span><span class="k">@selector</span><span class="p">(</span><span class="nl">handleSingleTap:</span><span class="p">)</span> <span class="nl">userInfo:</span><span class="nb">nil</span> <span class="nl">repeats:</span><span class="n">NO</span><span class="p">];</span>
+</span><span class="line">        <span class="p">[[</span><span class="n">NSRunLoop</span> <span class="n">mainRunLoop</span><span class="p">]</span> <span class="nl">addTimer:</span><span class="n">self</span><span class="p">.</span><span class="n">timer</span> <span class="nl">forMode:</span><span class="n">NSRunLoopCommonModes</span><span class="p">];</span>
+</span><span class="line">        <span class="n">self</span><span class="p">.</span><span class="n">gestureState</span> <span class="o">=</span> <span class="n">UIGestureRecognizerStateBegan</span><span class="p">;</span>
+</span><span class="line">        <span class="k">return</span> <span class="n">YES</span><span class="p">;</span>
+</span><span class="line">    <span class="p">}</span>
+</span><span class="line">    <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">touch</span><span class="p">.</span><span class="n">tapCount</span> <span class="o">==</span><span class="mi">2</span> <span class="o">&amp;&amp;</span> <span class="n">self</span><span class="p">.</span><span class="n">timer</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">        <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">timer</span> <span class="n">invalidate</span><span class="p">];</span>
+</span><span class="line">        <span class="n">self</span><span class="p">.</span><span class="n">timer</span> <span class="o">=</span> <span class="nb">nil</span><span class="p">;</span>
+</span><span class="line">    <span class="p">}</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">NO</span><span class="p">;</span>
+</span><span class="line"><span class="p">}</span>
+</span><span class="line">
+</span><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">BOOL</span><span class="p">)</span><span class="nf">gestureRecognizer:</span><span class="p">(</span><span class="n">UIGestureRecognizer</span> <span class="o">*</span><span class="p">)</span><span class="nv">gestureRecognizer</span> <span class="nf">shouldRecognizeSimultaneouslyWithGestureRecognizer:</span><span class="p">(</span><span class="n">UIGestureRecognizer</span> <span class="o">*</span><span class="p">)</span><span class="nv">otherGestureRecognizer</span><span class="p">{</span>
+</span><span class="line">    <span class="n">self</span><span class="p">.</span><span class="n">gestureState</span> <span class="o">=</span> <span class="n">gestureRecognizer</span><span class="p">.</span><span class="n">state</span><span class="p">;</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">YES</span><span class="p">;</span>
+</span><span class="line"><span class="p">}</span>
+</span><span class="line">
+</span><span class="line"><span class="c1">// Handler will be called from timer</span>
+</span><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">handleSingleTap:</span><span class="p">(</span><span class="n">UITapGestureRecognizer</span><span class="o">*</span><span class="p">)</span><span class="nv">sender</span> <span class="p">{</span>
+</span><span class="line">    <span class="k">if</span> <span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">gestureState</span><span class="o">==</span><span class="n">UIGestureRecognizerStateRecognized</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">        <span class="n">UIAlertView</span> <span class="o">*</span><span class="n">alert</span> <span class="o">=</span> <span class="p">[[</span><span class="n">UIAlertView</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithTitle:</span><span class="s">@&quot;SingleTap&quot;</span> <span class="nl">message:</span><span class="s">@&quot;Oh yes!&quot;</span> <span class="nl">delegate:</span><span class="nb">nil</span> <span class="nl">cancelButtonTitle:</span><span class="s">@&quot;OK&quot;</span> <span class="nl">otherButtonTitles:</span><span class="nb">nil</span><span class="p">,</span> <span class="nb">nil</span><span class="p">];</span>
+</span><span class="line">        <span class="p">[</span><span class="n">alert</span> <span class="n">show</span><span class="p">];</span>
+</span><span class="line">    <span class="p">}</span>
+</span><span class="line"><span class="p">}</span>
+</span><span class="line"><span class="k">@end</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The timer can solve multiple taps issue, but it cannot recognize long touch. The
+long touch cannot be recognized in <code>gestureRecognizer shouldReceiveTouch:</code>
+method, but can be detected in
+<code>shouldRecognizeSimultaneouslyWithGestureRecognizer</code> method. If the touch went
+too long, the <code>gestureRecognizer.state</code> would be
+<code>UIGestureRecognizerStateFailed</code>. Thus I record the state and check it when the
+timer finished.</p>
+
+<p>There is one more thing that I should mentioned:
+<code>shouldRecognizeSimultaneouslyWithGestureRecognizer</code> may not be called as
+frequently as we might expected. If we tap once, wait, and long touch the
+device, <code>handleSingleTap</code> may still recognize the event to be a quick tap
+because <code>self.gestureState</code> may still be <code>UIGestureRecognizerStateRecognized</code> at
+the time. The way to prevent this result is to reset <code>self.gestureState</code>
+every time we start the timer.</p>
+
+<h3 id="source-code">Source code</h3>
+
+<p>You can find the source code on my <a href="https://github.com/dryman/UIWebTouch">github page</a>.</p>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-06-18T17:53:00+08:00" pubdate data-updated="true">Jun 18<span>th</span>, 2012</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/cocoa/'>Cocoa</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2012/06/18/handle-touch-events-in-uiwebview/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2012/06/18/handle-touch-events-in-uiwebview/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2012/06/17/debug-uiwebview-in-your-ios-app/" title="Previous Post: Debug UIWebView in your iOS app">&laquo; Debug UIWebView in your iOS app</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/06/18/handle-touch-events-in-uiwebview/">Handle touch events in UIWebView</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/06/17/debug-uiwebview-in-your-ios-app/">Debug UIWebView in your iOS app</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/14/recursion-best-practices/">Recursion best practices</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/10/practical-software-verification-using-SPIN/">Practical software verification using SPIN</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/05/jekyll-octopress-hacker-news-plugin/">Jekyll/Octopress hacker news plugin</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/04/jekyll-graphviz-plugin/">Jekyll/Octopress graphviz plugin</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/01/persistent-red-black-tree-4/">persistent red black tree in lisp (4)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/31/persistent-red-black-tree-in-lisp-3/">persistent red black tree in lisp (3)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/31/persistent-red-black-tree-in-lisp-2/">persistent red black tree in lisp (2)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/30/persistent-red-black-tree-in-lisp-1/">persistent red black tree in lisp (1)</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("idryman", 4, true);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/idryman" class="twitter-follow-button" data-show-count="false">Follow @idryman</a>
+  
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - dryman (Felix Ren-Chyan Chern) -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'dryblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.idryman.org/blog/2012/06/18/handle-touch-events-in-uiwebview/';
+        var disqus_url = 'http://www.idryman.org/blog/2012/06/18/handle-touch-events-in-uiwebview/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+<!--
+hn like button plugin for jekyll/octopress
+Author: dryman (Felix Ren-Chyan Chern)
+
+Inpired from http://hnlike.com/ written by sbashyal
+
+(The MIT License)
+
+Copyright © 2012-2013 Felix Ren-Chyan Chern
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the ‘Software’), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED ‘AS IS’, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+  <script type="text/javascript">
+    (function(){
+      var hn_like = document.createElement('iframe');
+      hn_like.frameborder="no";
+      hn_like.scrolling="no";
+      hn_like.height="28px";
+      hn_like.width="115px";
+      hn_like.src = "http://hnlike.com/upvote.php?link="
+                    + encodeURIComponent(document.location)
+                    + "&title="
+                    + encodeURIComponent("Handle touch events in UIWebView");
+      hn_like.innerHTML="iframes not supported by your browser";
+      var twitter = document.getElementsByClassName("twitter-share-button")[0];
+
+      twitter.parentNode.insertBefore(
+        hn_like,
+        twitter
+      );
+    })();
+  </script>
+
+<!-- end of hn like button -->
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
