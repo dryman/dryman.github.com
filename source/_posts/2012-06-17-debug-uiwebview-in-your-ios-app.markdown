@@ -39,5 +39,11 @@ of direct method call. Guess what? The compiler accept the hack. Awesome!
 
 Now simply run your iphone simulator and open the url `localhost:9999` to view your inspector. **Voilà!**
 
+### Edit
+
+[brainlock][brainlock] shared his [remote inspector][remote] that can use proxy
+to debug *on the device*. Awesome!
 
 [reference]: http://atnan.com/blog/2011/11/17/enabling-remote-debugging-via-private-apis-in-mobile-safari/
+[brainlock]: https://github.com/brainlock
+[remote]: https://github.com/brainlock/ios-remote-inspector
