@@ -1,0 +1,627 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Grand central dispatch vs OpenMP - Carpe diem (Felix's blog)</title>
+  <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
+
+  
+  <meta name="description" content="In 2009 Apple released a new task parallelism technology called Grand Central Dispatch (GCD). Apple worked hard on tuning GCD; stated that only 15 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://www.idryman.org/blog/2012/08/05/grand-central-dispatch-vs-openmp/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Carpe diem (Felix's blog)" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-23425996-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Carpe diem (Felix's blog)</a></h1>
+  
+    <h2>Work hard and enjoy every moments...</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:www.idryman.org" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="http://idryman.tumblr.com/">Drawings</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Grand Central Dispatch vs OpenMP</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-08-05T12:41:00+08:00" pubdate data-updated="true">Aug 5<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>In 2009 Apple released a new task parallelism technology called 
+<a href="http://developer.apple.com/library/ios/#documentation/Performance/Reference/GCD_libdispatch_Ref/Reference/reference.html">Grand Central Dispatch (GCD)</a>. Apple worked hard on tuning GCD; stated that only 15
+instructions are required to queue up a work unit in GCD, while creating a
+traditional thread could easily require several hundred instructions.<br />
+The main advantage of GCD is that programmer/user does not required to choose
+how many thread for application that optimize the most. It can save a lot of
+time for programmers because getting the most power out of CPUs requires a lot
+of measurement. With GCD, let the operating system decide it for you, <em>it just
+works.</em></p>
+
+<!-- more -->
+
+<p>Most GCD documentation provided by Apple take focus on user applications:
+background process, asynchronous callbacks, non-blocking UI, dispatched IOs
+…etc. GCD and c/obj-c blocks works pretty good in those scenarios, but we
+want a more general comparison between GCD and traditional thread models. <strong>Which
+is faster?</strong>
+Currently no one has made a general benchmark for this. I targeted to use an
+industry standard benchmark for GCD vs threads, and I ended up by picking 
+<a href="http://en.wikipedia.org/wiki/Conjugate_gradient_method">Conjugate Gradient</a> computation in 
+<a href="http://www.nas.nasa.gov/publications/npb.html">NAS Parallel Benchmark (NPB) maintained by NASA</a> as my benchmark model.</p>
+
+<p>I uses <a href="http://openmp.org/wp/">OpenMP</a> implementation in CG problem. It is an shared memory
+threading API which is much easier to use then POSIX thread. However it is still
+required for programmer/user to pick thread number in run time or in compile time.
+NASA only provide fortran code, so I uses <a href="http://jason.cse.ohio-state.edu/examples/npb/index.html">Ohio’s C implementation</a>.</p>
+
+<h2 id="benchmark-result">Benchmark result</h2>
+
+<p><img src="/images/npb_cg.png" alt="NPB CG" title="figure 1" /></p>
+
+<p>The result is quite promising! Problem sizes in NPB are predefined and indicated
+as different classes: </p>
+
+<ul>
+  <li>Class W: vector size: 7000, iterations: 15 (90’s workstation size, now likely
+too small)</li>
+  <li>Class A: vector size: 14000, iterations: 15</li>
+  <li>Class B: vector size: 75000, iterations: 75</li>
+</ul>
+
+<p>I tested OpenMP with different thread numbers and it performs differently on
+different problem size. It not quite obvious to choose a correct thread number
+for the problem, and GCD implementations beats them all.</p>
+
+<h2 id="bottleneck-implementation">Bottleneck implementation</h2>
+
+<p>The OpenMP implementation looks like this:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line">    <span class="cp">#pragma omp parallel {  </span><span class="c1">// Spawn threads for all computations in the block</span>
+</span><span class="line">    <span class="cm">/* </span>
+</span><span class="line"><span class="cm">      some other code... </span>
+</span><span class="line"><span class="cm">    */</span>
+</span><span class="line">
+</span><span class="line">    <span class="cp">#pragma omp for private(i,k)  </span><span class="c1">// Bottleneck</span>
+</span><span class="line">      <span class="k">for</span> <span class="p">(</span><span class="n">j</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;=</span> <span class="n">lastrow</span><span class="o">-</span><span class="n">firstrow</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">        <span class="kt">int</span> <span class="n">iresidue</span><span class="p">;</span>
+</span><span class="line">        <span class="kt">double</span> <span class="n">sum1</span><span class="p">,</span> <span class="n">sum2</span><span class="p">;</span>
+</span><span class="line">        <span class="n">i</span> <span class="o">=</span> <span class="n">rowstr</span><span class="p">[</span><span class="n">j</span><span class="p">];</span>
+</span><span class="line">        <span class="n">iresidue</span> <span class="o">=</span> <span class="p">(</span><span class="n">rowstr</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">i</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span><span class="p">;</span>
+</span><span class="line">        <span class="n">sum1</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
+</span><span class="line">        <span class="n">sum2</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
+</span><span class="line">        <span class="k">if</span> <span class="p">(</span><span class="n">iresidue</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="n">sum1</span> <span class="o">=</span> <span class="n">sum1</span> <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">p</span><span class="p">[</span><span class="n">colidx</span><span class="p">[</span><span class="n">i</span><span class="p">]];</span>
+</span><span class="line">        <span class="k">for</span> <span class="p">(</span><span class="n">k</span> <span class="o">=</span> <span class="n">i</span><span class="o">+</span><span class="n">iresidue</span><span class="p">;</span> <span class="n">k</span> <span class="o">&lt;=</span> <span class="n">rowstr</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">2</span><span class="p">;</span> <span class="n">k</span> <span class="o">+=</span> <span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">          <span class="n">sum1</span> <span class="o">=</span> <span class="n">sum1</span> <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>   <span class="o">*</span> <span class="n">p</span><span class="p">[</span><span class="n">colidx</span><span class="p">[</span><span class="n">k</span><span class="p">]];</span>
+</span><span class="line">          <span class="n">sum2</span> <span class="o">=</span> <span class="n">sum2</span> <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span><span class="p">[</span><span class="n">colidx</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]];</span>
+</span><span class="line">        <span class="p">}</span>
+</span><span class="line">          <span class="n">q</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">sum1</span> <span class="o">+</span> <span class="n">sum2</span><span class="p">;</span>
+</span><span class="line">      <span class="p">}</span>
+</span><span class="line">
+</span><span class="line">      <span class="cm">/* more code */</span>
+</span><span class="line">      <span class="p">}</span> <span class="cm">/* end parallel */</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Other code instead of bottleneck are basically vector initialization, copy,
+multiply and norm computations. I tested all of these, but they don’t make
+big differences between OpenMP, GCD, and BLAS1 functions.</p>
+
+<p>GCD implementation looks much like the original code:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line">      <span class="c1">// c_queue is a concurrent queue</span>
+</span><span class="line">      <span class="n">dispatch_apply</span> <span class="p">(</span><span class="n">NA</span><span class="p">,</span> <span class="n">c_queue</span><span class="p">,</span> <span class="o">^</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">idx</span><span class="p">){</span>
+</span><span class="line">        <span class="kt">size_t</span> <span class="n">j</span> <span class="o">=</span> <span class="n">idx</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span>
+</span><span class="line">        <span class="kt">double</span> <span class="n">sum</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
+</span><span class="line">        <span class="kt">double</span> <span class="n">sum1</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">sum2</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
+</span><span class="line">        <span class="kt">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="n">rowstr</span><span class="p">[</span><span class="n">j</span><span class="p">];</span>
+</span><span class="line">        <span class="kt">size_t</span> <span class="n">iresidue</span> <span class="o">=</span> <span class="p">(</span><span class="n">rowstr</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">i</span><span class="p">)</span> <span class="o">%</span><span class="mi">2</span><span class="p">;</span>
+</span><span class="line">        <span class="k">if</span> <span class="p">(</span><span class="n">iresidue</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="n">sum1</span> <span class="o">=</span> <span class="n">sum1</span> <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">p</span><span class="p">[</span><span class="n">colidx</span><span class="p">[</span><span class="n">i</span><span class="p">]];</span>
+</span><span class="line">        <span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">k</span> <span class="o">=</span> <span class="n">i</span><span class="o">+</span><span class="n">iresidue</span><span class="p">;</span> <span class="n">k</span> <span class="o">&lt;=</span> <span class="n">rowstr</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">2</span><span class="p">;</span> <span class="n">k</span> <span class="o">+=</span> <span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">          <span class="n">sum1</span> <span class="o">=</span> <span class="n">sum1</span> <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>   <span class="o">*</span> <span class="n">p</span><span class="p">[</span><span class="n">colidx</span><span class="p">[</span><span class="n">k</span><span class="p">]];</span>
+</span><span class="line">          <span class="n">sum2</span> <span class="o">=</span> <span class="n">sum2</span> <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span><span class="p">[</span><span class="n">colidx</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]];</span>
+</span><span class="line">        <span class="p">}</span>
+</span><span class="line">        <span class="n">q</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">sum1</span> <span class="o">+</span> <span class="n">sum2</span><span class="p">;</span>
+</span><span class="line">      <span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>What a great news! It is much easier then I thought to transfer the original
+code into GCD.</p>
+
+<h2 id="parallel-reduction-in-openmp-gcd-and-blas">Parallel reduction in OpenMP, GCD, and BLAS</h2>
+
+<p>As I concluded before, it doesn’t make big difference between three of these.
+The implementations are:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>OpenMP  </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line">    <span class="cp">#pragma omp parallel private (i,j,k)</span>
+</span><span class="line">    <span class="p">{</span>
+</span><span class="line">    <span class="cp">#pragma omp single nowait</span>
+</span><span class="line">      <span class="n">rho</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
+</span><span class="line">    <span class="cp">#pragma omp for reduction(+:rho)</span>
+</span><span class="line">      <span class="k">for</span> <span class="p">(</span><span class="n">j</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">NA</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">        <span class="n">rho</span> <span class="o">=</span> <span class="n">rho</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="n">j</span><span class="p">];</span>
+</span><span class="line">      <span class="p">}</span>
+</span><span class="line">    <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>GCD  </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line">    <span class="cm">/* clang -fblocks -O3 -DCACHE_LINE_SIZE=$(shell sysctl -n hw.cachelinesize) */</span>
+</span><span class="line">    <span class="cp">#include &lt;dispatch/dispatch.h&gt;</span>
+</span><span class="line">    <span class="cp">#define STRIDE (1024*(CACHE_LINE_SIZE/sizeof(double)))</span>
+</span><span class="line">    <span class="cp">#define DIVIDE (NA/STRIDE)</span>
+</span><span class="line">    <span class="cp">#define RESIDUE (NA%STRIDE)</span>
+</span><span class="line">
+</span><span class="line">    <span class="n">__block</span> <span class="kt">double</span> <span class="n">rho</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
+</span><span class="line">    <span class="n">dispatch_async</span><span class="p">(</span><span class="n">s_queue</span><span class="p">,</span><span class="o">^</span><span class="p">{</span>
+</span><span class="line">      <span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">j</span> <span class="o">=</span> <span class="n">DIVIDE</span><span class="o">*</span><span class="n">STRIDE</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">NA</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">){</span>
+</span><span class="line">        <span class="n">rho</span> <span class="o">+=</span> <span class="n">x</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="n">j</span><span class="p">];</span>
+</span><span class="line">      <span class="p">}</span>
+</span><span class="line">    <span class="p">});</span>
+</span><span class="line">    <span class="n">dispatch_apply</span><span class="p">(</span><span class="n">DIVIDE</span><span class="p">,</span> <span class="n">c_queue</span><span class="p">,</span> <span class="o">^</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">idx</span><span class="p">){</span>
+</span><span class="line">      <span class="kt">size_t</span> <span class="n">j</span> <span class="o">=</span> <span class="n">idx</span> <span class="o">*</span> <span class="n">STRIDE</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span>
+</span><span class="line">      <span class="kt">size_t</span> <span class="n">j_e</span> <span class="o">=</span> <span class="n">j</span> <span class="o">+</span> <span class="n">STRIDE</span><span class="p">;</span>
+</span><span class="line">      <span class="kt">double</span> <span class="n">sum</span><span class="o">=</span><span class="mf">0.0</span><span class="p">;</span>
+</span><span class="line">      <span class="k">do</span> <span class="p">{</span>
+</span><span class="line">        <span class="n">sum</span> <span class="o">+=</span> <span class="n">x</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="n">j</span><span class="p">];</span>
+</span><span class="line">      <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="o">++</span><span class="n">j</span> <span class="o">&lt;</span> <span class="n">j_e</span><span class="p">);</span>
+</span><span class="line">      <span class="n">dispatch_sync</span><span class="p">(</span><span class="n">s_queue</span><span class="p">,</span><span class="o">^</span><span class="p">{</span>
+</span><span class="line">        <span class="n">rho</span> <span class="o">+=</span> <span class="n">sum</span><span class="p">;</span>
+</span><span class="line">      <span class="p">});</span>
+</span><span class="line">    <span class="p">});</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>CBLAS  </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line">    <span class="cm">/* clang -lcblas </span>
+</span><span class="line"><span class="cm">       when linking */</span>
+</span><span class="line">    <span class="cp">#include &lt;Accelerate/Accelerate.h&gt; </span><span class="c1">// header for OSX</span>
+</span><span class="line">
+</span><span class="line">    <span class="c1">// rho = x.x</span>
+</span><span class="line">    <span class="c1">//               size, vectorX,  incX, vectorY, incY</span>
+</span><span class="line">    <span class="n">rho</span> <span class="o">=</span> <span class="n">cblas_ddot</span><span class="p">(</span>  <span class="n">NA</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>  <span class="mi">1</span>  <span class="p">,</span>  <span class="o">&amp;</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>    <span class="mi">1</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>I think it does not make difference because those operations are all one
+dimensional BLAS1 problems.</p>
+
+<h4 id="note-on-cache-line-size">Note on cache line size</h4>
+
+<p>I thought that cache line size matters when I start implementing GCD version of
+parallel reduction. But it ended up that you just need to give it a large enough
+size for compiler to generate SIMD optimization. Note that you can get the CPU
+cache line size by command <code>sysctl -n hw.cachelinesize</code> from shell.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>I think the best practice so far is to use BLAS whenever you can. It’s cleaner
+and highly optimized by libraries developed by Apple, Intel, or other HPC
+foundations. For other operation that BLAS don’t support, GCD is a good choice
+and easy to migrate to. The pros and cons go as follows:</p>
+
+<h4 id="openmp-over-gcd">OpenMP over GCD</h4>
+
+<ul>
+  <li>Supported by gcc, while clang doesn’t.</li>
+  <li>Can be used on C, CPP, and Fortran (and many more?)</li>
+  <li>Many existing numerical code uses OpenMP</li>
+  <li>Easier to get start with. eg. <code>#omp parallel for</code></li>
+  <li>Better syntax in reduction: <code>#omp reduction (+:sum)</code></li>
+</ul>
+
+<h4 id="gcd-over-openmp">GCD over OpenMP</h4>
+
+<ul>
+  <li>Much easier to tune performance.</li>
+  <li>Tighter logic construction. Everything is encapsulated in blocks.</li>
+  <li>No separated thread spawns and private variables like OpenMP.</li>
+  <li>Much less parameters to adjust in compile time and run time.</li>
+  <li>Highly optimized in any kinks of problem sizes.</li>
+  <li>Works on iOS (OpenMP does not)</li>
+</ul>
+
+<p>I think the greatest advantage you can gain from GCD is that it is highly optimized 
+on different problem sizes, because operating system takeovers task load balancing. 
+It surprised me that on class W problem, OpenMP version with 16 threads is twice
+as slow compares to 1 thread version. With GCD, you no longer need to handle
+this unexpected result! Cheers.</p>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-08-05T12:41:00+08:00" pubdate data-updated="true">Aug 5<span>th</span>, 2012</time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2012/08/05/grand-central-dispatch-vs-openmp/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2012/08/05/grand-central-dispatch-vs-openmp/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2012/06/18/handle-touch-events-in-uiwebview/" title="Previous Post: Handle touch events in UIWebView">&laquo; Handle touch events in UIWebView</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/08/05/grand-central-dispatch-vs-openmp/">Grand central dispatch vs OpenMP</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/06/18/handle-touch-events-in-uiwebview/">Handle touch events in UIWebView</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/06/17/debug-uiwebview-in-your-ios-app/">Debug UIWebView in your iOS app</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/14/recursion-best-practices/">Recursion best practices</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/10/practical-software-verification-using-SPIN/">Practical software verification using SPIN</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/05/jekyll-octopress-hacker-news-plugin/">Jekyll/Octopress hacker news plugin</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/04/jekyll-graphviz-plugin/">Jekyll/Octopress graphviz plugin</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/01/persistent-red-black-tree-4/">persistent red black tree in lisp (4)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/31/persistent-red-black-tree-in-lisp-3/">persistent red black tree in lisp (3)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/03/31/persistent-red-black-tree-in-lisp-2/">persistent red black tree in lisp (2)</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("idryman", 4, true);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/idryman" class="twitter-follow-button" data-show-count="false">Follow @idryman</a>
+  
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - dryman (Felix Ren-Chyan Chern) -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'dryblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.idryman.org/blog/2012/08/05/grand-central-dispatch-vs-openmp/';
+        var disqus_url = 'http://www.idryman.org/blog/2012/08/05/grand-central-dispatch-vs-openmp/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+<!--
+hn like button plugin for jekyll/octopress
+Author: dryman (Felix Ren-Chyan Chern)
+
+Inpired from http://hnlike.com/ written by sbashyal
+
+(The MIT License)
+
+Copyright © 2012-2013 Felix Ren-Chyan Chern
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the ‘Software’), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED ‘AS IS’, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+  <script type="text/javascript">
+    (function(){
+      var hn_like = document.createElement('iframe');
+      hn_like.frameborder="no";
+      hn_like.scrolling="no";
+      hn_like.height="28px";
+      hn_like.width="115px";
+      hn_like.src = "http://hnlike.com/upvote.php?link="
+                    + encodeURIComponent(document.location)
+                    + "&title="
+                    + encodeURIComponent("Grand central dispatch vs OpenMP");
+      hn_like.innerHTML="iframes not supported by your browser";
+      var twitter = document.getElementsByClassName("twitter-share-button")[0];
+
+      twitter.parentNode.insertBefore(
+        hn_like,
+        twitter
+      );
+    })();
+  </script>
+
+<!-- end of hn like button -->
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

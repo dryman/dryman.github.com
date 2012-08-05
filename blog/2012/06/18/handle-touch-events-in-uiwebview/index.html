@@ -114,6 +114,14 @@ events as defaults.</p>
 
 <p>However this is really hard to achive…</p>
 
+<h3 id="edit-620">Edit: 6/20</h3>
+
+<p>I found this post:<a href="http://mithin.in/2009/08/26/detecting-taps-and-events-on-uiwebview-the-right-way/">DETECTING TAPS AND EVENTS ON UIWEBVIEW – THE RIGHT
+WAY</a>.
+He handles touch event via <code>- (void) sendEvent:(UIEvent*) event</code> instead of
+UIGesutreRecognizer. His approach is more general and less hacky than mine. Have
+a look at it also!</p>
+
 <!-- more -->
 
 <h3 id="responder-chain">responder chain</h3>
@@ -433,6 +441,8 @@ every time we start the timer.</p>
         <a class="basic-alignment left" href="/blog/2012/06/17/debug-uiwebview-in-your-ios-app/" title="Previous Post: Debug UIWebView in your iOS app">&laquo; Debug UIWebView in your iOS app</a>
       
       
+        <a class="basic-alignment right" href="/blog/2012/08/05/grand-central-dispatch-vs-openmp/" title="Next Post: Grand central dispatch vs OpenMP">Grand central dispatch vs OpenMP &raquo;</a>
+      
     </p>
   </footer>
 </article>
@@ -450,6 +460,10 @@ every time we start the timer.</p>
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/08/05/grand-central-dispatch-vs-openmp/">Grand central dispatch vs OpenMP</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2012/06/18/handle-touch-events-in-uiwebview/">Handle touch events in UIWebView</a>
@@ -485,10 +499,6 @@ every time we start the timer.</p>
     
       <li class="post">
         <a href="/blog/2012/03/31/persistent-red-black-tree-in-lisp-2/">persistent red black tree in lisp (2)</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/03/30/persistent-red-black-tree-in-lisp-1/">persistent red black tree in lisp (1)</a>
       </li>
     
   </ul>

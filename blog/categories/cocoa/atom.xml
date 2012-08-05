@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Cocoa | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/cocoa/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-06-18T23:29:31+08:00</updated>
+  <updated>2012-08-05T17:40:33+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -27,6 +27,14 @@ events as defaults.</p>
 </blockquote>
 
 <p>However this is really hard to achive…</p>
+
+<h3 id="edit-620">Edit: 6/20</h3>
+
+<p>I found this post:<a href="http://mithin.in/2009/08/26/detecting-taps-and-events-on-uiwebview-the-right-way/">DETECTING TAPS AND EVENTS ON UIWEBVIEW – THE RIGHT
+WAY</a>.
+He handles touch event via <code>- (void) sendEvent:(UIEvent*) event</code> instead of
+UIGesutreRecognizer. His approach is more general and less hacky than mine. Have
+a look at it also!</p>
 
 <!-- more -->
 
