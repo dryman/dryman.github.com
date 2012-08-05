@@ -3,6 +3,7 @@ layout: post
 title: "Notes on Obj-C blocks"
 date: 2012-08-01 16:11
 comments: true
+published: false 
 categories: Cocoa
 ---
 
@@ -56,5 +57,15 @@ categories: Cocoa
         // NOT REACHED: DEADLOCK
       });
     }); // Queues are strictly FIFO
+
+
+### dispatch_apply
+
+    // for (index = 0; index < count; index++)
+    // NOTE: should work on rows instead of pixels in image processing
+    // striding
+    dispatch_apply(count, queue, ^(size_t index) {
+      outputs[index] = perform_computation(inputs[index]);
+    });
 
 http://www.slideshare.net/robby_brown/grand-central-dispatch-design-patterns
