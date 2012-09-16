@@ -3,7 +3,7 @@ layout: post
 title: "Grand central dispatch vs OpenMP"
 date: 2012-08-05 12:41
 comments: true
-categories: 
+categories: Cocoa
 ---
 
 In 2009 Apple released a new task parallelism technology called 
