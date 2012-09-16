@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-09-02T15:51:23+08:00</updated>
+  <updated>2012-09-16T12:56:53+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,205 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Earthquake early warning prototype]]></title>
+    <link href="http://www.idryman.org/blog/2012/09/15/earthquake-early-warning-prototype/"/>
+    <updated>2012-09-15T14:48:00+08:00</updated>
+    <id>http://www.idryman.org/blog/2012/09/15/earthquake-early-warning-prototype</id>
+    <content type="html"><![CDATA[<p>I made a  prototype of earthquake early warning system in one week. The scenario
+goes as follows: We use a Friendly ARM SBC (Single-Board Computer) as an
+earthquake signal collector and processor. If the signal was identified as
+serious earthquake, it would send a message to our server. Then our server will
+authenticate the message and use Apple Push Notification Service (APNS) to
+notify some iPhone registered for the notifications.</p>
+
+<p>The demo video:</p>
+
+<iframe width="560" height="315" src="http://www.youtube.com/embed/jpXXkftFtI4" frameborder="0" allowfullscreen=""></iframe>
+
+<!-- more -->
+
+<h2 id="apple-push-notification-service-apns">Apple Push Notification Service (APNS)</h2>
+
+<p>There are two ways to show up a notification even if app wasn’t active. One is
+local notification and the other is server-pushed notification.</p>
+
+<blockquote>
+  <p>Local notification are scheduled by an iOS application. It’s iOS only.</p>
+</blockquote>
+
+<blockquote>
+  <p>Push notification are sent by a remote server to Apple Push Notification
+   service, which pushes the notification to devices on which the application is
+   installed.</p>
+</blockquote>
+
+<p>There are a lot of limitation in alert message. So one must use it wisely. The
+maximum size allowed for a notification payload is <em>256 bytes</em>. APNS refuses any
+notification that exceeds this limit. The notification is encoded in a JSON
+string, the properties go as follows:</p>
+
+<ul>
+  <li><strong>alert</strong> If this property is included, iOS display a standard alert. This
+property can be a string or a dictionary. If it was a dictionary, below are
+the properties of <strong>alert</strong>.
+    <ul>
+      <li><strong>body</strong> The text of the alert message</li>
+      <li><strong>action-loc-key</strong> Display an alert with two buttons. The right buttons’s
+title would be this key.</li>
+      <li><strong>loc-key</strong> A key to an alert-message string in a <code>Localizable.strings</code>
+file for the current localization.</li>
+      <li><strong>loc-args</strong> Variable string to appear in place of format specifiers 
+in <strong>loc-key</strong>.</li>
+      <li><strong>launch-image</strong> The file name of an image in application bundle, which
+will be shown on the display message.</li>
+    </ul>
+  </li>
+  <li><strong>badge</strong> The number to display as the badge of the application icon.</li>
+  <li><strong>sound</strong> The name of the sound in the application bundle. Set the property to
+<em>default</em> then the default sound is played.</li>
+</ul>
+
+<p>To develop and deploy the provider side of a client/server application, you must
+get SSL certificatates from Apple Dev Center. Apple has a <a href="http://developer.apple.com/library/ios/#documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/ProvisioningDevelopment/ProvisioningDevelopment.html#//apple_ref/doc/uid/TP40008194-CH104-SW1">guide for
+this</a>.</p>
+
+<p>After setting up provisioning on Dev Center, you can get the certificate and key
+in <code>.pem</code> format, with following commands.</p>
+
+<pre><code>openssl pkcs12 -clcerts -nokeys -out apns-dev-cert.pem -in apns-dev-cert.p12
+openssl pkcs12 -nocerts -out apns-dev-key.pem -in apns-dev-key.p12
+</code></pre>
+
+<p>Remember to setup your bundle identifier and code sign as same as your
+provisioning profile uploaded to apple.</p>
+
+<p>Sometimes you might bump into bugs that your code sign wouldn’t work when you
+renew your bundle identifier. If so, just restart XCode.</p>
+
+<h2 id="server-cgi-script">Server CGI script</h2>
+
+<p>I use Perl to be cgi server. There are already a lot of APNS plugins that you
+can find in most popular languages. So just pick what is comfortable to you
+for implementing server side application.</p>
+
+<p>My script that handles APNS looks like this:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+</pre></td><td class="code"><pre><code class="perl"><span class="line"><span class="c1">#!/usr/bin/env perl</span>
+</span><span class="line"><span class="k">use</span> <span class="nn">Net::</span><span class="n">APNS</span><span class="p">;</span>
+</span><span class="line">
+</span><span class="line"><span class="k">my</span> <span class="nv">$apns</span> <span class="o">=</span> <span class="nn">Net::</span><span class="n">APNS</span><span class="o">-&gt;</span><span class="k">new</span><span class="p">;</span>
+</span><span class="line"><span class="k">my</span> <span class="nv">$notifier</span> <span class="o">=</span> <span class="nv">$apns</span><span class="o">-&gt;</span><span class="n">notify</span><span class="p">({</span>
+</span><span class="line">  <span class="n">cert</span> <span class="o">=&gt;</span> <span class="s">&quot;cert.pem&quot;</span><span class="p">,</span>
+</span><span class="line">  <span class="n">key</span> <span class="o">=&gt;</span> <span class="s">&quot;key.pem&quot;</span><span class="p">,</span>
+</span><span class="line">  <span class="n">passwd</span> <span class="o">=&gt;</span> <span class="s">&quot;passwd&quot;</span><span class="p">,</span>
+</span><span class="line"><span class="p">});</span>
+</span><span class="line">
+</span><span class="line"><span class="nv">$notifier</span><span class="o">-&gt;</span><span class="n">devicetoken</span><span class="p">(</span><span class="s">&quot;202154bb3b92e71f02b011183dfc7ad1261b69007346b52d1c8bcdb5aef9f4dd&quot;</span><span class="p">);</span>
+</span><span class="line"><span class="nv">$notifier</span><span class="o">-&gt;</span><span class="n">message</span><span class="p">(</span><span class="s">&quot;Earthquake!!&quot;</span><span class="p">);</span>
+</span><span class="line"><span class="nv">$notifier</span><span class="o">-&gt;</span><span class="n">badge</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+</span><span class="line"><span class="nv">$notifier</span><span class="o">-&gt;</span><span class="n">sound</span><span class="p">(</span><span class="s">&#39;default&#39;</span><span class="p">);</span>
+</span><span class="line"><span class="nv">$notifier</span><span class="o">-&gt;</span><span class="n">sandbox</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+</span><span class="line"><span class="nv">$notifier</span><span class="o">-&gt;</span><span class="nb">write</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The device token is generated by your app. You will first register when your app
+launch, then get the token from method <code>- (void)application:(UIApplication
+*)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData
+*)deviceToken</code>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="k">@implementation</span> <span class="nc">FCAppDelegate</span>
+</span><span class="line">
+</span><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">BOOL</span><span class="p">)</span><span class="nf">application:</span><span class="p">(</span><span class="n">UIApplication</span> <span class="o">*</span><span class="p">)</span><span class="nv">application</span> <span class="nf">didFinishLaunchingWithOptions:</span><span class="p">(</span><span class="n">NSDictionary</span> <span class="o">*</span><span class="p">)</span><span class="nv">launchOptions</span>
+</span><span class="line"><span class="p">{</span>
+</span><span class="line">    <span class="p">[[</span><span class="n">UIApplication</span> <span class="n">sharedApplication</span><span class="p">]</span> <span class="nl">registerForRemoteNotificationTypes:</span>
+</span><span class="line">        <span class="p">(</span><span class="n">UIRemoteNotificationTypeAlert</span><span class="o">|</span>
+</span><span class="line">         <span class="n">UIRemoteNotificationTypeBadge</span><span class="o">|</span>
+</span><span class="line">         <span class="n">UIRemoteNotificationTypeSound</span><span class="p">)];</span>
+</span><span class="line">    <span class="c1">// Override point for customization after application launch.</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">YES</span><span class="p">;</span>
+</span><span class="line"><span class="p">}</span>
+</span><span class="line">
+</span><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">application:</span><span class="p">(</span><span class="n">UIApplication</span> <span class="o">*</span><span class="p">)</span><span class="nv">application</span> <span class="nf">didRegisterForRemoteNotificationsWithDeviceToken:</span><span class="p">(</span><span class="n">NSData</span> <span class="o">*</span><span class="p">)</span><span class="nv">deviceToken</span> <span class="p">{</span>
+</span><span class="line">    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;My token is %@&quot;</span><span class="p">,</span> <span class="n">deviceToken</span><span class="p">);</span>
+</span><span class="line"><span class="p">}</span>
+</span><span class="line"><span class="k">@end</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="arm-board">ARM board</h2>
+
+<p>I use Friendly ARM 6410 for prototyping.</p>
+
+<p><img src="http://www.idryman.org/images/mini6410.jpg" alt="mini6410" title="figure 1" /></p>
+
+<p>Here are some configuration details:</p>
+
+<h3 id="booting">booting</h3>
+
+<p>In <code>minicom</code> remote shell:</p>
+
+<pre><code>&gt; boot-args:
+&gt; root=/dev/mtdblock2 rootfstype=yaffs2 init=/linuxrc console=ttySAC0,115200
+</code></pre>
+
+<p>The boot args is quite important else you won’t get the shell from the device or
+you may not boot it successfully. It took me a while to find the correct boot
+args.</p>
+
+<h3 id="cross-compile">cross compile</h3>
+
+<p>If some desired library are not included in the board, you can cross compile
+it from source. However, the configuration is a bit complex then normal
+compilation:</p>
+
+<pre><code>$ ./configure --host=arm-linux-gnu --target=arm-linux CC=arm-linux-gcc \
+$ AR=arm-linux-ar LD=arm-linux-ld RANLIB=arm-linux-ranlib \
+$ --prefix=/opt/curl --without-ssl
+</code></pre>
+
+<p>The cross compiled library can be uploaded to ARM board via ftp:</p>
+
+<pre><code>$ ncftp -u user -p passwd $IP
+&gt; put curl.tar.gz
+</code></pre>
+
+<p>You can find the <code>$IP</code> in minicom remote shell by <code>ifconfig</code>.</p>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Grand central dispatch vs OpenMP]]></title>
