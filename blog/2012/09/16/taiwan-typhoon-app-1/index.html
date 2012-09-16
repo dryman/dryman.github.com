@@ -5,11 +5,12 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>My Octopress configs - Carpe diem (Felix's blog)</title>
+  <title>Taiwan Typhoon App (1) - Carpe diem (Felix's blog)</title>
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="installation note This is an installation note for Octopress blogging framework. My configuration is developed on OSX with ruby 1.9.2, and xcode 4.2 &hellip;">
+  <meta name="description" content="Taiwan is an island next to Pacific ocean, and one kind of serious disaster in
+Taiwan is typhoon. Fortunately, We have best typhoon researches in the &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +19,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.idryman.org/blog/2012/03/10/my-octopress-configs/">
+  <link rel="canonical" href="http://www.idryman.org/blog/2012/09/16/taiwan-typhoon-app-1/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -80,7 +81,7 @@
   
   <header>
     
-      <h1 class="entry-title">My Octopress Configs</h1>
+      <h1 class="entry-title">Taiwan Typhoon App (1)</h1>
     
     
       <p class="meta">
@@ -96,76 +97,106 @@
   
 
 
-<time datetime="2012-03-10T16:12:00+08:00" pubdate data-updated="true">Mar 10<span>th</span>, 2012</time>
+<time datetime="2012-09-16T16:11:00+08:00" pubdate data-updated="true">Sep 16<span>th</span>, 2012</time>
         
       </p>
     
   </header>
 
 
-<div class="entry-content"><h2 id="installation-note">installation note</h2>
+<div class="entry-content"><p>Taiwan is an island next to Pacific ocean, and one kind of serious disaster in
+Taiwan is typhoon. Fortunately, We have best typhoon researches in the world,
+and I want to make a step further to let people read typhoon predictions on iOS.</p>
 
-<p>This is an installation note for <a href="http://octopress.org">Octopress</a> blogging framework. My configuration is developed on OSX with ruby 1.9.2, and xcode 4.2.</p>
+<p><img width="50%" style="margin-left:25%;" src="/images/typhoon_tw/typhoon-08-23.png" /></p>
 
 <!-- more -->
 
-<h2 id="required-developement-tools">Required developement tools</h2>
+<p>There are two main resources that we can get typhoon prediction. One is <a href="http://www.cwb.gov.tw/V7e/prevent/typhoon/ty.htm?">Central
+Weather Bureau, Taiwan (CWB)</a>, and the other is <a href="http://jtwccdn.appspot.com/JTWC/">Joint Typhoon Warning
+Center (JTWC)</a>. Here I’ll focus on <a href="http://www.cwb.gov.tw/V7e/prevent/typhoon/ty.htm?">CWB</a> data.</p>
 
-<ol>
-  <li><a href="https://github.com/kennethreitz/osx-gcc-installer">osx-gcc installer</a></li>
-  <li>install <a href="http://mxcl.github.com/homebrew/">homebrew</a> if not yet installed</li>
-</ol>
+<h2 id="setup-inspect-environment">Setup inspect environment</h2>
 
-<h2 id="manage-rubies-with-rvmhttpbeginrescueendcom">Manage Rubies with <a href="http://beginrescueend.com/">RVM</a></h2>
+<p>At the first scene, <a href="http://www.cwb.gov.tw/V7e/prevent/typhoon/ty.htm?">CWB</a> seems hard to parse because it uses images
+to show potential track area instead of using JSON API and google map.</p>
 
-<p>Install RVM</p>
+<p><img src="/images/typhoon_tw/cwb_pta.png" alt="cwb pta" title="figure 2" /></p>
 
-<pre><code>bash -s stable &lt; &lt;(curl -s https://raw.github.com/wayneeseguin/rvm/master/binscripts/rvm-installer)
-</code></pre>
+<p>The html code is quite dirty and hard to inspect. The tip is to find the <code>iframe</code>
+element from the inspector.</p>
 
-<p>Reload your Shell environment:</p>
+<p><img src="/images/typhoon_tw/inspect_iframe.png" alt="inspect iframe" title="figure 3" /></p>
 
-<pre><code>source ~/.bash_profile
-</code></pre>
+<p>Then, open the direct link in another window.</p>
 
-<p>Install ruby:</p>
+<p><img src="/images/typhoon_tw/cwb_pta_iframe.png" alt="cwb iframe" title="figure 4" /></p>
 
-<pre><code>rvm install 1.9.2 --with-gcc=gcc-4.2
-</code></pre>
+<p>Now we have a relatively cleaner html to inspect.</p>
 
-<p>Note: Octopress requires ruby 1.9.2</p>
+<p><img src="/images/typhoon_tw/inspector.png" alt="inspector" title="figure 5" /></p>
 
-<p>Use ruby 1.9.2</p>
+<h3 id="get-the-information-source">Get the information source</h3>
 
-<pre><code>rvm use 1.9.2 --default
-</code></pre>
+<p>I’m lucky. The source is right in JavaScript file.</p>
 
-<h2 id="setup-octopresshttpoctopressorg">Setup <a href="http://octopress.org">Octopress</a></h2>
+<p><img src="/images/typhoon_tw/ty_infos.png" alt="ty info" title="figure 6" /></p>
 
-<pre><code>git clone git://github.com/imathis/octopress.git your-blog
-cd your-blog
-gem install bundler
-bundle install
-rake install
-</code></pre>
+<p>Though it’s not JSON, but almost (lol). The direct link is</p>
 
-<h2 id="setup-github-pages">Setup github pages</h2>
-<p>add new repository as <em>your-name.github.com</em></p>
+<p><img src="/images/typhoon_tw/ty_infos_dir.png" alt="ty info dir" title="figure 7" /></p>
 
-<pre><code>rake setup_github_pages
-Enter the read/write url for your repository: git@github.com:your-name/your-name.github.com.git
-rake generate
-rake deploy
-</code></pre>
+<p>The parameter of the link seems to be a clue that we can query history records,
+but it doesn’t. With or without the parameter it always gives us the newest
+information of typhoons.</p>
 
-<p>Now you can go to github.com/your-name.github.com to see your repository</p>
+<h2 id="parse">Parse</h2>
 
-<pre><code>git add .
-git commit -m 'blog init'
-git push origin source
-</code></pre>
+<p>We only interested in <code>var typhs= [...]</code>. It’s easy to get data out using regular
+expression.</p>
 
-<p>Wait about 10 minutes and you can see your inited blog on your-name.github.com!</p>
+<p>I tested regular expression with Perl before I actually implement it in
+Objective-C. If you need a tool to do text processing, Perl is always the best
+choice. I strongly recommend people to learn Perl, it’s worthy.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>https://github.com/dryman/Taiwan-Typhoon-iOS/blob/master/parse.pl source </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+</pre></td><td class="code"><pre><code class="perl"><span class="line">    <span class="c1">#!/usr/bin/env perl</span>
+</span><span class="line">    <span class="k">use</span> <span class="mf">5.010</span><span class="p">;</span>
+</span><span class="line">    <span class="k">use</span> <span class="n">English</span><span class="p">;</span>
+</span><span class="line">
+</span><span class="line">    <span class="nb">undef</span> <span class="nv">$INPUT_RECORD_SEPARATOR</span><span class="p">;</span>  <span class="c1"># disable input seprator &quot;\n&quot;</span>
+</span><span class="line">    <span class="nb">open</span> <span class="k">my</span> <span class="nv">$fh</span><span class="p">,</span> <span class="s">&quot;ty_infos.js&quot;</span><span class="p">;</span>
+</span><span class="line">    <span class="nv">$_</span> <span class="o">=</span> <span class="sr">&lt;$fh&gt;</span><span class="p">;</span>                     <span class="c1"># read endire file as string into $_</span>
+</span><span class="line">
+</span><span class="line">    <span class="sr">/\[.+?\];/s</span><span class="p">;</span>                    <span class="c1"># /s modifier let &#39;.&#39; match &quot;\n&quot;</span>
+</span><span class="line">                                    <span class="c1"># +? match not greedly</span>
+</span><span class="line">    <span class="n">say</span> <span class="nv">$MATCH</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Beware that not to match greedly, else you won’t get what you want. Now we can
+write it in much more verbose Objective-C.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line">    <span class="n">NSRegularExpression</span> <span class="o">*</span><span class="n">regex</span> <span class="o">=</span> <span class="p">[</span><span class="n">NSRegularExpression</span> <span class="nl">regularExpressionWithPattern:</span><span class="s">@&quot;</span><span class="se">\\</span><span class="s">[.+?</span><span class="se">\\</span><span class="s">];&quot;</span> <span class="nl">options:</span><span class="n">NSRegularExpressionDotMatchesLineSeparators</span> <span class="nl">error:</span><span class="o">&amp;</span><span class="n">err</span><span class="p">];</span>
+</span><span class="line">    <span class="n">NSRange</span> <span class="n">range_of_match</span> <span class="o">=</span> <span class="p">[</span><span class="n">regex</span> <span class="nl">rangeOfFirstMatchInString:</span><span class="n">ty_infos</span> <span class="nl">options:</span><span class="n">NSRegularExpressionDotMatchesLineSeparators</span> <span class="nl">range:</span><span class="n">NSMakeRange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ty_infos</span><span class="p">.</span><span class="n">length</span><span class="p">)];</span>
+</span><span class="line">    <span class="n">NSString</span> <span class="o">*</span><span class="n">json</span> <span class="o">=</span> <span class="p">[</span><span class="n">ty_infos</span> <span class="nl">substringWithRange:</span><span class="n">NSMakeRange</span><span class="p">(</span><span class="n">range_of_match</span><span class="p">.</span><span class="n">location</span><span class="p">,</span> <span class="n">range_of_match</span><span class="p">.</span><span class="n">length</span><span class="o">-</span><span class="mi">1</span><span class="p">)];</span>
+</span><span class="line">    <span class="n">NSArray</span><span class="o">*</span> <span class="n">arr</span> <span class="o">=</span> <span class="p">[</span><span class="n">NSJSONSerialization</span> <span class="nl">JSONObjectWithData:</span><span class="p">[</span><span class="n">json</span> <span class="nl">dataUsingEncoding:</span><span class="n">NSUTF8StringEncoding</span><span class="p">]</span> <span class="nl">options:</span><span class="mi">0</span> <span class="nl">error:</span><span class="nb">nil</span><span class="p">];</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
 </div>
 
 
@@ -188,12 +219,12 @@ git push origin source
   
 
 
-<time datetime="2012-03-10T16:12:00+08:00" pubdate data-updated="true">Mar 10<span>th</span>, 2012</time>
+<time datetime="2012-09-16T16:11:00+08:00" pubdate data-updated="true">Sep 16<span>th</span>, 2012</time>
       
 
 <span class="categories">
   
-    <a class='category' href='/blog/categories/octopress/'>Octopress</a>
+    <a class='category' href='/blog/categories/cocoa/'>Cocoa</a>
   
 </span>
 
@@ -202,7 +233,7 @@ git push origin source
     
       <div class="sharing">
   
-  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2012/03/10/my-octopress-configs/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2012/03/10/my-octopress-configs/" >Tweet</a>
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2012/09/16/taiwan-typhoon-app-1/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2012/09/16/taiwan-typhoon-app-1/" >Tweet</a>
   
   
   <div class="g-plusone" data-size="medium"></div>
@@ -215,8 +246,8 @@ git push origin source
     
     <p class="meta">
       
+        <a class="basic-alignment left" href="/blog/2012/09/15/earthquake-early-warning-prototype/" title="Previous Post: Earthquake early warning prototype">&laquo; Earthquake early warning prototype</a>
       
-        <a class="basic-alignment right" href="/blog/2012/03/10/writing-math-equations-on-octopress/" title="Next Post: Writing math equations on Octopress">Writing math equations on Octopress &raquo;</a>
       
     </p>
   </footer>
@@ -319,8 +350,8 @@ git push origin source
       
         
         // var disqus_developer = 1;
-        var disqus_identifier = 'http://www.idryman.org/blog/2012/03/10/my-octopress-configs/';
-        var disqus_url = 'http://www.idryman.org/blog/2012/03/10/my-octopress-configs/';
+        var disqus_identifier = 'http://www.idryman.org/blog/2012/09/16/taiwan-typhoon-app-1/';
+        var disqus_url = 'http://www.idryman.org/blog/2012/09/16/taiwan-typhoon-app-1/';
         var disqus_script = 'embed.js';
       
     (function () {
@@ -370,7 +401,7 @@ SOFTWARE.
       hn_like.src = "http://hnlike.com/upvote.php?link="
                     + encodeURIComponent(document.location)
                     + "&title="
-                    + encodeURIComponent("My Octopress configs");
+                    + encodeURIComponent("Taiwan Typhoon App (1)");
       hn_like.innerHTML="iframes not supported by your browser";
       var twitter = document.getElementsByClassName("twitter-share-button")[0];
 

@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-09-16T12:56:53+08:00</updated>
+  <updated>2012-09-16T17:41:00+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,107 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Taiwan Typhoon App (1)]]></title>
+    <link href="http://www.idryman.org/blog/2012/09/16/taiwan-typhoon-app-1/"/>
+    <updated>2012-09-16T16:11:00+08:00</updated>
+    <id>http://www.idryman.org/blog/2012/09/16/taiwan-typhoon-app-1</id>
+    <content type="html"><![CDATA[<p>Taiwan is an island next to Pacific ocean, and one kind of serious disaster in
+Taiwan is typhoon. Fortunately, We have best typhoon researches in the world,
+and I want to make a step further to let people read typhoon predictions on iOS.</p>
+
+<p><img width="50%" style="margin-left:25%;" src="http://www.idryman.org/images/typhoon_tw/typhoon-08-23.png" /></p>
+
+<!-- more -->
+
+<p>There are two main resources that we can get typhoon prediction. One is <a href="http://www.cwb.gov.tw/V7e/prevent/typhoon/ty.htm?">Central
+Weather Bureau, Taiwan (CWB)</a>, and the other is <a href="http://jtwccdn.appspot.com/JTWC/">Joint Typhoon Warning
+Center (JTWC)</a>. Here I’ll focus on <a href="http://www.cwb.gov.tw/V7e/prevent/typhoon/ty.htm?">CWB</a> data.</p>
+
+<h2 id="setup-inspect-environment">Setup inspect environment</h2>
+
+<p>At the first scene, <a href="http://www.cwb.gov.tw/V7e/prevent/typhoon/ty.htm?">CWB</a> seems hard to parse because it uses images
+to show potential track area instead of using JSON API and google map.</p>
+
+<p><img src="http://www.idryman.org/images/typhoon_tw/cwb_pta.png" alt="cwb pta" title="figure 2" /></p>
+
+<p>The html code is quite dirty and hard to inspect. The tip is to find the <code>iframe</code>
+element from the inspector.</p>
+
+<p><img src="http://www.idryman.org/images/typhoon_tw/inspect_iframe.png" alt="inspect iframe" title="figure 3" /></p>
+
+<p>Then, open the direct link in another window.</p>
+
+<p><img src="http://www.idryman.org/images/typhoon_tw/cwb_pta_iframe.png" alt="cwb iframe" title="figure 4" /></p>
+
+<p>Now we have a relatively cleaner html to inspect.</p>
+
+<p><img src="http://www.idryman.org/images/typhoon_tw/inspector.png" alt="inspector" title="figure 5" /></p>
+
+<h3 id="get-the-information-source">Get the information source</h3>
+
+<p>I’m lucky. The source is right in JavaScript file.</p>
+
+<p><img src="http://www.idryman.org/images/typhoon_tw/ty_infos.png" alt="ty info" title="figure 6" /></p>
+
+<p>Though it’s not JSON, but almost (lol). The direct link is</p>
+
+<p><img src="http://www.idryman.org/images/typhoon_tw/ty_infos_dir.png" alt="ty info dir" title="figure 7" /></p>
+
+<p>The parameter of the link seems to be a clue that we can query history records,
+but it doesn’t. With or without the parameter it always gives us the newest
+information of typhoons.</p>
+
+<h2 id="parse">Parse</h2>
+
+<p>We only interested in <code>var typhs= [...]</code>. It’s easy to get data out using regular
+expression.</p>
+
+<p>I tested regular expression with Perl before I actually implement it in
+Objective-C. If you need a tool to do text processing, Perl is always the best
+choice. I strongly recommend people to learn Perl, it’s worthy.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>https://github.com/dryman/Taiwan-Typhoon-iOS/blob/master/parse.pl source </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+</pre></td><td class="code"><pre><code class="perl"><span class="line">    <span class="c1">#!/usr/bin/env perl</span>
+</span><span class="line">    <span class="k">use</span> <span class="mf">5.010</span><span class="p">;</span>
+</span><span class="line">    <span class="k">use</span> <span class="n">English</span><span class="p">;</span>
+</span><span class="line">
+</span><span class="line">    <span class="nb">undef</span> <span class="nv">$INPUT_RECORD_SEPARATOR</span><span class="p">;</span>  <span class="c1"># disable input seprator &quot;\n&quot;</span>
+</span><span class="line">    <span class="nb">open</span> <span class="k">my</span> <span class="nv">$fh</span><span class="p">,</span> <span class="s">&quot;ty_infos.js&quot;</span><span class="p">;</span>
+</span><span class="line">    <span class="nv">$_</span> <span class="o">=</span> <span class="sr">&lt;$fh&gt;</span><span class="p">;</span>                     <span class="c1"># read endire file as string into $_</span>
+</span><span class="line">
+</span><span class="line">    <span class="sr">/\[.+?\];/s</span><span class="p">;</span>                    <span class="c1"># /s modifier let &#39;.&#39; match &quot;\n&quot;</span>
+</span><span class="line">                                    <span class="c1"># +? match not greedly</span>
+</span><span class="line">    <span class="n">say</span> <span class="nv">$MATCH</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Beware that not to match greedly, else you won’t get what you want. Now we can
+write it in much more verbose Objective-C.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line">    <span class="n">NSRegularExpression</span> <span class="o">*</span><span class="n">regex</span> <span class="o">=</span> <span class="p">[</span><span class="n">NSRegularExpression</span> <span class="nl">regularExpressionWithPattern:</span><span class="s">@&quot;</span><span class="se">\\</span><span class="s">[.+?</span><span class="se">\\</span><span class="s">];&quot;</span> <span class="nl">options:</span><span class="n">NSRegularExpressionDotMatchesLineSeparators</span> <span class="nl">error:</span><span class="o">&amp;</span><span class="n">err</span><span class="p">];</span>
+</span><span class="line">    <span class="n">NSRange</span> <span class="n">range_of_match</span> <span class="o">=</span> <span class="p">[</span><span class="n">regex</span> <span class="nl">rangeOfFirstMatchInString:</span><span class="n">ty_infos</span> <span class="nl">options:</span><span class="n">NSRegularExpressionDotMatchesLineSeparators</span> <span class="nl">range:</span><span class="n">NSMakeRange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ty_infos</span><span class="p">.</span><span class="n">length</span><span class="p">)];</span>
+</span><span class="line">    <span class="n">NSString</span> <span class="o">*</span><span class="n">json</span> <span class="o">=</span> <span class="p">[</span><span class="n">ty_infos</span> <span class="nl">substringWithRange:</span><span class="n">NSMakeRange</span><span class="p">(</span><span class="n">range_of_match</span><span class="p">.</span><span class="n">location</span><span class="p">,</span> <span class="n">range_of_match</span><span class="p">.</span><span class="n">length</span><span class="o">-</span><span class="mi">1</span><span class="p">)];</span>
+</span><span class="line">    <span class="n">NSArray</span><span class="o">*</span> <span class="n">arr</span> <span class="o">=</span> <span class="p">[</span><span class="n">NSJSONSerialization</span> <span class="nl">JSONObjectWithData:</span><span class="p">[</span><span class="n">json</span> <span class="nl">dataUsingEncoding:</span><span class="n">NSUTF8StringEncoding</span><span class="p">]</span> <span class="nl">options:</span><span class="mi">0</span> <span class="nl">error:</span><span class="nb">nil</span><span class="p">];</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Earthquake early warning prototype]]></title>
