@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-09-16T18:45:53+08:00</updated>
+  <updated>2012-09-18T22:31:27+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,313 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Taiwan Typhoon App (2)]]></title>
+    <link href="http://www.idryman.org/blog/2012/09/16/taiwan-typhoon-app-2/"/>
+    <updated>2012-09-16T17:30:00+08:00</updated>
+    <id>http://www.idryman.org/blog/2012/09/16/taiwan-typhoon-app-2</id>
+    <content type="html"><![CDATA[<p>I start from a single view application with <strong>MKMapView</strong>. Remeber to link
+<code>MapKit.framework</code> in project setting.</p>
+
+<p>This is just a prototyping app, so everything will be handled in
+<code>FCViewController</code>, including</p>
+
+<ul>
+  <li><code>NSURLConnection</code> delegate: handle request and incoming data stream.</li>
+  <li>Read data as string, and process it with regular expression and JSON parsing.</li>
+  <li><code>MKMapView</code> delegate: create and draw annotations and overlays.</li>
+</ul>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>https://github.com/dryman/Taiwan-Typhoon-iOS/blob/master/TyphoonTW/FCViewController.h FCViewController.h </span></figcaption>
+ <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="cp">    #import &lt;UIKit/UIKit.h&gt;</span>
+</span><span class="line"><span class="cp">    #import &lt;MapKit/MapKit.h&gt;</span>
+</span><span class="line"><span class="cp">    #import &lt;CoreLocation/CoreLocation.h&gt;</span>
+</span><span class="line">
+</span><span class="line">    <span class="k">@interface</span> <span class="nc">FCViewController</span> : <span class="nc">UIViewController</span> <span class="o">&lt;</span><span class="n">MKMapViewDelegate</span><span class="p">,</span><span class="n">CLLocationManagerDelegate</span><span class="p">,</span> <span class="n">NSURLConnectionDataDelegate</span><span class="o">&gt;</span>
+</span><span class="line">    <span class="k">@property</span> <span class="p">(</span><span class="n">weak</span><span class="p">,</span> <span class="n">nonatomic</span><span class="p">)</span> <span class="kt">IBOutlet</span> <span class="n">MKMapView</span> <span class="o">*</span><span class="n">mapView</span><span class="p">;</span>
+</span><span class="line">    <span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">strong</span><span class="p">)</span> <span class="n">CLLocationManager</span> <span class="o">*</span><span class="n">clManager</span><span class="p">;</span>
+</span><span class="line">    <span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">strong</span><span class="p">)</span> <span class="n">NSURLConnection</span> <span class="o">*</span><span class="n">connection</span><span class="p">;</span>
+</span><span class="line">    <span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">strong</span><span class="p">)</span> <span class="n">NSMutableData</span> <span class="o">*</span><span class="n">connectionData</span><span class="p">;</span>
+</span><span class="line">
+</span><span class="line">    <span class="k">@end</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="nsurlconnection">NSURLConnection</h2>
+
+<p>I use <em>NSURLConnection</em> for networking. There are three common ways to use it:</p>
+
+<ol>
+  <li>Synchronous request (Not recommended.)</li>
+  <li>Asynchronous request using block.</li>
+  <li>Asynchronous request using delegate to handle respond data.</li>
+</ol>
+
+<p>I use third method for this app. To use it, you</p>
+
+<ol>
+  <li>make sure your class support <code>NSURLConnectionDataDelegate</code> protocol.</li>
+  <li>alloc <code>NSURLConnection</code> object, set <code>self</code> as delegate and start
+immediately (or setup some configurations like assign custom queues, and
+start manually)</li>
+  <li>Finally, implement these methods: 
+    <ul>
+      <li><code>- (void) connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response</code> </li>
+      <li><code>- (void) connection:(NSURLConnection *)connection didReceiveData:(NSData *)data</code> </li>
+      <li><code>- (void) connectionDidFinishLoading:(NSURLConnection *)connection</code></li>
+      <li><code>- (void) connection:(NSURLConnection *)connection didFailWithError:(NSError *)error</code></li>
+    </ul>
+  </li>
+</ol>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">viewDidLoad</span>
+</span><span class="line"><span class="p">{</span>
+</span><span class="line">    <span class="n">connection</span> <span class="o">=</span> <span class="p">[[</span><span class="n">NSURLConnection</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithRequest:</span><span class="p">[</span><span class="n">NSURLRequest</span> <span class="nl">requestWithURL:</span><span class="p">[</span><span class="n">NSURL</span> <span class="nl">URLWithString:</span><span class="s">@&quot;http://www.cwb.gov.tw/V7/prevent/typhoon/Data/PTA_NEW/js/datas/ty_infos.js&quot;</span><span class="p">]]</span>
+</span><span class="line">                                          <span class="nl">delegate:</span><span class="n">self</span>
+</span><span class="line">                                          <span class="nl">startImmediately:</span><span class="n">YES</span><span class="p">];</span>
+</span><span class="line"><span class="p">}</span>
+</span><span class="line">
+</span><span class="line"><span class="cp">#pragma mark NSURLConnection delegate</span>
+</span><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="nf">connection:</span><span class="p">(</span><span class="n">NSURLConnection</span> <span class="o">*</span><span class="p">)</span><span class="nv">connection</span> <span class="nf">didReceiveResponse:</span><span class="p">(</span><span class="n">NSURLResponse</span> <span class="o">*</span><span class="p">)</span><span class="nv">response</span>
+</span><span class="line"><span class="p">{</span>
+</span><span class="line">    <span class="n">connectionData</span> <span class="o">=</span> <span class="p">[[</span><span class="n">NSMutableData</span> <span class="n">alloc</span><span class="p">]</span> <span class="n">init</span><span class="p">];</span>
+</span><span class="line"><span class="p">}</span>
+</span><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="nf">connection:</span><span class="p">(</span><span class="n">NSURLConnection</span> <span class="o">*</span><span class="p">)</span><span class="nv">connection</span> <span class="nf">didReceiveData:</span><span class="p">(</span><span class="n">NSData</span> <span class="o">*</span><span class="p">)</span><span class="nv">data</span>
+</span><span class="line"><span class="p">{</span>
+</span><span class="line">    <span class="p">[</span><span class="n">connectionData</span> <span class="nl">appendData:</span><span class="n">data</span><span class="p">];</span>
+</span><span class="line"><span class="p">}</span>
+</span><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="nf">connectionDidFinishLoading:</span><span class="p">(</span><span class="n">NSURLConnection</span> <span class="o">*</span><span class="p">)</span><span class="nv">connection</span>
+</span><span class="line"><span class="p">{</span>
+</span><span class="line">    <span class="c1">// process connection data here.</span>
+</span><span class="line"><span class="p">}</span>
+</span><span class="line">
+</span><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="nf">connection:</span><span class="p">(</span><span class="n">NSURLConnection</span> <span class="o">*</span><span class="p">)</span><span class="nv">connection</span> <span class="nf">didFailWithError:</span><span class="p">(</span><span class="n">NSError</span> <span class="o">*</span><span class="p">)</span><span class="nv">error</span>
+</span><span class="line"><span class="p">{</span>
+</span><span class="line">    <span class="n">connectionData</span> <span class="o">=</span> <span class="nb">nil</span><span class="p">;</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="process-data">Process data</h2>
+
+<ol>
+  <li>Read data as string.</li>
+  <li>Get JSON from JavaScript using regular expression.</li>
+  <li>Use <code>NSJSONSerialization</code> to parse JSON</li>
+  <li>Parsed data is combination of <code>NSArray</code>, <code>NSDictionary</code>, <code>NSString</code>,
+<code>NSNumber</code>, and <code>NSNull</code>.</li>
+</ol>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+<span class="line-number">38</span>
+<span class="line-number">39</span>
+<span class="line-number">40</span>
+<span class="line-number">41</span>
+<span class="line-number">42</span>
+<span class="line-number">43</span>
+<span class="line-number">44</span>
+<span class="line-number">45</span>
+<span class="line-number">46</span>
+<span class="line-number">47</span>
+<span class="line-number">48</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="nf">connectionDidFinishLoading:</span><span class="p">(</span><span class="n">NSURLConnection</span> <span class="o">*</span><span class="p">)</span><span class="nv">connection</span>
+</span><span class="line"><span class="p">{</span>
+</span><span class="line">    <span class="n">NSString</span> <span class="o">*</span><span class="n">ty_infos</span> <span class="o">=</span> <span class="p">[[</span><span class="n">NSString</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithData:</span><span class="n">connectionData</span> <span class="nl">encoding:</span><span class="n">NSUTF8StringEncoding</span><span class="p">];</span>
+</span><span class="line">    <span class="n">connectionData</span> <span class="o">=</span> <span class="nb">nil</span><span class="p">;</span>
+</span><span class="line">    <span class="n">NSError</span> <span class="o">*</span><span class="n">err</span> <span class="o">=</span> <span class="nb">nil</span><span class="p">;</span>
+</span><span class="line">    <span class="n">NSRegularExpression</span> <span class="o">*</span><span class="n">regex</span> <span class="o">=</span> <span class="p">[</span><span class="n">NSRegularExpression</span> <span class="nl">regularExpressionWithPattern:</span><span class="s">@&quot;</span><span class="se">\\</span><span class="s">[.+?</span><span class="se">\\</span><span class="s">];&quot;</span> <span class="nl">options:</span><span class="n">NSRegularExpressionDotMatchesLineSeparators</span> <span class="nl">error:</span><span class="o">&amp;</span><span class="n">err</span><span class="p">];</span>
+</span><span class="line">    <span class="n">NSRange</span> <span class="n">range_of_match</span> <span class="o">=</span> <span class="p">[</span><span class="n">regex</span> <span class="nl">rangeOfFirstMatchInString:</span><span class="n">ty_infos</span> <span class="nl">options:</span><span class="n">NSRegularExpressionDotMatchesLineSeparators</span> <span class="nl">range:</span><span class="n">NSMakeRange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ty_infos</span><span class="p">.</span><span class="n">length</span><span class="p">)];</span>
+</span><span class="line">    <span class="n">NSString</span> <span class="o">*</span><span class="n">json</span> <span class="o">=</span> <span class="p">[</span><span class="n">ty_infos</span> <span class="nl">substringWithRange:</span><span class="n">NSMakeRange</span><span class="p">(</span><span class="n">range_of_match</span><span class="p">.</span><span class="n">location</span><span class="p">,</span> <span class="n">range_of_match</span><span class="p">.</span><span class="n">length</span><span class="o">-</span><span class="mi">1</span><span class="p">)];</span>
+</span><span class="line">    <span class="n">NSArray</span><span class="o">*</span> <span class="n">arr</span> <span class="o">=</span> <span class="p">[</span><span class="n">NSJSONSerialization</span> <span class="nl">JSONObjectWithData:</span><span class="p">[</span><span class="n">json</span> <span class="nl">dataUsingEncoding:</span><span class="n">NSUTF8StringEncoding</span><span class="p">]</span> <span class="nl">options:</span><span class="mi">0</span> <span class="nl">error:</span><span class="nb">nil</span><span class="p">];</span>
+</span><span class="line">
+</span><span class="line">
+</span><span class="line">    <span class="k">for</span> <span class="p">(</span><span class="n">NSDictionary</span> <span class="o">*</span><span class="n">typhoon</span> <span class="k">in</span> <span class="n">arr</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">        <span class="c1">// Use autoreleasepool to release temporary objects</span>
+</span><span class="line">        <span class="err">@</span><span class="n">autoreleasepool</span> <span class="p">{</span>
+</span><span class="line">            <span class="n">size_t</span> <span class="n">length</span> <span class="o">=</span> <span class="p">[[</span><span class="n">typhoon</span> <span class="nl">valueForKey:</span><span class="s">@&quot;fcst&quot;</span><span class="p">]</span> <span class="n">count</span><span class="p">]</span> <span class="o">+</span> <span class="p">[[</span><span class="n">typhoon</span> <span class="nl">valueForKey:</span><span class="s">@&quot;best_track&quot;</span><span class="p">]</span> <span class="n">count</span><span class="p">];</span>
+</span><span class="line">            <span class="n">CLLocationCoordinate2D</span> <span class="o">*</span><span class="n">line_points</span> <span class="o">=</span> <span class="p">(</span><span class="n">CLLocationCoordinate2D</span><span class="o">*</span><span class="p">)</span> <span class="n">malloc</span><span class="p">(</span><span class="n">length</span><span class="o">*</span><span class="k">sizeof</span><span class="p">(</span><span class="n">CLLocationCoordinate2D</span><span class="p">));</span>
+</span><span class="line">
+</span><span class="line">            <span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+</span><span class="line">            <span class="k">for</span> <span class="p">(</span><span class="n">NSDictionary</span> <span class="o">*</span><span class="n">track</span> <span class="k">in</span> <span class="p">[</span><span class="n">typhoon</span> <span class="nl">valueForKey:</span><span class="s">@&quot;best_track&quot;</span><span class="p">])</span> <span class="p">{</span>
+</span><span class="line">                <span class="n">CGFloat</span> <span class="n">lat</span> <span class="o">=</span> <span class="p">[[</span><span class="n">track</span> <span class="nl">valueForKey:</span><span class="s">@&quot;lat&quot;</span><span class="p">]</span> <span class="n">floatValue</span><span class="p">];</span>
+</span><span class="line">                <span class="n">CGFloat</span> <span class="n">lon</span> <span class="o">=</span> <span class="p">[[</span><span class="n">track</span> <span class="nl">valueForKey:</span><span class="s">@&quot;lon&quot;</span><span class="p">]</span> <span class="n">floatValue</span><span class="p">];</span>
+</span><span class="line">                <span class="n">CLLocationCoordinate2D</span> <span class="n">location</span> <span class="o">=</span> <span class="n">CLLocationCoordinate2DMake</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">);</span>
+</span><span class="line">                <span class="n">line_points</span><span class="p">[</span><span class="n">i</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="n">location</span><span class="p">;</span>
+</span><span class="line">                <span class="n">MKPointAnnotation</span> <span class="o">*</span><span class="n">centerPoint</span> <span class="o">=</span> <span class="p">[[</span><span class="n">MKPointAnnotation</span> <span class="n">alloc</span><span class="p">]</span> <span class="n">init</span><span class="p">];</span>
+</span><span class="line">                <span class="n">centerPoint</span><span class="p">.</span><span class="n">coordinate</span> <span class="o">=</span> <span class="n">location</span><span class="p">;</span>
+</span><span class="line">                <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">mapView</span> <span class="nl">addAnnotation:</span><span class="n">centerPoint</span><span class="p">];</span>
+</span><span class="line">            <span class="p">}</span>
+</span><span class="line">            <span class="k">for</span> <span class="p">(</span><span class="n">NSDictionary</span><span class="o">*</span> <span class="n">fcst</span> <span class="k">in</span> <span class="p">[</span><span class="n">typhoon</span> <span class="nl">valueForKey:</span><span class="s">@&quot;fcst&quot;</span><span class="p">])</span> <span class="p">{</span>
+</span><span class="line">                <span class="n">CGFloat</span> <span class="n">lat</span> <span class="o">=</span> <span class="p">[[</span><span class="n">fcst</span> <span class="nl">valueForKey:</span><span class="s">@&quot;lat&quot;</span><span class="p">]</span>  <span class="n">floatValue</span><span class="p">];</span>
+</span><span class="line">                <span class="n">CGFloat</span> <span class="n">lon</span> <span class="o">=</span> <span class="p">[[</span><span class="n">fcst</span> <span class="nl">valueForKey:</span><span class="s">@&quot;lon&quot;</span><span class="p">]</span>  <span class="n">floatValue</span><span class="p">];</span>
+</span><span class="line">                <span class="n">CGFloat</span> <span class="n">rad</span> <span class="o">=</span> <span class="p">[[</span><span class="n">fcst</span> <span class="nl">valueForKey:</span><span class="s">@&quot;pr70&quot;</span><span class="p">]</span> <span class="n">floatValue</span><span class="p">];</span>
+</span><span class="line">                <span class="n">CLLocationCoordinate2D</span> <span class="n">location</span> <span class="o">=</span> <span class="n">CLLocationCoordinate2DMake</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">);</span>
+</span><span class="line">                <span class="n">line_points</span><span class="p">[</span><span class="n">i</span><span class="o">++</span><span class="p">]</span><span class="o">=</span><span class="n">location</span><span class="p">;</span>
+</span><span class="line">
+</span><span class="line">                <span class="n">MKCircle</span> <span class="o">*</span><span class="n">cir</span> <span class="o">=</span> <span class="p">[</span><span class="n">MKCircle</span> <span class="nl">circleWithCenterCoordinate:</span> <span class="n">location</span>
+</span><span class="line">                                                              <span class="nl">radius:</span> <span class="n">rad</span><span class="o">*</span><span class="mi">1000</span><span class="p">];</span>
+</span><span class="line">                <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">mapView</span> <span class="nl">addOverlay:</span><span class="n">cir</span><span class="p">];</span>
+</span><span class="line">                <span class="n">MKPointAnnotation</span> <span class="o">*</span><span class="n">centerPoint</span> <span class="o">=</span> <span class="p">[[</span><span class="n">MKPointAnnotation</span> <span class="n">alloc</span><span class="p">]</span> <span class="n">init</span><span class="p">];</span>
+</span><span class="line">                <span class="n">centerPoint</span><span class="p">.</span><span class="n">coordinate</span> <span class="o">=</span> <span class="n">location</span><span class="p">;</span>
+</span><span class="line">                <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">mapView</span> <span class="nl">addAnnotation:</span><span class="n">centerPoint</span><span class="p">];</span>
+</span><span class="line">            <span class="p">}</span>
+</span><span class="line">
+</span><span class="line">            <span class="n">MKPolyline</span> <span class="o">*</span><span class="n">line</span> <span class="o">=</span> <span class="p">[</span><span class="n">MKPolyline</span> <span class="nl">polylineWithCoordinates:</span><span class="n">line_points</span> <span class="nl">count:</span><span class="n">length</span><span class="p">];</span>
+</span><span class="line">            <span class="p">[</span><span class="n">self</span><span class="p">.</span><span class="n">mapView</span> <span class="nl">addOverlay:</span><span class="n">line</span><span class="p">];</span>
+</span><span class="line">            <span class="n">free</span><span class="p">(</span><span class="n">line_points</span><span class="p">);</span>
+</span><span class="line">        <span class="p">}</span>
+</span><span class="line">    <span class="p">}</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="mapkit">MapKit</h2>
+
+<p>MapKit is simular to most UI elements. You setup a MKMapView, add data
+(MKAnnotation, MKOverlay, …etc.) to it, and handle drawing delegate methods.
+This is a prototype app, so I only use built-in <code>MKPointAnnotation</code> and
+<code>MKPolyline</code> overlay. If you want to assign custom properties to annotation or
+overlays, you can subclass them and implement drawing functions in delegate.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="cp">#pragma mark Map View Delegate methods</span>
+</span><span class="line"><span class="k">-</span> <span class="p">(</span><span class="n">MKOverlayView</span><span class="o">*</span><span class="p">)</span><span class="nf">mapView:</span><span class="p">(</span><span class="n">MKMapView</span> <span class="o">*</span><span class="p">)</span><span class="nv">mapView</span> <span class="nf">viewForOverlay:</span><span class="p">(</span><span class="kt">id</span><span class="o">&lt;</span><span class="n">MKOverlay</span><span class="o">&gt;</span><span class="p">)</span><span class="nv">overlay</span>
+</span><span class="line"><span class="p">{</span>
+</span><span class="line">    <span class="k">if</span> <span class="p">([</span><span class="n">overlay</span> <span class="nl">isKindOfClass:</span><span class="p">[</span><span class="n">MKCircle</span> <span class="n">class</span><span class="p">]])</span> <span class="p">{</span>
+</span><span class="line">        <span class="n">MKCircleView</span> <span class="o">*</span><span class="n">view</span> <span class="o">=</span> <span class="p">[[</span><span class="n">MKCircleView</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithCircle:</span><span class="n">overlay</span><span class="p">];</span>
+</span><span class="line">        <span class="n">view</span><span class="p">.</span><span class="n">fillColor</span> <span class="o">=</span> <span class="p">[[</span><span class="n">UIColor</span> <span class="n">redColor</span><span class="p">]</span> <span class="nl">colorWithAlphaComponent:</span><span class="mf">0.02</span><span class="p">];</span>
+</span><span class="line">        <span class="n">view</span><span class="p">.</span><span class="n">strokeColor</span> <span class="o">=</span> <span class="p">[[</span><span class="n">UIColor</span> <span class="n">redColor</span><span class="p">]</span> <span class="nl">colorWithAlphaComponent:</span><span class="mf">0.15</span><span class="p">];</span>
+</span><span class="line">        <span class="n">view</span><span class="p">.</span><span class="n">lineWidth</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+</span><span class="line">        <span class="k">return</span> <span class="n">view</span><span class="p">;</span>
+</span><span class="line">    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">([</span><span class="n">overlay</span> <span class="nl">isKindOfClass:</span><span class="p">[</span><span class="n">MKPolyline</span> <span class="n">class</span><span class="p">]])</span> <span class="p">{</span>
+</span><span class="line">        <span class="n">MKPolylineView</span> <span class="o">*</span><span class="n">view</span> <span class="o">=</span> <span class="p">[[</span><span class="n">MKPolylineView</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithPolyline:</span><span class="n">overlay</span><span class="p">];</span>
+</span><span class="line">        <span class="n">view</span><span class="p">.</span><span class="n">strokeColor</span> <span class="o">=</span> <span class="p">[[</span><span class="n">UIColor</span> <span class="n">blackColor</span><span class="p">]</span> <span class="nl">colorWithAlphaComponent:</span><span class="mf">0.2</span><span class="p">];</span>
+</span><span class="line">        <span class="n">view</span><span class="p">.</span><span class="n">lineWidth</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+</span><span class="line">        <span class="k">return</span> <span class="n">view</span><span class="p">;</span>
+</span><span class="line">    <span class="p">}</span>
+</span><span class="line">    <span class="k">return</span> <span class="nb">nil</span><span class="p">;</span>
+</span><span class="line"><span class="p">}</span>
+</span><span class="line"><span class="k">-</span> <span class="p">(</span><span class="n">MKAnnotationView</span><span class="o">*</span><span class="p">)</span><span class="nf">mapView:</span><span class="p">(</span><span class="n">MKMapView</span> <span class="o">*</span><span class="p">)</span><span class="nv">mView</span> <span class="nf">viewForAnnotation:</span><span class="p">(</span><span class="kt">id</span><span class="o">&lt;</span><span class="n">MKAnnotation</span><span class="o">&gt;</span><span class="p">)</span><span class="nv">annotation</span>
+</span><span class="line"><span class="p">{</span>
+</span><span class="line">    <span class="n">NSString</span> <span class="o">*</span><span class="n">identifier</span> <span class="o">=</span> <span class="s">@&quot;pinView&quot;</span><span class="p">;</span>
+</span><span class="line">    <span class="n">MKAnnotationView</span> <span class="o">*</span><span class="n">annotationView</span> <span class="o">=</span> <span class="p">(</span><span class="n">MKAnnotationView</span><span class="o">*</span><span class="p">)[</span><span class="n">mView</span> <span class="nl">dequeueReusableAnnotationViewWithIdentifier:</span><span class="n">identifier</span><span class="p">];</span>
+</span><span class="line">    <span class="k">if</span> <span class="p">(</span><span class="n">annotationView</span><span class="o">==</span><span class="nb">nil</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">        <span class="n">annotationView</span> <span class="o">=</span> <span class="p">[[</span><span class="n">MKAnnotationView</span> <span class="n">alloc</span><span class="p">]</span> <span class="nl">initWithAnnotation:</span><span class="n">annotation</span> <span class="nl">reuseIdentifier:</span><span class="n">identifier</span><span class="p">];</span>
+</span><span class="line">        <span class="n">UIImage</span> <span class="o">*</span><span class="n">img</span> <span class="o">=</span> <span class="p">[</span><span class="n">UIImage</span> <span class="nl">imageNamed:</span><span class="s">@&quot;typh.png&quot;</span><span class="p">];</span>
+</span><span class="line">        <span class="n">annotationView</span><span class="p">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">img</span><span class="p">;</span>
+</span><span class="line">        <span class="n">annotationView</span><span class="p">.</span><span class="n">canShowCallout</span> <span class="o">=</span> <span class="n">NO</span><span class="p">;</span>
+</span><span class="line">    <span class="p">}</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">annotationView</span><span class="p">;</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>That’s it. Now we have a native interface to show typhoon prediction!</p>
+
+<p><img width="50%" style="margin-left:25%;" src="http://www.idryman.org/images/typhoon_tw/typhoon-09-16.png" /></p>
+
+<h2 id="source-code">Source code</h2>
+
+<p>The source code is on <a href="https://github.com/dryman/Taiwan-Typhoon-iOS">github</a>.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Taiwan Typhoon App (1)]]></title>
@@ -3678,77 +3985,6 @@ change <code>rdiscount</code> to <code>kramdown</code></p>
     </li>
   </ol>
 </div>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[My Octopress configs]]></title>
-    <link href="http://www.idryman.org/blog/2012/03/10/my-octopress-configs/"/>
-    <updated>2012-03-10T16:12:00+08:00</updated>
-    <id>http://www.idryman.org/blog/2012/03/10/my-octopress-configs</id>
-    <content type="html"><![CDATA[<h2 id="installation-note">installation note</h2>
-
-<p>This is an installation note for <a href="http://octopress.org">Octopress</a> blogging framework. My configuration is developed on OSX with ruby 1.9.2, and xcode 4.2.</p>
-
-<!-- more -->
-
-<h2 id="required-developement-tools">Required developement tools</h2>
-
-<ol>
-  <li><a href="https://github.com/kennethreitz/osx-gcc-installer">osx-gcc installer</a></li>
-  <li>install <a href="http://mxcl.github.com/homebrew/">homebrew</a> if not yet installed</li>
-</ol>
-
-<h2 id="manage-rubies-with-rvmhttpbeginrescueendcom">Manage Rubies with <a href="http://beginrescueend.com/">RVM</a></h2>
-
-<p>Install RVM</p>
-
-<pre><code>bash -s stable &lt; &lt;(curl -s https://raw.github.com/wayneeseguin/rvm/master/binscripts/rvm-installer)
-</code></pre>
-
-<p>Reload your Shell environment:</p>
-
-<pre><code>source ~/.bash_profile
-</code></pre>
-
-<p>Install ruby:</p>
-
-<pre><code>rvm install 1.9.2 --with-gcc=gcc-4.2
-</code></pre>
-
-<p>Note: Octopress requires ruby 1.9.2</p>
-
-<p>Use ruby 1.9.2</p>
-
-<pre><code>rvm use 1.9.2 --default
-</code></pre>
-
-<h2 id="setup-octopresshttpoctopressorg">Setup <a href="http://octopress.org">Octopress</a></h2>
-
-<pre><code>git clone git://github.com/imathis/octopress.git your-blog
-cd your-blog
-gem install bundler
-bundle install
-rake install
-</code></pre>
-
-<h2 id="setup-github-pages">Setup github pages</h2>
-<p>add new repository as <em>your-name.github.com</em></p>
-
-<pre><code>rake setup_github_pages
-Enter the read/write url for your repository: git@github.com:your-name/your-name.github.com.git
-rake generate
-rake deploy
-</code></pre>
-
-<p>Now you can go to github.com/your-name.github.com to see your repository</p>
-
-<pre><code>git add .
-git commit -m 'blog init'
-git push origin source
-</code></pre>
-
-<p>Wait about 10 minutes and you can see your inited blog on your-name.github.com!</p>
 ]]></content>
   </entry>
   
