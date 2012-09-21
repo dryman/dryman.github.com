@@ -14,9 +14,9 @@ and I want to make a step further to let people read typhoon predictions on iOS.
 
 <!-- more -->
 
-There are two main resources that we can get typhoon prediction. One is [Central
-Weather Bureau, Taiwan (CWB)][cwb], and the other is [Joint Typhoon Warning
-Center (JTWC)][jtwc]. Here I'll focus on [CWB][cwb] data.
+There are two main resources that we can get typhoon prediction. One is 
+[Central Weather Bureau, Taiwan (CWB)][cwb], and the other is 
+[Joint Typhoon Warning Center (JTWC)][jtwc]. Here I'll focus on [CWB][cwb] data.
 
 ## Setup inspect environment
 

@@ -9,13 +9,13 @@ categories: Cocoa
 
 ## Syntax
 
-    int ^(myBlock)(int,int);
+    int (^myBlock)(int,int);
 
-    void ^(myVoidBlock)(int,int);
-    ^(myVoidBlock)(int,int); // same
+    void (^myVoidBlock)(int,int);
+    (^myVoidBlock)(int,int); // same wrong
 
-    ^(myVoidBlock2)(void);
-    ^(myVoidBlock2); // same
+    (^myVoidBlock2)(void); wrong
+    (^myVoidBlock2); //  wrong
 
     typedef int (^BlockType)(int,int);
     BlockType myBlock1, myBlock2;
