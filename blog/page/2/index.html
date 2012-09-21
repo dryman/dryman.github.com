@@ -9,8 +9,8 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="Okasaki’s purely functional red black tree The peristent red black tree in last post works ok, but the rotate functions and
-color flip is not &hellip;">
+  <meta name="description" content="I created a graphviz plugin for Octopress/Jekyll today. For example: {% graphviz %}
+digraph G { compound=true; subgraph cluster0 { a -&gt; b; a -&gt &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -78,6 +78,73 @@ color flip is not &hellip;">
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2012/04/04/jekyll-graphviz-plugin/">Jekyll/Octopress Graphviz Plugin</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-04-04T17:37:00+08:00" pubdate data-updated="true">Apr 4<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I created a graphviz plugin for Octopress/Jekyll today. For example:</p>
+
+<pre><code>{% graphviz %}
+digraph G {
+  compound=true;
+  subgraph cluster0 {
+  a -&gt; b;
+  a -&gt; c;
+  b -&gt; d;
+  c -&gt; d;
+  }
+  subgraph cluster1 {
+  e -&gt; g;
+  e -&gt; f;
+  }
+  b -&gt; f [lhead=cluster1];
+  d -&gt; e;
+  c -&gt; g [ltail=cluster0, lhead=cluster1];
+  c -&gt; e [ltail=cluster0];
+  d -&gt; h;
+}
+{% endgraphviz %}
+</code></pre>
+
+<p>will produce:</p>
+
+<p><img src="/images/graphviz/g-3feb8846aa4bb9767add244df8bed05a.svg" /></p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2012/04/04/jekyll-graphviz-plugin/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -669,78 +736,6 @@ theorem</strong> the most.</p>
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2012/03/10/writing-math-equations-on-octopress/">Writing Math Equations on Octopress</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-03-10T16:23:00+08:00" pubdate data-updated="true">Mar 10<span>th</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Octopress is a wonderful blogging framework for hackers, but it does not support
-math typesetting by default. What hacker doesn’t use Latex math?</p>
-
-<p>The followings are configs to make you write latex math equations in Octopress.
-Then you can translate this</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-</pre></td><td class="code"><pre><code class="latex"><span class="line"><span class="sb">$$</span><span class="nb"></span>
-</span><span class="line"><span class="nv">\begin</span><span class="nb">{align}</span>
-</span><span class="line"><span class="nv">\mbox</span><span class="nb">{Union: } &amp; A</span><span class="nv">\cup</span><span class="nb"> B </span><span class="o">=</span><span class="nb"> </span><span class="nv">\{</span><span class="nb">x</span><span class="nv">\mid</span><span class="nb"> x</span><span class="nv">\in</span><span class="nb"> A </span><span class="nv">\mbox</span><span class="nb">{ or } x</span><span class="nv">\in</span><span class="nb"> B</span><span class="nv">\}</span><span class="nb"> </span><span class="nv">\\</span><span class="nb"></span>
-</span><span class="line"><span class="nv">\mbox</span><span class="nb">{Concatenation: } &amp; A</span><span class="nv">\circ</span><span class="nb"> B  </span><span class="o">=</span><span class="nb"> </span><span class="nv">\{</span><span class="nb">xy</span><span class="nv">\mid</span><span class="nb"> x</span><span class="nv">\in</span><span class="nb"> A </span><span class="nv">\mbox</span><span class="nb">{ and } y</span><span class="nv">\in</span><span class="nb"> B</span><span class="nv">\}</span><span class="nb"> </span><span class="nv">\\</span><span class="nb"></span>
-</span><span class="line"><span class="nv">\mbox</span><span class="nb">{Star: } &amp; A^</span><span class="nv">\star</span><span class="nb">  </span><span class="o">=</span><span class="nb"> </span><span class="nv">\{</span><span class="nb">x_</span><span class="m">1</span><span class="nb">x_</span><span class="m">2</span><span class="nv">\ldots</span><span class="nb"> x_k </span><span class="nv">\mid</span><span class="nb">  k</span><span class="nv">\geq</span><span class="nb"> </span><span class="m">0</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{ and each } x_i</span><span class="nv">\in</span><span class="nb"> A</span><span class="nv">\}</span><span class="nb"> </span><span class="nv">\\</span><span class="nb"></span>
-</span><span class="line"><span class="nv">\end</span><span class="nb">{align}</span>
-</span><span class="line"><span class="s">$$</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>into this</p>
-
-<script type="math/tex; mode=display">% <![CDATA[
-
-\begin{align}
-\mbox{Union: } & A\cup B = \{x\mid x\in A \mbox{ or } x\in B\} \\
-\mbox{Concatenation: } & A\circ B  = \{xy\mid x\in A \mbox{ and } y\in B\} \\
-\mbox{Star: } & A^\star  = \{x_1x_2\ldots x_k \mid  k\geq 0 \mbox{ and each } x_i\in A\} \\
-\end{align}
- %]]></script>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/03/10/writing-math-equations-on-octopress/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/3/">&larr; Older</a>
@@ -756,6 +751,10 @@ Then you can translate this</p>
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/09/21/c-slash-objc-c-block-syntax-explained/">C/Objc-C block syntax explained</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2012/09/16/taiwan-typhoon-app-2/">Taiwan Typhoon App (2)</a>
@@ -791,10 +790,6 @@ Then you can translate this</p>
     
       <li class="post">
         <a href="/blog/2012/04/05/jekyll-octopress-hacker-news-plugin/">Jekyll/Octopress hacker news plugin</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/04/04/jekyll-graphviz-plugin/">Jekyll/Octopress graphviz plugin</a>
       </li>
     
   </ul>

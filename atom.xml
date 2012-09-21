@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-09-18T22:33:49+08:00</updated>
+  <updated>2012-09-21T22:59:19+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,243 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[C/Objc-C block syntax explained]]></title>
+    <link href="http://www.idryman.org/blog/2012/09/21/c-slash-objc-c-block-syntax-explained/"/>
+    <updated>2012-09-21T20:33:00+08:00</updated>
+    <id>http://www.idryman.org/blog/2012/09/21/c-slash-objc-c-block-syntax-explained</id>
+    <content type="html"><![CDATA[<p>Block is heavily used in objective-c  APIs. If you want to
+write concurrent and responsive interface, you will need blocks and grand
+central dispatch. Blocks also bring many goods form functional programming to cocoa.
+It is just awesome.</p>
+
+<p>However, when I first learn blocks I found the syntax confuses me a lot. 
+This is why I wrote this article. Hope this article can help people who have the
+same problem as I did.</p>
+
+<!-- more -->
+
+<h2 id="declare-a-block-variable">Declare a block variable</h2>
+
+<p>Block syntax inherited form C’s function pointers. To declare a block variable,
+you write:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line">    <span class="kt">int</span> <span class="p">(</span><span class="o">^</span><span class="n">multiply</span><span class="p">)(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">)</span> <span class="o">=</span> <span class="o">^</span><span class="kt">int</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="n">b</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="n">a</span><span class="o">*</span><span class="n">b</span><span class="p">;</span> <span class="p">};</span>
+</span><span class="line">  <span class="c1">//^^^^^^^^^^^^^^^^^^^^^^^^          ^^^^^^^^^^^  ^^^^^^^^^^^^^^^</span>
+</span><span class="line">  <span class="c1">//  declare block variable          block          block body</span>
+</span><span class="line">  <span class="c1">//  &quot;multiply&quot;                      argument</span>
+</span><span class="line">
+</span><span class="line">    <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="n">multiply</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">);</span> <span class="c1">// 15</span>
+</span><span class="line">  <span class="c1">// execute a block</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>It is similar to function pointer:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line">    <span class="kt">int</span> <span class="n">mutiply</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="n">b</span><span class="p">){</span>
+</span><span class="line">        <span class="k">return</span> <span class="n">a</span><span class="o">*</span><span class="n">b</span><span class="p">;</span>
+</span><span class="line">    <span class="p">}</span>
+</span><span class="line">
+</span><span class="line">    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">functionPt</span><span class="p">)(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">)</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">mutiply</span><span class="p">;</span>
+</span><span class="line">
+</span><span class="line">    <span class="n">functionPt</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">);</span> <span class="c1">// 15</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h3 id="block-literal-syntax-shortcut">Block literal syntax shortcut</h3>
+
+<p>Block literal can be written in various ways:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line">    <span class="kt">int</span> <span class="p">(</span><span class="o">^</span><span class="n">myBlock</span><span class="p">)(</span><span class="kt">int</span><span class="p">)</span> <span class="o">=</span> <span class="o">^</span><span class="kt">int</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">)</span> <span class="p">{...};</span>
+</span><span class="line">    <span class="kt">int</span> <span class="p">(</span><span class="o">^</span><span class="n">myBlock</span><span class="p">)(</span><span class="kt">int</span><span class="p">)</span> <span class="o">=</span> <span class="o">^</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">)</span> <span class="p">{...};</span>   <span class="c1">// same</span>
+</span><span class="line">
+</span><span class="line">    <span class="kt">int</span> <span class="p">(</span><span class="o">^</span><span class="n">myBlock</span><span class="p">)(</span><span class="kt">void</span><span class="p">)</span> <span class="o">=</span> <span class="o">^</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{...};</span>
+</span><span class="line">    <span class="kt">int</span> <span class="p">(</span><span class="o">^</span><span class="n">myBlock</span><span class="p">)(</span><span class="kt">void</span><span class="p">)</span> <span class="o">=</span> <span class="o">^</span><span class="p">{...};</span>          <span class="c1">// same</span>
+</span><span class="line">    <span class="kt">int</span> <span class="p">(</span><span class="o">^</span><span class="n">myBlock</span><span class="p">)()</span> <span class="o">=</span> <span class="o">^</span><span class="p">{...};</span>              <span class="c1">// same</span>
+</span><span class="line">
+</span><span class="line">    <span class="kt">void</span> <span class="p">(</span><span class="o">^</span><span class="n">myBlock</span><span class="p">)()</span> <span class="o">=</span> <span class="o">^</span><span class="p">{...};</span>             <span class="c1">// valid</span>
+</span><span class="line">    <span class="p">(</span><span class="o">^</span><span class="n">myBLock</span><span class="p">)()</span> <span class="o">=</span> <span class="o">^</span><span class="p">{...};</span>                  <span class="c1">// invalid</span>
+</span><span class="line">    <span class="kt">void</span> <span class="p">(</span><span class="o">^</span><span class="n">myBlock</span><span class="p">)</span> <span class="o">=</span> <span class="o">^</span><span class="p">{...};</span>               <span class="c1">// invalid</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h3 id="anonymous-block">Anonymous block</h3>
+
+<p>You don’t need a block variable to use a block. A block without a block variable
+is called <em>anonymous block</em>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line">    <span class="c1">// An anonymous block</span>
+</span><span class="line">    <span class="o">^</span><span class="kt">int</span> <span class="p">(</span><span class="kt">id</span> <span class="n">obj1</span><span class="p">,</span> <span class="kt">id</span> <span class="n">obj2</span><span class="p">)</span> <span class="p">{...};</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Many objective-c methods accepts anonymous block:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line">    <span class="n">NSArray</span> <span class="o">*</span><span class="n">sortedArray</span> <span class="o">=</span> <span class="p">[</span><span class="n">unsortedArray</span> <span class="nl">sortedArrayUsingComparator:</span>
+</span><span class="line">        <span class="o">^</span><span class="p">(</span><span class="kt">id</span> <span class="n">obj1</span><span class="p">,</span> <span class="kt">id</span> <span class="n">obj2</span><span class="p">){</span>
+</span><span class="line">            <span class="p">...</span>
+</span><span class="line">        <span class="p">}];</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h3 id="compare-with-function-pointer">Compare with function pointer</h3>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line">    <span class="k">struct</span> <span class="n">s_data</span>
+</span><span class="line">    <span class="p">{</span>
+</span><span class="line">        <span class="kt">int</span> <span class="n">a</span><span class="p">;</span>
+</span><span class="line">        <span class="kt">char</span><span class="o">*</span> <span class="n">name</span><span class="p">[</span><span class="mi">10</span><span class="p">];</span>
+</span><span class="line">        <span class="kt">unsigned</span> <span class="n">b</span><span class="p">;</span>
+</span><span class="line">    <span class="p">};</span>
+</span><span class="line">
+</span><span class="line">    <span class="n">NSInteger</span> <span class="n">compareFunction</span><span class="p">(</span><span class="kt">id</span> <span class="n">obj1</span><span class="p">,</span> <span class="kt">id</span> <span class="n">obj2</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">context</span><span class="p">){</span>
+</span><span class="line">        <span class="k">struct</span> <span class="n">s_data</span> <span class="o">*</span><span class="n">data</span> <span class="o">=</span> <span class="p">(</span><span class="k">struct</span> <span class="n">s_data</span> <span class="o">*</span><span class="p">)</span> <span class="n">context</span><span class="p">;</span>
+</span><span class="line">        <span class="c1">// do things</span>
+</span><span class="line">    <span class="p">};</span>
+</span><span class="line">
+</span><span class="line">    <span class="n">sturct</span> <span class="n">s_data</span> <span class="o">*</span><span class="n">my_data</span> <span class="o">=</span> <span class="p">(</span><span class="k">struct</span> <span class="n">s_data</span> <span class="o">*</span><span class="p">)</span><span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">s_data</span><span class="p">));</span>
+</span><span class="line">    <span class="n">s_data</span><span class="p">.</span><span class="n">a</span> <span class="o">=</span> <span class="o">-</span><span class="mi">3</span><span class="p">;</span>
+</span><span class="line">    <span class="n">s_data</span><span class="p">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">&quot;abc&quot;</span><span class="p">;</span>
+</span><span class="line">    <span class="n">s_data</span><span class="p">.</span><span class="n">b</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
+</span><span class="line">    <span class="kt">void</span> <span class="o">*</span><span class="n">context</span> <span class="o">=</span> <span class="n">my_data</span><span class="p">;</span>
+</span><span class="line">    <span class="n">NSArray</span> <span class="o">*</span><span class="n">sortedArray</span> <span class="o">=</span> <span class="p">[</span><span class="n">unsortedArray</span> <span class="nl">sortedArrayUsingFunction:</span> <span class="o">&amp;</span><span class="n">compareFunction</span>
+</span><span class="line">                                                           <span class="nl">context:</span><span class="n">context</span><span class="p">];</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>What does above mean? Well, if you want to pass a callback function to
+elsewhere, sometimes you might also need to pass data. To do that, you first
+pack your data into a <code>struct</code>, and use a <code>void</code> pointer points to it. Then you
+pass the callback function and the <code>void</code> pointer to the function. Finally you
+dereference the <code>void</code> pointer back to the <code>struct</code>.</p>
+
+<p>With block, all variables in it are captured. You no longer need to do that type
+casting hack to pass data.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line">    <span class="n">NSNumber</span> <span class="o">*</span><span class="n">num</span> <span class="o">=</span> <span class="err">@</span><span class="mi">3</span><span class="p">;</span>
+</span><span class="line">
+</span><span class="line">    <span class="n">NSArray</span> <span class="o">*</span><span class="n">sortedArray</span> <span class="o">=</span> <span class="p">[</span><span class="n">unsortedArray</span> <span class="nl">sortedArrayUsingComparator:</span>
+</span><span class="line">        <span class="o">^</span><span class="p">(</span><span class="kt">id</span> <span class="n">obj1</span><span class="p">,</span> <span class="kt">id</span> <span class="n">obj2</span><span class="p">){</span>
+</span><span class="line">            <span class="k">return</span> <span class="p">[</span><span class="n">num</span> <span class="nl">compare:</span> <span class="n">obj1</span><span class="p">];</span>
+</span><span class="line">            <span class="c1">// num is retained inside the block</span>
+</span><span class="line">        <span class="p">}];</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="typedef">Typedef</h2>
+
+<p>We can use <code>typedef</code> to define a reusable type:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line">    <span class="k">typedef</span> <span class="kt">int</span> <span class="p">(</span><span class="o">^</span><span class="n">MyBlockType</span><span class="p">)(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">);</span>
+</span><span class="line">
+</span><span class="line">    <span class="n">MyBlockType</span> <span class="n">myBlock</span> <span class="o">=</span> <span class="o">^</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="n">b</span><span class="p">){...};</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="type-cast">Type cast</h2>
+
+<p>As other types, you can also type cast a block. The syntax is a little weired,
+though.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line">    <span class="kt">void</span><span class="o">*</span> <span class="n">someContext</span><span class="p">;</span> <span class="c1">// Probably comes from a function&#39;s argument;</span>
+</span><span class="line">
+</span><span class="line">    <span class="kt">int</span> <span class="p">(</span><span class="o">^</span><span class="n">myBlock</span><span class="p">)(</span><span class="kt">int</span><span class="p">,</span><span class="kt">int</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span> <span class="p">(</span><span class="o">^</span><span class="p">)(</span><span class="kt">int</span><span class="p">,</span><span class="kt">int</span><span class="p">))</span><span class="n">someContext</span><span class="p">;</span>
+</span><span class="line">    <span class="c1">// block</span>
+</span><span class="line">
+</span><span class="line">    <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="n">myFnPt</span><span class="p">)(</span><span class="kt">int</span><span class="p">,</span><span class="kt">int</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="p">)(</span><span class="kt">int</span><span class="p">,</span><span class="kt">int</span><span class="p">))</span><span class="n">someContext</span><span class="p">;</span>
+</span><span class="line">    <span class="c1">// function pointer</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="block-in-objective-c-class">Block in Objective-C class</h2>
+
+<h3 id="property">property</h3>
+
+<p>Block in objective C is quite trivial:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="k">@interface</span> <span class="nc">MyClass</span> : <span class="nc">NSObject</span>
+</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">copy</span><span class="p">)</span> <span class="kt">int</span><span class="p">(</span><span class="o">^</span><span class="n">myBlock</span><span class="p">)(</span><span class="kt">int</span><span class="p">,</span><span class="kt">int</span><span class="p">);</span>
+</span><span class="line"><span class="k">@end</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h3 id="accessors-and-method-arguments">Accessors and method arguments</h3>
+
+<p>However, it’s strange in method declaration and accessors.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="k">-</span><span class="p">(</span><span class="kt">int</span><span class="p">(</span><span class="o">^</span><span class="p">)(</span><span class="kt">int</span><span class="p">,</span><span class="kt">int</span><span class="p">))</span> <span class="nf">getMyBlock</span><span class="p">;</span>
+</span><span class="line"><span class="k">-</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="nf">setMyBlock:</span> <span class="p">(</span><span class="kt">int</span><span class="p">(</span><span class="o">^</span><span class="p">)(</span><span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="n">b</span><span class="p">))</span> <span class="n">inputBlock</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The syntax is weird because Apple uses type cast syntax as type declaration syntax.
+This is now the only way to use anonymous type in Objective-C method argument
+instead of using <code>typedef</code>. This syntax won’t work in other places, either.</p>
+
+<p>That’s all for block syntax! There are still topics to discuss like memory
+management and grand central dispatch. I’ll discuss them in next few posts.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Taiwan Typhoon App (2)]]></title>
@@ -3845,148 +4082,6 @@ B=&\mbox{On input $\langle M\rangle$, where $M$ is a portion of a TM:}\\
   & 3.\;\mbox{Print the description of this TM and halt.} \\
 \end{align}
  %]]&gt;</script>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Writing math equations on Octopress]]></title>
-    <link href="http://www.idryman.org/blog/2012/03/10/writing-math-equations-on-octopress/"/>
-    <updated>2012-03-10T16:23:00+08:00</updated>
-    <id>http://www.idryman.org/blog/2012/03/10/writing-math-equations-on-octopress</id>
-    <content type="html"><![CDATA[<p>Octopress is a wonderful blogging framework for hackers, but it does not support
-math typesetting by default. What hacker doesn’t use Latex math?</p>
-
-<p>The followings are configs to make you write latex math equations in Octopress.
-Then you can translate this</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-</pre></td><td class="code"><pre><code class="latex"><span class="line"><span class="sb">$$</span><span class="nb"></span>
-</span><span class="line"><span class="nv">\begin</span><span class="nb">{align}</span>
-</span><span class="line"><span class="nv">\mbox</span><span class="nb">{Union: } &amp; A</span><span class="nv">\cup</span><span class="nb"> B </span><span class="o">=</span><span class="nb"> </span><span class="nv">\{</span><span class="nb">x</span><span class="nv">\mid</span><span class="nb"> x</span><span class="nv">\in</span><span class="nb"> A </span><span class="nv">\mbox</span><span class="nb">{ or } x</span><span class="nv">\in</span><span class="nb"> B</span><span class="nv">\}</span><span class="nb"> </span><span class="nv">\\</span><span class="nb"></span>
-</span><span class="line"><span class="nv">\mbox</span><span class="nb">{Concatenation: } &amp; A</span><span class="nv">\circ</span><span class="nb"> B  </span><span class="o">=</span><span class="nb"> </span><span class="nv">\{</span><span class="nb">xy</span><span class="nv">\mid</span><span class="nb"> x</span><span class="nv">\in</span><span class="nb"> A </span><span class="nv">\mbox</span><span class="nb">{ and } y</span><span class="nv">\in</span><span class="nb"> B</span><span class="nv">\}</span><span class="nb"> </span><span class="nv">\\</span><span class="nb"></span>
-</span><span class="line"><span class="nv">\mbox</span><span class="nb">{Star: } &amp; A^</span><span class="nv">\star</span><span class="nb">  </span><span class="o">=</span><span class="nb"> </span><span class="nv">\{</span><span class="nb">x_</span><span class="m">1</span><span class="nb">x_</span><span class="m">2</span><span class="nv">\ldots</span><span class="nb"> x_k </span><span class="nv">\mid</span><span class="nb">  k</span><span class="nv">\geq</span><span class="nb"> </span><span class="m">0</span><span class="nb"> </span><span class="nv">\mbox</span><span class="nb">{ and each } x_i</span><span class="nv">\in</span><span class="nb"> A</span><span class="nv">\}</span><span class="nb"> </span><span class="nv">\\</span><span class="nb"></span>
-</span><span class="line"><span class="nv">\end</span><span class="nb">{align}</span>
-</span><span class="line"><span class="s">$$</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>into this</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-\begin{align}
-\mbox{Union: } & A\cup B = \{x\mid x\in A \mbox{ or } x\in B\} \\
-\mbox{Concatenation: } & A\circ B  = \{xy\mid x\in A \mbox{ and } y\in B\} \\
-\mbox{Star: } & A^\star  = \{x_1x_2\ldots x_k \mid  k\geq 0 \mbox{ and each } x_i\in A\} \\
-\end{align}
- %]]&gt;</script>
-
-<!-- more -->
-
-<p><strong>Voilà!</strong></p>
-
-<hr />
-
-<h2 id="here-are-the-instructions">Here are the instructions:</h2>
-
-<ol>
-  <li>Use <a href="http://kramdown.rubyforge.org/">kramdown</a> instead of rdiscount</li>
-</ol>
-
-<p>kramdown is a free GPL-licensed Ruby library for parsing and converting a
-superset of Markdown. It is completely written in Ruby, supports standard
-Markdown and latex math equations.</p>
-
-<pre><code>gem install kramdown
-</code></pre>
-
-<ol>
-  <li>Change settings in <code>_config.yml</code></li>
-</ol>
-
-<p><code>_config.yml</code> is configurations for Jekyll’s settings. find <code>markdown</code> and
-change <code>rdiscount</code> to <code>kramdown</code></p>
-
-<ol>
-  <li>
-    <p>Change <code>gem 'ridiscount'</code> to <code>gem 'kramdown</code> in <code>Gemfile</code><sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>.</p>
-  </li>
-  <li>
-    <p>Put <a href="http://www.mathjax.org/">MathJax</a> CDN and configs in
-<code>source/_layouts/default.html</code>.</p>
-  </li>
-</ol>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-</pre></td><td class="code"><pre><code class="html"><span class="line"><span class="c">&lt;!-- mathjax config similar to math.stackexchange --&gt;</span>
-</span><span class="line"><span class="nt">&lt;script </span><span class="na">type=</span><span class="s">&quot;text/x-mathjax-config&quot;</span><span class="nt">&gt;</span>
-</span><span class="line"><span class="nx">MathJax</span><span class="p">.</span><span class="nx">Hub</span><span class="p">.</span><span class="nx">Config</span><span class="p">({</span>
-</span><span class="line">  <span class="nx">jax</span><span class="o">:</span> <span class="p">[</span><span class="s2">&quot;input/TeX&quot;</span><span class="p">,</span> <span class="s2">&quot;output/HTML-CSS&quot;</span><span class="p">],</span>
-</span><span class="line">  <span class="nx">tex2jax</span><span class="o">:</span> <span class="p">{</span>
-</span><span class="line">    <span class="nx">inlineMath</span><span class="o">:</span> <span class="p">[</span> <span class="p">[</span><span class="s1">&#39;$&#39;</span><span class="p">,</span> <span class="s1">&#39;$&#39;</span><span class="p">]</span> <span class="p">],</span>
-</span><span class="line">    <span class="nx">displayMath</span><span class="o">:</span> <span class="p">[</span> <span class="p">[</span><span class="s1">&#39;$$&#39;</span><span class="p">,</span> <span class="s1">&#39;$$&#39;</span><span class="p">]],</span>
-</span><span class="line">    <span class="nx">processEscapes</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
-</span><span class="line">    <span class="nx">skipTags</span><span class="o">:</span> <span class="p">[</span><span class="s1">&#39;script&#39;</span><span class="p">,</span> <span class="s1">&#39;noscript&#39;</span><span class="p">,</span> <span class="s1">&#39;style&#39;</span><span class="p">,</span> <span class="s1">&#39;textarea&#39;</span><span class="p">,</span> <span class="s1">&#39;pre&#39;</span><span class="p">,</span> <span class="s1">&#39;code&#39;</span><span class="p">]</span>
-</span><span class="line">  <span class="p">},</span>
-</span><span class="line">  <span class="nx">messageStyle</span><span class="o">:</span> <span class="s2">&quot;none&quot;</span><span class="p">,</span>
-</span><span class="line">  <span class="s2">&quot;HTML-CSS&quot;</span><span class="o">:</span> <span class="p">{</span> <span class="nx">preferredFont</span><span class="o">:</span> <span class="s2">&quot;TeX&quot;</span><span class="p">,</span> <span class="nx">availableFonts</span><span class="o">:</span> <span class="p">[</span><span class="s2">&quot;STIX&quot;</span><span class="p">,</span><span class="s2">&quot;TeX&quot;</span><span class="p">]</span> <span class="p">}</span>
-</span><span class="line"><span class="p">});</span>
-</span><span class="line"><span class="nt">&lt;/script&gt;</span>
-</span><span class="line"><span class="nt">&lt;script </span><span class="na">src=</span><span class="s">&quot;http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML&quot;</span> <span class="na">type=</span><span class="s">&quot;text/javascript&quot;</span><span class="nt">&gt;&lt;/script&gt;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<ol>
-  <li>Fix <a href="http://www.mathjax.org/">MathJax</a> right-click bug</li>
-</ol>
-
-<p>I found the solution on <a href="http://luikore.github.com/2011/09/good-things-learned-from-octopress/">luikore’s blog</a>. The problem was when you right-click on a MathJax formula, the whole browser becomes white. To fix it, open <code>sass/base/_theme.scss</code> and change the div under body from</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-</pre></td><td class="code"><pre><code class="scss"><span class="line"><span class="nt">body</span> <span class="p">{</span>
-</span><span class="line">  <span class="o">&gt;</span> <span class="nt">div</span> <span class="p">{</span>
-</span><span class="line">    <span class="na">background</span><span class="o">:</span> <span class="nv">$sidebar-bg</span> <span class="nv">$noise-bg</span><span class="p">;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>to</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-</pre></td><td class="code"><pre><code class="scss"><span class="line"><span class="nt">body</span> <span class="p">{</span>
-</span><span class="line">  <span class="o">&gt;</span> <span class="nt">div</span><span class="nn">#main</span> <span class="p">{</span>
-</span><span class="line">    <span class="na">background</span><span class="o">:</span> <span class="nv">$sidebar-bg</span> <span class="nv">$noise-bg</span><span class="p">;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>and it is done.</p>
-
-<div class="footnotes">
-  <ol>
-    <li id="fn:1">
-      <p>It’s useful if you want to depoloy your code on differnt machines.<a href="#fnref:1" rel="reference">&#8617;</a></p>
-    </li>
-  </ol>
-</div>
 ]]></content>
   </entry>
   
