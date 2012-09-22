@@ -242,7 +242,7 @@ is called <em>anonymous block</em>.</p>
 </span><span class="line">    <span class="n">s_data</span><span class="p">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">&quot;abc&quot;</span><span class="p">;</span>
 </span><span class="line">    <span class="n">s_data</span><span class="p">.</span><span class="n">b</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
 </span><span class="line">    <span class="kt">void</span> <span class="o">*</span><span class="n">context</span> <span class="o">=</span> <span class="n">my_data</span><span class="p">;</span>
-</span><span class="line">    <span class="n">NSArray</span> <span class="o">*</span><span class="n">sortedArray</span> <span class="o">=</span> <span class="p">[</span><span class="n">unsortedArray</span> <span class="nl">sortedArrayUsingFunction:</span> <span class="o">&amp;</span><span class="n">compareFunction</span>
+</span><span class="line">    <span class="n">NSArray</span> <span class="o">*</span><span class="n">sortedArray</span> <span class="o">=</span> <span class="p">[</span><span class="n">unsortedArray</span> <span class="nl">sortedArrayUsingFunction:</span> <span class="n">compareFunction</span>
 </span><span class="line">                                                           <span class="nl">context:</span><span class="n">context</span><span class="p">];</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
@@ -331,6 +331,39 @@ though.</p>
 <p>The syntax is weird because Apple uses type cast syntax as type declaration syntax.
 This is now the only way to use anonymous type in Objective-C method argument
 instead of using <code>typedef</code>. This syntax won’t work in other places, either.</p>
+
+<h2 id="other-syntaxs">Other syntaxs</h2>
+
+<h3 id="array">Array</h3>
+
+<p>You can define a chunk of blocks like so:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line">    <span class="kt">int</span><span class="p">(</span><span class="o">^</span><span class="n">myBlocks</span><span class="p">[</span><span class="mi">5</span><span class="p">])(</span><span class="kt">int</span><span class="p">,</span><span class="kt">int</span><span class="p">);</span>
+</span><span class="line">
+</span><span class="line">    <span class="n">myBlocks</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">=^</span><span class="p">(</span><span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="kt">int</span> <span class="n">b</span><span class="p">){...};</span>
+</span><span class="line">    <span class="n">myBlocks</span><span class="p">[</span><span class="mi">2</span><span class="p">](</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">);</span> <span class="c1">// excecute</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h3 id="nested-blocks">Nested blocks</h3>
+
+<p>Nested block syntax is ugly:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line">    <span class="kt">void</span><span class="p">(</span><span class="o">^</span><span class="p">(</span><span class="o">^</span><span class="n">myNestedBlock</span><span class="p">)())();</span>
+</span><span class="line">
+</span><span class="line">    <span class="k">typedef</span> <span class="kt">void</span><span class="p">(</span><span class="o">^</span><span class="n">VoidBlock</span><span class="p">)();</span>
+</span><span class="line">    <span class="n">VoidBlock</span><span class="p">(</span><span class="o">^</span><span class="n">myNestedBlock</span><span class="p">)();</span> <span class="c1">// same, better</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Readability of nested block without <code>typedef</code> is so horrible. <code>typedef</code> is
+strongly recommended.</p>
 
 <p>That’s all for block syntax! There are still topics to discuss like memory
 management and grand central dispatch. I’ll discuss them in next few posts.</p>
