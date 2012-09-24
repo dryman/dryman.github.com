@@ -99,7 +99,7 @@ Many objective-c methods accepts anonymous block:
     s_data.name = "abc";
     s_data.b = 5;
     void *context = my_data;
-    NSArray *sortedArray = [unsortedArray sortedArrayUsingFunction: &compareFunction
+    NSArray *sortedArray = [unsortedArray sortedArrayUsingFunction: compareFunction
                                                            context:context];
 {% endcodeblock %}
 
@@ -168,9 +168,37 @@ However, it's strange in method declaration and accessors.
 -(void) setMyBlock: (int(^)(int a, int b)) inputBlock;
 {% endcodeblock %}
 
+
 The syntax is weird because Apple uses type cast syntax as type declaration syntax.
 This is now the only way to use anonymous type in Objective-C method argument
 instead of using `typedef`. This syntax won't work in other places, either.
+
+## Other syntaxs
+
+### Array
+
+You can define a chunk of blocks like so:
+
+{% codeblock lang:objc %}
+    int(^myBlocks[5])(int,int);
+
+    myBlocks[2]=^(int a, int b){...};
+    myBlocks[2](3, 4); // excecute
+{% endcodeblock %}
+
+### Nested blocks
+
+Nested block syntax is ugly:
+
+{% codeblock lang:objc %}
+    void(^(^myNestedBlock)())();
+
+    typedef void(^VoidBlock)();
+    VoidBlock(^myNestedBlock)(); // same, better
+{% endcodeblock %}
+
+Readability of nested block without `typedef` is so horrible. `typedef` is
+strongly recommended.
 
 That's all for block syntax! There are still topics to discuss like memory
 management and grand central dispatch. I'll discuss them in next few posts.
