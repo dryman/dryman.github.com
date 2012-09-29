@@ -4,7 +4,7 @@
   <title><![CDATA[Category: block | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/block/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-09-29T14:10:03+08:00</updated>
+  <updated>2012-09-29T14:21:00+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -226,7 +226,7 @@ End of quiz 3
     <p> Though <code>ptr</code> and <code>x</code> are both moved to the heap,
     <code>ptr</code> still points to the original address of <code>x</code>.
     Thus, the value in <code>*ptr</code> is garbage.  If there are other
-    function that uses the stack before you use <code>boringBlock()</code>.  It
+    functions that use the stack before you use <code>boringBlock()</code>.  It
     would print:</p>
 
 <pre><code>clean up stack
@@ -234,6 +234,8 @@ x is 2, *ptr is 24
 End of quiz 3
 </code></pre>
 </div>
+<pre><code>&lt;p&gt;&lt;strong&gt;Oops&lt;/strong&gt;&lt;/p&gt;
+</code></pre>
 
 <h2 id="quiz-4">Quiz 4</h2>
 <p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
