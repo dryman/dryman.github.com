@@ -109,8 +109,8 @@ parallel programming model Grand Central Dispatch. Unlike ordinary C &hellip;">
 parallel programming model <a href="https://developer.apple.com/documentation/Performance/Reference/GCD_libdispatch_Ref/Reference/reference.html">Grand Central Dispatch</a>. Unlike ordinary C
 functions, blocks can capture surrounding variable contexts. The captured
 variables are casts to <code>const</code> by default, and for mutable variables you can mark
-it with <code>__block</code>. However, there is a lot of pitfalls in <code>__block</code> variables.
-Can you identify all of them?</p>
+it with <code>__block</code> storage qualifier. However, there is a lot of pitfalls in
+<code>__block</code> variables.  Can you identify all of them?</p>
 
 <!-- more -->
 
@@ -506,6 +506,8 @@ End of quiz 5
         <a class="basic-alignment left" href="/blog/2012/09/21/c-slash-objc-c-block-syntax-explained/" title="Previous Post: C/Objc-C block syntax explained">&laquo; C/Objc-C block syntax explained</a>
       
       
+        <a class="basic-alignment right" href="/blog/2012/09/29/c-objc-block-byref-internals/" title="Next Post: C/ObjC block byref internals">C/ObjC block byref internals &raquo;</a>
+      
     </p>
   </footer>
 </article>
@@ -523,6 +525,10 @@ End of quiz 5
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/09/29/c-objc-block-byref-internals/">C/ObjC block byref internals</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2012/09/29/c-objc-block-quizzes/">C/ObjC block quizzes</a>
@@ -558,10 +564,6 @@ End of quiz 5
     
       <li class="post">
         <a href="/blog/2012/04/14/recursion-best-practices/">Recursion best practices</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/04/10/practical-software-verification-using-SPIN/">Practical software verification using SPIN</a>
       </li>
     
   </ul>

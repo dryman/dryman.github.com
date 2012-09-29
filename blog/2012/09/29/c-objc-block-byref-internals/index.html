@@ -1,0 +1,696 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>C/ObjC block byref internals - Carpe diem (Felix's blog)</title>
+  <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
+
+  
+  <meta name="description" content="In the last post, I mentioned that __block variable (here we named it block
+byref) will be retained if multiple blocks referenced it. Here are some &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://www.idryman.org/blog/2012/09/29/c-objc-block-byref-internals/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Carpe diem (Felix's blog)" type="application/atom+xml">
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-23425996-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Carpe diem (Felix's blog)</a></h1>
+  
+    <h2>Work hard and enjoy every moments...</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:www.idryman.org" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about-me">About Me</a></li>
+  <li><a href="http://idryman.tumblr.com/">Drawings</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">C/ObjC Block Byref Internals</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-09-29T15:21:00+08:00" pubdate data-updated="true">Sep 29<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>In the last post, I mentioned that <code>__block</code> variable (here we named it block
+byref) will be retained if multiple blocks referenced it. Here are some sample
+code to show how runtime deals with reference counts.</p>
+
+<!-- more -->
+
+<p>In order to <em>move</em> the <code>__block</code> variable to the heap, the compiler must rewrite
+access to such a variable to be indirect through the structures forwarding
+pointer.  For example:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line">    <span class="kt">int</span> <span class="n">__block</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>
+</span><span class="line">    <span class="n">i</span> <span class="o">=</span> <span class="mi">11</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>would be rewritten to be:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line">    <span class="k">struct</span> <span class="n">_block_byref_i</span> <span class="p">{</span>
+</span><span class="line">      <span class="kt">void</span> <span class="o">*</span><span class="n">isa</span><span class="p">;</span>
+</span><span class="line">      <span class="k">struct</span> <span class="n">_block_byref_i</span> <span class="o">*</span><span class="n">forwarding</span><span class="p">;</span>
+</span><span class="line">      <span class="kt">int</span> <span class="n">flags</span><span class="p">;</span>   <span class="c1">//refcount;</span>
+</span><span class="line">      <span class="kt">int</span> <span class="n">size</span><span class="p">;</span>
+</span><span class="line">      <span class="kt">int</span> <span class="n">captured_i</span><span class="p">;</span>
+</span><span class="line">    <span class="p">}</span> <span class="n">i</span> <span class="o">=</span> <span class="p">{</span> <span class="nb">NULL</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">_block_byref_i</span><span class="p">),</span> <span class="mi">10</span> <span class="p">};</span>
+</span><span class="line">
+</span><span class="line">    <span class="n">i</span><span class="p">.</span><span class="n">forwarding</span><span class="o">-&gt;</span><span class="n">captured_i</span> <span class="o">=</span> <span class="mi">11</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="print-runtime-information">Print runtime information</h2>
+
+<p>As long as we know how block byref is structured, we can access the memory and
+dump it with internal function <code>_Block_byref_dump</code>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>more_curious.c </span><a href="https://github.com/dryman/C-ObjC-block-quiz/blob/master/more_curious.c">source</a></figcaption> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+<span class="line-number">38</span>
+<span class="line-number">39</span>
+<span class="line-number">40</span>
+<span class="line-number">41</span>
+<span class="line-number">42</span>
+<span class="line-number">43</span>
+<span class="line-number">44</span>
+<span class="line-number">45</span>
+<span class="line-number">46</span>
+<span class="line-number">47</span>
+<span class="line-number">48</span>
+<span class="line-number">49</span>
+<span class="line-number">50</span>
+<span class="line-number">51</span>
+<span class="line-number">52</span>
+<span class="line-number">53</span>
+<span class="line-number">54</span>
+<span class="line-number">55</span>
+<span class="line-number">56</span>
+<span class="line-number">57</span>
+<span class="line-number">58</span>
+<span class="line-number">59</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="cm">/*</span>
+</span><span class="line"><span class="cm"> * clang -Wall -fblocks -framework Foundation more_curious.c -o more_curious</span>
+</span><span class="line"><span class="cm"> */</span>
+</span><span class="line"><span class="cp">#include &lt;stdio.h&gt;</span>
+</span><span class="line"><span class="cp">#include &lt;Block.h&gt;</span>
+</span><span class="line">
+</span><span class="line"><span class="k">struct</span> <span class="n">Block_byref</span> <span class="p">{</span>
+</span><span class="line">    <span class="kt">void</span> <span class="o">*</span><span class="n">isa</span><span class="p">;</span>
+</span><span class="line">    <span class="k">struct</span> <span class="n">Block_byref</span> <span class="o">*</span><span class="n">forwarding</span><span class="p">;</span>
+</span><span class="line">    <span class="kt">int</span> <span class="n">flags</span><span class="p">;</span> <span class="cm">/* refcount; */</span>
+</span><span class="line">    <span class="kt">int</span> <span class="n">size</span><span class="p">;</span>
+</span><span class="line">    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">byref_keep</span><span class="p">)(</span><span class="k">struct</span> <span class="n">Block_byref</span> <span class="o">*</span><span class="n">dst</span><span class="p">,</span> <span class="k">struct</span> <span class="n">Block_byref</span> <span class="o">*</span><span class="n">src</span><span class="p">);</span>
+</span><span class="line">    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">byref_destroy</span><span class="p">)(</span><span class="k">struct</span> <span class="n">Block_byref</span> <span class="o">*</span><span class="p">);</span>
+</span><span class="line">    <span class="cm">/* long shared[0]; */</span>
+</span><span class="line"><span class="p">};</span>
+</span><span class="line">
+</span><span class="line"><span class="k">static</span> <span class="kr">__inline</span> <span class="k">struct</span> <span class="n">Block_byref</span><span class="o">*</span> <span class="nf">derefBlockVar</span><span class="p">(</span><span class="kt">char</span><span class="o">*</span> <span class="n">src</span><span class="p">)</span>
+</span><span class="line"><span class="p">{</span>
+</span><span class="line">    <span class="k">return</span> <span class="p">(</span><span class="k">struct</span> <span class="n">Block_byref</span><span class="o">*</span><span class="p">)</span> <span class="p">(</span><span class="n">src</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">));</span>
+</span><span class="line"><span class="p">}</span>
+</span><span class="line">
+</span><span class="line"><span class="k">extern</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">_Block_dump</span><span class="p">(</span><span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">block</span><span class="p">);</span>
+</span><span class="line"><span class="k">extern</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">_Block_byref_dump</span><span class="p">(</span><span class="k">struct</span> <span class="n">Block_byref</span> <span class="o">*</span><span class="n">src</span><span class="p">);</span>
+</span><span class="line">
+</span><span class="line">
+</span><span class="line">
+</span><span class="line"><span class="k">typedef</span> <span class="kt">void</span><span class="p">(</span><span class="o">^</span><span class="n">BoringBlock</span><span class="p">)(</span><span class="kt">void</span><span class="p">);</span>
+</span><span class="line"><span class="kt">void</span> <span class="p">(</span><span class="o">^</span><span class="n">boringBlock</span><span class="p">)(</span><span class="kt">void</span><span class="p">);</span>
+</span><span class="line">
+</span><span class="line"><span class="n">BoringBlock</span> <span class="nf">blockRefCountTest</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span><span class="line"><span class="p">{</span>
+</span><span class="line">    <span class="n">__block</span> <span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</span><span class="line">
+</span><span class="line">    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Before local block:</span><span class="se">\n</span><span class="s">%s</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">,</span><span class="n">_Block_byref_dump</span><span class="p">(</span><span class="n">derefBlockVar</span><span class="p">((</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">x</span><span class="p">)));</span>
+</span><span class="line">    <span class="n">BoringBlock</span> <span class="n">localBlock</span> <span class="o">=</span> <span class="o">^</span><span class="p">{</span>
+</span><span class="line">        <span class="n">x</span><span class="o">++</span><span class="p">;</span>
+</span><span class="line">        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Execute block:</span><span class="se">\n</span><span class="s">%s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="n">_Block_byref_dump</span><span class="p">(</span><span class="n">derefBlockVar</span><span class="p">((</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">x</span><span class="p">)));</span>
+</span><span class="line">        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;x is %d, &amp;x is %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">x</span><span class="p">);</span>
+</span><span class="line">    <span class="p">};</span>
+</span><span class="line">    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;After local block generated:</span><span class="se">\n</span><span class="s">%s</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">,</span><span class="n">_Block_byref_dump</span><span class="p">(</span><span class="n">derefBlockVar</span><span class="p">((</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">x</span><span class="p">)));</span>
+</span><span class="line">
+</span><span class="line">    <span class="n">boringBlock</span> <span class="o">=</span> <span class="n">Block_copy</span><span class="p">(</span><span class="n">localBlock</span><span class="p">);</span>
+</span><span class="line">    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;After first block copy:</span><span class="se">\n</span><span class="s">%s</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">,</span><span class="n">_Block_byref_dump</span><span class="p">(</span><span class="n">derefBlockVar</span><span class="p">((</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">x</span><span class="p">)));</span>
+</span><span class="line">
+</span><span class="line">    <span class="n">BoringBlock</span> <span class="n">retBlock</span> <span class="o">=</span> <span class="n">Block_copy</span><span class="p">(</span><span class="n">localBlock</span><span class="p">);</span>
+</span><span class="line">    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;After second block copy:</span><span class="se">\n</span><span class="s">%s</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">,</span><span class="n">_Block_byref_dump</span><span class="p">(</span><span class="n">derefBlockVar</span><span class="p">((</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">x</span><span class="p">)));</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">retBlock</span><span class="p">;</span>
+</span><span class="line"><span class="p">}</span>
+</span><span class="line">
+</span><span class="line"><span class="kt">int</span> <span class="nf">main</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span><span class="line"><span class="p">{</span>
+</span><span class="line">    <span class="n">BoringBlock</span> <span class="n">retBlock</span> <span class="o">=</span> <span class="n">blockRefCountTest</span><span class="p">();</span>
+</span><span class="line">    <span class="n">boringBlock</span><span class="p">();</span>
+</span><span class="line">    <span class="n">Block_release</span><span class="p">(</span><span class="n">boringBlock</span><span class="p">);</span>
+</span><span class="line">    <span class="n">retBlock</span><span class="p">();</span>
+</span><span class="line">    <span class="n">Block_release</span><span class="p">(</span><span class="n">retBlock</span><span class="p">);</span>
+</span><span class="line">
+</span><span class="line">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The execution result is</p>
+
+<pre><code>$ ./more_curious 
+Before local block:
+byref data block 0x7fff6e8034f0 contents:
+  forwarding: 0x7fff6e8034f0
+  flags: 0x0
+  size: 32
+
+
+After local block generated:
+byref data block 0x7fff6e8034f0 contents:
+  forwarding: 0x7fff6e8034f0
+  flags: 0x0
+  size: 32
+
+
+After first block copy:
+byref data block 0x7fc191c13f60 contents:
+  forwarding: 0x7fc191c13f60
+  flags: 0x1000004
+  size: 32
+
+
+After second block copy:
+byref data block 0x7fc191c13f60 contents:
+  forwarding: 0x7fc191c13f60
+  flags: 0x1000006
+  size: 32
+
+
+Execute block:
+byref data block 0x7fc191c13f60 contents:
+  forwarding: 0x7fc191c13f60
+  flags: 0x1000004
+  size: 32
+
+x is 2, &amp;x is 0x7fc191c13f78
+Execute block:
+byref data block 0x7fc191c13f60 contents:
+  forwarding: 0x7fc191c13f60
+  flags: 0x1000002
+  size: 32
+
+x is 3, &amp;x is 0x7fc191c13f78
+</code></pre>
+
+<h2 id="what-does-it-mean">What does it mean?</h2>
+
+<p>We can find some interesting things in this log:</p>
+
+<ol>
+  <li>Block byref flags and address doesn’t change until first copy.</li>
+  <li>After copy, the flag becomes <code>0x1000004</code>. There’s a <code>(1 &lt;&lt; 24)</code> flag in the
+front.</li>
+  <li>Block releases does decrease flag number in times of 2.</li>
+</ol>
+
+<p>The <code>(1 &lt;&lt; 24)</code> flag (the number one in <code>0x100xxxxx</code>) means <code>BLOCK_NEEDS_FREE</code>
+in this <code>enum</code>:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>Block_private.h </span><a href="http://opensource.apple.com/source/libclosure/libclosure-38/Block_private.h">source </a></figcaption> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="k">enum</span> <span class="p">{</span>
+</span><span class="line">    <span class="n">BLOCK_REFCOUNT_MASK</span> <span class="o">=</span>     <span class="p">(</span><span class="mh">0xffff</span><span class="p">),</span>
+</span><span class="line">    <span class="n">BLOCK_NEEDS_FREE</span> <span class="o">=</span>        <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">24</span><span class="p">),</span>
+</span><span class="line">    <span class="n">BLOCK_HAS_COPY_DISPOSE</span> <span class="o">=</span>  <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">25</span><span class="p">),</span>
+</span><span class="line">    <span class="n">BLOCK_HAS_CTOR</span> <span class="o">=</span>          <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">26</span><span class="p">),</span> <span class="cm">/* Helpers have C++ code. */</span>
+</span><span class="line">    <span class="n">BLOCK_IS_GC</span> <span class="o">=</span>             <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">27</span><span class="p">),</span>
+</span><span class="line">    <span class="n">BLOCK_IS_GLOBAL</span> <span class="o">=</span>         <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">28</span><span class="p">),</span>
+</span><span class="line">    <span class="n">BLOCK_HAS_DESCRIPTOR</span> <span class="o">=</span>    <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">29</span><span class="p">)</span>
+</span><span class="line"><span class="p">};</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>So, flag changes until first copy makes sense, because block byref doesn’t need
+free until it is copied to heap.</p>
+
+<p>The reference count is actually taken out from flags like so:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line">    <span class="n">refcount</span> <span class="o">=</span> <span class="n">shared_struct</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">BLOCK_REFCOUNT_MASK</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>I didn’t find out why reference count is in times of two. The actual code that
+increase and decrease reference count is this:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>runtime.c </span><a href="http://opensource.apple.com/source/libclosure/libclosure-38/runtime.c">source </a></figcaption> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="k">static</span> <span class="kt">int</span> <span class="nf">latching_incr_int</span><span class="p">(</span><span class="kt">int</span> <span class="o">*</span><span class="n">where</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">    <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">        <span class="kt">int</span> <span class="n">old_value</span> <span class="o">=</span> <span class="o">*</span><span class="p">(</span><span class="k">volatile</span> <span class="kt">int</span> <span class="o">*</span><span class="p">)</span><span class="n">where</span><span class="p">;</span>
+</span><span class="line">        <span class="k">if</span> <span class="p">((</span><span class="n">old_value</span> <span class="o">&amp;</span> <span class="n">BLOCK_REFCOUNT_MASK</span><span class="p">)</span> <span class="o">==</span> <span class="n">BLOCK_REFCOUNT_MASK</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">            <span class="k">return</span> <span class="n">BLOCK_REFCOUNT_MASK</span><span class="p">;</span>
+</span><span class="line">        <span class="p">}</span>
+</span><span class="line">        <span class="k">if</span> <span class="p">(</span><span class="n">OSAtomicCompareAndSwapInt</span><span class="p">(</span><span class="n">old_value</span><span class="p">,</span> <span class="n">old_value</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="k">volatile</span> <span class="kt">int</span> <span class="o">*</span><span class="p">)</span><span class="n">where</span><span class="p">))</span> <span class="p">{</span>
+</span><span class="line">            <span class="k">return</span> <span class="n">old_value</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span>
+</span><span class="line">        <span class="p">}</span>
+</span><span class="line">    <span class="p">}</span>
+</span><span class="line"><span class="p">}</span>
+</span><span class="line">
+</span><span class="line"><span class="k">static</span> <span class="kt">int</span> <span class="nf">latching_decr_int</span><span class="p">(</span><span class="kt">int</span> <span class="o">*</span><span class="n">where</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">    <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">        <span class="kt">int</span> <span class="n">old_value</span> <span class="o">=</span> <span class="o">*</span><span class="p">(</span><span class="k">volatile</span> <span class="kt">int</span> <span class="o">*</span><span class="p">)</span><span class="n">where</span><span class="p">;</span>
+</span><span class="line">        <span class="k">if</span> <span class="p">((</span><span class="n">old_value</span> <span class="o">&amp;</span> <span class="n">BLOCK_REFCOUNT_MASK</span><span class="p">)</span> <span class="o">==</span> <span class="n">BLOCK_REFCOUNT_MASK</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">            <span class="k">return</span> <span class="n">BLOCK_REFCOUNT_MASK</span><span class="p">;</span>
+</span><span class="line">        <span class="p">}</span>
+</span><span class="line">        <span class="k">if</span> <span class="p">((</span><span class="n">old_value</span> <span class="o">&amp;</span> <span class="n">BLOCK_REFCOUNT_MASK</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">            <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class="line">        <span class="p">}</span>
+</span><span class="line">        <span class="k">if</span> <span class="p">(</span><span class="n">OSAtomicCompareAndSwapInt</span><span class="p">(</span><span class="n">old_value</span><span class="p">,</span> <span class="n">old_value</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="k">volatile</span> <span class="kt">int</span> <span class="o">*</span><span class="p">)</span><span class="n">where</span><span class="p">))</span> <span class="p">{</span>
+</span><span class="line">            <span class="k">return</span> <span class="n">old_value</span><span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+</span><span class="line">        <span class="p">}</span>
+</span><span class="line">    <span class="p">}</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p><code>OSAtomicCompareAndSwapInt</code> is a function that can change value of a <code>int</code>
+thread and multiprocessor safe.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Block seems magical at the first seen. With block we no longer have to do the
+<em>function pointer + struct cast + void*</em> tricks. Block automatically captures
+variables for us, and we can use <code>__block</code> storage qualifier to declare mutable
+ones. Behind the scene is really cool hack to make all this happen. However, it
+not quite easy to debug blocks and byrefs. We’d need to write some helper
+functions for <code>gdb</code> or <code>lldb</code>. These will be discuss in my next post.</p>
+
+<h2 id="references">References:</h2>
+
+<ul>
+  <li><a href="http://www.informit.com/articles/article.aspx?p=1749597&amp;seqNum=12">BNR Advanced Mac OSX programming: Blocks Internals</a></li>
+  <li><a href="http://clang.llvm.org/docs/BlockLanguageSpec.txt">Block language spec</a></li>
+  <li><a href="http://clang.llvm.org/docs/Block-ABI-Apple.txt">Block ABI Apple</a></li>
+  <li><a href="http://opensource.apple.com/source/libclosure/libclosure-38/Block_private.h">Block private header</a></li>
+  <li><a href="http://opensource.apple.com/source/libclosure/libclosure-38/runtime.c">Block runtime</a></li>
+  <li><a href="http://developer.apple.com/library/ios/#documentation/System/Conceptual/ManPages_iPhoneOS/man3/OSAtomicCompareAndSwapInt.3.html">Mac OS X Manual Page For OSAtomicCompareAndSwapInt</a></li>
+</ul>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-09-29T15:21:00+08:00" pubdate data-updated="true">Sep 29<span>th</span>, 2012</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/block/'>block</a>, <a class='category' href='/blog/categories/cocoa-/'>cocoa,</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2012/09/29/c-objc-block-byref-internals/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2012/09/29/c-objc-block-byref-internals/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2012/09/29/c-objc-block-quizzes/" title="Previous Post: C/ObjC block quizzes">&laquo; C/ObjC block quizzes</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/09/29/c-objc-block-byref-internals/">C/ObjC block byref internals</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/29/c-objc-block-quizzes/">C/ObjC block quizzes</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/21/c-slash-objc-c-block-syntax-explained/">C/Objc-C block syntax explained</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/16/taiwan-typhoon-app-2/">Taiwan Typhoon App (2)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/16/taiwan-typhoon-app-1/">Taiwan Typhoon App (1)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/15/earthquake-early-warning-prototype/">Earthquake early warning prototype</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/08/05/grand-central-dispatch-vs-openmp/">Grand central dispatch vs OpenMP</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/06/18/handle-touch-events-in-uiwebview/">Handle touch events in UIWebView</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/06/17/debug-uiwebview-in-your-ios-app/">Debug UIWebView in your iOS app</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/04/14/recursion-best-practices/">Recursion best practices</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("idryman", 4, true);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/idryman" class="twitter-follow-button" data-show-count="false">Follow @idryman</a>
+  
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - dryman (Felix Ren-Chyan Chern) -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'dryblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.idryman.org/blog/2012/09/29/c-objc-block-byref-internals/';
+        var disqus_url = 'http://www.idryman.org/blog/2012/09/29/c-objc-block-byref-internals/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+<!--
+hn like button plugin for jekyll/octopress
+Author: dryman (Felix Ren-Chyan Chern)
+
+Inpired from http://hnlike.com/ written by sbashyal
+
+(The MIT License)
+
+Copyright © 2012-2013 Felix Ren-Chyan Chern
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the ‘Software’), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED ‘AS IS’, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+  <script type="text/javascript">
+    (function(){
+      var hn_like = document.createElement('iframe');
+      hn_like.frameborder="no";
+      hn_like.scrolling="no";
+      hn_like.height="28px";
+      hn_like.width="115px";
+      hn_like.src = "http://hnlike.com/upvote.php?link="
+                    + encodeURIComponent(document.location)
+                    + "&title="
+                    + encodeURIComponent("C/ObjC block byref internals");
+      hn_like.innerHTML="iframes not supported by your browser";
+      var twitter = document.getElementsByClassName("twitter-share-button")[0];
+
+      twitter.parentNode.insertBefore(
+        hn_like,
+        twitter
+      );
+    })();
+  </script>
+
+<!-- end of hn like button -->
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
