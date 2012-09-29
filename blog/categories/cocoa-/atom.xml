@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: cocoa, | Carpe diem (Felix's blog)]]></title>
+  <link href="http://www.idryman.org/blog/categories/cocoa-/atom.xml" rel="self"/>
+  <link href="http://www.idryman.org/"/>
+  <updated>2012-09-29T14:10:03+08:00</updated>
+  <id>http://www.idryman.org/</id>
+  <author>
+    <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[C/ObjC block quizzes]]></title>
+    <link href="http://www.idryman.org/blog/2012/09/29/c-objc-block-quizzes/"/>
+    <updated>2012-09-29T12:15:00+08:00</updated>
+    <id>http://www.idryman.org/blog/2012/09/29/c-objc-block-quizzes</id>
+    <content type="html"><![CDATA[<p>Apple introduced blocks (anonymous functions or lambdas) as C extensions for its
+parallel programming model <a href="https://developer.apple.com/documentation/Performance/Reference/GCD_libdispatch_Ref/Reference/reference.html">Grand Central Dispatch</a>. Unlike ordinary C
+functions, blocks can capture surrounding variable contexts. The captured
+variables are casts to <code>const</code> by default, and for mutable variables you can mark
+it with <code>__block</code>. However, there is a lot of pitfalls in <code>__block</code> variables.
+Can you identify all of them?</p>
+
+<!-- more -->
+
+<script language="javascript">
+function toggle(divId) {
+  var div = document.getElementById(divId);
+  var link = document.getElementById(divId+"_a");
+  if (div.style.display == "block") {
+    div.style.display = "none";
+    link.innerHTML = "Show answer";
+  } else {
+    div.style.display = "block";
+    link.innerHTML = "Toggle answer";
+  }
+}
+</script>
+
+<h2 id="testing-environment">Testing environment</h2>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="cm">/*</span>
+</span><span class='line'><span class="cm"> * clang -Wall -fblocks -framework Foundation quiz.c -o quiz</span>
+</span><span class='line'><span class="cm"> */</span>
+</span><span class='line'><span class="cp">#include &lt;stdio.h&gt;</span>
+</span><span class='line'><span class="cp">#include &lt;block.h /&gt;&lt;/stdio.h&gt;&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="k">typedef</span> <span class="kt">void</span> <span class="p">(</span><span class="o">^</span><span class="n">BoringBlock</span><span class="p">)(</span><span class="kt">void</span><span class="p">);</span>
+</span><span class='line'><span class="n">BoringBlock</span> <span class="n">boringBlock</span><span class="p">;</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="kt">void</span> <span class="n">quiz</span><span class="o">&lt;</span><span class="n">em</span><span class="o">&gt;</span><span class="mi">1</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span><span class="err">…</span><span class="p">}</span>
+</span><span class='line'><span class="kt">void</span> <span class="n">quiz</span><span class="o">&lt;/</span><span class="n">em</span><span class="o">&gt;</span><span class="mi">2</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span><span class="err">…</span><span class="p">}</span>
+</span><span class='line'><span class="err">…</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="kt">int</span> <span class="n">main</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">quiz_1</span><span class="p">()</span>
+</span><span class='line'>    <span class="n">boringBlock</span><span class="p">();</span>
+</span><span class='line'>    <span class="n">Block_release</span><span class="p">(</span><span class="n">boringBlock</span><span class="p">);</span>
+</span><span class='line'>    <span class="err">…</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="k">return</span> <span class="mi">0</span><span class="p">;</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+</code></pre>
+
+<p>The above is compile configuration and the program structure of the quiz.
+You can download and test the code form <a href="https://github.com/dryman/C-ObjC-block-quiz">Github</a>.</p>
+
+<h2 id="quiz-1">Quiz 1</h2>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">void</span> <span class="nf">quiz_1</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">__block</span> <span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">printf</span><span class="p">(</span><span class="err">“</span><span class="n">x</span> <span class="n">address</span> <span class="n">is</span> <span class="o">%</span><span class="n">p</span><span class="err">\</span><span class="n">n</span><span class="err">”</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">x</span><span class="p">);</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">BoringBlock</span> <span class="n">localBlock</span> <span class="o">=</span> <span class="o">^</span><span class="p">{</span>
+</span><span class='line'>    <span class="n">x</span><span class="o">++</span><span class="p">;</span> <span class="c1">// Dummy use of x</span>
+</span><span class='line'>    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;End of quiz 1</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'><span class="n">boringBlock</span> <span class="o">=</span> <span class="n">Block_copy</span><span class="p">(</span><span class="n">localBlock</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">printf</span><span class="p">(</span><span class="s">&quot;after copy, x address is %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">x</span><span class="p">);</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+</code></pre>
+
+<p>What would be printed if we execute <code>quiz_1()</code> then <code>boringBlock()</code>? Would <code>&amp;x</code> be
+printed in same address or different addresses?</p>
+
+<p><a id="quiz_1_a" href="javascript:toggle('quiz_1')">Show answer</a></p>
+
+<div id="quiz_1" style="display: none;">
+    <p> In block implementation spec, captured <code>__block</code> variable
+    <code>x</code> will be moved to heap after we execute <code>Block_copy</code>.
+    On my machine it prints: </p>
+
+<pre><code>x address is 0x7fff613d04f8
+after copy, x address is 0x7fe9a1c13f78
+End of quiz 1
+</code></pre>
+
+    <p> Memory allocation on stack is much faster then heap, so variable and block
+    literal are both allocated on stack by default. It is copied to heap only when
+    necessary. </p>
+</div>
+
+<h2 id="quiz-2">Quiz 2</h2>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">void</span> <span class="nf">quiz_2</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">__block</span> <span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">BoringBlock</span> <span class="n">localBlock</span> <span class="o">=</span> <span class="o">^</span><span class="p">{</span>
+</span><span class='line'>    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;x is %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;End of quiz 2</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'><span class="n">boringBlock</span> <span class="o">=</span> <span class="n">Block_copy</span><span class="p">(</span><span class="n">localBlock</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">x</span><span class="o">++</span><span class="p">;</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+</code></pre>
+
+<p>Now, if we change the variable <code>x</code> in <code>quiz_2()</code> scope, would captured variable
+<code>x</code> also changes its value?</p>
+
+<p><a id="quiz_2_a" href="javascript:toggle('quiz_2')">Show answer</a></p>
+
+<div id="quiz_2" style="display: none;">
+    <p> Actually it does! Though <code>x</code> is in different memory address,
+    we can just use it as normal <code>int</code> value, and it behaves just as
+    expected.  On my machine it prints:</p>
+
+<pre><code>x is 2
+End of quiz 2
+</code></pre>
+</div>
+
+<h2 id="quiz-3">Quiz 3</h2>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">void</span> <span class="nf">quiz_3</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">__block</span> <span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">__block</span> <span class="kt">int</span><span class="o">*</span> <span class="n">ptr</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">x</span><span class="p">;</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">BoringBlock</span> <span class="n">localBlock</span> <span class="o">=</span> <span class="o">^</span><span class="p">{</span>
+</span><span class='line'>    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;x is %d, *ptr is %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">ptr</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;End of quiz 3</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'><span class="n">boringBlock</span> <span class="o">=</span> <span class="n">Block_copy</span><span class="p">(</span><span class="n">localBlock</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">x</span><span class="o">++</span><span class="p">;</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+</code></pre>
+
+<p>Would <code>x</code> and <code>*ptr</code> be the same value?</p>
+
+<p><a id="quiz_3_a" href="javascript:toggle('quiz_3')">Show answer</a></p>
+
+<div id="quiz_3" style="display: none;">
+
+    <p>Well, if you are lucky, it would print</p>
+
+<pre><code>x is 2, *ptr is 1
+End of quiz 3
+</code></pre>
+
+    <p> Though <code>ptr</code> and <code>x</code> are both moved to the heap,
+    <code>ptr</code> still points to the original address of <code>x</code>.
+    Thus, the value in <code>*ptr</code> is garbage.  If there are other
+    function that uses the stack before you use <code>boringBlock()</code>.  It
+    would print:</p>
+
+<pre><code>clean up stack
+x is 2, *ptr is 24
+End of quiz 3
+</code></pre>
+</div>
+
+<h2 id="quiz-4">Quiz 4</h2>
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">void</span> <span class="nf">quiz_4</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">__block</span> <span class="kt">int</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">};</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="kt">void</span> <span class="p">(</span><span class="o">^</span><span class="n">localBlock</span><span class="p">)(</span><span class="kt">void</span><span class="p">)</span> <span class="o">=</span> <span class="o">^</span><span class="p">{</span>
+</span><span class='line'>    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;x[0] is %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+</span><span class='line'>    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;End of quiz 4</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+</code></pre>
+
+<p>What about array?</p>
+
+<p><a id="quiz_4_a" href="javascript:toggle('quiz_4')">Show answer</a></p>
+
+<div id="quiz_4" style="display: none;">
+
+    <p> Actually, complier won't let you compile this. C array and
+    <code>struct</code> contains C array are both invalid with
+    <code>__block</code>. </p>
+</div>
+
+<h2 id="quiz-5">Quiz 5</h2>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="n">BoringBlock</span> <span class="nf">quiz_5</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="n">__block</span> <span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;x address is %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">x</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">BoringBlock</span> <span class="n">localBlock</span> <span class="o">=</span> <span class="o">^</span><span class="p">{</span>
+</span><span class='line'>    <span class="n">x</span><span class="o">++</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;x is %d, &amp;amp;x is %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">x</span><span class="p">);</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'><span class="n">boringBlock</span> <span class="o">=</span> <span class="n">Block_copy</span><span class="p">(</span><span class="n">localBlock</span><span class="p">);</span>
+</span><span class='line'><span class="n">printf</span><span class="p">(</span><span class="s">&quot;x address is %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">x</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">BoringBlock</span> <span class="n">retBlock</span> <span class="o">=</span> <span class="n">Block_copy</span><span class="p">(</span><span class="n">localBlock</span><span class="p">);</span>
+</span><span class='line'><span class="n">printf</span><span class="p">(</span><span class="s">&quot;x address is %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">x</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">return</span> <span class="n">retBlock</span><span class="p">;</span> <span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+</code></pre>
+
+<p>Block execution:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'>    <span class="n">BoringBlock</span> <span class="n">retBlock</span> <span class="o">=</span> <span class="n">quiz_5</span><span class="p">();</span>
+</span><span class='line'>    <span class="n">boringBlock</span><span class="p">();</span>
+</span><span class='line'>    <span class="n">retBlock</span><span class="p">();</span>
+</span><span class='line'>    <span class="n">Block_release</span><span class="p">(</span><span class="n">boringBlock</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">Block_release</span><span class="p">(</span><span class="n">retBlock</span><span class="p">);</span>
+</span><span class='line'>    <span class="n">printf</span><span class="p">(</span><span class="err">“</span><span class="n">End</span> <span class="n">of</span> <span class="n">quiz</span> <span class="mi">5</span><span class="err">\</span><span class="n">n</span><span class="err">\</span><span class="n">n</span><span class="err">”</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>What if we copied the block twice. Would the address change twice also?</p>
+
+<p><a id="quiz_5_a" href="javascript:toggle('quiz_5')">Show answer</a></p>
+
+<div id="quiz_5" style="display: none;">
+
+<p>The address of <code>x</code> only changes once in first copy:</p>
+
+<pre><code>x address is 0x7fff613d04f8
+x address is 0x7fe9a1c13f78
+x address is 0x7fe9a1c13f78
+x is 2, &amp;x is 0x7fe9a1c13f78
+x is 3, &amp;x is 0x7fe9a1c13f78
+End of quiz 5
+</code></pre>
+
+    <p> So, how does memory management work? Actually, compiler use reference
+    counting on <code>__block</code> variables instead of block literals. For
+    more curious, see my next post.</p>
+</div>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li><a href="http://www.informit.com/articles/article.aspx?p=1749597&amp;seqNum=12">BNR Advanced Mac OSX programming: Blocks Internals</a></li>
+  <li><a href="http://clang.llvm.org/docs/BlockLanguageSpec.txt">Block language spec</a></li>
+  <li><a href="http://clang.llvm.org/docs/Block-ABI-Apple.txt">Block ABI Apple</a></li>
+</ul>
+
+<h2 id="source-code">Source code:</h2>
+
+<p>You can download source code of this quiz from <a href="https://github.com/dryman/C-ObjC-block-quiz">Github</a>.</p>
+
+]]></content>
+  </entry>
+  
+</feed>
