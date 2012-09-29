@@ -165,7 +165,7 @@ End of quiz 3
     <p> Though <code>ptr</code> and <code>x</code> are both moved to the heap,
     <code>ptr</code> still points to the original address of <code>x</code>.
     Thus, the value in <code>*ptr</code> is garbage.  If there are other
-    function that uses the stack before you use <code>boringBlock()</code>.  It
+    functions that use the stack before you use <code>boringBlock()</code>.  It
     would print:</p>
 
 <pre><code>clean up stack
@@ -173,6 +173,7 @@ x is 2, *ptr is 24
 End of quiz 3
 </code></pre>
 </div>
+    <p><strong>Oops</strong></p>
 
 ## Quiz 4
 {% codeblock lang:c %}
