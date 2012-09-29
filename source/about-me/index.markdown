@@ -7,8 +7,6 @@ sharing: true
 footer: true
 ---
 
-## Summary
-
 My first programming experience was in an EE C++ data structure course in 2009.
 Since then, I taught myself more on programming, involved open source
 communities, became an IT in lab, and had done many personal projects

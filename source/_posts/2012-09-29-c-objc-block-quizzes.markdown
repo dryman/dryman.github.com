@@ -10,8 +10,8 @@ Apple introduced blocks (anonymous functions or lambdas) as C extensions for its
 parallel programming model [Grand Central Dispatch][gcd]. Unlike ordinary C
 functions, blocks can capture surrounding variable contexts. The captured
 variables are casts to `const` by default, and for mutable variables you can mark
-it with `__block`. However, there is a lot of pitfalls in `__block` variables.
-Can you identify all of them?
+it with `__block` storage qualifier. However, there is a lot of pitfalls in
+`__block` variables.  Can you identify all of them?
 
 [gcd]: https://developer.apple.com/documentation/Performance/Reference/GCD_libdispatch_Ref/Reference/reference.html
 
