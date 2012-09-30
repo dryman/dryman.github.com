@@ -4,7 +4,7 @@
   <title><![CDATA[Category: block | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/block/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-09-30T15:09:59+08:00</updated>
+  <updated>2012-09-30T16:45:10+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -29,7 +29,7 @@ helper functions every time! Thanks for
 <h2 id="gdb">GDB</h2>
 
 <p>Add these line into your <code>~.gdbinit</code> file. It was originally created by Big Nerd
-Ranch’s author Mark Dalrymple.
+Ranch Inc.
 I renamed the functions from <code>dump-block-literal</code> and <code>dump-block-byref</code> to
 <code>pblock</code> and <code>pbyref</code>.</p>
 
