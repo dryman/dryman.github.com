@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "C/Objc-C block syntax explained"
+title: "C/ObjC block syntax explained"
 date: 2012-09-21 20:33
 comments: true
 categories: Cocoa

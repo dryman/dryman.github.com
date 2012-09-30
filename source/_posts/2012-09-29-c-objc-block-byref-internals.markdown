@@ -223,7 +223,7 @@ _function pointer + struct cast + void*_ tricks. Block automatically captures
 variables for us, and we can use `__block` storage qualifier to declare mutable
 ones. Behind the scene is really cool hack to make all this happen. However, it
 not quite easy to debug blocks and byrefs. We'd need to write some helper
-functions for `gdb` or `lldb`. These will be discuss in my next post.
+functions for `gdb` or `lldb`. These will be discussed in my next post.
 
 ## References:
 
