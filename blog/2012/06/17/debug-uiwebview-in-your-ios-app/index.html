@@ -162,7 +162,11 @@ of direct method call. Guess what? The compiler accept the hack. Awesome!</p>
 <h3 id="edit">Edit</h3>
 
 <p><a href="https://github.com/brainlock">brainlock</a> shared his <a href="https://github.com/brainlock/ios-remote-inspector">remote inspector</a> that can use proxy
-to debug <em>on the device</em>. Awesome!</p>
+to debug on the device. However, I prefer to use simple and stupid solution
+after all. ;)</p>
+
+<p>For more curious, The <code>#if (TARGET_IPHONE_SIMULATOR)</code> macro will ensure the hack
+of accessing WebKit’s private api won’t ship with your production code.</p>
 
 </div>
 
