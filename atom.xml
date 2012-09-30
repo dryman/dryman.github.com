@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-09-30T13:20:10+08:00</updated>
+  <updated>2012-09-30T14:59:37+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,166 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[C-ObjC block and debugger]]></title>
+    <link href="http://www.idryman.org/blog/2012/09/30/c-objc-block-and-debugger/"/>
+    <updated>2012-09-30T14:32:00+08:00</updated>
+    <id>http://www.idryman.org/blog/2012/09/30/c-objc-block-and-debugger</id>
+    <content type="html"><![CDATA[<p>In the last post, we discussed block byref internal structures and showed the
+sample code of how to <code>printf</code> it. However, we don’t want to write that much
+helper functions every time! Thanks for
+<a href="http://www.informit.com/articles/article.aspx?p=1749597&amp;seqNum=12">Big Nerd Ranch: Advanced Mac OSX Programming</a>, we can now load
+<code>gdb</code>/<code>lldb</code> plugins and no need to do that anymore! ;D</p>
+
+<!-- more -->
+
+<h2 id="gdb">GDB</h2>
+
+<p>Add these line into your <code>~.gdbinit</code> file. It was originally created by Big Nerd
+Ranch’s author Mark Dalrymple.
+I renamed the functions from <code>dump-block-literal</code> and <code>dump-block-byref</code> to
+<code>pblock</code> and <code>pbyref</code>.</p>
+
+<pre><code>define pblock
+    printf "%s", (const char*)_Block_dump($arg0)
+end
+
+document pblock
+    Dumps runtime information about the supplied block reference
+    Argument is the name or address of a block literal
+end
+
+define pbyref
+    printf "%s", (const char*)_Block_byref_dump((char*)&amp;$arg0 - 2*sizeof(int) - 2*sizeof(void*))
+end
+
+document pbyref
+    Dumps runtime information about the supplied __block variable
+    Argument is a pointer to the variable embeded in a block byref structure
+end
+</code></pre>
+
+<p>To use it, you just simply type <code>pbyref</code> and <code>pblock</code> followed by a variable in <code>gdb</code>.</p>
+
+<pre><code>(gdb) pbyref x
+byref data block 0x7fff5fbff480 contents:
+  forwarding: 0x7fff5fbff480
+  flags: 0x0
+  size: 32
+
+(gdb) pblock localBlock
+^0x7fff5fbff450 (new layout) =
+isa: stack Block
+flags: HASSIGNATURE HASHELP
+refcount+deallocating: 0
+invoke: 0x100001430
+descriptor: 0x100002070
+descriptor-&gt;reserved: 0
+descriptor-&gt;size: 40
+descriptor-&gt;copy helper: 0x100001470
+descriptor-&gt;dispose helper: 0x1000014b0
+descriptor-&gt;signature: 0x100001c29 'v8@?0'
+descriptor-&gt;layout: 0x0 '(null)'
+</code></pre>
+
+<h2 id="lldb">LLDB</h2>
+
+<p>I made a <code>lldb</code> version this weekend. You can find it on <a href="https://github.com/dryman/lldb-block-helper">Github</a>.
+I tried to use <code>command alias</code> or <code>command regex</code> at first, but it just won’t
+work. So I just write a python plugin for lldb and load it in <code>.lldbinit</code>. The
+code is quite trivial:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>blockHelper.py</span><a href="https://github.com/dryman/lldb-block-helper/blob/master/blockHelper.py">source </a></figcaption> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+</pre></td><td class="code"><pre><code class="py"><span class="line"><span class="c">#!/usr/bin/env python</span>
+</span><span class="line">
+</span><span class="line"><span class="kn">import</span> <span class="nn">lldb</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">commands</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">pbyref</span><span class="p">(</span><span class="n">debugger</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">internal_dict</span><span class="p">):</span>
+</span><span class="line">    <span class="n">cmd</span> <span class="o">=</span> <span class="s">&quot;expr (void)printf(</span><span class="se">\&quot;</span><span class="si">%s</span><span class="se">\&quot;</span><span class="s">,(const char*)_Block_byref_dump((char*)&amp;&quot;</span> <span class="o">+</span> \
+</span><span class="line">    <span class="n">command</span> <span class="o">+</span> <span class="s">&quot;- 2*sizeof(int) - 2*sizeof(void *)));&quot;</span>
+</span><span class="line">    <span class="n">lldb</span><span class="o">.</span><span class="n">debugger</span><span class="o">.</span><span class="n">HandleCommand</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">pblock</span><span class="p">(</span><span class="n">debugger</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">internal_dict</span><span class="p">):</span>
+</span><span class="line">    <span class="n">cmd</span> <span class="o">=</span> <span class="s">&quot;expr (void)printf(</span><span class="se">\&quot;</span><span class="si">%s</span><span class="se">\&quot;</span><span class="s">,(const char*)_Block_dump(&quot;</span> <span class="o">+</span> <span class="n">command</span> <span class="o">+</span> <span class="s">&quot;));&quot;</span>
+</span><span class="line">    <span class="n">lldb</span><span class="o">.</span><span class="n">debugger</span><span class="o">.</span><span class="n">HandleCommand</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">__lldb_init_module</span><span class="p">(</span><span class="n">debugger</span><span class="p">,</span> <span class="n">internal_dict</span><span class="p">):</span>
+</span><span class="line">    <span class="n">debugger</span><span class="o">.</span><span class="n">HandleCommand</span><span class="p">(</span><span class="s">&#39;command script add -f blockHelper.pbyref pbyref&#39;</span><span class="p">)</span>
+</span><span class="line">    <span class="n">debugger</span><span class="o">.</span><span class="n">HandleCommand</span><span class="p">(</span><span class="s">&#39;command script add -f blockHelper.pblock pblock&#39;</span><span class="p">)</span>
+</span><span class="line">    <span class="k">print</span> <span class="s">&#39;The &quot;pbyref&quot; command has been installed and is ready of use.&#39;</span>
+</span><span class="line">    <span class="k">print</span> <span class="s">&#39;The &quot;pblock&quot; command has been installed and is ready of use.&#39;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h3 id="install">INSTALL</h3>
+
+<ul>
+  <li>Download this git repostory to your home directory as <code>.lldb</code>.</li>
+</ul>
+
+<pre><code>git clone https://github.com/dryman/lldb-block-helper.git ~/.lldb
+</code></pre>
+
+<ul>
+  <li>add this line into your <code>~/.lldbinit</code>.</li>
+</ul>
+
+<pre><code>command script import ~/.lldb/blockHelper.py 
+</code></pre>
+
+<h3 id="usage">USAGE</h3>
+
+<pre><code>(lldb) pbyref x
+&lt;no result&gt;
+byref data block 0x100713f90 contents:
+  forwarding: 0x100713f90
+  flags: 0x1000004
+  size: 32
+
+(lldb) pblock localBlock
+&lt;no result&gt;
+^0x7fff5fbff480 (new layout) =
+isa: stack Block
+flags: HASSIGNATURE HASHELP
+refcount+deallocating: 0
+invoke: 0x100001430
+descriptor: 0x100002070
+descriptor-&gt;reserved: 0
+descriptor-&gt;size: 40
+descriptor-&gt;copy helper: 0x100001470
+descriptor-&gt;dispose helper: 0x1000014b0
+descriptor-&gt;signature: 0x100001c29 'v8@?0'
+descriptor-&gt;layout: 0x0 '(null)'
+</code></pre>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li><a href="http://lldb.llvm.org/python-reference.html">lldb python references</a></li>
+  <li><a href="http://www.informit.com/articles/article.aspx?p=1749597&amp;seqNum=12">Big Nerd Ranch: Advanced Mac OSX Programming</a></li>
+</ul>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[C/ObjC block byref internals]]></title>
@@ -4560,130 +4720,6 @@ In short, put this in your <code>.sbclrc</code>.</p>
 </pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="k">setq</span> <span class="nv">inferior-lisp-program</span> <span class="s">&quot;/usr/local/bin/sbcl&quot;</span><span class="p">)</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[The NLP Day]]></title>
-    <link href="http://www.idryman.org/blog/2012/03/14/the-nlp-day/"/>
-    <updated>2012-03-14T19:55:00+08:00</updated>
-    <id>http://www.idryman.org/blog/2012/03/14/the-nlp-day</id>
-    <content type="html"><![CDATA[<p>Yesterday (3/13) was the NLP day, and we have the honor to invite Eduard Hovy to
-give us three talks about the current status and future of NLP researches.
-The talks were excellent! The first talk was about how machine learning perform
-so well then previous AI systems. It seems that computer can be more intelligent
-not because it is smart, but to be trained trained by huge amount of data. The
-second talk was “A new semantics: merging propositional and distributional
-information”. Eduard introduced a new model that combine theories and
-computability that can be used in machine learning. The third talk was “Text
-harvesting and ontology constructing using a powerful new method.” Using a
-simple “$N_p \mbox{ such as } N_p \mbox{ and } N_p * $” query and search on Google
-seems to be trivial, but the results are awesomely incredible! Thus we can mark
-the “is-a” relationship automatically and the data is satisfying and robust,
-plus, much more than any relationships in existing wordnets! There are so many
-interesting topics to write down, but for mow, I’ll focus on the second talk
-first. You can find the slide for the second talk 
-<a href="http://projects.ict.usc.edu/rwt2011/presentations/hovy.pdf">here</a>.</p>
-
-<!-- more -->
-
-<p>Though machine learning told us that “you don’t have to be smart, you just need
-enough training data,” deep in our heart, we still believe that all of our human
-behaviors is not a huge training table. There must be some rules that guide us,
-as a theory, to know what we will do and what wouldn’t. We believe that there
-are theories that can measure info contents, not only treat input strings as
-meaningless characters that the only purpose is to be sent to machine to do
-statistical analysis.</p>
-
-<h3 id="defining-a-concept-in-a-new-way">Defining a concept in a new way</h3>
-
-<p>A concept $C$ is a list of triples</p>
-
-<script type="math/tex; mode=display">
-C=\left\{(r_1w_1s_1),(r_2w_2s_2),(r_3w_3s_3)\right\}
-</script>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-\begin{align}
-\mbox{where } &r_i\varepsilon\;\{Relations\}=&\mbox{e.g., :subj, :agent, :color-of}\\
-& w_i\varepsilon\;\{Words\}=&\mbox{e.g., happy, run, apple}\\
-& s_i\varepsilon\;[0,1]=&\mbox{normalized weight}
-\end{align}
- %]]&gt;</script>
-
-<p>For example, a dog can be represented as <sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup></p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-</pre></td><td class="code"><pre><code class="scheme"><span class="line"><span class="p">(</span><span class="nf">defparameter</span> <span class="nv">*dog*</span>
-</span><span class="line">  <span class="o">&#39;</span><span class="p">((</span><span class="nf">:type</span> <span class="s">&quot;Jack Russel&quot;</span> <span class="mf">0.2</span><span class="p">)</span>
-</span><span class="line">    <span class="p">(</span><span class="nf">:type</span> <span class="s">&quot;Retriever&quot;</span> <span class="mf">0.4</span><span class="p">)</span>
-</span><span class="line">    <span class="p">(</span><span class="nf">:color</span> <span class="s">&quot;brown&quot;</span> <span class="mf">0.4</span><span class="p">)</span>
-</span><span class="line">    <span class="p">(</span><span class="nf">:color</span> <span class="s">&quot;black&quot;</span> <span class="mf">0.3</span><span class="p">)</span>
-</span><span class="line">    <span class="p">(</span><span class="nf">:agent-of</span> <span class="s">&quot;eat&quot;</span> <span class="mf">0.4</span><span class="p">)</span>
-</span><span class="line">    <span class="p">(</span><span class="nf">:patient-of</span> <span class="s">&quot;chase&quot;</span> <span class="mf">0.3</span><span class="p">)))</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>And it can be expressed in a more complexed form:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-</pre></td><td class="code"><pre><code class="scheme"><span class="line"><span class="p">(</span><span class="nf">defparameter</span> <span class="nv">*dog*</span>
-</span><span class="line">  <span class="o">&#39;</span><span class="p">((</span><span class="nf">:type</span> <span class="p">((</span><span class="s">&quot;Retriever&quot;</span> <span class="mf">0.4</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;Jack Russel&quot;</span> <span class="mf">0.2</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;Terrier&quot;</span> <span class="mf">0.4</span><span class="p">)))</span>
-</span><span class="line">    <span class="p">(</span><span class="nf">:color</span> <span class="p">((</span><span class="s">&quot;brown&quot;</span> <span class="mf">0.4</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;black&quot;</span> <span class="mf">0.3</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;patched&quot;</span> <span class="mf">0.3</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;white&quot;</span> <span class="mf">0.2</span><span class="p">)))</span>
-</span><span class="line">    <span class="p">(</span><span class="nf">:name</span> <span class="p">((</span><span class="s">&quot;Spot&quot;</span> <span class="mf">0.3</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;Lassie&quot;</span> <span class="mf">0.2</span><span class="p">)))</span>
-</span><span class="line">    <span class="p">(</span><span class="nf">:agent-of</span> <span class="p">((</span><span class="s">&quot;eat&quot;</span> <span class="mf">0.4</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;run&quot;</span> <span class="mf">0.4</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;bark&quot;</span> <span class="mf">0.4</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;pant&quot;</span> <span class="mf">0.3</span><span class="p">)))</span>
-</span><span class="line">    <span class="p">(</span><span class="nf">:patient-of</span> <span class="p">((</span><span class="s">&quot;chase&quot;</span> <span class="mf">0.3</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;walk&quot;</span> <span class="mf">0.4</span><span class="p">)</span> <span class="p">(</span><span class="s">&quot;love&quot;</span> <span class="mf">0.4</span> <span class="p">)))))</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>which we can visualize it as below:
-<img src="http://www.idryman.org/images/nlp-day/dog-context-1.png" title="'An example of dog context'" /></p>
-
-<p>Furthermore, since every node itself can be another context, we can generate a
-graph! <sup id="fnref:2"><a href="#fn:2" rel="footnote">2</a></sup>
-<img src="http://www.idryman.org/images/nlp-day/dog-context-2.png" title="'An another example of dog context'" /></p>
-
-<h3 id="the-main-questions-to-address">The main questions to address</h3>
-
-<ul>
-  <li>Construction
-    <ul>
-      <li>Do we really need tensors? Or are vectors enough?</li>
-      <li>How to build them?</li>
-      <li>Which relations to use? Which scores?</li>
-      <li>How do we evaluate this?</li>
-    </ul>
-  </li>
-  <li>Compositionally: How to ‘add’ tensors to obtain new, more complex, meanings
-that are still tensors?</li>
-  <li>Dependency: How to represent and manage the underlying interconnections across
-tensor elements?</li>
-  <li>Logical operators: How to handle negation, quantification models (can,
-must…), etc.?</li>
-</ul>
-
-<hr />
-
-<div class="footnotes">
-  <ol>
-    <li id="fn:1">
-      <p>I use the syntax of common lisp to express the relationship<a href="#fnref:1" rel="reference">&#8617;</a></p>
-    </li>
-    <li id="fn:2">
-      <p>The copyright of the images belongs to Eduard Hovy<a href="#fnref:2" rel="reference">&#8617;</a></p>
-    </li>
-  </ol>
-</div>
 ]]></content>
   </entry>
   
