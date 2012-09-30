@@ -25,6 +25,7 @@
   <script src="/javascripts/ender.js"></script>
   <script src="/javascripts/octopress.js" type="text/javascript"></script>
   <link href="/atom.xml" rel="alternate" title="Carpe diem (Felix's blog)" type="application/atom+xml">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
   <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
 <link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
 <link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
@@ -47,10 +48,17 @@
 
 <body   >
   <header role="banner"><hgroup>
+  <!--div id="logo">
+  	<div id="logoLeft">{</div>
+  	<div id="logoText">mob</div>
+  	<div id="logoRight">}</div>
+  	<div class="clear"></div>
+  </div-->
   <h1><a href="/">Carpe diem (Felix's blog)</a></h1>
   
     <h2>Work hard and enjoy every moments...</h2>
   
+  <div class="clear"></div>
 </hgroup>
 
 </header>
@@ -81,7 +89,9 @@
   
   <header>
     
-      <h1 class="entry-title">Grand Central Dispatch vs OpenMP</h1>
+      
+        <h1 class="entry-title">Grand Central Dispatch vs OpenMP</h1>
+      
     
     
       <p class="meta">
@@ -425,10 +435,10 @@ this unexpected result! Cheers.</p>
     
     <p class="meta">
       
-        <a class="basic-alignment left" href="/blog/2012/06/18/handle-touch-events-in-uiwebview/" title="Previous Post: Handle touch events in UIWebView">&laquo; Handle touch events in UIWebView</a>
+        <a class="basic-alignment left articlenav" href="/blog/2012/06/18/handle-touch-events-in-uiwebview/" title="Previous Post: Handle touch events in UIWebView">&laquo; Handle touch events in UIWebView</a>
       
       
-        <a class="basic-alignment right" href="/blog/2012/09/15/earthquake-early-warning-prototype/" title="Next Post: Earthquake early warning prototype">Earthquake early warning prototype &raquo;</a>
+        <a class="basic-alignment right articlenav" href="/blog/2012/09/15/earthquake-early-warning-prototype/" title="Next Post: Earthquake early warning prototype">Earthquake early warning prototype &raquo;</a>
       
     </p>
   </footer>
@@ -541,59 +551,6 @@ this unexpected result! Cheers.</p>
       (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
     }());
 </script>
-
-
-
-<!--
-hn like button plugin for jekyll/octopress
-Author: dryman (Felix Ren-Chyan Chern)
-
-Inpired from http://hnlike.com/ written by sbashyal
-
-(The MIT License)
-
-Copyright © 2012-2013 Felix Ren-Chyan Chern
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the ‘Software’), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-of the Software, and to permit persons to whom the Software is furnished to do
-so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED ‘AS IS’, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
--->
-  <script type="text/javascript">
-    (function(){
-      var hn_like = document.createElement('iframe');
-      hn_like.frameborder="no";
-      hn_like.scrolling="no";
-      hn_like.height="28px";
-      hn_like.width="115px";
-      hn_like.src = "http://hnlike.com/upvote.php?link="
-                    + encodeURIComponent(document.location)
-                    + "&title="
-                    + encodeURIComponent("Grand central dispatch vs OpenMP");
-      hn_like.innerHTML="iframes not supported by your browser";
-      var twitter = document.getElementsByClassName("twitter-share-button")[0];
-
-      twitter.parentNode.insertBefore(
-        hn_like,
-        twitter
-      );
-    })();
-  </script>
-
-<!-- end of hn like button -->
 
 
 

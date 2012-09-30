@@ -2,126 +2,126 @@
 <urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>
     <url>
         <loc>http://www.idryman.org/blog/2012/03/10/my-octopress-configs/</loc>
-        <lastmod>2012-06-17T15:43:36+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/2012/03/10/writing-math-equations-on-octopress/</loc>
-        <lastmod>2012-06-17T15:43:36+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/2012/03/12/the-recursion-theorem/</loc>
-        <lastmod>2012-06-17T15:43:36+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>
             http://www.idryman.org/blog/2012/03/13/handcraft-algorithm-environment-in-kramdown/
         </loc>
-        <lastmod>2012-06-17T15:43:36+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/2012/03/14/the-nlp-day/</loc>
-        <lastmod>2012-06-17T15:43:36+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/2012/03/24/lisp-development-on-mac/</loc>
-        <lastmod>2012-06-17T15:43:36+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/2012/03/26/lisp-debugging-tools/</loc>
-        <lastmod>2012-06-17T15:43:36+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/2012/03/30/persistent-red-black-tree-in-lisp-1/</loc>
-        <lastmod>2012-06-17T15:43:36+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/2012/03/31/persistent-red-black-tree-in-lisp-2/</loc>
-        <lastmod>2012-06-17T15:43:36+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/2012/03/31/persistent-red-black-tree-in-lisp-3/</loc>
-        <lastmod>2012-06-17T15:43:36+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/2012/04/01/persistent-red-black-tree-4/</loc>
-        <lastmod>2012-06-17T15:43:36+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/2012/04/04/jekyll-graphviz-plugin/</loc>
-        <lastmod>2012-06-17T15:43:36+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/2012/04/05/jekyll-octopress-hacker-news-plugin/</loc>
-        <lastmod>2012-06-17T15:43:36+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>
             http://www.idryman.org/blog/2012/04/10/practical-software-verification-using-SPIN/
         </loc>
-        <lastmod>2012-06-17T15:43:36+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/2012/04/14/recursion-best-practices/</loc>
-        <lastmod>2012-06-17T17:37:42+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/2012/06/17/debug-uiwebview-in-your-ios-app/</loc>
-        <lastmod>2012-06-17T21:48:11+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/2012/06/18/handle-touch-events-in-uiwebview/</loc>
-        <lastmod>2012-06-20T10:22:26+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/2012/08/05/grand-central-dispatch-vs-openmp/</loc>
-        <lastmod>2012-09-15T14:50:52+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/2012/09/15/earthquake-early-warning-prototype/</loc>
-        <lastmod>2012-09-16T12:53:23+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/2012/09/16/taiwan-typhoon-app-1/</loc>
-        <lastmod>2012-09-16T18:45:41+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/2012/09/16/taiwan-typhoon-app-2/</loc>
-        <lastmod>2012-09-18T22:32:29+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/2012/09/21/c-slash-objc-c-block-syntax-explained/</loc>
-        <lastmod>2012-09-29T16:53:59+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/2012/09/29/c-objc-block-quizzes/</loc>
-        <lastmod>2012-09-29T15:43:43+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/2012/09/29/c-objc-block-byref-internals/</loc>
-        <lastmod>2012-09-29T17:07:28+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/about-me/</loc>
-        <lastmod>2012-09-29T14:33:12+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/archives/</loc>
-        <lastmod>2012-09-29T17:07:28+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/double-pendulum/</loc>
-        <lastmod>2012-09-02T15:47:42+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/graph-theories/elementary-graph-algorithms.html</loc>
-        <lastmod>2012-06-17T15:43:36+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/graph-theories/</loc>
-        <lastmod>2012-06-17T15:43:36+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/</loc>
-        <lastmod>2012-09-29T17:07:28+08:00</lastmod>
+        <lastmod>2012-09-30T12:46:12+08:00</lastmod>
     </url>
 </urlset>
