@@ -42,7 +42,11 @@ Now simply run your iphone simulator and open the url `localhost:9999` to view y
 ### Edit
 
 [brainlock][brainlock] shared his [remote inspector][remote] that can use proxy
-to debug *on the device*. Awesome!
+to debug on the device. However, I prefer to use simple and stupid solution
+after all. ;)
+
+For more curious, The `#if (TARGET_IPHONE_SIMULATOR)` macro will ensure the hack
+of accessing WebKit's private api won't ship with your production code.
 
 [reference]: http://atnan.com/blog/2011/11/17/enabling-remote-debugging-via-private-apis-in-mobile-safari/
 [brainlock]: https://github.com/brainlock
