@@ -4,7 +4,7 @@
   <title><![CDATA[Category: block | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/block/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-10-01T15:02:37+08:00</updated>
+  <updated>2012-10-05T11:59:38+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -734,9 +734,8 @@ End of quiz 3
 x is 2, *ptr is 24
 End of quiz 3
 </code></pre>
+<p><strong>Oops</strong></p>
 </div>
-<pre><code>&lt;p&gt;&lt;strong&gt;Oops&lt;/strong&gt;&lt;/p&gt;
-</code></pre>
 
 <h2 id="quiz-4">Quiz 4</h2>
 <p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
