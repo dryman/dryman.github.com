@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Objective-C | Carpe diem (Felix's blog)]]></title>
+  <link href="http://www.idryman.org/blog/categories/objective-c/atom.xml" rel="self"/>
+  <link href="http://www.idryman.org/"/>
+  <updated>2012-10-30T10:40:11+08:00</updated>
+  <id>http://www.idryman.org/</id>
+  <author>
+    <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Type Qualifiers and friends]]></title>
+    <link href="http://www.idryman.org/blog/2012/10/29/type-qualifiers/"/>
+    <updated>2012-10-29T08:55:00+08:00</updated>
+    <id>http://www.idryman.org/blog/2012/10/29/type-qualifiers</id>
+    <content type="html"><![CDATA[<p>Type qualifiers are heavily used in C and Objective C. In C99 there are four
+type qualifiers: <code>const</code>, <code>restrict</code>, <code>register</code> and <code>volatile</code>. In objective C,
+Apple introduced <code>__weak</code>, <code>__strong</code>, <code>__unsafe_unretained</code>, and
+<code>__autoreleasing</code> for automatic reference counting.</p>
+
+<p>It is easy to get confused with complicated type qualifiers. For example:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">char</span><span class="o">*</span> <span class="k">const</span> <span class="o">*</span> <span class="n">x</span><span class="p">;</span>  <span class="c1">// x is a pointer to const pointer to char</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>In this post I’ll go through what type qualifiers are, and how do we read and
+write it in correct way.</p>
+
+<!-- more -->
+
+<h2 id="names-and-definitions">Names and definitions</h2>
+
+<p>Type qualifiers should not be confused with <strong>storage specifiers</strong> like <code>static</code>
+<code>auto</code>, <code>extern</code> and <code>register</code>. To illustrate this, allow me to use Mike Ash’s
+example:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">static</span> <span class="k">const</span> <span class="kt">int</span> <span class="n">x</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Here, <code>static</code> is a storage specifier to tell complier how <code>x</code> is stored, and
+<code>const</code> is a type qualifier to tell complier <strong>the type</strong> of x is read-only
+data. Since <code>const</code> is part of the type, you can write:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">typedef</span> <span class="k">const</span> <span class="kt">int</span> <span class="n">MyInt</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>but you cannot write:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">typedef</span> <span class="k">static</span> <span class="kt">int</span> <span class="n">MyInt</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>This is because <code>static</code> is not part of the type.</p>
+
+<p>You might wonder: is <code>__block</code> a type qualifier or storage specifier?  The 
+<a href="http://clang.llvm.org/docs/BlockLanguageSpec.txt">clang block language spec</a> said that it is a <strong>storage qualifier</strong>.
+Don’t get confused.  <code>__block</code> is a <em>storage qualifer/specifer</em> which modifies
+how variable is stored.  For more curious on <code>__block</code>, you can check out my
+previous post <a href="http://www.idryman.org/blog/2012/09/29/c-objc-block-byref-internals/">Block byref internals</a>.</p>
+
+<h3 id="arc-ownership-qualifiers">ARC ownership qualifiers</h3>
+
+<p>What about <code>__strong</code>, <code>__weak</code>, <code>__unsafe_unretained</code>, and <code>__autoreleasing</code>?
+You <em>can</em> use it with <code>typedef</code>, and they are truly part of the type. However, they
+are a bit different from C type qualifiers. ARC generated code have an runtime
+API supports it. You can manually use some of those: <code>objc_storeWeak</code>,
+<code>objc_destroyWeak</code>…etc. In Clang specification, these qualifiers are named
+<strong>ownership qualifiers</strong>. Luckily, they share the same rule of type
+qualifiers.</p>
+
+<h2 id="the-grammar">The grammar</h2>
+
+<p>C declaration can be really complicated. In this section I’ll just cover the
+basics and the most commonly seen ones.</p>
+
+<ul>
+  <li>Rule 1: find the identifier (the variable), read from right to left.</li>
+</ul>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">int</span> <span class="n">x</span><span class="p">;</span>                <span class="c1">// x is int</span>
+</span><span class='line'><span class="kt">int</span> <span class="o">*</span> <span class="n">x</span><span class="p">;</span>              <span class="c1">// x is a ‘pointer to’ int</span>
+</span><span class='line'><span class="kt">int</span> <span class="o">*</span> <span class="o">*</span> <span class="n">x</span><span class="p">;</span>            <span class="c1">// x is a ‘pointer to’ ‘pointer to’ int</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>When there is a type qualifier, it applies to its immediate left:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">int</span> <span class="k">const</span> <span class="n">x</span><span class="p">;</span>          <span class="c1">// x is a const int</span>
+</span><span class='line'><span class="kt">int</span> <span class="o">*</span> <span class="k">const</span> <span class="n">x</span><span class="p">;</span>        <span class="c1">// x is a ‘const pointer to’ int</span>
+</span><span class='line'><span class="kt">int</span> <span class="k">const</span> <span class="o">*</span> <span class="n">x</span><span class="p">;</span>        <span class="c1">// x is a ‘pointer to’ const int</span>
+</span><span class='line'><span class="kt">int</span> <span class="o">*</span> <span class="k">const</span> <span class="o">*</span> <span class="n">x</span><span class="p">;</span>      <span class="c1">// x is a ‘pointer to’ ‘const pointer to’ int</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<ul>
+  <li>Rule 2: If next to type specifier, it applies to type-specifier</li>
+</ul>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">const</span> <span class="kt">int</span> <span class="n">x</span><span class="p">;</span>          <span class="c1">// x is a const int</span>
+</span><span class='line'><span class="k">const</span> <span class="kt">int</span> <span class="o">*</span> <span class="k">const</span> <span class="n">x</span><span class="p">;</span>  <span class="c1">// x is a ‘const pointer to’ const int</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<ul>
+  <li>Rule 3: If there are parenthesis or bracelets, reorder it to postfix form:</li>
+</ul>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">int</span> <span class="o">*</span> <span class="k">const</span> <span class="o">*</span> <span class="p">(</span> <span class="o">*</span> <span class="n">p</span><span class="p">)();</span>
+</span><span class='line'><span class="c1">// postfix: p * () * const * int</span>
+</span><span class='line'><span class="c1">// p is a pointer to a function returning a</span>
+</span><span class='line'><span class="c1">// pointer to const-pointer-to-int</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>For more curious, checkout <a href="http://www.vineetgupta.com/2011/03/deciphering-complex-c-declarations/">Deciphering Complex C Declarations</a> and
+<a href="http://cdecl.org">cdecl</a>.</p>
+
+<h2 id="restrict-volatile-and-register">restrict, volatile, and register</h2>
+
+<h3 id="volatile">volatile</h3>
+
+<blockquote>
+  <p>Every reference to the variable will reload the contents from memory rather
+than take advantage of situations where a copy can be in a register.</p>
+</blockquote>
+
+<p>The <code>volatile</code> qualifier maintains consistency of memory access to data objects.
+Volatile variable are read from memory each time their values is needed, and
+writen back to memory each time they are changed. However, volatile variables
+are not automic. If you want to write thread safe operation, you can write
+something like:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>OSAtomic.h </span><a href='http://www.opensource.apple.com/source/xnu/xnu-1456.1.26/libkern/libkern/OSAtomic.h'>link</a></figcaption> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">static</span> <span class="kr">__inline</span> <span class="n">bool</span> <span class="nf">OSAtomicCompareAndSwapInt</span><span class="p">(</span><span class="kt">int</span> <span class="n">oldi</span><span class="p">,</span> <span class="kt">int</span> <span class="n">newi</span><span class="p">,</span> <span class="kt">int</span> <span class="k">volatile</span> <span class="o">*</span><span class="n">dst</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kt">int</span> <span class="n">original</span> <span class="o">=</span> <span class="n">InterlockedCompareExchange</span><span class="p">(</span><span class="n">dst</span><span class="p">,</span> <span class="n">newi</span><span class="p">,</span> <span class="n">oldi</span><span class="p">);</span>
+</span><span class='line'>    <span class="k">return</span> <span class="p">(</span><span class="n">original</span> <span class="o">==</span> <span class="n">oldi</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>This is a function that is thread and multiprocessor safe to swap/update an integer.
+Objective-C runtime uses these functions defined in <a href="http://www.opensource.apple.com/source/xnu/xnu-1456.1.26/libkern/libkern/OSAtomic.h">OSAtomic.h</a> to
+manage retain counts.</p>
+
+<h3 id="register">register</h3>
+
+<p><code>register</code> is a opposite keyword to <code>volatile</code>.
+The register type modifier tells the compiler to store the variable being
+declared in a CPU register (if possible), to optimize access.</p>
+
+<h3 id="restrict">restrict</h3>
+
+<p><code>restrict</code> is a keyword purely for the purpose of optimization. </p>
+
+<blockquote>
+  <p>In the C programming language, as of the C99 standard, restrict is a keyword
+that can be used in pointer declarations. The restrict keyword is a
+declaration of intent given by the programmer to the compiler. It says that
+for the lifetime of the pointer, only it or a value directly derived from it
+(such as <code>pointer + 1</code>) will be used to access the object to which
+it points. This limits the effects of pointer aliasing, aiding caching
+optimizations.</p>
+</blockquote>
+
+<p><code>restrict</code> is a qualifier for pointers. It claims that the memory that pointer
+points to can only be accessed by this pointer.  Consider this case:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">char</span> <span class="o">*</span><span class="n">src</span><span class="p">,</span> <span class="o">*</span><span class="n">dst</span><span class="p">;</span>
+</span><span class='line'><span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">len</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">dst</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">src</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>If the <code>*dst</code> overlapped with <code>*src</code>, compiler can only generate code that load a
+small piece of memory and operate it once at a time. Fortran does not have this
+problem because it does not have pointers. Thus Fortran can do ambitious optimization
+to load a big chunck of memory and operate it all at once. <code>restrict</code> is a new
+keyword defined in C99 to address this problem. The original code can be
+rewritten as:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">void</span> <span class="o">*</span><span class="n">memcpy</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="kr">restrict</span> <span class="n">s1</span><span class="p">,</span> <span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="kr">restrict</span> <span class="n">s2</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">n</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>and compiler can optimize this code like Fortran does!</p>
+
+<p>Note that <code>restrict</code> is a type qualifier for <strong>pointers</strong>.</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">int</span> <span class="o">*</span> <span class="kr">restrict</span> <span class="n">x</span><span class="p">;</span> <span class="c1">// correct</span>
+</span><span class='line'><span class="kt">int</span> <span class="kr">restrict</span> <span class="o">*</span> <span class="n">x</span><span class="p">;</span> <span class="c1">// wrong</span>
+</span><span class='line'><span class="kr">restrict</span> <span class="kt">int</span> <span class="o">*</span> <span class="n">x</span><span class="p">;</span> <span class="c1">// wrong</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<h2 id="arc-ownership-qualifiers-1">ARC ownership qualifiers</h2>
+
+<p>If you understand all the above, then Objective-C Automatic Reference Counting
+qualifiers should be easy to you! Here is the definition from Apple:</p>
+
+<ol>
+  <li><code>__strong</code> is the default. An object remains <strong>alive</strong> as long as there is a strong
+  pointer to it.</li>
+  <li><code>__weak</code> specifies a reference that does not keep the referenced object alive. A
+  weak reference is set to <code>nil</code> when there are no strong references to the object.</li>
+  <li><code>__unsafe_unretained</code> specifies a reference that does not keep the referenced
+  object alive and is not set to <code>nil</code> when there are no strong references to the
+  object. If the object it references is deallocated, the pointer is left
+  dangling.</li>
+  <li><code>__autoreleasing</code> is used to denote arguments that are passed by reference <code>(id *)</code>
+  and are autoreleased on return.</li>
+</ol>
+
+<p>All ownership qualifiers should decorate on Objective-C object pointers.</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'><span class="n">MyClass</span> <span class="o">*</span> <span class="n">__weak</span> <span class="n">_weakSelf</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span>    <span class="c1">// correct</span>
+</span><span class='line'><span class="n">MyClass</span> <span class="n">__weak</span> <span class="o">*</span> <span class="n">_weakSelf</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span>    <span class="c1">// wrong! May cause serious bugs!</span>
+</span><span class='line'><span class="n">__weak</span> <span class="n">MyClass</span> <span class="o">*</span> <span class="n">_weakSelf</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span>    <span class="c1">// wrong!&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="c1">// Explicitly transfer CGColorRef ownership from UIColor to layer’s backgroundColor</span>
+</span><span class='line'><span class="n">CALayer</span><span class="o">*</span> <span class="n">layer</span> <span class="o">=</span> <span class="p">[</span><span class="n">CALayer</span> <span class="n">layer</span><span class="p">];</span>
+</span><span class='line'><span class="n">CGColorRef</span> <span class="n">redRef</span><span class="p">;</span>
+</span><span class='line'><span class="err">@</span><span class="n">autorelease</span><span class="p">{</span>
+</span><span class='line'>    <span class="n">UIColor</span> <span class="o">*</span> <span class="n">__autoreleasing</span> <span class="n">redColor</span> <span class="o">=</span> <span class="p">[[</span><span class="n">UIColor</span> <span class="n">redColor</span><span class="p">]</span> <span class="nl">colorWithAlphaComponent:</span><span class="mf">.5f</span><span class="p">];</span>
+</span><span class='line'>    <span class="n">redRef</span> <span class="o">=</span> <span class="n">CFRetain</span><span class="p">([</span><span class="n">redColor</span> <span class="n">CGColor</span><span class="p">]);</span>
+</span><span class='line'><span class="p">}</span> <span class="c1">// UIColor released</span>
+</span><span class='line'><span class="n">layer</span><span class="p">.</span><span class="n">backgroundColor</span> <span class="o">=</span> <span class="n">redRef</span><span class="p">;</span>
+</span><span class='line'><span class="n">CFRelease</span><span class="p">(</span><span class="n">redRef</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>For more curious on why do we need to write verbose code for <code>CGColor</code>, you can
+take a look at Big Nerd Ranch’s 
+<a href="http://weblog.bignerdranch.com/296-arc-gotcha-unexpectedly-short-lifetimes/">ARC Gotcha – Unexpectedly Short Lifetimes</a> and Amatten’s
+<a href="http://amattn.com/2011/12/07/arc_best_practices.html">ARC Best Practices</a>.</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li><a href="http://www.vineetgupta.com/2011/03/deciphering-complex-c-declarations/">Deciphering complex c declarations</a></li>
+  <li><a href="http://www.mikeash.com/pyblog/friday-qa-2009-06-26-type-qualifiers-in-c-part-1.html">Mike Ash Friday QA: Type qualifiers in C part 1</a></li>
+  <li><a href="http://weblog.bignerdranch.com/296-arc-gotcha-unexpectedly-short-lifetimes/">ARC Gotcha – Unexpectedly Short Lifetimes</a> and Amatten’s</li>
+  <li><a href="http://amattn.com/2011/12/07/arc_best_practices.html">ARC Best Practices</a></li>
+  <li><a href="http://clang.llvm.org/docs/BlockLanguageSpec.txt">Block language spec</a></li>
+  <li><a href="http://clang.llvm.org/docs/AutomaticReferenceCounting.html">Clang ARC spec</a></li>
+  <li><a href="http://developer.apple.com/library/mac/#releasenotes/ObjectiveC/RN-TransitioningToARC/Introduction/Introduction.html">Transitioning to ARC Release Notes</a></li>
+</ul>
+
+]]></content>
+  </entry>
+  
+</feed>
