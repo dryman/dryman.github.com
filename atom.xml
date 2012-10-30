@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-10-30T21:51:40+08:00</updated>
+  <updated>2012-10-30T21:53:21+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -19,7 +19,7 @@
     <updated>2012-10-30T13:58:00+08:00</updated>
     <id>http://www.idryman.org/blog/2012/10/30/dance-with-objective-c-dynamic-types</id>
     <content type="html"><![CDATA[<p>Objective-C is a super set of C language. The entire language is a preprocessor
-skin added to C language, with a powerful runtime system. With this runtime system,
+skin added to C language and a powerful runtime system. With this runtime system,
 one can have full featured object oriented programming interface, functional
 programming environment, and magical dynamic typing system. </p>
 
