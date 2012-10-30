@@ -1,0 +1,591 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Dance with Objective-C dynamic types - Carpe diem (Felix's blog)</title>
+  <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
+
+  
+  <meta name="description" content="Objective-C is a super set of C language. The entire language is a preprocessor
+skin added to C language, with a powerful runtime system. With this &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://www.idryman.org/blog/2012/10/30/dance-with-objective-c-dynamic-types/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Carpe diem (Felix's blog)" type="application/atom+xml">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- mathjax config similar to math.stackexchange -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/HTML-CSS"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-23425996-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <!--div id="logo">
+  	<div id="logoLeft">{</div>
+  	<div id="logoText">mob</div>
+  	<div id="logoRight">}</div>
+  	<div class="clear"></div>
+  </div-->
+  <h1><a href="/">Carpe diem (Felix's blog)</a></h1>
+  
+    <h2>Work hard and enjoy every moments...</h2>
+  
+  <div class="clear"></div>
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:www.idryman.org" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about-me">About Me</a></li>
+  <li><a href="http://idryman.tumblr.com/">Drawings</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      
+        <h1 class="entry-title">Dance With Objective-C Dynamic Types</h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-10-30T13:58:00+08:00" pubdate data-updated="true">Oct 30<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Objective-C is a super set of C language. The entire language is a preprocessor
+skin added to C language, with a powerful runtime system. With this runtime system,
+one can have full featured object oriented programming interface, functional
+programming environment, and magical dynamic typing system. </p>
+
+<p>In this post, I’ll go through common tasks you can do with Objective-C typing
+system, including querying normal <code>NSObject</code> types, packing static type with
+<code>NSValue</code>, testing core foundation references, and validating if a pointer is a
+valid object pointer.</p>
+
+<!-- more -->
+
+<h2 id="objective-c-type-system">Objective-C type system</h2>
+
+<p>To determine an Objective-C object type is super easy. Just use <code>isKindOfClass</code>
+method and it is done.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">testObjectType:</span><span class="p">(</span><span class="kt">id</span><span class="p">)</span><span class="nv">obj</span>
+</span><span class="line"><span class="p">{</span>
+</span><span class="line">    <span class="k">if</span> <span class="p">([</span><span class="n">obj</span> <span class="nl">isKindOfClass:</span> <span class="p">[</span><span class="n">NSNumber</span> <span class="n">class</span><span class="p">]])</span> <span class="p">{</span>
+</span><span class="line">        <span class="c1">// do something with number</span>
+</span><span class="line">    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">([</span><span class="n">obj</span> <span class="nl">isKindOfClass:</span> <span class="p">[</span><span class="n">NSValue</span> <span class="n">class</span><span class="p">])</span> <span class="p">{</span>
+</span><span class="line">        <span class="c1">// do something with values...</span>
+</span><span class="line">    <span class="p">}</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Why do we need this mechanism? One application is implementing key value coding
+with some known range of types. For example, Core Animation listed these
+properties are animatable:</p>
+
+<ul>
+  <li>anchorPoint</li>
+  <li>backgroundColor</li>
+  <li>backgroundFilters</li>
+  <li>borderColor</li>
+  <li>borderWidth</li>
+  <li>bounds</li>
+  <li>compositingFilter</li>
+  <li>contents</li>
+  <li>contentsRect</li>
+  <li>cornerRadius</li>
+  <li>doubleSided</li>
+  <li>filters</li>
+  <li>frame</li>
+  <li>hidden</li>
+  <li>mask</li>
+  <li>masksToBounds</li>
+  <li>opacity</li>
+  <li>position</li>
+  <li>shadowColor</li>
+  <li>shadowOffset</li>
+  <li>shadowOpacity</li>
+  <li>shadowRadius</li>
+  <li>sublayers</li>
+  <li>sublayerTransform</li>
+  <li>transform</li>
+  <li>zPosition</li>
+</ul>
+
+<p>These properties are categorized in several types includes <code>CGPoint</code>, <code>CGRect</code>,
+<code>CGFloat</code>, <code>CGImageRef</code>, <code>CGColorRef</code>, and even <code>BOOL</code>. Each kind of type
+require individual implementation to operate its value. Thankfully,
+Objective C dynamic type system allows us to pass-in the value with generic type
+<code>id</code> and determine the actual type at runtime. <code>id</code> is simply a void
+pointer. The objective c object itself is a struct which have a <code>isa</code> pointer
+points to actual class which defines its instance variables, methods, and class
+inheritances.</p>
+
+<h2 id="packaging-static-c-types-with-nsvalue">Packaging static C types with NSValue</h2>
+
+<p>Objective C is a skin language based on C, so it is very often to use C types
+like int, float, pointer to struct…etc. However, these static types violate
+Objective-C’s dynamic typing idioms. Apple introduced <code>NSValue</code> as a container
+for a single C or Objective-C data item. It can hold any C types such as int,
+float, char, pointers, structures, and object ids. It not only wrap the item
+into an Objective-C object, but also encode the type information of the original
+object.</p>
+
+<p>To create an <code>NSValue</code> object, you pass it a pointer to the item, along with the
+encoded type information generated by <code>@encode()</code> keyword.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="n">CGPoint</span> <span class="n">origin</span> <span class="o">=</span> <span class="n">CGPointMake</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">);</span>
+</span><span class="line"><span class="n">NSValue</span> <span class="o">*</span> <span class="n">originValue</span> <span class="o">=</span> <span class="p">[</span><span class="n">NSValue</span> <span class="nl">valueWithBytes:</span><span class="o">&amp;</span><span class="n">origin</span> <span class="nl">objCType:</span><span class="k">@encode</span><span class="p">(</span><span class="n">CGPoint</span><span class="p">)];</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p><code>@encode()</code> is a compiler directive which can accepts all types that can be used
+as an argument of C <code>sizeof()</code> operator. <code>@encode()</code> returns a <code>const char*</code>
+string encoding that type. The encoding is specified in 
+<a href="https://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html#//apple_ref/doc/uid/TP40008048-CH100">Objective-C runtime type encodings</a>.</p>
+
+<p>To illustrate this, see the following examples:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="err">@</span><span class="n">encoding</span><span class="p">(</span><span class="kt">int</span> <span class="o">**</span> <span class="p">)</span>
+</span><span class="line"><span class="c1">// ==&gt; &quot;{^^i}&quot;</span>
+</span><span class="line"><span class="err">@</span><span class="n">encoding</span><span class="p">(</span><span class="n">CGPoint</span><span class="p">)</span>
+</span><span class="line"><span class="c1">// ==&gt; &quot;{CGPoint=ff}&quot;</span>
+</span><span class="line"><span class="err">@</span><span class="n">encoding</span><span class="p">(</span><span class="n">CGColorRef</span><span class="p">)</span>
+</span><span class="line"><span class="c1">// ==&gt; &quot;^{CGColor=}&quot;</span>
+</span><span class="line"><span class="err">@</span><span class="n">encoding</span><span class="p">(</span><span class="n">NSObject</span><span class="p">)</span>
+</span><span class="line"><span class="c1">// ==&gt; &quot;{NSObject=#}&quot;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>With this encoded type information, it only takes few steps to determine which
+type it is at runtime:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="k">if</span> <span class="p">([</span><span class="n">obj</span> <span class="nl">isKindOfClass:</span><span class="p">[</span><span class="n">NSValue</span> <span class="n">class</span><span class="p">]])</span> <span class="p">{</span>
+</span><span class="line">    <span class="n">NSValue</span><span class="o">*</span> <span class="n">value</span> <span class="o">=</span> <span class="p">(</span><span class="n">NSValue</span><span class="o">*</span><span class="p">)</span> <span class="n">obj</span><span class="p">;</span>
+</span><span class="line">    <span class="k">if</span> <span class="nf">strcmp</span><span class="p">([</span><span class="n">value</span> <span class="n">objCType</span><span class="p">],</span> <span class="k">@encode</span><span class="p">(</span><span class="n">CGPoint</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">        <span class="n">CGPoint</span> <span class="n">origin</span><span class="p">;</span>
+</span><span class="line">        <span class="p">[</span><span class="n">value</span> <span class="nl">getValue:</span><span class="o">&amp;</span><span class="n">origin</span><span class="p">];</span>
+</span><span class="line">        <span class="c1">// do things with origin...</span>
+</span><span class="line">    <span class="p">}</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h3 id="uikit-addition-to-nsvalue">UIKit addition to NSValue</h3>
+
+<p>UIKit added a <a href="http://developer.apple.com/library/ios/#DOCUMENTATION/UIKit/Reference/NSValue_UIKit_Additions/Reference/Reference.html">category for NSValue</a> to represent iOS related
+geometry-based data. You can use these method instead of encoding <code>CGPoint</code>,
+<code>CGRect</code>, and else every time.</p>
+
+<h2 id="bridging-with-core-foundation-objects">Bridging with Core Foundation objects</h2>
+
+<p>Though <code>NSValue</code> covers many kind of types, in practice there are still some
+types don’t fit this solution for dynamic typing. More specifically,
+<code>CGColorRef</code>, <code>CGImageRef</code> and other Core Foundation types that can be treated
+as Objective-C object through <a href="http://developer.apple.com/library/ios/#documentation/CoreFoundation/Conceptual/CFDesignConcepts/Articles/tollFreeBridgedTypes.html">toll-free briding</a> are the types we
+don’t pack with <code>NSValue</code>.</p>
+
+<p>A core foundation references is also a void pointer as same as <code>id</code> is.
+To find out the type of an unknown <code>CFTypeRef</code>, you can query it with C function
+<code>CFGetTypeID</code>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="k">if</span> <span class="p">(</span><span class="n">CFGetTypeID</span><span class="p">((</span><span class="n">__bridge</span> <span class="n">CFTypeRef</span><span class="p">)</span><span class="n">obj</span><span class="p">),</span> <span class="o">==</span> <span class="n">CGImageGetTypeID</span><span class="p">())</span> <span class="p">{</span>
+</span><span class="line">    <span class="n">CGImageRef</span> <span class="n">imgRef</span> <span class="o">=</span> <span class="n">CFBridgingRetain</span><span class="p">(</span><span class="n">obj</span><span class="p">);</span>
+</span><span class="line">    <span class="c1">// do things with imgRef</span>
+</span><span class="line">    <span class="n">CFRelease</span><span class="p">(</span><span class="n">imgRef</span><span class="p">);</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>A CFTypeRef marked as <code>id</code> type can also accept basic objective C messages like
+<code>isKindOfType:</code>. Hence testing an <code>id</code> typed object is quite safe as long as it
+is either a <code>NSObject</code>, <code>NSValue</code>, <code>CFTypeRef</code>, <code>CGColorRef</code> or any other
+Objective-C object/Core Foundation reference.</p>
+
+<h2 id="testing-if-a-pointer-is-a-valid-nsobject">Testing if a pointer is a valid NSObject</h2>
+
+<p>There is a blog post on Cocoa with love about
+<a href="http://www.cocoawithlove.com/2010/10/testing-if-arbitrary-pointer-is-valid.html">how to test if an arbitary pointer is a valid NSObject</a>.
+In my point of view, programmer <em>should</em> pass in a valid object for sure. If it
+is not a valid object, just let it crash.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>It is amazing that a langauge so close to C can create such a rich type system
+without byte code, VM, or complex sybol tricks (like what C++ does). Though
+handling differnt types can be a bit painful sometimes, but it brings powerful
+polimorphsm to the language. Thus programmer can create highly abstract API
+and framework with differnt data types that share the same methods.</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li><a href="http://www.cocoawithlove.com/2010/10/testing-if-arbitrary-pointer-is-valid.html">how to test if an arbitary pointer is a valid NSObject</a></li>
+  <li><a href="https://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html#//apple_ref/doc/uid/TP40008048-CH100">Objective C type encoding</a></li>
+  <li><a href="http://developer.apple.com/library/mac/#documentation/CoreFoundation/Conceptual/CFDesignConcepts/Articles/Inspecting.html">Inspecting core foundation object</a></li>
+  <li><a href="https://github.com/dryman/FCAnimationFactory/blob/master/FCEasingAnimation/FCAnimationFactory.m">Example usage of how to handle Core Animation dynamic properties</a>
+(See makeValueScalingBlockFromValue: method)</li>
+</ul>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-10-30T13:58:00+08:00" pubdate data-updated="true">Oct 30<span>th</span>, 2012</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/cocoa/'>Cocoa</a>, <a class='category' href='/blog/categories/objective-c/'>Objective-C</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2012/10/30/dance-with-objective-c-dynamic-types/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2012/10/30/dance-with-objective-c-dynamic-types/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left articlenav" href="/blog/2012/10/29/type-qualifiers/" title="Previous Post: Type Qualifiers and friends">&laquo; Type Qualifiers and friends</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/10/30/dance-with-objective-c-dynamic-types/">Dance with Objective-C dynamic types</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/10/29/type-qualifiers/">Type Qualifiers and friends</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/30/c-objc-block-and-debugger/">C/ObjC block and debugger</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/29/c-objc-block-byref-internals/">C/ObjC block byref internals</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/29/c-objc-block-quizzes/">C/ObjC block quizzes</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/21/c-slash-objc-c-block-syntax-explained/">C/ObjC block syntax explained</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/16/taiwan-typhoon-app-2/">Taiwan Typhoon App (2)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/16/taiwan-typhoon-app-1/">Taiwan Typhoon App (1)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/15/earthquake-early-warning-prototype/">Earthquake early warning prototype</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/08/05/grand-central-dispatch-vs-openmp/">Grand central dispatch vs OpenMP</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("idryman", 4, true);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/idryman" class="twitter-follow-button" data-show-count="false">Follow @idryman</a>
+  
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - dryman (Felix Ren-Chyan Chern) -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'dryblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.idryman.org/blog/2012/10/30/dance-with-objective-c-dynamic-types/';
+        var disqus_url = 'http://www.idryman.org/blog/2012/10/30/dance-with-objective-c-dynamic-types/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+<!--
+hn like button plugin for jekyll/octopress
+Author: dryman (Felix Ren-Chyan Chern)
+
+Inpired from http://hnlike.com/ written by sbashyal
+
+(The MIT License)
+
+Copyright © 2012-2013 Felix Ren-Chyan Chern
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the ‘Software’), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED ‘AS IS’, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+  <script type="text/javascript">
+    (function(){
+      var hn_like = document.createElement('iframe');
+      hn_like.frameborder="no";
+      hn_like.scrolling="no";
+      hn_like.height="28px";
+      hn_like.width="115px";
+      hn_like.src = "http://hnlike.com/upvote.php?link="
+                    + encodeURIComponent(document.location)
+                    + "&title="
+                    + encodeURIComponent("Dance with Objective-C dynamic types");
+      hn_like.innerHTML="iframes not supported by your browser";
+      var twitter = document.getElementsByClassName("twitter-share-button")[0];
+
+      twitter.parentNode.insertBefore(
+        hn_like,
+        twitter
+      );
+    })();
+  </script>
+
+<!-- end of hn like button -->
+
+
+
+
+
+</body>
+</html>

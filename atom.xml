@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-10-30T10:40:11+08:00</updated>
+  <updated>2012-10-30T21:51:40+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,216 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Dance with Objective-C dynamic types]]></title>
+    <link href="http://www.idryman.org/blog/2012/10/30/dance-with-objective-c-dynamic-types/"/>
+    <updated>2012-10-30T13:58:00+08:00</updated>
+    <id>http://www.idryman.org/blog/2012/10/30/dance-with-objective-c-dynamic-types</id>
+    <content type="html"><![CDATA[<p>Objective-C is a super set of C language. The entire language is a preprocessor
+skin added to C language, with a powerful runtime system. With this runtime system,
+one can have full featured object oriented programming interface, functional
+programming environment, and magical dynamic typing system. </p>
+
+<p>In this post, I’ll go through common tasks you can do with Objective-C typing
+system, including querying normal <code>NSObject</code> types, packing static type with
+<code>NSValue</code>, testing core foundation references, and validating if a pointer is a
+valid object pointer.</p>
+
+<!-- more -->
+
+<h2 id="objective-c-type-system">Objective-C type system</h2>
+
+<p>To determine an Objective-C object type is super easy. Just use <code>isKindOfClass</code>
+method and it is done.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">testObjectType:</span><span class="p">(</span><span class="kt">id</span><span class="p">)</span><span class="nv">obj</span>
+</span><span class="line"><span class="p">{</span>
+</span><span class="line">    <span class="k">if</span> <span class="p">([</span><span class="n">obj</span> <span class="nl">isKindOfClass:</span> <span class="p">[</span><span class="n">NSNumber</span> <span class="n">class</span><span class="p">]])</span> <span class="p">{</span>
+</span><span class="line">        <span class="c1">// do something with number</span>
+</span><span class="line">    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">([</span><span class="n">obj</span> <span class="nl">isKindOfClass:</span> <span class="p">[</span><span class="n">NSValue</span> <span class="n">class</span><span class="p">])</span> <span class="p">{</span>
+</span><span class="line">        <span class="c1">// do something with values...</span>
+</span><span class="line">    <span class="p">}</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Why do we need this mechanism? One application is implementing key value coding
+with some known range of types. For example, Core Animation listed these
+properties are animatable:</p>
+
+<ul>
+  <li>anchorPoint</li>
+  <li>backgroundColor</li>
+  <li>backgroundFilters</li>
+  <li>borderColor</li>
+  <li>borderWidth</li>
+  <li>bounds</li>
+  <li>compositingFilter</li>
+  <li>contents</li>
+  <li>contentsRect</li>
+  <li>cornerRadius</li>
+  <li>doubleSided</li>
+  <li>filters</li>
+  <li>frame</li>
+  <li>hidden</li>
+  <li>mask</li>
+  <li>masksToBounds</li>
+  <li>opacity</li>
+  <li>position</li>
+  <li>shadowColor</li>
+  <li>shadowOffset</li>
+  <li>shadowOpacity</li>
+  <li>shadowRadius</li>
+  <li>sublayers</li>
+  <li>sublayerTransform</li>
+  <li>transform</li>
+  <li>zPosition</li>
+</ul>
+
+<p>These properties are categorized in several types includes <code>CGPoint</code>, <code>CGRect</code>,
+<code>CGFloat</code>, <code>CGImageRef</code>, <code>CGColorRef</code>, and even <code>BOOL</code>. Each kind of type
+require individual implementation to operate its value. Thankfully,
+Objective C dynamic type system allows us to pass-in the value with generic type
+<code>id</code> and determine the actual type at runtime. <code>id</code> is simply a void
+pointer. The objective c object itself is a struct which have a <code>isa</code> pointer
+points to actual class which defines its instance variables, methods, and class
+inheritances.</p>
+
+<h2 id="packaging-static-c-types-with-nsvalue">Packaging static C types with NSValue</h2>
+
+<p>Objective C is a skin language based on C, so it is very often to use C types
+like int, float, pointer to struct…etc. However, these static types violate
+Objective-C’s dynamic typing idioms. Apple introduced <code>NSValue</code> as a container
+for a single C or Objective-C data item. It can hold any C types such as int,
+float, char, pointers, structures, and object ids. It not only wrap the item
+into an Objective-C object, but also encode the type information of the original
+object.</p>
+
+<p>To create an <code>NSValue</code> object, you pass it a pointer to the item, along with the
+encoded type information generated by <code>@encode()</code> keyword.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="n">CGPoint</span> <span class="n">origin</span> <span class="o">=</span> <span class="n">CGPointMake</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">);</span>
+</span><span class="line"><span class="n">NSValue</span> <span class="o">*</span> <span class="n">originValue</span> <span class="o">=</span> <span class="p">[</span><span class="n">NSValue</span> <span class="nl">valueWithBytes:</span><span class="o">&amp;</span><span class="n">origin</span> <span class="nl">objCType:</span><span class="k">@encode</span><span class="p">(</span><span class="n">CGPoint</span><span class="p">)];</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p><code>@encode()</code> is a compiler directive which can accepts all types that can be used
+as an argument of C <code>sizeof()</code> operator. <code>@encode()</code> returns a <code>const char*</code>
+string encoding that type. The encoding is specified in 
+<a href="https://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html#//apple_ref/doc/uid/TP40008048-CH100">Objective-C runtime type encodings</a>.</p>
+
+<p>To illustrate this, see the following examples:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="err">@</span><span class="n">encoding</span><span class="p">(</span><span class="kt">int</span> <span class="o">**</span> <span class="p">)</span>
+</span><span class="line"><span class="c1">// ==&gt; &quot;{^^i}&quot;</span>
+</span><span class="line"><span class="err">@</span><span class="n">encoding</span><span class="p">(</span><span class="n">CGPoint</span><span class="p">)</span>
+</span><span class="line"><span class="c1">// ==&gt; &quot;{CGPoint=ff}&quot;</span>
+</span><span class="line"><span class="err">@</span><span class="n">encoding</span><span class="p">(</span><span class="n">CGColorRef</span><span class="p">)</span>
+</span><span class="line"><span class="c1">// ==&gt; &quot;^{CGColor=}&quot;</span>
+</span><span class="line"><span class="err">@</span><span class="n">encoding</span><span class="p">(</span><span class="n">NSObject</span><span class="p">)</span>
+</span><span class="line"><span class="c1">// ==&gt; &quot;{NSObject=#}&quot;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>With this encoded type information, it only takes few steps to determine which
+type it is at runtime:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="k">if</span> <span class="p">([</span><span class="n">obj</span> <span class="nl">isKindOfClass:</span><span class="p">[</span><span class="n">NSValue</span> <span class="n">class</span><span class="p">]])</span> <span class="p">{</span>
+</span><span class="line">    <span class="n">NSValue</span><span class="o">*</span> <span class="n">value</span> <span class="o">=</span> <span class="p">(</span><span class="n">NSValue</span><span class="o">*</span><span class="p">)</span> <span class="n">obj</span><span class="p">;</span>
+</span><span class="line">    <span class="k">if</span> <span class="nf">strcmp</span><span class="p">([</span><span class="n">value</span> <span class="n">objCType</span><span class="p">],</span> <span class="k">@encode</span><span class="p">(</span><span class="n">CGPoint</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">        <span class="n">CGPoint</span> <span class="n">origin</span><span class="p">;</span>
+</span><span class="line">        <span class="p">[</span><span class="n">value</span> <span class="nl">getValue:</span><span class="o">&amp;</span><span class="n">origin</span><span class="p">];</span>
+</span><span class="line">        <span class="c1">// do things with origin...</span>
+</span><span class="line">    <span class="p">}</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h3 id="uikit-addition-to-nsvalue">UIKit addition to NSValue</h3>
+
+<p>UIKit added a <a href="http://developer.apple.com/library/ios/#DOCUMENTATION/UIKit/Reference/NSValue_UIKit_Additions/Reference/Reference.html">category for NSValue</a> to represent iOS related
+geometry-based data. You can use these method instead of encoding <code>CGPoint</code>,
+<code>CGRect</code>, and else every time.</p>
+
+<h2 id="bridging-with-core-foundation-objects">Bridging with Core Foundation objects</h2>
+
+<p>Though <code>NSValue</code> covers many kind of types, in practice there are still some
+types don’t fit this solution for dynamic typing. More specifically,
+<code>CGColorRef</code>, <code>CGImageRef</code> and other Core Foundation types that can be treated
+as Objective-C object through <a href="http://developer.apple.com/library/ios/#documentation/CoreFoundation/Conceptual/CFDesignConcepts/Articles/tollFreeBridgedTypes.html">toll-free briding</a> are the types we
+don’t pack with <code>NSValue</code>.</p>
+
+<p>A core foundation references is also a void pointer as same as <code>id</code> is.
+To find out the type of an unknown <code>CFTypeRef</code>, you can query it with C function
+<code>CFGetTypeID</code>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="k">if</span> <span class="p">(</span><span class="n">CFGetTypeID</span><span class="p">((</span><span class="n">__bridge</span> <span class="n">CFTypeRef</span><span class="p">)</span><span class="n">obj</span><span class="p">),</span> <span class="o">==</span> <span class="n">CGImageGetTypeID</span><span class="p">())</span> <span class="p">{</span>
+</span><span class="line">    <span class="n">CGImageRef</span> <span class="n">imgRef</span> <span class="o">=</span> <span class="n">CFBridgingRetain</span><span class="p">(</span><span class="n">obj</span><span class="p">);</span>
+</span><span class="line">    <span class="c1">// do things with imgRef</span>
+</span><span class="line">    <span class="n">CFRelease</span><span class="p">(</span><span class="n">imgRef</span><span class="p">);</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>A CFTypeRef marked as <code>id</code> type can also accept basic objective C messages like
+<code>isKindOfType:</code>. Hence testing an <code>id</code> typed object is quite safe as long as it
+is either a <code>NSObject</code>, <code>NSValue</code>, <code>CFTypeRef</code>, <code>CGColorRef</code> or any other
+Objective-C object/Core Foundation reference.</p>
+
+<h2 id="testing-if-a-pointer-is-a-valid-nsobject">Testing if a pointer is a valid NSObject</h2>
+
+<p>There is a blog post on Cocoa with love about
+<a href="http://www.cocoawithlove.com/2010/10/testing-if-arbitrary-pointer-is-valid.html">how to test if an arbitary pointer is a valid NSObject</a>.
+In my point of view, programmer <em>should</em> pass in a valid object for sure. If it
+is not a valid object, just let it crash.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>It is amazing that a langauge so close to C can create such a rich type system
+without byte code, VM, or complex sybol tricks (like what C++ does). Though
+handling differnt types can be a bit painful sometimes, but it brings powerful
+polimorphsm to the language. Thus programmer can create highly abstract API
+and framework with differnt data types that share the same methods.</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li><a href="http://www.cocoawithlove.com/2010/10/testing-if-arbitrary-pointer-is-valid.html">how to test if an arbitary pointer is a valid NSObject</a></li>
+  <li><a href="https://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html#//apple_ref/doc/uid/TP40008048-CH100">Objective C type encoding</a></li>
+  <li><a href="http://developer.apple.com/library/mac/#documentation/CoreFoundation/Conceptual/CFDesignConcepts/Articles/Inspecting.html">Inspecting core foundation object</a></li>
+  <li><a href="https://github.com/dryman/FCAnimationFactory/blob/master/FCEasingAnimation/FCAnimationFactory.m">Example usage of how to handle Core Animation dynamic properties</a>
+(See makeValueScalingBlockFromValue: method)</li>
+</ul>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Type Qualifiers and friends]]></title>
@@ -4550,369 +4760,6 @@ returns the right node, or it will return the left one. For example:</p>
 </span><span class="line">                 <span class="p">(</span><span class="nb">list</span> <span class="nv">a</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">)</span> <span class="nv">b</span><span class="p">)</span>
 </span><span class="line">                 <span class="p">(</span><span class="nb">list</span> <span class="nv">b</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">)</span> <span class="nv">a</span><span class="p">))))))</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
-
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Lisp Debugging Tools]]></title>
-    <link href="http://www.idryman.org/blog/2012/03/26/lisp-debugging-tools/"/>
-    <updated>2012-03-26T09:51:00+08:00</updated>
-    <id>http://www.idryman.org/blog/2012/03/26/lisp-debugging-tools</id>
-    <content type="html"><![CDATA[<h2 id="debug-in-step-mode">Debug in Step Mode</h2>
-
-<p>I’m an old school debugger, and I love to use gdb like debug tools. The
-alternative debug environment in lisp is the <code>step mode</code>. To enter it, simply
-enter:</p>
-
-<pre><code>CL-USER&gt; (step (whatever-function arg1 arg2 arg3))
-step 1 --&gt; (WHATEVER-FUNCTION ARG1 ARG2 ARG3)
-Step 1 [2]&gt;
-</code></pre>
-
-<p>Now you can enter most commands you are familiar in gdb and other cool stuffs
-lisp provides to you. Try type <code>:h</code> and see what <a href="http://www.clisp.org/">clisp</a> outputs:</p>
-
-<pre><code>Commands may be abbreviated as shown in the second column.
-COMMAND        ABBR     DESCRIPTION
-Help           :h, ?    print this command list
-Error          :e       print the last error message
-Inspect        :i       inspect the last error
-Abort          :a       abort to the next recent input loop
-Unwind         :uw      abort to the next recent input loop
-Reset          :re      toggle *PACKAGE* and *READTABLE* between the
-                          local bindings and the sane values
-Quit           :q       quit to the top-level input loop
-Where          :w       inspect this frame
-Up             :u       go up one frame, inspect it
-Top            :t       go to top frame, inspect it
-Down           :d       go down one frame, inspect it
-Bottom         :b       go to bottom (most recent) frame, inspect it
-Mode mode      :m       set stack mode for Backtrace: 1=all the stack elements
-             2=all the frames                         3=only lexical frames
-             4=only EVAL and APPLY frames (default)   5=only APPLY frames
-Frame-limit n  :fl      set the frame-limit for Backtrace. This many frames
-                          will be printed in a backtrace at most.
-Backtrace [mode [limit]] :bt  inspect the stack
-Break+         :br+     set breakpoint in EVAL frame
-Break-         :br-     disable breakpoint in EVAL frame
-Redo           :rd      re-evaluate form in EVAL frame
-Return value   :rt      leave EVAL frame, prescribing the return values
-Step           :s       step into form: evaluate this form in single step mode
-Next           :n       step over form: evaluate this form at once
-Over           :o       step over this level: evaluate at once up to the next return
-Continue       :c       switch off single step mode, continue evaluation
--- Step-until :su, Next-until :nu, Over-until :ou, Continue-until :cu --
-           same as above, specify a condition when to stop
-</code></pre>
-
-<!-- more -->
-
-<p><strong>Voilà!</strong> Note that <code>Step</code> will step into every S-expression and <code>Next</code> will
-only evaluate the expression and return the value. The great news is you can
-do any evaluations in <code>Step mode</code>. For example, you can type in a S-expression
-to exam a variable, use <code>(inspect object)</code> to view detail information, or even
-redefine some functions at runtime!</p>
-
-<h2 id="basic-usage-of-trace">Basic usage of trace</h2>
-
-<p>The <code>trace</code> macro can save you a lot of time in debugging. For simple usage:</p>
-
-<pre><code>USER(17): (trace list-reverse-aux)
-(LIST-REVERSE-AUX)
-USER(18): (list-reverse '(1 2 3 4))
- 0: (LIST-REVERSE (1 2 3 4))
-   1: (LIST-REVERSE-AUX (1 2 3 4) NIL)
-     2: (LIST-REVERSE-AUX (2 3 4) (1))
-       3: (LIST-REVERSE-AUX (3 4) (2 1))
-         4: (LIST-REVERSE-AUX (4) (3 2 1))
-           5: (LIST-REVERSE-AUX NIL (4 3 2 1))
-           5: returned (4 3 2 1)
-         4: returned (4 3 2 1)
-       3: returned (4 3 2 1)
-     2: returned (4 3 2 1)
-   1: returned (4 3 2 1)
- 0: returned (4 3 2 1)
-(4 3 2 1)
-</code></pre>
-
-<h3 id="advanced-usage-of-trace">Advanced usage of trace</h3>
-
-<p>If you want more information in execution, you can tell <code>trace</code> to give your
-more. </p>
-
-<p><strong>(TRACE function-name …)</strong> makes the functions <em>function-name</em>, … traced. Each <em>function-name</em> should be either a function name or a LIST <code>(function-name &amp;KEY :SUPPRESS-IF :MAX-DEPTH :STEP-IF :BINDINGS :PRE :POST :PRE-BREAK-IF :POST-BREAK-IF :PRE-PRINT :POST-PRINT :PRINT)</code>, where</p>
-
-<ul>
-  <li><code>:SUPPRESS-IF form</code>
-    no trace output as long as form is true</li>
-  <li><code>:MAX-DEPTH form</code>
-    no trace output as long as <code>(&gt; *trace-level* form)</code>. This is useful for
-    tracing functions that are use by the tracer itself, such as PRINT-OBJECT,
-    or otherwise when tracing would lead to an infinite recursion.</li>
-  <li><code>:STEP-IF form</code>
-    invokes the stepper as soon as form is true</li>
-  <li><code>:BINDINGS ((variable form)...)</code>
-    binds variables to the result of evaluation of forms around evaluation of
-    all of the following forms</li>
-  <li><code>:PRE form</code>
-    evaluates form before calling the function</li>
-  <li><code>:POST form</code>
-    evaluates form after return from the function</li>
-  <li><code>:PRE-BREAK-IF form</code>
-    goes into the break loop before calling the function if form is true</li>
-  <li><code>:POST-BREAK-IF form</code>
-    goes into the break loop after return from the function if form is true</li>
-  <li><code>:PRE-PRINT form</code>
-    prints the values of form before calling the function</li>
-  <li><code>:POST-PRINT form</code>
-    prints the values of form after return from the function</li>
-  <li><code>:PRINT form</code>
-    prints the values of form both before calling and after return from the function</li>
-</ul>
-
-<p>In all these forms you can access the following variables:</p>
-
-<ul>
-  <li><code>EXT:*TRACE-FUNCTION*</code>
-    the traced function itself</li>
-  <li><code>EXT:*TRACE-ARGS*</code>
-    the arguments to the function</li>
-  <li><code>EXT:*TRACE-FORM*</code>
-    the function/macro call as form</li>
-  <li><code>EXT:*TRACE-VALUES*</code>
-    after return from the function: the list of return values from the function call</li>
-</ul>
-
-<p>I copied the exapmple from <a href="http://www.clisp.org/impnotes/debugger.html#trace-call-id">25.2. Debugging Utilities</a>.</p>
-
-<pre><code>(defun f0 (x)
-  (cond ((zerop x) 1)
-        ((zerop (random 2)) (* x (f0 (1- x))))
-        (t (* x (f1 (1- x))))))
-⇒ F0
-(defun f1 (x)
-  (cond ((zerop x) 1)
-        ((zerop (random 2)) (* x (f0 (1- x))))
-        (t (* x (f1 (1- x))))))
-⇒ F1
-(defvar *f0-call-count* 0)
-⇒ *F0-CALL-COUNT*
-(defvar *id0*)
-⇒ *ID0*
-(defvar *cc0*)
-⇒ *CC0*
-(defvar *f1-call-count* 0)
-⇒ *F1-CALL-COUNT*
-(defvar *id1*)
-⇒ *ID1*
-(defvar *cc1*)
-⇒ *CC1*
-(trace (f0 :bindings ((*cc0* (incf *f0-call-count*))
-                      (*id0* (gensym "F0-")))
-           :pre-print (list 'enter *id0* *cc0*)
-           :post-print (list 'exit *id0* *cc0*))
-       (f1 :bindings ((*cc1* (incf *f1-call-count*))
-                      (*id1* (gensym "F1-")))
-           :pre-print (list 'enter *id1* *cc1*)
-           :post-print (list 'exit *id1* *cc1*)))
-;; Tracing function F0.
-;; Tracing function F1.
-⇒ (F0 F1)
-(f0 10)
-1. Trace: (F0 '10)
-(ENTER #:F0-2926 1)
-2. Trace: (F1 '9)
-(ENTER #:F1-2927 1)
-3. Trace: (F0 '8)
-(ENTER #:F0-2928 2)
-4. Trace: (F1 '7)
-(ENTER #:F1-2929 2)
-5. Trace: (F1 '6)
-(ENTER #:F1-2930 3)
-6. Trace: (F1 '5)
-(ENTER #:F1-2931 4)
-7. Trace: (F1 '4)
-(ENTER #:F1-2932 5)
-8. Trace: (F0 '3)
-(ENTER #:F0-2933 3)
-9. Trace: (F1 '2)
-(ENTER #:F1-2934 6)
-10. Trace: (F0 '1)
-(ENTER #:F0-2935 4)
-11. Trace: (F1 '0)
-(ENTER #:F1-2936 7)
-(EXIT #:F1-2936 7)
-11. Trace: F1 ==&gt; 1
-(EXIT #:F0-2935 4)
-10. Trace: F0 ==&gt; 1
-(EXIT #:F1-2934 6)
-9. Trace: F1 ==&gt; 2
-(EXIT #:F0-2933 3)
-8. Trace: F0 ==&gt; 6
-(EXIT #:F1-2932 5)
-7. Trace: F1 ==&gt; 24
-(EXIT #:F1-2931 4)
-6. Trace: F1 ==&gt; 120
-(EXIT #:F1-2930 3)
-5. Trace: F1 ==&gt; 720
-(EXIT #:F1-2929 2)
-4. Trace: F1 ==&gt; 5040
-(EXIT #:F0-2928 2)
-3. Trace: F0 ==&gt; 40320
-(EXIT #:F1-2927 1)
-2. Trace: F1 ==&gt; 362880
-(EXIT #:F0-2926 1)
-1. Trace: F0 ==&gt; 3628800
-⇒ 3628800
-*f0-call-count*
-⇒ 4
-*f1-call-count*
-⇒ 7
-</code></pre>
-
-<h3 id="pretty-backtrace">Pretty backtrace</h3>
-
-<p>The original backtrace dump message is not good enough, thanks to <a href="http://jsnell.iki.fi/blog/archive/2007-12-19-pretty-sbcl-backtraces.html">Juho’s
-post</a>, you can put this in your <code>.sbclrc</code>:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-<span class="line-number">16</span>
-<span class="line-number">17</span>
-<span class="line-number">18</span>
-<span class="line-number">19</span>
-<span class="line-number">20</span>
-<span class="line-number">21</span>
-<span class="line-number">22</span>
-<span class="line-number">23</span>
-<span class="line-number">24</span>
-<span class="line-number">25</span>
-<span class="line-number">26</span>
-<span class="line-number">27</span>
-<span class="line-number">28</span>
-<span class="line-number">29</span>
-<span class="line-number">30</span>
-<span class="line-number">31</span>
-<span class="line-number">32</span>
-<span class="line-number">33</span>
-<span class="line-number">34</span>
-<span class="line-number">35</span>
-<span class="line-number">36</span>
-<span class="line-number">37</span>
-<span class="line-number">38</span>
-<span class="line-number">39</span>
-<span class="line-number">40</span>
-<span class="line-number">41</span>
-<span class="line-number">42</span>
-</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">backtrace-with-extra-info</span> <span class="p">(</span><span class="k">&amp;key</span> <span class="p">(</span><span class="nv">start</span> <span class="mi">1</span><span class="p">)</span> <span class="p">(</span><span class="nv">end</span> <span class="mi">20</span><span class="p">))</span>
-</span><span class="line">  <span class="p">(</span><span class="nv">swank-backend::call-with-debugging-environment</span>
-</span><span class="line">   <span class="p">(</span><span class="k">lambda</span> <span class="p">()</span>
-</span><span class="line">     <span class="p">(</span><span class="nb">loop</span> <span class="nv">for</span> <span class="nv">i</span> <span class="nv">from</span> <span class="nv">start</span> <span class="nv">to</span> <span class="p">(</span><span class="nb">length</span> <span class="p">(</span><span class="nv">swank-backend::compute-backtrace</span>
-</span><span class="line">                                        <span class="nv">start</span> <span class="nv">end</span><span class="p">))</span>
-</span><span class="line">           <span class="nb">do</span> <span class="p">(</span><span class="nb">ignore-errors</span> <span class="p">(</span><span class="nv">print-frame</span> <span class="nv">i</span><span class="p">))))))</span>
-</span><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">print-frame</span> <span class="p">(</span><span class="nv">i</span><span class="p">)</span>
-</span><span class="line">  <span class="p">(</span><span class="nb">destructuring-bind</span> <span class="p">(</span><span class="k">&amp;key</span> <span class="nv">file</span> <span class="nb">position</span> <span class="k">&amp;allow-other-keys</span><span class="p">)</span>
-</span><span class="line">      <span class="p">(</span><span class="nb">apply</span> <span class="nf">#&#39;</span><span class="nb">append</span>
-</span><span class="line">             <span class="p">(</span><span class="nb">remove-if</span> <span class="nf">#&#39;</span><span class="nb">atom</span>
-</span><span class="line">                        <span class="p">(</span><span class="nv">swank-backend:frame-source-location-for-emacs</span> <span class="nv">i</span><span class="p">)))</span>
-</span><span class="line">    <span class="p">(</span><span class="k">let*</span> <span class="p">((</span><span class="nv">frame</span> <span class="p">(</span><span class="nv">swank-backend::nth-frame</span> <span class="nv">i</span><span class="p">))</span>
-</span><span class="line">           <span class="p">(</span><span class="nv">line-number</span> <span class="p">(</span><span class="nv">find-line-position</span> <span class="nv">file</span> <span class="nb">position</span> <span class="nv">frame</span><span class="p">)))</span>
-</span><span class="line">      <span class="p">(</span><span class="nb">format</span> <span class="no">t</span> <span class="s">&quot;~2@a: ~s~%~</span>
-</span><span class="line"><span class="s">                   ~:[~*~;~:[~2:*    At ~a (unknown line)~*~%~;~</span>
-</span><span class="line"><span class="s">                             ~2:*    At ~a:~a~%~]~]~</span>
-</span><span class="line"><span class="s">                   ~:[~*~;    Local variables:~%~{      ~a = ~s~%~}~]&quot;</span>
-</span><span class="line">              <span class="nv">i</span>
-</span><span class="line">              <span class="p">(</span><span class="nv">sb-debug::frame-call</span> <span class="p">(</span><span class="nv">swank-backend::nth-frame</span> <span class="nv">i</span><span class="p">))</span>
-</span><span class="line">              <span class="nv">file</span> <span class="nv">line-number</span>
-</span><span class="line">              <span class="p">(</span><span class="nv">swank-backend::frame-locals</span> <span class="nv">i</span><span class="p">)</span>
-</span><span class="line">              <span class="p">(</span><span class="nb">mapcan</span> <span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="nv">x</span><span class="p">)</span>
-</span><span class="line">                        <span class="c1">;; Filter out local variables whose variables we</span>
-</span><span class="line">                        <span class="c1">;; don&#39;t know</span>
-</span><span class="line">                        <span class="p">(</span><span class="nb">unless</span> <span class="p">(</span><span class="nb">eql</span> <span class="p">(</span><span class="nb">getf</span> <span class="nv">x</span> <span class="ss">:value</span><span class="p">)</span> <span class="ss">:&lt;not-available&gt;</span><span class="p">)</span>
-</span><span class="line">                          <span class="p">(</span><span class="nb">list</span> <span class="p">(</span><span class="nb">getf</span> <span class="nv">x</span> <span class="ss">:name</span><span class="p">)</span> <span class="p">(</span><span class="nb">getf</span> <span class="nv">x</span> <span class="ss">:value</span><span class="p">))))</span>
-</span><span class="line">                      <span class="p">(</span><span class="nv">swank-backend::frame-locals</span> <span class="nv">i</span><span class="p">))))))</span>
-</span><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">find-line-position</span> <span class="p">(</span><span class="nv">file</span> <span class="nv">char-offset</span> <span class="nv">frame</span><span class="p">)</span>
-</span><span class="line">  <span class="c1">;; It would be nice if SBCL stored line number information in</span>
-</span><span class="line">  <span class="c1">;; addition to form path information by default Since it doesn&#39;t</span>
-</span><span class="line">  <span class="c1">;; we need to use Swank to map the source path to a character</span>
-</span><span class="line">  <span class="c1">;; offset, and then map the character offset to a line number</span>
-</span><span class="line">  <span class="p">(</span><span class="nb">ignore-errors</span>
-</span><span class="line">   <span class="p">(</span><span class="k">let*</span> <span class="p">((</span><span class="nv">location</span> <span class="p">(</span><span class="nv">sb-di::frame-code-location</span> <span class="nv">frame</span><span class="p">))</span>
-</span><span class="line">          <span class="p">(</span><span class="nv">debug-source</span> <span class="p">(</span><span class="nv">sb-di::code-location-debug-source</span> <span class="nv">location</span><span class="p">))</span>
-</span><span class="line">          <span class="p">(</span><span class="nv">line</span> <span class="p">(</span><span class="nb">with-open-file</span> <span class="p">(</span><span class="nc">stream</span> <span class="nv">file</span><span class="p">)</span>
-</span><span class="line">                  <span class="p">(</span><span class="nb">1+</span> <span class="p">(</span><span class="nb">loop</span> <span class="nv">repeat</span> <span class="nv">char-offset</span>
-</span><span class="line">                            <span class="nb">count</span> <span class="p">(</span><span class="nb">eql</span> <span class="p">(</span><span class="nb">read-char</span> <span class="nc">stream</span><span class="p">)</span> <span class="sc">#\Newline</span><span class="p">))))))</span>
-</span><span class="line">     <span class="p">(</span><span class="nb">format</span> <span class="no">nil</span> <span class="s">&quot;~:[~a (file modified)~;~a~]&quot;</span>
-</span><span class="line">             <span class="p">(</span><span class="nb">=</span> <span class="p">(</span><span class="nb">file-write-date</span> <span class="nv">file</span><span class="p">)</span>
-</span><span class="line">                <span class="p">(</span><span class="nv">sb-di::debug-source-created</span> <span class="nv">debug-source</span><span class="p">))</span>
-</span><span class="line">             <span class="nv">line</span><span class="p">))))</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>And now in your REPL, the following code:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">declaim</span> <span class="p">(</span><span class="k">optimize</span> <span class="nv">debug</span><span class="p">))</span>
-</span><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">foo</span> <span class="p">(</span><span class="nv">x</span><span class="p">)</span>
-</span><span class="line">  <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">y</span> <span class="p">(</span><span class="nb">+</span> <span class="nv">x</span> <span class="mi">3</span><span class="p">)))</span>
-</span><span class="line">    <span class="p">(</span><span class="nv">backtrace</span><span class="p">)</span>
-</span><span class="line">    <span class="p">(</span><span class="nv">backtrace-with-extra-info</span><span class="p">)</span>
-</span><span class="line">    <span class="p">(</span><span class="nb">+</span> <span class="nv">x</span> <span class="nv">y</span><span class="p">)))</span>
-</span><span class="line"><span class="p">(</span><span class="nb">defmethod</span> <span class="nv">bar</span> <span class="p">((</span><span class="nv">n</span> <span class="kt">fixnum</span><span class="p">)</span> <span class="p">(</span><span class="nv">y</span> <span class="p">(</span><span class="nb">eql</span> <span class="mi">1</span><span class="p">)))</span>
-</span><span class="line">  <span class="p">(</span><span class="nv">foo</span> <span class="p">(</span><span class="nb">+</span> <span class="nv">y</span> <span class="nv">n</span><span class="p">)))</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>The old backtrace would look like:</p>
-
-<pre><code>1: (FOO 4)
-2: ((SB-PCL::FAST-METHOD BAR (FIXNUM (EQL 1)))
-    #&lt;unused argument&gt;
-    #&lt;unused argument&gt;
-    3
-    1)
-3: (SB-INT:SIMPLE-EVAL-IN-LEXENV (BAR 3 1) #&lt;NULL-LEXENV&gt;)
-</code></pre>
-
-<p>And the new one:</p>
-
-<pre><code>1: FOO
-   At /tmp/testlisp:5
-   Local variables:
-     X = 4
-     Y = 7
-2: (SB-PCL::FAST-METHOD BAR (FIXNUM (EQL 1)))
-   At /tmp/testlisp:8
-   Local variables:
-     N = 3
-     Y = 1
-3: SB-INT:SIMPLE-EVAL-IN-LEXENV
-   At /scratch/src/sbcl/src/code/evallisp:93 (file modified)
-   Local variables:
-     ARG-0 = (BAR 3 1)
-     ARG-1 = #&lt;NULL-LEXENV&gt;
-</code></pre>
-
-<p><strong>Voilà!</strong> </p>
 
 ]]></content>
   </entry>
