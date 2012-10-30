@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Cocoa | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/cocoa/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-10-30T21:53:21+08:00</updated>
+  <updated>2012-10-30T21:54:05+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -217,7 +217,7 @@ and framework with differnt data types that share the same methods.</p>
   <li><a href="https://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html#//apple_ref/doc/uid/TP40008048-CH100">Objective C type encoding</a></li>
   <li><a href="http://developer.apple.com/library/mac/#documentation/CoreFoundation/Conceptual/CFDesignConcepts/Articles/Inspecting.html">Inspecting core foundation object</a></li>
   <li><a href="https://github.com/dryman/FCAnimationFactory/blob/master/FCEasingAnimation/FCAnimationFactory.m">Example usage of how to handle Core Animation dynamic properties</a>
-(See makeValueScalingBlockFromValue: method)</li>
+(See the <code>makeValueScalingBlockFromValue:</code> method)</li>
 </ul>
 
 ]]></content>
