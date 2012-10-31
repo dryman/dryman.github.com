@@ -315,6 +315,181 @@ Objective-C object/Core Foundation reference.</p>
 In my point of view, programmer <em>should</em> pass in a valid object for sure. If it
 is not a valid object, just let it crash.</p>
 
+<h2 id="puting-it-all-together">Puting it all together</h2>
+
+<p>This piece of code is part of my project <a href="https://github.com/dryman/FCAnimationFactory">FCAnimationFactory</a> for the
+purpose of interpolating different kinds of value with respect to their types.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>FCAnimationFactory.m  </span><a href="https://github.com/dryman/FCAnimationFactory/blob/master/FCEasingAnimation/FCAnimationFactory.m">link</a></figcaption> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+<span class="line-number">38</span>
+<span class="line-number">39</span>
+<span class="line-number">40</span>
+<span class="line-number">41</span>
+<span class="line-number">42</span>
+<span class="line-number">43</span>
+<span class="line-number">44</span>
+<span class="line-number">45</span>
+<span class="line-number">46</span>
+<span class="line-number">47</span>
+<span class="line-number">48</span>
+<span class="line-number">49</span>
+<span class="line-number">50</span>
+<span class="line-number">51</span>
+<span class="line-number">52</span>
+<span class="line-number">53</span>
+<span class="line-number">54</span>
+<span class="line-number">55</span>
+<span class="line-number">56</span>
+<span class="line-number">57</span>
+<span class="line-number">58</span>
+<span class="line-number">59</span>
+<span class="line-number">60</span>
+<span class="line-number">61</span>
+<span class="line-number">62</span>
+<span class="line-number">63</span>
+<span class="line-number">64</span>
+<span class="line-number">65</span>
+<span class="line-number">66</span>
+<span class="line-number">67</span>
+<span class="line-number">68</span>
+<span class="line-number">69</span>
+<span class="line-number">70</span>
+<span class="line-number">71</span>
+<span class="line-number">72</span>
+<span class="line-number">73</span>
+<span class="line-number">74</span>
+<span class="line-number">75</span>
+<span class="line-number">76</span>
+<span class="line-number">77</span>
+<span class="line-number">78</span>
+<span class="line-number">79</span>
+<span class="line-number">80</span>
+<span class="line-number">81</span>
+<span class="line-number">82</span>
+<span class="line-number">83</span>
+<span class="line-number">84</span>
+</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">id</span><span class="p">(</span><span class="o">^</span><span class="p">)(</span><span class="kt">float</span><span class="p">))</span><span class="nf">makeValueScalingBlockFromValue:</span><span class="p">(</span><span class="kt">id</span><span class="p">)</span><span class="nv">fromValue</span> <span class="nf">ToValue:</span><span class="p">(</span><span class="kt">id</span><span class="p">)</span><span class="nv">toValue</span>
+</span><span class="line"><span class="p">{</span>
+</span><span class="line">    <span class="k">if</span> <span class="p">(</span><span class="n">fromValue</span><span class="o">==</span><span class="nb">nil</span> <span class="o">||</span> <span class="n">toValue</span><span class="o">==</span><span class="nb">nil</span><span class="p">)</span> <span class="n">NSAssert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">@&quot;fromValue and toValue must not be nil&quot;</span><span class="p">);</span>
+</span><span class="line">
+</span><span class="line">    <span class="kt">id</span> <span class="n">value</span> <span class="o">=</span> <span class="n">fromValue</span><span class="p">;</span>
+</span><span class="line">
+</span><span class="line">    <span class="cm">/*</span>
+</span><span class="line"><span class="cm">     * single float is handled in NSNumber</span>
+</span><span class="line"><span class="cm">     */</span>
+</span><span class="line">    <span class="k">if</span> <span class="p">([</span><span class="n">value</span> <span class="nl">isKindOfClass:</span><span class="p">[</span><span class="n">NSNumber</span> <span class="n">class</span><span class="p">]])</span> <span class="p">{</span>
+</span><span class="line">        <span class="kt">float</span> <span class="n">v1</span> <span class="o">=</span> <span class="p">[(</span><span class="n">NSNumber</span><span class="o">*</span><span class="p">)</span><span class="n">fromValue</span> <span class="n">floatValue</span><span class="p">];</span>
+</span><span class="line">        <span class="kt">float</span> <span class="n">v2</span> <span class="o">=</span> <span class="p">[(</span><span class="n">NSNumber</span><span class="o">*</span><span class="p">)</span><span class="n">toValue</span> <span class="n">floatValue</span><span class="p">];</span>
+</span><span class="line">        <span class="kt">float</span> <span class="n">diffValue</span> <span class="o">=</span> <span class="n">v2</span> <span class="o">-</span> <span class="n">v1</span><span class="p">;</span>
+</span><span class="line">        <span class="k">return</span> <span class="o">^</span><span class="kt">id</span><span class="p">(</span><span class="kt">float</span> <span class="n">factor</span><span class="p">){</span>
+</span><span class="line">            <span class="kt">float</span> <span class="n">result</span> <span class="o">=</span> <span class="n">factor</span><span class="o">*</span><span class="n">diffValue</span> <span class="o">+</span> <span class="n">v1</span><span class="p">;</span>
+</span><span class="line">            <span class="k">return</span> <span class="p">[</span><span class="n">NSNumber</span> <span class="nl">numberWithFloat:</span><span class="n">result</span><span class="p">];</span>
+</span><span class="line">        <span class="p">};</span>
+</span><span class="line">    <span class="p">}</span>
+</span><span class="line">
+</span><span class="line">    <span class="cm">/*</span>
+</span><span class="line"><span class="cm">     * NSValue handles CGPoint, CGSize, CGRect, and CATransform3D</span>
+</span><span class="line"><span class="cm">     */</span>
+</span><span class="line">    <span class="k">if</span> <span class="p">([</span><span class="n">value</span> <span class="nl">isKindOfClass:</span><span class="p">[</span><span class="n">NSValue</span> <span class="n">class</span><span class="p">]])</span> <span class="p">{</span>
+</span><span class="line">        <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">objCType</span> <span class="o">=</span> <span class="p">[</span><span class="n">value</span> <span class="n">objCType</span><span class="p">];</span>
+</span><span class="line">        <span class="k">if</span> <span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">objCType</span><span class="p">,</span> <span class="k">@encode</span><span class="p">(</span><span class="n">CGPoint</span><span class="p">))</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">            <span class="n">CGPoint</span> <span class="n">pt0</span><span class="p">,</span> <span class="n">pt1</span><span class="p">;</span>
+</span><span class="line">            <span class="p">[(</span><span class="n">NSValue</span><span class="o">*</span><span class="p">)</span><span class="n">fromValue</span> <span class="nl">getValue:</span><span class="o">&amp;</span><span class="n">pt0</span><span class="p">];</span>
+</span><span class="line">            <span class="p">[(</span><span class="n">NSValue</span><span class="o">*</span><span class="p">)</span><span class="n">toValue</span> <span class="nl">getValue:</span><span class="o">&amp;</span><span class="n">pt1</span><span class="p">];</span>
+</span><span class="line">            <span class="k">return</span> <span class="o">^</span><span class="kt">id</span><span class="p">(</span><span class="kt">float</span> <span class="n">factor</span><span class="p">){</span>
+</span><span class="line">                <span class="kt">float</span> <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="n">pt1</span><span class="p">.</span><span class="n">x</span> <span class="o">-</span> <span class="n">pt0</span><span class="p">.</span><span class="n">x</span><span class="p">)</span><span class="o">*</span><span class="n">factor</span> <span class="o">+</span> <span class="n">pt0</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+</span><span class="line">                <span class="kt">float</span> <span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">pt1</span><span class="p">.</span><span class="n">y</span> <span class="o">-</span> <span class="n">pt0</span><span class="p">.</span><span class="n">y</span><span class="p">)</span><span class="o">*</span><span class="n">factor</span> <span class="o">+</span> <span class="n">pt0</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+</span><span class="line">                <span class="k">return</span> <span class="p">[</span><span class="n">NSValue</span> <span class="nl">valueWithCGPoint:</span><span class="n">CGPointMake</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)];</span>
+</span><span class="line">            <span class="p">};</span>
+</span><span class="line">        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">objCType</span><span class="p">,</span> <span class="k">@encode</span><span class="p">(</span><span class="n">CGSize</span><span class="p">))</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">            <span class="n">CGSize</span> <span class="n">size0</span><span class="p">,</span> <span class="n">size1</span><span class="p">;</span>
+</span><span class="line">            <span class="p">[(</span><span class="n">NSValue</span><span class="o">*</span><span class="p">)</span><span class="n">fromValue</span> <span class="nl">getValue:</span><span class="o">&amp;</span><span class="n">size0</span><span class="p">];</span>
+</span><span class="line">            <span class="p">[(</span><span class="n">NSValue</span><span class="o">*</span><span class="p">)</span><span class="n">toValue</span> <span class="nl">getValue:</span><span class="o">&amp;</span><span class="n">size1</span><span class="p">];</span>
+</span><span class="line">            <span class="k">return</span> <span class="o">^</span><span class="kt">id</span><span class="p">(</span><span class="kt">float</span> <span class="n">factor</span><span class="p">){</span>
+</span><span class="line">                <span class="kt">float</span> <span class="n">w</span> <span class="o">=</span> <span class="p">(</span><span class="n">size1</span><span class="p">.</span><span class="n">width</span> <span class="o">-</span> <span class="n">size0</span><span class="p">.</span><span class="n">width</span><span class="p">)</span><span class="o">*</span><span class="n">factor</span> <span class="o">+</span> <span class="n">size0</span><span class="p">.</span><span class="n">width</span><span class="p">;</span>
+</span><span class="line">                <span class="kt">float</span> <span class="n">h</span> <span class="o">=</span> <span class="p">(</span><span class="n">size1</span><span class="p">.</span><span class="n">height</span> <span class="o">-</span> <span class="n">size0</span><span class="p">.</span><span class="n">height</span><span class="p">)</span><span class="o">*</span><span class="n">factor</span> <span class="o">+</span> <span class="n">size0</span><span class="p">.</span><span class="n">height</span><span class="p">;</span>
+</span><span class="line">                <span class="k">return</span> <span class="p">[</span><span class="n">NSValue</span> <span class="nl">valueWithCGSize:</span><span class="n">CGSizeMake</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">)];</span>
+</span><span class="line">            <span class="p">};</span>
+</span><span class="line">        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">objCType</span><span class="p">,</span> <span class="k">@encode</span><span class="p">(</span><span class="n">CGRect</span><span class="p">))</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">            <span class="n">CGRect</span> <span class="n">rect0</span><span class="p">,</span> <span class="n">rect1</span><span class="p">;</span>
+</span><span class="line">            <span class="p">[(</span><span class="n">NSValue</span><span class="o">*</span><span class="p">)</span><span class="n">fromValue</span> <span class="nl">getValue:</span><span class="o">&amp;</span><span class="n">rect0</span><span class="p">];</span>
+</span><span class="line">            <span class="p">[(</span><span class="n">NSValue</span><span class="o">*</span><span class="p">)</span><span class="n">toValue</span> <span class="nl">getValue:</span><span class="o">&amp;</span><span class="n">rect1</span><span class="p">];</span>
+</span><span class="line">            <span class="k">return</span> <span class="o">^</span><span class="kt">id</span><span class="p">(</span><span class="kt">float</span> <span class="n">factor</span><span class="p">){</span>
+</span><span class="line">                <span class="kt">float</span> <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="n">rect1</span><span class="p">.</span><span class="n">origin</span><span class="p">.</span><span class="n">x</span> <span class="o">-</span> <span class="n">rect0</span><span class="p">.</span><span class="n">origin</span><span class="p">.</span><span class="n">x</span><span class="p">)</span><span class="o">*</span><span class="n">factor</span> <span class="o">+</span> <span class="n">rect0</span><span class="p">.</span><span class="n">origin</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+</span><span class="line">                <span class="kt">float</span> <span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">rect1</span><span class="p">.</span><span class="n">origin</span><span class="p">.</span><span class="n">y</span> <span class="o">-</span> <span class="n">rect0</span><span class="p">.</span><span class="n">origin</span><span class="p">.</span><span class="n">y</span><span class="p">)</span><span class="o">*</span><span class="n">factor</span> <span class="o">+</span> <span class="n">rect0</span><span class="p">.</span><span class="n">origin</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+</span><span class="line">                <span class="kt">float</span> <span class="n">w</span> <span class="o">=</span> <span class="p">(</span><span class="n">rect1</span><span class="p">.</span><span class="n">size</span><span class="p">.</span><span class="n">width</span> <span class="o">-</span> <span class="n">rect0</span><span class="p">.</span><span class="n">size</span><span class="p">.</span><span class="n">width</span><span class="p">)</span><span class="o">*</span><span class="n">factor</span> <span class="o">+</span> <span class="n">rect0</span><span class="p">.</span><span class="n">size</span><span class="p">.</span><span class="n">width</span><span class="p">;</span>
+</span><span class="line">                <span class="kt">float</span> <span class="n">h</span> <span class="o">=</span> <span class="p">(</span><span class="n">rect1</span><span class="p">.</span><span class="n">size</span><span class="p">.</span><span class="n">height</span> <span class="o">-</span> <span class="n">rect0</span><span class="p">.</span><span class="n">size</span><span class="p">.</span><span class="n">height</span><span class="p">)</span><span class="o">*</span><span class="n">factor</span> <span class="o">+</span> <span class="n">rect0</span><span class="p">.</span><span class="n">size</span><span class="p">.</span><span class="n">height</span><span class="p">;</span>
+</span><span class="line">                <span class="k">return</span> <span class="p">[</span><span class="n">NSValue</span> <span class="nl">valueWithCGRect:</span><span class="n">CGRectMake</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">)];</span>
+</span><span class="line">            <span class="p">};</span>
+</span><span class="line">        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">objCType</span><span class="p">,</span> <span class="k">@encode</span><span class="p">(</span><span class="n">CATransform3D</span><span class="p">))</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">            <span class="n">NSAssert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">@&quot;CATransform3D type currently not supported&quot;</span><span class="p">);</span>
+</span><span class="line">        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span><span class="line">            <span class="n">NSAssert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">@&quot;Unknown NSValue type %s&quot;</span><span class="p">,</span><span class="n">objCType</span><span class="p">);</span>
+</span><span class="line">        <span class="p">}</span>
+</span><span class="line">    <span class="p">}</span>
+</span><span class="line">
+</span><span class="line">    <span class="k">if</span> <span class="p">(</span><span class="n">CFGetTypeID</span><span class="p">((</span><span class="n">__bridge</span> <span class="n">CFTypeRef</span><span class="p">)</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="n">CGColorGetTypeID</span><span class="p">())</span> <span class="p">{</span>
+</span><span class="line">        <span class="k">return</span> <span class="o">^</span><span class="kt">id</span><span class="p">(</span><span class="kt">float</span> <span class="n">factor</span><span class="p">){</span>
+</span><span class="line">            <span class="n">CGColorRef</span> <span class="n">fromColor</span> <span class="o">=</span> <span class="p">(</span><span class="n">__bridge</span> <span class="n">CGColorRef</span><span class="p">)</span><span class="n">fromValue</span><span class="p">;</span>
+</span><span class="line">            <span class="n">CGColorRef</span> <span class="n">toColor</span> <span class="o">=</span> <span class="p">(</span><span class="n">__bridge</span> <span class="n">CGColorRef</span><span class="p">)</span><span class="n">toValue</span><span class="p">;</span>
+</span><span class="line">            <span class="n">size_t</span> <span class="n">num</span> <span class="o">=</span> <span class="n">CGColorGetNumberOfComponents</span><span class="p">(</span><span class="n">fromColor</span><span class="p">);</span>
+</span><span class="line">            <span class="k">const</span> <span class="n">CGFloat</span> <span class="o">*</span><span class="n">fromComp</span> <span class="o">=</span> <span class="n">CGColorGetComponents</span><span class="p">(</span><span class="n">fromColor</span><span class="p">);</span>
+</span><span class="line">            <span class="k">const</span> <span class="n">CGFloat</span> <span class="o">*</span><span class="n">toComp</span> <span class="o">=</span> <span class="n">CGColorGetComponents</span><span class="p">(</span><span class="n">toColor</span><span class="p">);</span>
+</span><span class="line">
+</span><span class="line">            <span class="n">CGFloat</span> <span class="n">newComp</span><span class="p">[</span><span class="n">num</span><span class="p">];</span> <span class="c1">// same as amalloc</span>
+</span><span class="line">            <span class="k">for</span> <span class="p">(</span><span class="n">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">num</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">                <span class="n">newComp</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">toComp</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">fromComp</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">*</span> <span class="n">factor</span> <span class="o">+</span> <span class="n">fromComp</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+</span><span class="line">            <span class="p">}</span>
+</span><span class="line">            <span class="n">CGColorRef</span> <span class="n">retColor</span> <span class="o">=</span> <span class="n">CGColorCreate</span><span class="p">(</span><span class="n">CGColorGetColorSpace</span><span class="p">(</span><span class="n">fromColor</span><span class="p">),</span> <span class="n">newComp</span><span class="p">);</span>
+</span><span class="line">
+</span><span class="line">            <span class="k">return</span> <span class="p">(</span><span class="n">__bridge_transfer</span> <span class="kt">id</span><span class="p">)</span><span class="n">retColor</span><span class="p">;</span>
+</span><span class="line">        <span class="p">};</span>
+</span><span class="line">    <span class="p">}</span>
+</span><span class="line">    <span class="k">if</span> <span class="p">(</span><span class="n">CFGetTypeID</span><span class="p">((</span><span class="n">__bridge</span> <span class="n">CFTypeRef</span><span class="p">)</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="n">CGImageGetTypeID</span><span class="p">())</span> <span class="p">{</span>
+</span><span class="line">        <span class="n">NSAssert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">@&quot;CGImageRef should be handled in another class&quot;</span><span class="p">);</span>
+</span><span class="line">    <span class="p">}</span>
+</span><span class="line">
+</span><span class="line">    <span class="n">NSAssert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">@&quot;value type unknown&quot;</span><span class="p">);</span>
+</span><span class="line">    <span class="k">return</span> <span class="o">^</span><span class="kt">id</span><span class="p">(</span><span class="kt">float</span> <span class="n">factor</span><span class="p">){</span> <span class="k">return</span> <span class="nb">nil</span><span class="p">;};</span>    <span class="c1">// turn off compiler warnings</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
 <h2 id="conclusion">Conclusion</h2>
 
 <p>It is amazing that a langauge so close to C can create such a rich type system
@@ -329,8 +504,6 @@ and framework with differnt data types that share the same methods.</p>
   <li><a href="http://www.cocoawithlove.com/2010/10/testing-if-arbitrary-pointer-is-valid.html">how to test if an arbitary pointer is a valid NSObject</a></li>
   <li><a href="https://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html#//apple_ref/doc/uid/TP40008048-CH100">Objective C type encoding</a></li>
   <li><a href="http://developer.apple.com/library/mac/#documentation/CoreFoundation/Conceptual/CFDesignConcepts/Articles/Inspecting.html">Inspecting core foundation object</a></li>
-  <li><a href="https://github.com/dryman/FCAnimationFactory/blob/master/FCEasingAnimation/FCAnimationFactory.m">Example usage of how to handle Core Animation dynamic properties</a>
-(See the <code>makeValueScalingBlockFromValue:</code> method)</li>
 </ul>
 
 </div>
