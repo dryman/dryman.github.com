@@ -172,8 +172,8 @@ End of quiz 3
 x is 2, *ptr is 24
 End of quiz 3
 </code></pre>
+<p><strong>Oops</strong></p>
 </div>
-    <p><strong>Oops</strong></p>
 
 ## Quiz 4
 {% codeblock lang:c %}

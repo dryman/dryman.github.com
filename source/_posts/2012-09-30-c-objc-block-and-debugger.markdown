@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "C-ObjC block and debugger"
+title: "C/ObjC block and debugger"
 date: 2012-09-30 14:32
 comments: true
 categories: Cocoa, block
@@ -17,7 +17,7 @@ helper functions every time! Thanks for
 ## GDB
 
 Add these line into your `~.gdbinit` file. It was originally created by Big Nerd
-Ranch's author Mark Dalrymple.
+Ranch Inc.
 I renamed the functions from `dump-block-literal` and `dump-block-byref` to
 `pblock` and `pbyref`.
 
