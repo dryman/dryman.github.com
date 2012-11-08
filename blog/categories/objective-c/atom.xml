@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Objective-C | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/objective-c/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-11-08T14:34:36+08:00</updated>
+  <updated>2012-11-08T14:37:19+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -400,7 +400,7 @@ and framework with differnt data types that share the same methods.</p>
     <link href="http://www.idryman.org/blog/2012/10/29/type-qualifiers/"/>
     <updated>2012-10-29T08:55:00+08:00</updated>
     <id>http://www.idryman.org/blog/2012/10/29/type-qualifiers</id>
-    <content type="html"><![CDATA[<p>Type qualifiers are heavily used in C and Objective C. In C99 there are four
+    <content type="html"><![CDATA[<p>Type qualifiers are heavily used in C and Objective C. In C99 there are three
 type qualifiers: <code>const</code>, <code>restrict</code>, and <code>volatile</code>. In objective C,
 Apple introduced <code>__weak</code>, <code>__strong</code>, <code>__unsafe_unretained</code>, and
 <code>__autoreleasing</code> for automatic reference counting.</p>
