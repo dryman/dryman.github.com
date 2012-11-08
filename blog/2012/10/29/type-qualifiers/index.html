@@ -10,7 +10,8 @@
 
   
   <meta name="description" content="Type qualifiers are heavily used in C and Objective C. In C99 there are four
-type qualifiers: const, restrict, register and volatile. In objective C &hellip;">
+type qualifiers: const, restrict, and volatile. In objective C,
+Apple &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -132,7 +133,7 @@ MathJax.Hub.Config({
 
 
 <div class="entry-content"><p>Type qualifiers are heavily used in C and Objective C. In C99 there are four
-type qualifiers: <code>const</code>, <code>restrict</code>, <code>register</code> and <code>volatile</code>. In objective C,
+type qualifiers: <code>const</code>, <code>restrict</code>, and <code>volatile</code>. In objective C,
 Apple introduced <code>__weak</code>, <code>__strong</code>, <code>__unsafe_unretained</code>, and
 <code>__autoreleasing</code> for automatic reference counting.</p>
 
@@ -245,7 +246,7 @@ basics and the most commonly seen ones.</p>
 <p>For more curious, checkout <a href="http://www.vineetgupta.com/2011/03/deciphering-complex-c-declarations/">Deciphering Complex C Declarations</a> and
 <a href="http://cdecl.org">cdecl</a>.</p>
 
-<h2 id="restrict-volatile-and-register">restrict, volatile, and register</h2>
+<h2 id="volatile-restrict">volatile, restrict</h2>
 
 <h3 id="volatile">volatile</h3>
 
@@ -273,12 +274,6 @@ something like:</p>
 <p>This is a function that is thread and multiprocessor safe to swap/update an integer.
 Objective-C runtime uses these functions defined in <a href="http://www.opensource.apple.com/source/xnu/xnu-1456.1.26/libkern/libkern/OSAtomic.h">OSAtomic.h</a> to
 manage retain counts.</p>
-
-<h3 id="register">register</h3>
-
-<p><code>register</code> is a opposite keyword to <code>volatile</code>.
-The register type modifier tells the compiler to store the variable being
-declared in a CPU register (if possible), to optimize access.</p>
 
 <h3 id="restrict">restrict</h3>
 

@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Objective-C | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/objective-c/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-10-31T09:32:58+08:00</updated>
+  <updated>2012-11-08T14:34:36+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -358,7 +358,7 @@ purpose of interpolating different kinds of value with respect to their types.</
 </span><span class='line'>        <span class="k">const</span> <span class="n">CGFloat</span> <span class="o">*</span><span class="n">fromComp</span> <span class="o">=</span> <span class="n">CGColorGetComponents</span><span class="p">(</span><span class="n">fromColor</span><span class="p">);</span>
 </span><span class='line'>        <span class="k">const</span> <span class="n">CGFloat</span> <span class="o">*</span><span class="n">toComp</span> <span class="o">=</span> <span class="n">CGColorGetComponents</span><span class="p">(</span><span class="n">toColor</span><span class="p">);</span>
 </span><span class='line'>
-</span><span class='line'>        <span class="n">CGFloat</span> <span class="n">newComp</span><span class="p">[</span><span class="n">num</span><span class="p">];</span> <span class="c1">// same as amalloc</span>
+</span><span class='line'>        <span class="n">CGFloat</span> <span class="n">newComp</span><span class="p">[</span><span class="n">num</span><span class="p">];</span> <span class="c1">// same as malloca</span>
 </span><span class='line'>        <span class="k">for</span> <span class="p">(</span><span class="n">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">num</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
 </span><span class='line'>            <span class="n">newComp</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">toComp</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">fromComp</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">*</span> <span class="n">factor</span> <span class="o">+</span> <span class="n">fromComp</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
 </span><span class='line'>        <span class="p">}</span>
@@ -401,7 +401,7 @@ and framework with differnt data types that share the same methods.</p>
     <updated>2012-10-29T08:55:00+08:00</updated>
     <id>http://www.idryman.org/blog/2012/10/29/type-qualifiers</id>
     <content type="html"><![CDATA[<p>Type qualifiers are heavily used in C and Objective C. In C99 there are four
-type qualifiers: <code>const</code>, <code>restrict</code>, <code>register</code> and <code>volatile</code>. In objective C,
+type qualifiers: <code>const</code>, <code>restrict</code>, and <code>volatile</code>. In objective C,
 Apple introduced <code>__weak</code>, <code>__strong</code>, <code>__unsafe_unretained</code>, and
 <code>__autoreleasing</code> for automatic reference counting.</p>
 
@@ -514,7 +514,7 @@ basics and the most commonly seen ones.</p>
 <p>For more curious, checkout <a href="http://www.vineetgupta.com/2011/03/deciphering-complex-c-declarations/">Deciphering Complex C Declarations</a> and
 <a href="http://cdecl.org">cdecl</a>.</p>
 
-<h2 id="restrict-volatile-and-register">restrict, volatile, and register</h2>
+<h2 id="volatile-restrict">volatile, restrict</h2>
 
 <h3 id="volatile">volatile</h3>
 
@@ -542,12 +542,6 @@ something like:</p>
 <p>This is a function that is thread and multiprocessor safe to swap/update an integer.
 Objective-C runtime uses these functions defined in <a href="http://www.opensource.apple.com/source/xnu/xnu-1456.1.26/libkern/libkern/OSAtomic.h">OSAtomic.h</a> to
 manage retain counts.</p>
-
-<h3 id="register">register</h3>
-
-<p><code>register</code> is a opposite keyword to <code>volatile</code>.
-The register type modifier tells the compiler to store the variable being
-declared in a CPU register (if possible), to optimize access.</p>
 
 <h3 id="restrict">restrict</h3>
 
