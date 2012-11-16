@@ -6,8 +6,8 @@ comments: true
 categories: C Objective-C
 ---
 
-Type qualifiers are heavily used in C and Objective C. In C99 there are four
-type qualifiers: `const`, `restrict`, `register` and `volatile`. In objective C,
+Type qualifiers are heavily used in C and Objective C. In C99 there are three
+type qualifiers: `const`, `restrict`, and `volatile`. In objective C,
 Apple introduced `__weak`, `__strong`, `__unsafe_unretained`, and
 `__autoreleasing` for automatic reference counting.
 
@@ -106,7 +106,7 @@ int * const * ( * p)();
 For more curious, checkout [Deciphering Complex C Declarations][complex c] and
 [cdecl][cdecl].
 
-## restrict, volatile, and register
+## volatile, restrict
 
 ### volatile
 
@@ -129,12 +129,6 @@ static __inline bool OSAtomicCompareAndSwapInt(int oldi, int newi, int volatile 
 This is a function that is thread and multiprocessor safe to swap/update an integer.
 Objective-C runtime uses these functions defined in [OSAtomic.h][OSAtomic] to
 manage retain counts.
-
-### register
-
-`register` is a opposite keyword to `volatile`.
-The register type modifier tells the compiler to store the variable being
-declared in a CPU register (if possible), to optimize access.
 
 ### restrict
 

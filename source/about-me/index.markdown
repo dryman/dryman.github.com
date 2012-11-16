@@ -16,6 +16,10 @@ Now I found myself best suited in iOS programming and am looking to find a job
 in this area.
 
 ## iOS projects
+* [FCAnimationFactory](https://github.com/dryman/FCAnimationFactory)
+  A core animation extention that programmer can apply
+  custom timing function to animate position, size, color, opacities and more.
+
 * [Pendulum+](http://itunes.apple.com/au/app/pendulum+/id558261535?mt=8&ign-mpt=uo\%3D2)
   A chaotic double pendulum physics simulation with great use of Core Animation.
   It has good peroformance, low battery usage, and runs smoothly on all iOS
