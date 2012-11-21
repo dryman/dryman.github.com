@@ -4,7 +4,7 @@
   <title><![CDATA[Category: C | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/c/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-11-08T14:37:19+08:00</updated>
+  <updated>2012-11-21T16:35:07+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,195 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Integer Promotion]]></title>
+    <link href="http://www.idryman.org/blog/2012/11/21/integer-promotion/"/>
+    <updated>2012-11-21T14:15:00+08:00</updated>
+    <id>http://www.idryman.org/blog/2012/11/21/integer-promotion</id>
+    <content type="html"><![CDATA[<p>Almost every programmer has learned about C, and a lot of them use it for their
+career. It is certainly one of the most popular programming languages on
+<a href="http://www.tiobe.com/index.php/content/paperinfo/tpci/index.html">TIOBE</a> (first place in November 2012). Yet, C can be really tricky and
+behave unexpectedly sometimes. One of those dodgy side of C is <strong>integer
+promotion</strong>. See the following example that illustrate the issue:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="cp">#include &lt;stdio.h /&gt;&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="kt">int</span> <span class="n">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">a</span> <span class="o">=</span> <span class="mh">0xff</span><span class="p">;</span>
+</span><span class='line'>    <span class="kt">char</span> <span class="n">b</span> <span class="o">=</span> <span class="mh">0xff</span><span class="p">;</span>
+</span><span class='line'>    <span class="kt">int</span> <span class="n">c</span> <span class="o">=</span> <span class="n">a</span><span class="o">==</span><span class="n">b</span><span class="p">;</span> <span class="c1">// true, or false?</span>
+</span><span class='line'>    <span class="n">printf</span><span class="p">(</span><span class="err">“</span><span class="n">C</span><span class="o">:</span> <span class="o">%</span><span class="n">d</span><span class="err">\</span><span class="n">n</span><span class="err">”</span><span class="p">,</span><span class="n">c</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>You might think the output is <code>1</code>, yet the answer is <code>0</code>. Oops.</p>
+
+<!--more-->
+
+<h2 id="c99-spec">C99 SPEC</h2>
+
+<p>In the prior implementation of K&amp;R and C89, arithmetic operands on <code>short</code>
+and <code>char</code> fell into two major camps and may produce different results from the
+above C snippet. In C99, integer promotion is clearly defined in following rule
+(6.3.1.1):</p>
+
+<blockquote>
+  <p>If an int can represent all values of the original type, the value is converted
+to an int; otherwise, it is converted to an unsigned int. These are called the
+integer promotions. All other types are unchanged by the integer promotions.</p>
+</blockquote>
+
+<p>Recall that the range of integer types:</p>
+
+<ul>
+  <li>signed char: -127 to 127</li>
+  <li>unsigned char: 0 to 255</li>
+  <li>signed short: -32767 to 32767</li>
+  <li>unsigned short: 0 to 65535</li>
+  <li>signed int: -2147483647 to 2147483647</li>
+</ul>
+
+<p>You can see that signed and unsigned char, short all can be represented in
+signed int, so they are all converted to signed int when doing arithmetic
+operations.</p>
+
+<p>In the previous example, <code>unsigned char a = 0xff</code> is presenting <em>255</em>. However,
+<code>char b = 0xff</code> is presenting <em>-1</em>. When both converted to int type, <code>a</code>
+remains <em>255</em>, or <code>0x000000ff</code>; <code>b</code> will be <code>0xffffffff</code> which is <em>-1</em>
+represented in int type. You can see how it works in this C snippet:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="cp">#include &lt;stdio.h /&gt;&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="kt">int</span> <span class="n">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">a</span> <span class="o">=</span> <span class="mh">0xff</span><span class="p">;</span>
+</span><span class='line'>    <span class="kt">char</span> <span class="n">b</span> <span class="o">=</span> <span class="mh">0xff</span><span class="p">;</span>
+</span><span class='line'>    <span class="n">printf</span><span class="p">(</span><span class="err">“</span><span class="n">A</span><span class="o">:</span> <span class="o">%</span><span class="mi">08</span><span class="n">x</span><span class="p">,</span> <span class="n">B</span><span class="o">:</span> <span class="o">%</span><span class="mi">08</span><span class="n">x</span><span class="err">\</span><span class="n">n</span><span class="err">”</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">);</span>
+</span><span class='line'>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>The output would be:</p>
+
+<pre><code>A: 000000ff, B: ffffffff
+</code></pre>
+
+<p>This is why the result of expression <code>a==b</code> is <code>0</code>.</p>
+
+<h2 id="understand-it-at-assembly-level">Understand it at assembly level</h2>
+
+<p>When I first understood integer promotion rules, I got even more confused: why
+is this rule so awkward? To understand why it is designed like so, you must dig
+into compiled assembly code.</p>
+
+<p>Let’s start with an easy example:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">a</span> <span class="o">=</span> <span class="mh">0xff</span><span class="p">;</span>
+</span><span class='line'>    <span class="kt">char</span> <span class="n">b</span> <span class="o">=</span> <span class="mh">0xff</span><span class="p">;</span>
+</span><span class='line'>    <span class="kt">int</span> <span class="n">c</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="p">;</span>
+</span><span class='line'>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>The compiled assembly is:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='gas'><span class='line'><span class="nf">movl</span>    <span class="no">$0</span><span class="p">,</span> <span class="p">-</span><span class="mi">4</span><span class="p">(</span><span class="nv">%rbp</span><span class="p">)</span>        <span class="c"># The return value of main is 0</span>
+</span><span class='line'><span class="nf">movb</span>    <span class="no">$-1</span><span class="p">,</span> <span class="p">-</span><span class="mi">5</span><span class="p">(</span><span class="nv">%rbp</span><span class="p">)</span>       <span class="c"># unsigned char a = 0xff;</span>
+</span><span class='line'><span class="nf">movb</span>    <span class="no">$-1</span><span class="p">,</span> <span class="p">-</span><span class="mi">6</span><span class="p">(</span><span class="nv">%rbp</span><span class="p">)</span>       <span class="c"># char b = 0xff;</span>
+</span><span class='line'><span class="nf">movzbl</span>  <span class="p">-</span><span class="mi">5</span><span class="p">(</span><span class="nv">%rbp</span><span class="p">),</span> <span class="nv">%eax</span>
+</span><span class='line'><span class="nf">movsbl</span>  <span class="p">-</span><span class="mi">6</span><span class="p">(</span><span class="nv">%rbp</span><span class="p">),</span> <span class="nv">%ecx</span>
+</span><span class='line'><span class="nf">addl</span>    <span class="nv">%eax</span><span class="p">,</span> <span class="nv">%ecx</span>          <span class="c"># int c = a + b</span>
+</span><span class='line'><span class="nf">movl</span>    <span class="nv">%ecx</span><span class="p">,</span> <span class="p">-</span><span class="mi">12</span><span class="p">(</span><span class="nv">%rbp</span><span class="p">)</span>     <span class="c"># store c onto the stack</span>
+</span><span class='line'><span class="nf">movl</span>    <span class="p">-</span><span class="mi">4</span><span class="p">(</span><span class="nv">%rbp</span><span class="p">),</span> <span class="nv">%eax</span>
+</span><span class='line'><span class="nf">popq</span>    <span class="nv">%rbp</span>
+</span><span class='line'><span class="nf">ret</span>                         <span class="c"># return value 0 from eax</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>If you are not familiar with GAS syntax, you can check out 
+<a href="http://en.wikibooks.org/wiki/X86_Assembly/GAS_Syntax">X86 Assembly/GAS Syntax</a>. GAS assembly instructions are generally suffixed
+with the letters “b”, “s”, “w”, “l”, “q” or “t” to determine what size operand
+is being manipulated.</p>
+
+<ul>
+  <li>b = byte (8 bit)</li>
+  <li>s = short (16 bit integer) or single (32-bit floating point)</li>
+  <li>w = word (16 bit)</li>
+  <li>l = long (32 bit integer or 64-bit floating point)</li>
+  <li>q = quad (64 bit)</li>
+  <li>t = ten bytes (80-bit floating point)</li>
+</ul>
+
+<p>GAS convention is to push parameter from left-to-right. For instance, 
+<code>movl $0, -4(%rbp)</code> means to move <code>0x00000000</code> to address <code>-4(%rbp)</code>.</p>
+
+<p>The instruction <code>movzbl</code> means moving a byte to long (32 bit int) with <strong>zero
+fill</strong>.  <code>movzbl -5(%rbp), %eax</code> take <code>0xff</code> to <code>%eax</code> and fill the rest with
+zero.  <code>%eax</code> is now <code>0x000000ff</code>.</p>
+
+<p>The instruction <code>movsbl</code> means moving a byte to long with <strong>signed fill</strong>. 
+<code>movsbl -6(%rbp), %ecx</code> take <code>0xff</code> to <code>%eax</code> and fill the rest with signed
+value, which will cause <code>%ecx</code> to be <code>0xffffffff</code>.  Finally, <code>addl %eax, %ecx</code>
+do the add operation, and <code>movl %ecx, -12(%rbp)</code> store the result onto the
+stack.</p>
+
+<p>Now, you understand that integer promotion is a rule how C types being mapped
+directly to machine instructions. All arithmetics operands are applied to
+smaller integers <strong>after</strong> they are transformed into int with <em>signed</em> or
+<em>unsigned fill</em>.  You can think it this way: though <code>short</code> and <code>char</code> are stored
+in one or two byte, they are treated as int when you use it with arithmetic
+operations. The rule how they are transformed to int is called <strong>integer
+promotion</strong>.</p>
+
+<h2 id="summary">Summary</h2>
+
+<p>Typically, CPUs are fastest at operating on integers of their native integer
+size. On x86, 32-bit arithmetics are can be twice as fast compare to 16-bit
+operands. C is a language focused on performance, so it will do the integer
+promotion to make the program as fast as possible. Though, you need to
+keep the integer promotion rule in mind to prevent some integer overflow
+vulnerability issues.</p>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Type Qualifiers and friends]]></title>

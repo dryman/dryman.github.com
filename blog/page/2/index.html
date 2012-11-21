@@ -9,8 +9,7 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="This is an annoying problem that related to my recent project. The goal is
-simple: handle single touch event in UIWebView and let it handle other &hellip;">
+  <meta name="description" content="In 2009 Apple released a new task parallelism technology called Grand Central Dispatch (GCD). Apple worked hard on tuning GCD; stated that only 15 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -103,6 +102,57 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2012/08/05/grand-central-dispatch-vs-openmp/">Grand Central Dispatch vs OpenMP</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-08-05T12:41:00+08:00" pubdate data-updated="true">Aug 5<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>In 2009 Apple released a new task parallelism technology called 
+<a href="http://developer.apple.com/library/ios/#documentation/Performance/Reference/GCD_libdispatch_Ref/Reference/reference.html">Grand Central Dispatch (GCD)</a>. Apple worked hard on tuning GCD; stated that only 15
+instructions are required to queue up a work unit in GCD, while creating a
+traditional thread could easily require several hundred instructions.<br />
+The main advantage of GCD is that programmer/user does not required to choose
+how many thread for application that optimize the most. It can save a lot of
+time for programmers because getting the most power out of CPUs requires a lot
+of measurement. With GCD, let the operating system decide it for you, <em>it just
+works.</em></p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2012/08/05/grand-central-dispatch-vs-openmp/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -684,62 +734,6 @@ generate this form? Then we only need to write the right case!</p>
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/03/30/persistent-red-black-tree-in-lisp-1/">Persistent Red Black Tree in Lisp (1)</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-03-30T13:57:00+08:00" pubdate data-updated="true">Mar 30<span>th</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>I’m a newbie to Lisp programing language. Lisp is one of the most oldest
-programming language that is still being used today. People have a lot of
-defences on programming languages, because there are too many choices to us
-today. Every language has their strength and weakness. It is not easy to make
-the choice.</p>
-
-<p>In my opinion, the best way to decide what languages I must learn is to
-see which kinds of people are loving it. 
-For example, Ruby community does great supports for business plans; Python is
-the best open sourced language for academia uses (scientific libraries, machine
-learning, computer vision, statistics, visualizations…etc.) Many old school
-hackers (including me) still love to use Perl; Java is widely used in big
-companies; VBA is friendly for dealing excel data…etc. And <strong>Lisp</strong>, are
-highly recommended by great hackers. </p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/03/30/persistent-red-black-tree-in-lisp-1/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/3/">&larr; Older</a>
@@ -757,7 +751,11 @@ highly recommended by great hackers. </p>
   <ul id="recent_posts">
     
       <li class="post">
-        <a href="/blog/2012/10/30/dance-with-objective-c-dynamic-types/">Dance with Objective-C dynamic types</a>
+        <a href="/blog/2012/11/21/integer-promotion/">Integer Promotion</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/10/30/dance-with-objective-c-dynamic-types/">Dance With Objective C Dynamic Types</a>
       </li>
     
       <li class="post">
@@ -790,10 +788,6 @@ highly recommended by great hackers. </p>
     
       <li class="post">
         <a href="/blog/2012/09/15/earthquake-early-warning-prototype/">Earthquake early warning prototype</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/08/05/grand-central-dispatch-vs-openmp/">Grand central dispatch vs OpenMP</a>
       </li>
     
   </ul>

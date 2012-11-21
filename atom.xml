@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-11-08T14:37:19+08:00</updated>
+  <updated>2012-11-21T16:35:07+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -14,11 +14,207 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Dance with Objective-C dynamic types]]></title>
+    <title type="html"><![CDATA[Integer Promotion]]></title>
+    <link href="http://www.idryman.org/blog/2012/11/21/integer-promotion/"/>
+    <updated>2012-11-21T14:15:00+08:00</updated>
+    <id>http://www.idryman.org/blog/2012/11/21/integer-promotion</id>
+    <content type="html"><![CDATA[<p>Almost every programmer has learned about C, and a lot of them use it for their
+career. It is certainly one of the most popular programming languages on
+<a href="http://www.tiobe.com/index.php/content/paperinfo/tpci/index.html">TIOBE</a> (first place in November 2012). Yet, C can be really tricky and
+behave unexpectedly sometimes. One of those dodgy side of C is <strong>integer
+promotion</strong>. See the following example that illustrate the issue:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="cp">#include &lt;stdio.h&gt;</span>
+</span><span class="line">
+</span><span class="line"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span><span class="line"><span class="p">{</span>
+</span><span class="line">    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">a</span> <span class="o">=</span> <span class="mh">0xff</span><span class="p">;</span>
+</span><span class="line">    <span class="kt">char</span> <span class="n">b</span> <span class="o">=</span> <span class="mh">0xff</span><span class="p">;</span>
+</span><span class="line">    <span class="kt">int</span> <span class="n">c</span> <span class="o">=</span> <span class="n">a</span><span class="o">==</span><span class="n">b</span><span class="p">;</span> <span class="c1">// true, or false?</span>
+</span><span class="line">    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;C: %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="n">c</span><span class="p">);</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>You might think the output is <code>1</code>, yet the answer is <code>0</code>. Oops.</p>
+
+<!--more-->
+
+<h2 id="c99-spec">C99 SPEC</h2>
+
+<p>In the prior implementation of K&amp;R and C89, arithmetic operands on <code>short</code>
+and <code>char</code> fell into two major camps and may produce different results from the
+above C snippet. In C99, integer promotion is clearly defined in following rule
+(6.3.1.1):</p>
+
+<blockquote>
+  <p>If an int can represent all values of the original type, the value is converted
+to an int; otherwise, it is converted to an unsigned int. These are called the
+integer promotions. All other types are unchanged by the integer promotions.</p>
+</blockquote>
+
+<p>Recall that the range of integer types:</p>
+
+<ul>
+  <li>signed char: -127 to 127</li>
+  <li>unsigned char: 0 to 255</li>
+  <li>signed short: -32767 to 32767</li>
+  <li>unsigned short: 0 to 65535</li>
+  <li>signed int: -2147483647 to 2147483647</li>
+</ul>
+
+<p>You can see that signed and unsigned char, short all can be represented in
+signed int, so they are all converted to signed int when doing arithmetic
+operations.</p>
+
+<p>In the previous example, <code>unsigned char a = 0xff</code> is presenting <em>255</em>. However,
+<code>char b = 0xff</code> is presenting <em>-1</em>. When both converted to int type, <code>a</code>
+remains <em>255</em>, or <code>0x000000ff</code>; <code>b</code> will be <code>0xffffffff</code> which is <em>-1</em>
+represented in int type. You can see how it works in this C snippet:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="cp">#include &lt;stdio.h&gt;</span>
+</span><span class="line">
+</span><span class="line"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span><span class="line"><span class="p">{</span>
+</span><span class="line">    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">a</span> <span class="o">=</span> <span class="mh">0xff</span><span class="p">;</span>
+</span><span class="line">    <span class="kt">char</span> <span class="n">b</span> <span class="o">=</span> <span class="mh">0xff</span><span class="p">;</span>
+</span><span class="line">    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;A: %08x, B: %08x</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">);</span>
+</span><span class="line">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The output would be:</p>
+
+<pre><code>A: 000000ff, B: ffffffff
+</code></pre>
+
+<p>This is why the result of expression <code>a==b</code> is <code>0</code>.</p>
+
+<h2 id="understand-it-at-assembly-level">Understand it at assembly level</h2>
+
+<p>When I first understood integer promotion rules, I got even more confused: why
+is this rule so awkward? To understand why it is designed like so, you must dig
+into compiled assembly code.</p>
+
+<p>Let’s start with an easy example:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span><span class="line"><span class="p">{</span>
+</span><span class="line">    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">a</span> <span class="o">=</span> <span class="mh">0xff</span><span class="p">;</span>
+</span><span class="line">    <span class="kt">char</span> <span class="n">b</span> <span class="o">=</span> <span class="mh">0xff</span><span class="p">;</span>
+</span><span class="line">    <span class="kt">int</span> <span class="n">c</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="p">;</span>
+</span><span class="line">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The compiled assembly is:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+</pre></td><td class="code"><pre><code class="gas"><span class="line"><span class="nf">movl</span>    <span class="no">$0</span><span class="p">,</span> <span class="p">-</span><span class="mi">4</span><span class="p">(</span><span class="nv">%rbp</span><span class="p">)</span>        <span class="c"># The return value of main is 0</span>
+</span><span class="line"><span class="nf">movb</span>    <span class="no">$-1</span><span class="p">,</span> <span class="p">-</span><span class="mi">5</span><span class="p">(</span><span class="nv">%rbp</span><span class="p">)</span>       <span class="c"># unsigned char a = 0xff;</span>
+</span><span class="line"><span class="nf">movb</span>    <span class="no">$-1</span><span class="p">,</span> <span class="p">-</span><span class="mi">6</span><span class="p">(</span><span class="nv">%rbp</span><span class="p">)</span>       <span class="c"># char b = 0xff;</span>
+</span><span class="line"><span class="nf">movzbl</span>  <span class="p">-</span><span class="mi">5</span><span class="p">(</span><span class="nv">%rbp</span><span class="p">),</span> <span class="nv">%eax</span>
+</span><span class="line"><span class="nf">movsbl</span>  <span class="p">-</span><span class="mi">6</span><span class="p">(</span><span class="nv">%rbp</span><span class="p">),</span> <span class="nv">%ecx</span>
+</span><span class="line"><span class="nf">addl</span>    <span class="nv">%eax</span><span class="p">,</span> <span class="nv">%ecx</span>          <span class="c"># int c = a + b</span>
+</span><span class="line"><span class="nf">movl</span>    <span class="nv">%ecx</span><span class="p">,</span> <span class="p">-</span><span class="mi">12</span><span class="p">(</span><span class="nv">%rbp</span><span class="p">)</span>     <span class="c"># store c onto the stack</span>
+</span><span class="line"><span class="nf">movl</span>    <span class="p">-</span><span class="mi">4</span><span class="p">(</span><span class="nv">%rbp</span><span class="p">),</span> <span class="nv">%eax</span>
+</span><span class="line"><span class="nf">popq</span>    <span class="nv">%rbp</span>
+</span><span class="line"><span class="nf">ret</span>                         <span class="c"># return value 0 from eax</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>If you are not familiar with GAS syntax, you can check out 
+<a href="http://en.wikibooks.org/wiki/X86_Assembly/GAS_Syntax">X86 Assembly/GAS Syntax</a>. GAS assembly instructions are generally suffixed
+with the letters “b”, “s”, “w”, “l”, “q” or “t” to determine what size operand
+is being manipulated.</p>
+
+<ul>
+  <li>b = byte (8 bit)</li>
+  <li>s = short (16 bit integer) or single (32-bit floating point)</li>
+  <li>w = word (16 bit)</li>
+  <li>l = long (32 bit integer or 64-bit floating point)</li>
+  <li>q = quad (64 bit)</li>
+  <li>t = ten bytes (80-bit floating point)</li>
+</ul>
+
+<p>GAS convention is to push parameter from left-to-right. For instance, 
+<code>movl $0, -4(%rbp)</code> means to move <code>0x00000000</code> to address <code>-4(%rbp)</code>.</p>
+
+<p>The instruction <code>movzbl</code> means moving a byte to long (32 bit int) with <strong>zero
+fill</strong>.  <code>movzbl -5(%rbp), %eax</code> take <code>0xff</code> to <code>%eax</code> and fill the rest with
+zero.  <code>%eax</code> is now <code>0x000000ff</code>.</p>
+
+<p>The instruction <code>movsbl</code> means moving a byte to long with <strong>signed fill</strong>. 
+<code>movsbl -6(%rbp), %ecx</code> take <code>0xff</code> to <code>%eax</code> and fill the rest with signed
+value, which will cause <code>%ecx</code> to be <code>0xffffffff</code>.  Finally, <code>addl %eax, %ecx</code>
+do the add operation, and <code>movl %ecx, -12(%rbp)</code> store the result onto the
+stack.</p>
+
+<p>Now, you understand that integer promotion is a rule how C types being mapped
+directly to machine instructions. All arithmetics operands are applied to
+smaller integers <strong>after</strong> they are transformed into int with <em>signed</em> or
+<em>unsigned fill</em>.  You can think it this way: though <code>short</code> and <code>char</code> are stored
+in one or two byte, they are treated as int when you use it with arithmetic
+operations. The rule how they are transformed to int is called <strong>integer
+promotion</strong>.</p>
+
+<h2 id="summary">Summary</h2>
+
+<p>Typically, CPUs are fastest at operating on integers of their native integer
+size. On x86, 32-bit arithmetics are can be twice as fast compare to 16-bit
+operands. C is a language focused on performance, so it will do the integer
+promotion to make the program as fast as possible. Though, you need to
+keep the integer promotion rule in mind to prevent some integer overflow
+vulnerability issues.</p>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Dance With Objective C Dynamic Types]]></title>
     <link href="http://www.idryman.org/blog/2012/10/30/dance-with-objective-c-dynamic-types/"/>
-    <updated>2012-10-30T13:58:00+08:00</updated>
+    <updated>2012-10-30T00:00:00+08:00</updated>
     <id>http://www.idryman.org/blog/2012/10/30/dance-with-objective-c-dynamic-types</id>
-    <content type="html"><![CDATA[<p>Objective-C is a super set of C language. The entire language is a preprocessor
+    <content type="html"><![CDATA[<p>— layout: post
+title: “Dance with Objective-C dynamic types”
+date: 2012-10-30 13:58
+comments: true
+categories: Objective-C Cocoa
+—</p>
+
+<p>Objective-C is a super set of C language. The entire language is a preprocessor
 skin added to C language and a powerful runtime system. With this runtime system,
 one can have full featured object oriented programming interface, functional
 programming environment, and magical dynamic typing system. </p>
@@ -4659,273 +4855,6 @@ to by expanding the macro:</p>
 </span><span class="line">      <span class="p">(</span><span class="nv">C</span> <span class="p">(</span><span class="nv">APPLY</span> <span class="nf">#&#39;</span><span class="nv">KID</span> <span class="nv">NODE</span> <span class="p">(</span><span class="nv">LIST</span> <span class="nv">DIR</span><span class="p">))))</span>
 </span><span class="line">  <span class="p">(</span><span class="nv">LET*</span> <span class="p">()</span>
 </span><span class="line">    <span class="p">(</span><span class="nv">MTREE-EXPAND</span> <span class="nv">DIR</span> <span class="p">(</span><span class="nv">A</span> <span class="nv">Y</span> <span class="p">(</span><span class="nv">B</span> <span class="nv">X</span> <span class="nv">C</span><span class="p">)))))</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[persistent red black tree in lisp (1)]]></title>
-    <link href="http://www.idryman.org/blog/2012/03/30/persistent-red-black-tree-in-lisp-1/"/>
-    <updated>2012-03-30T13:57:00+08:00</updated>
-    <id>http://www.idryman.org/blog/2012/03/30/persistent-red-black-tree-in-lisp-1</id>
-    <content type="html"><![CDATA[<p>I’m a newbie to Lisp programing language. Lisp is one of the most oldest
-programming language that is still being used today. People have a lot of
-defences on programming languages, because there are too many choices to us
-today. Every language has their strength and weakness. It is not easy to make
-the choice.</p>
-
-<p>In my opinion, the best way to decide what languages I must learn is to
-see which kinds of people are loving it. 
-For example, Ruby community does great supports for business plans; Python is
-the best open sourced language for academia uses (scientific libraries, machine
-learning, computer vision, statistics, visualizations…etc.) Many old school
-hackers (including me) still love to use Perl; Java is widely used in big
-companies; VBA is friendly for dealing excel data…etc. And <strong>Lisp</strong>, are
-highly recommended by great hackers. </p>
-
-<!-- more -->
-
-<hr />
-
-<p>If you are also interested in Lisp, I recommend <a href="http://www.gigamonkeys.com/book/">Practical Common
-Lisp</a> written by <a href="http://www.gigamonkeys.com/">Peter Seibel</a>, and <a href="http://paulgraham.com/onlisp.html">On Lisp</a> written
-by <a href="http://paulgraham.com/">Paul Graham</a>. Both of them are free, downloadable PDF files, and
-there are also online version and epub format.</p>
-
-<hr />
-
-<h3 id="basic-thoughts">Basic thoughts</h3>
-
-<p>Let’s begin with basic structures. At first, I design the structure similar to
-what you will write in C code.</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">defstruct</span> <span class="nv">rb</span>
-</span><span class="line">  <span class="nv">left</span>
-</span><span class="line">  <span class="nv">right</span>
-</span><span class="line">  <span class="nv">red</span>
-</span><span class="line">  <span class="nv">data</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>Here we can see the power of Lisp. It does not only create the structure, but
-also create constructor and accessors for the structure. Now you can create the
-<code>rb</code> and access it like so:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-<span class="line-number">16</span>
-<span class="line-number">17</span>
-<span class="line-number">18</span>
-</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="k">setq</span> <span class="nv">node</span>
-</span><span class="line">  <span class="p">(</span><span class="nv">make-rb</span> <span class="ss">:left</span> <span class="no">nil</span> <span class="ss">:right</span> <span class="no">nil</span> <span class="ss">:red</span> <span class="no">T</span> <span class="ss">:data</span> <span class="mi">3</span><span class="p">))</span>
-</span><span class="line">
-</span><span class="line"><span class="nv">==&gt;</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:left</span> <span class="no">nil</span> <span class="ss">:right</span> <span class="no">nil</span> <span class="ss">:red</span> <span class="no">T</span> <span class="ss">:data</span> <span class="mi">3</span><span class="p">)</span>
-</span><span class="line">
-</span><span class="line"><span class="p">(</span><span class="nv">rb-left</span> <span class="nv">node</span><span class="p">)</span>
-</span><span class="line">
-</span><span class="line"><span class="nv">==&gt;</span> <span class="no">nil</span>
-</span><span class="line">
-</span><span class="line"><span class="p">(</span><span class="nv">rb-data</span> <span class="nv">node</span><span class="p">)</span>
-</span><span class="line">
-</span><span class="line"><span class="nv">==&gt;</span> <span class="mi">3</span>
-</span><span class="line">
-</span><span class="line"><span class="p">(</span><span class="nb">setf</span> <span class="p">(</span><span class="nv">rb-right</span> <span class="nv">node</span><span class="p">)</span> <span class="p">(</span><span class="nv">make-rb</span> <span class="ss">:data</span> <span class="mi">5</span><span class="p">))</span> <span class="c1">; Other field are default as nil</span>
-</span><span class="line">
-</span><span class="line"><span class="nv">==&gt;</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:left</span> <span class="no">nil</span>
-</span><span class="line">          <span class="ss">:right</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:left</span> <span class="no">nil</span> <span class="ss">:right</span> <span class="no">nil</span> <span class="ss">:red</span> <span class="no">nil</span> <span class="ss">:data</span> <span class="mi">5</span><span class="p">)</span>
-</span><span class="line">          <span class="ss">:red</span> <span class="no">T</span> <span class="ss">:data</span> <span class="mi">3</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>This seems to be nice. But we can rewrite it in more lispy style:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">defstruct</span> <span class="nv">rb</span>
-</span><span class="line">  <span class="p">(</span><span class="nv">red</span> <span class="no">T</span><span class="p">)</span> <span class="c1">; default value for red</span>
-</span><span class="line">  <span class="nv">data</span><span class="p">)</span>
-</span><span class="line">
-</span><span class="line"><span class="c1">;; A node can be represented as</span>
-</span><span class="line"><span class="c1">;; (nil #S(RB :red T :data 3) nil)</span>
-</span><span class="line"><span class="c1">;; To generate this:</span>
-</span><span class="line"><span class="p">(</span><span class="nb">list</span> <span class="no">nil</span> <span class="p">(</span><span class="nv">make-rb</span> <span class="ss">:data</span> <span class="mi">3</span><span class="p">)</span> <span class="no">nil</span><span class="p">)</span>
-</span><span class="line">
-</span><span class="line"><span class="nv">==&gt;</span> <span class="p">(</span><span class="no">nil</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:red</span> <span class="no">T</span> <span class="ss">:data</span> <span class="mi">3</span><span class="p">)</span> <span class="no">nil</span><span class="p">)</span>
-</span><span class="line">
-</span><span class="line"><span class="c1">;; You can also use lisp syntax candy</span>
-</span><span class="line"><span class="o">`</span><span class="p">(</span><span class="nb">list</span> <span class="no">nil</span> <span class="o">,</span><span class="p">(</span><span class="nv">make-rb</span> <span class="ss">:data</span> <span class="mi">3</span><span class="p">)</span> <span class="no">nil</span><span class="p">)</span>
-</span><span class="line">
-</span><span class="line"><span class="nv">==&gt;</span> <span class="p">(</span><span class="no">nil</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:red</span> <span class="no">T</span> <span class="ss">:data</span> <span class="mi">3</span><span class="p">)</span> <span class="no">nil</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>The s-expression with a preceding <code>`</code> means that it is a expression that
-lisp don’t evaluate, except expression inside it with a preceding <code>,</code>. It is
-convenient for us to generate new list object.</p>
-
-<p>To access the elements in a list:</p>
-
-<ol>
-  <li><code>car</code> the first</li>
-  <li><code>cadr</code> the second</li>
-  <li><code>caddr</code> the third</li>
-</ol>
-
-<p>And now we can wirte a persistant basic binary insert function!</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-<span class="line-number">16</span>
-<span class="line-number">17</span>
-</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">binary-insert-r</span> <span class="p">(</span><span class="nv">root</span> <span class="nv">data</span><span class="p">)</span>
-</span><span class="line">  <span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nb">null</span> <span class="nv">root</span><span class="p">)</span>                            <span class="c1">; cond works like &quot;switch&quot;</span>
-</span><span class="line">          <span class="o">`</span><span class="p">(</span><span class="no">nil</span> <span class="o">,</span><span class="p">(</span><span class="nv">make-rb</span> <span class="ss">:data</span> <span class="nv">data</span><span class="p">)</span> <span class="no">nil</span><span class="p">))</span>     <span class="c1">; make node when reach leaf</span>
-</span><span class="line">        <span class="p">((</span><span class="nb">=</span> <span class="nv">data</span> <span class="p">(</span><span class="nv">rb-data</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">)))</span> <span class="nv">root</span><span class="p">)</span>   <span class="c1">; return self if data is the same</span>
-</span><span class="line">        <span class="p">((</span><span class="nb">&gt;</span> <span class="nv">data</span> <span class="p">(</span><span class="nv">rb-data</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">)))</span>
-</span><span class="line">         <span class="p">(</span><span class="nb">list</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">root</span><span class="p">)</span>
-</span><span class="line">               <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">)</span>
-</span><span class="line">               <span class="p">(</span><span class="nv">binary-insert-r</span> <span class="p">(</span><span class="nb">caddr</span> <span class="nv">root</span><span class="p">)</span> <span class="nv">data</span><span class="p">)))</span> <span class="c1">; case insert to right</span>
-</span><span class="line">        <span class="p">(</span><span class="no">T</span>
-</span><span class="line">         <span class="p">(</span><span class="nb">list</span> <span class="p">(</span><span class="nv">binary-insert-r</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">root</span><span class="p">)</span> <span class="nv">data</span><span class="p">)</span>
-</span><span class="line">               <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">)</span>
-</span><span class="line">               <span class="p">(</span><span class="nb">caddr</span> <span class="nv">root</span><span class="p">)))))</span>                      <span class="c1">; case insert to left</span>
-</span><span class="line">
-</span><span class="line"><span class="p">(</span><span class="nb">defparameter</span> <span class="vg">*tree*</span> <span class="no">nil</span><span class="p">)</span>                     <span class="c1">; global variable *tree*</span>
-</span><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">binary-insert</span> <span class="p">(</span><span class="nv">data</span><span class="p">)</span>
-</span><span class="line">  <span class="p">(</span><span class="nb">setf</span> <span class="vg">*tree*</span> <span class="p">(</span><span class="nv">binary-insert-r</span> <span class="vg">*tree*</span> <span class="nv">data</span><span class="p">))</span> <span class="c1">; set *tree* as the returned tree</span>
-</span><span class="line">  <span class="vg">*tree*</span><span class="p">)</span>                                     <span class="c1">; return *tree* value</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>Let’s exam the function:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="nv">BINARY-INSERT-R</span>
-</span><span class="line"><span class="nv">CL-USER&gt;</span> <span class="p">(</span><span class="nv">binary-insert</span> <span class="mi">6</span><span class="p">)</span>
-</span><span class="line"><span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">6</span><span class="p">)</span> <span class="no">NIL</span><span class="p">)</span>
-</span><span class="line"><span class="nv">CL-USER&gt;</span> <span class="p">(</span><span class="nv">binary-insert</span> <span class="mi">7</span><span class="p">)</span>
-</span><span class="line"><span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">6</span><span class="p">)</span> <span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">7</span><span class="p">)</span> <span class="no">NIL</span><span class="p">))</span>
-</span><span class="line"><span class="nv">CL-USER&gt;</span> <span class="p">(</span><span class="nv">binary-insert</span> <span class="mi">5</span><span class="p">)</span>
-</span><span class="line"><span class="p">((</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">5</span><span class="p">)</span> <span class="no">NIL</span><span class="p">)</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">6</span><span class="p">)</span>
-</span><span class="line"> <span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">7</span><span class="p">)</span> <span class="no">NIL</span><span class="p">))</span>
-</span><span class="line"><span class="nv">CL-USER&gt;</span> <span class="p">(</span><span class="nv">binary-insert</span> <span class="mi">8</span><span class="p">)</span>
-</span><span class="line"><span class="p">((</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">5</span><span class="p">)</span> <span class="no">NIL</span><span class="p">)</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">6</span><span class="p">)</span>
-</span><span class="line">  <span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">7</span><span class="p">)</span> <span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">8</span><span class="p">)</span> <span class="no">NIL</span><span class="p">)))</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<h3 id="wait-hold-on">Wait! Hold on!</h3>
-
-<p>The code is god damn ugly! We can fix it with some utilities:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">kid</span> <span class="p">(</span><span class="nv">root</span> <span class="k">&amp;rest</span> <span class="nv">dirs</span><span class="p">)</span>
-</span><span class="line">  <span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nb">consp</span> <span class="nv">dirs</span><span class="p">)</span>
-</span><span class="line">         <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">dirs</span><span class="p">)</span>
-</span><span class="line">             <span class="p">(</span><span class="nb">apply</span> <span class="nf">#&#39;</span><span class="nv">kid</span> <span class="p">(</span><span class="nb">caddr</span> <span class="nv">root</span><span class="p">)</span> <span class="p">(</span><span class="nb">cdr</span> <span class="nv">dirs</span><span class="p">))</span>
-</span><span class="line">             <span class="p">(</span><span class="nb">apply</span> <span class="nf">#&#39;</span><span class="nv">kid</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">root</span><span class="p">)</span> <span class="p">(</span><span class="nb">cdr</span> <span class="nv">dirs</span><span class="p">))))</span>
-</span><span class="line">        <span class="p">(</span><span class="no">T</span> <span class="nv">root</span><span class="p">)))</span>
-</span><span class="line">
-</span><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">node-data</span> <span class="p">(</span><span class="nv">root</span><span class="p">)</span>
-</span><span class="line">  <span class="p">(</span><span class="nv">rb-data</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">)))</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>The <code>kid</code> takes a node and a series of <code>T</code> and <code>nil</code>; When it saw a <code>T</code>, it
-returns the right node, or it will return the left one. For example:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="nv">CL-USER&gt;</span> <span class="p">(</span><span class="nv">kid</span> <span class="vg">*tree*</span> <span class="no">nil</span><span class="p">)</span>            <span class="c1">; left node</span>
-</span><span class="line"><span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">5</span><span class="p">)</span> <span class="no">NIL</span><span class="p">)</span>
-</span><span class="line"><span class="nv">CL-USER&gt;</span> <span class="p">(</span><span class="nv">kid</span> <span class="vg">*tree*</span> <span class="no">T</span><span class="p">)</span>              <span class="c1">; right node</span>
-</span><span class="line"><span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">7</span><span class="p">)</span> <span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">8</span><span class="p">)</span> <span class="no">NIL</span><span class="p">))</span>
-</span><span class="line"><span class="nv">CL-USER&gt;</span> <span class="p">(</span><span class="nv">kid</span> <span class="vg">*tree*</span> <span class="no">T</span> <span class="no">T</span><span class="p">)</span>            <span class="c1">; right right node</span>
-</span><span class="line"><span class="p">(</span><span class="no">NIL</span> <span class="l-Other">#S</span><span class="p">(</span><span class="nv">RB</span> <span class="ss">:RED</span> <span class="no">T</span> <span class="ss">:DATA</span> <span class="mi">8</span><span class="p">)</span> <span class="no">NIL</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>Using <code>nil</code> and <code>T</code> as left and right dirctions, it is easier for us to rewrite
-<code>binary-insert-r</code> because we can change left and right cases into variables.</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">binary-insert-r</span> <span class="p">(</span><span class="nv">root</span> <span class="nv">data</span><span class="p">)</span>
-</span><span class="line">  <span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nb">null</span> <span class="nv">root</span><span class="p">)</span> <span class="o">`</span><span class="p">(</span><span class="no">nil</span> <span class="o">,</span><span class="p">(</span><span class="nv">make-rb</span> <span class="ss">:data</span> <span class="nv">data</span><span class="p">)</span> <span class="no">nil</span><span class="p">))</span>
-</span><span class="line">        <span class="p">((</span><span class="nb">=</span> <span class="nv">data</span> <span class="p">(</span><span class="nv">node-data</span> <span class="nv">root</span><span class="p">))</span> <span class="nv">root</span><span class="p">)</span>
-</span><span class="line">        <span class="p">(</span><span class="no">T</span> <span class="p">(</span><span class="k">let*</span> <span class="p">((</span><span class="nv">dir</span> <span class="p">(</span><span class="nb">&gt;</span> <span class="nv">data</span> <span class="p">(</span><span class="nv">node-data</span> <span class="nv">root</span><span class="p">)))</span>
-</span><span class="line">                  <span class="p">(</span><span class="nv">a</span> <span class="p">(</span><span class="nv">kid</span> <span class="nv">root</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">)))</span>
-</span><span class="line">                  <span class="p">(</span><span class="nv">b</span> <span class="p">(</span><span class="nv">binary-insert-r</span> <span class="p">(</span><span class="nv">kid</span> <span class="nv">root</span> <span class="nv">dir</span><span class="p">)</span> <span class="nv">data</span><span class="p">)))</span>
-</span><span class="line">             <span class="p">(</span><span class="k">if</span> <span class="nv">dir</span>
-</span><span class="line">                 <span class="p">(</span><span class="nb">list</span> <span class="nv">a</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">)</span> <span class="nv">b</span><span class="p">)</span>
-</span><span class="line">                 <span class="p">(</span><span class="nb">list</span> <span class="nv">b</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">)</span> <span class="nv">a</span><span class="p">))))))</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
 ]]></content>
