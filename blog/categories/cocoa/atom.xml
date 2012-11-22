@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Cocoa | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/cocoa/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-11-21T16:44:04+08:00</updated>
+  <updated>2012-11-22T09:34:33+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,388 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Dance with Objective-C dynamic types]]></title>
+    <link href="http://www.idryman.org/blog/2012/10/30/dance-with-objective-c-dynamic-types/"/>
+    <updated>2012-10-30T13:58:00+08:00</updated>
+    <id>http://www.idryman.org/blog/2012/10/30/dance-with-objective-c-dynamic-types</id>
+    <content type="html"><![CDATA[<p>Objective-C is a super set of C language. The entire language is a preprocessor
+skin added to C language and a powerful runtime system. With this runtime system,
+one can have full featured object oriented programming interface, functional
+programming environment, and magical dynamic typing system. </p>
+
+<p>In this post, I’ll go through common tasks you can do with Objective-C typing
+system, including querying normal <code>NSObject</code> types, packing static type with
+<code>NSValue</code>, testing core foundation references, and validating if a pointer is a
+valid object pointer.</p>
+
+<!-- more -->
+
+<h2 id="objective-c-type-system">Objective-C type system</h2>
+
+<p>To determine an Objective-C object type is super easy. Just use <code>isKindOfClass</code>
+method and it is done.</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">testObjectType:</span><span class="p">(</span><span class="kt">id</span><span class="p">)</span><span class="nv">obj</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">if</span> <span class="p">([</span><span class="n">obj</span> <span class="nl">isKindOfClass:</span> <span class="p">[</span><span class="n">NSNumber</span> <span class="n">class</span><span class="p">]])</span> <span class="p">{</span>
+</span><span class='line'>        <span class="c1">// do something with number</span>
+</span><span class='line'>    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">([</span><span class="n">obj</span> <span class="nl">isKindOfClass:</span> <span class="p">[</span><span class="n">NSValue</span> <span class="n">class</span><span class="p">])</span> <span class="p">{</span>
+</span><span class='line'>        <span class="c1">// do something with values…</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>Why do we need this mechanism? One application is implementing key value coding
+with some known range of types. For example, Core Animation listed these
+properties are animatable:</p>
+
+<ul>
+  <li>anchorPoint</li>
+  <li>backgroundColor</li>
+  <li>backgroundFilters</li>
+  <li>borderColor</li>
+  <li>borderWidth</li>
+  <li>bounds</li>
+  <li>compositingFilter</li>
+  <li>contents</li>
+  <li>contentsRect</li>
+  <li>cornerRadius</li>
+  <li>doubleSided</li>
+  <li>filters</li>
+  <li>frame</li>
+  <li>hidden</li>
+  <li>mask</li>
+  <li>masksToBounds</li>
+  <li>opacity</li>
+  <li>position</li>
+  <li>shadowColor</li>
+  <li>shadowOffset</li>
+  <li>shadowOpacity</li>
+  <li>shadowRadius</li>
+  <li>sublayers</li>
+  <li>sublayerTransform</li>
+  <li>transform</li>
+  <li>zPosition</li>
+</ul>
+
+<p>These properties are categorized in several types includes <code>CGPoint</code>, <code>CGRect</code>,
+<code>CGFloat</code>, <code>CGImageRef</code>, <code>CGColorRef</code>, and even <code>BOOL</code>. Each kind of type
+require individual implementation to operate its value. Thankfully,
+Objective C dynamic type system allows us to pass-in the value with generic type
+<code>id</code> and determine the actual type at runtime. <code>id</code> is simply a void
+pointer. The objective c object itself is a struct which have a <code>isa</code> pointer
+points to actual class which defines its instance variables, methods, and class
+inheritances.</p>
+
+<h2 id="packaging-static-c-types-with-nsvalue">Packaging static C types with NSValue</h2>
+
+<p>Objective C is a skin language based on C, so it is very often to use C types
+like int, float, pointer to struct…etc. However, these static types violate
+Objective-C’s dynamic typing idioms. Apple introduced <code>NSValue</code> as a container
+for a single C or Objective-C data item. It can hold any C types such as int,
+float, char, pointers, structures, and object ids. It not only wrap the item
+into an Objective-C object, but also encode the type information of the original
+object.</p>
+
+<p>To create an <code>NSValue</code> object, you pass it a pointer to the item, along with the
+encoded type information generated by <code>@encode()</code> keyword.</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'><span class="n">CGPoint</span> <span class="n">origin</span> <span class="o">=</span> <span class="n">CGPointMake</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">);</span>
+</span><span class='line'><span class="n">NSValue</span> <span class="o">*</span> <span class="n">originValue</span> <span class="o">=</span> <span class="p">[</span><span class="n">NSValue</span> <span class="nl">valueWithBytes:</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">origin</span> <span class="nl">objCType:</span><span class="k">@encode</span><span class="p">(</span><span class="n">CGPoint</span><span class="p">)];</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p><code>@encode()</code> is a compiler directive which can accepts all types that can be used
+as an argument of C <code>sizeof()</code> operator. <code>@encode()</code> returns a <code>const char*</code>
+string encoding that type. The encoding is specified in 
+<a href="https://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html#//apple_ref/doc/uid/TP40008048-CH100">Objective-C runtime type encodings</a>.</p>
+
+<p>To illustrate this, see the following examples:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'><span class="err">@</span><span class="n">encoding</span><span class="p">(</span><span class="kt">int</span> <span class="o">**</span> <span class="p">)</span>
+</span><span class='line'><span class="c1">// ==&amp;gt; “{^^i}”</span>
+</span><span class='line'><span class="err">@</span><span class="n">encoding</span><span class="p">(</span><span class="n">CGPoint</span><span class="p">)</span>
+</span><span class='line'><span class="c1">// ==&amp;gt; “{CGPoint=ff}”</span>
+</span><span class='line'><span class="err">@</span><span class="n">encoding</span><span class="p">(</span><span class="n">CGColorRef</span><span class="p">)</span>
+</span><span class='line'><span class="c1">// ==&amp;gt; “^{CGColor=}”</span>
+</span><span class='line'><span class="err">@</span><span class="n">encoding</span><span class="p">(</span><span class="n">NSObject</span><span class="p">)</span>
+</span><span class='line'><span class="c1">// ==&amp;gt; “{NSObject=#}”</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>With this encoded type information, it only takes few steps to determine which
+type it is at runtime:</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'><span class="k">if</span> <span class="p">([</span><span class="n">obj</span> <span class="nl">isKindOfClass:</span><span class="p">[</span><span class="n">NSValue</span> <span class="n">class</span><span class="p">]])</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">NSValue</span><span class="o">*</span> <span class="n">value</span> <span class="o">=</span> <span class="p">(</span><span class="n">NSValue</span><span class="o">*</span><span class="p">)</span> <span class="n">obj</span><span class="p">;</span>
+</span><span class='line'>    <span class="k">if</span> <span class="nf">strcmp</span><span class="p">([</span><span class="n">value</span> <span class="n">objCType</span><span class="p">],</span> <span class="k">@encode</span><span class="p">(</span><span class="n">CGPoint</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="n">CGPoint</span> <span class="n">origin</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">[</span><span class="n">value</span> <span class="nl">getValue:</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">origin</span><span class="p">];</span>
+</span><span class='line'>        <span class="c1">// do things with origin…</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<h3 id="uikit-addition-to-nsvalue">UIKit addition to NSValue</h3>
+
+<p>UIKit added a <a href="http://developer.apple.com/library/ios/#DOCUMENTATION/UIKit/Reference/NSValue_UIKit_Additions/Reference/Reference.html">category for NSValue</a> to represent iOS related
+geometry-based data. You can use these method instead of encoding <code>CGPoint</code>,
+<code>CGRect</code>, and else every time.</p>
+
+<h2 id="bridging-with-core-foundation-objects">Bridging with Core Foundation objects</h2>
+
+<p>Though <code>NSValue</code> covers many kind of types, in practice there are still some
+types don’t fit this solution for dynamic typing. More specifically,
+<code>CGColorRef</code>, <code>CGImageRef</code> and other Core Foundation types that can be treated
+as Objective-C object through <a href="http://developer.apple.com/library/ios/#documentation/CoreFoundation/Conceptual/CFDesignConcepts/Articles/tollFreeBridgedTypes.html">toll-free briding</a> are the types we
+don’t pack with <code>NSValue</code>.</p>
+
+<p>A core foundation references is also a void pointer as same as <code>id</code> is.
+To find out the type of an unknown <code>CFTypeRef</code>, you can query it with C function
+<code>CFGetTypeID</code>.</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'><span class="k">if</span> <span class="p">(</span><span class="n">CFGetTypeID</span><span class="p">((</span><span class="n">__bridge</span> <span class="n">CFTypeRef</span><span class="p">)</span><span class="n">obj</span><span class="p">),</span> <span class="o">==</span> <span class="n">CGImageGetTypeID</span><span class="p">())</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">CGImageRef</span> <span class="n">imgRef</span> <span class="o">=</span> <span class="n">CFBridgingRetain</span><span class="p">(</span><span class="n">obj</span><span class="p">);</span>
+</span><span class='line'>    <span class="c1">// do things with imgRef</span>
+</span><span class='line'>    <span class="n">CFRelease</span><span class="p">(</span><span class="n">imgRef</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>A CFTypeRef marked as <code>id</code> type can also accept basic objective C messages like
+<code>isKindOfType:</code>. Hence testing an <code>id</code> typed object is quite safe as long as it
+is either a <code>NSObject</code>, <code>NSValue</code>, <code>CFTypeRef</code>, <code>CGColorRef</code> or any other
+Objective-C object/Core Foundation reference.</p>
+
+<h2 id="testing-if-a-pointer-is-a-valid-nsobject">Testing if a pointer is a valid NSObject</h2>
+
+<p>There is a blog post on Cocoa with love about
+<a href="http://www.cocoawithlove.com/2010/10/testing-if-arbitrary-pointer-is-valid.html">how to test if an arbitary pointer is a valid NSObject</a>.
+In my point of view, programmer <em>should</em> pass in a valid object for sure. If it
+is not a valid object, just let it crash.</p>
+
+<h2 id="puting-it-all-together">Puting it all together</h2>
+
+<p>This piece of code is part of my project <a href="https://github.com/dryman/FCAnimationFactory">FCAnimationFactory</a> for the
+purpose of interpolating different kinds of value with respect to their types.</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>FCAnimationFactory.m  </span><a href='https://github.com/dryman/FCAnimationFactory/blob/master/FCEasingAnimation/FCAnimationFactory.m'>link</a></figcaption> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+</pre></td><td class='code'><pre><code class='objc'><span class='line'><span class="k">-</span> <span class="p">(</span><span class="kt">id</span><span class="p">(</span><span class="o">^</span><span class="p">)(</span><span class="kt">float</span><span class="p">))</span><span class="nf">makeValueScalingBlockFromValue:</span><span class="p">(</span><span class="kt">id</span><span class="p">)</span><span class="nv">fromValue</span> <span class="nf">ToValue:</span><span class="p">(</span><span class="kt">id</span><span class="p">)</span><span class="nv">toValue</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="n">fromValue</span><span class="o">==</span><span class="nb">nil</span> <span class="o">||</span> <span class="n">toValue</span><span class="o">==</span><span class="nb">nil</span><span class="p">)</span> <span class="n">NSAssert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="err">@”</span><span class="n">fromValue</span> <span class="n">and</span> <span class="n">toValue</span> <span class="n">must</span> <span class="n">not</span> <span class="n">be</span> <span class="nb">nil</span><span class="err">”</span><span class="p">);</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="kt">id</span> <span class="n">value</span> <span class="o">=</span> <span class="n">fromValue</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'><span class="cm">/*</span>
+</span><span class='line'><span class="cm"> * single float is handled in NSNumber</span>
+</span><span class='line'><span class="cm"> */</span>
+</span><span class='line'><span class="k">if</span> <span class="p">([</span><span class="n">value</span> <span class="nl">isKindOfClass:</span><span class="p">[</span><span class="n">NSNumber</span> <span class="n">class</span><span class="p">]])</span> <span class="p">{</span>
+</span><span class='line'>    <span class="kt">float</span> <span class="n">v1</span> <span class="o">=</span> <span class="p">[(</span><span class="n">NSNumber</span><span class="o">*</span><span class="p">)</span><span class="n">fromValue</span> <span class="n">floatValue</span><span class="p">];</span>
+</span><span class='line'>    <span class="kt">float</span> <span class="n">v2</span> <span class="o">=</span> <span class="p">[(</span><span class="n">NSNumber</span><span class="o">*</span><span class="p">)</span><span class="n">toValue</span> <span class="n">floatValue</span><span class="p">];</span>
+</span><span class='line'>    <span class="kt">float</span> <span class="n">diffValue</span> <span class="o">=</span> <span class="n">v2</span> <span class="o">-</span> <span class="n">v1</span><span class="p">;</span>
+</span><span class='line'>    <span class="k">return</span> <span class="o">^</span><span class="kt">id</span><span class="p">(</span><span class="kt">float</span> <span class="n">factor</span><span class="p">){</span>
+</span><span class='line'>        <span class="kt">float</span> <span class="n">result</span> <span class="o">=</span> <span class="n">factor</span><span class="o">*</span><span class="n">diffValue</span> <span class="o">+</span> <span class="n">v1</span><span class="p">;</span>
+</span><span class='line'>        <span class="k">return</span> <span class="p">[</span><span class="n">NSNumber</span> <span class="nl">numberWithFloat:</span><span class="n">result</span><span class="p">];</span>
+</span><span class='line'>    <span class="p">};</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="cm">/*</span>
+</span><span class='line'><span class="cm"> * NSValue handles CGPoint, CGSize, CGRect, and CATransform3D</span>
+</span><span class='line'><span class="cm"> */</span>
+</span><span class='line'><span class="k">if</span> <span class="p">([</span><span class="n">value</span> <span class="nl">isKindOfClass:</span><span class="p">[</span><span class="n">NSValue</span> <span class="n">class</span><span class="p">]])</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">objCType</span> <span class="o">=</span> <span class="p">[</span><span class="n">value</span> <span class="n">objCType</span><span class="p">];</span>
+</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">objCType</span><span class="p">,</span> <span class="k">@encode</span><span class="p">(</span><span class="n">CGPoint</span><span class="p">))</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="n">CGPoint</span> <span class="n">pt0</span><span class="p">,</span> <span class="n">pt1</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">[(</span><span class="n">NSValue</span><span class="o">*</span><span class="p">)</span><span class="n">fromValue</span> <span class="nl">getValue:</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">pt0</span><span class="p">];</span>
+</span><span class='line'>        <span class="p">[(</span><span class="n">NSValue</span><span class="o">*</span><span class="p">)</span><span class="n">toValue</span> <span class="nl">getValue:</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">pt1</span><span class="p">];</span>
+</span><span class='line'>        <span class="k">return</span> <span class="o">^</span><span class="kt">id</span><span class="p">(</span><span class="kt">float</span> <span class="n">factor</span><span class="p">){</span>
+</span><span class='line'>            <span class="kt">float</span> <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="n">pt1</span><span class="p">.</span><span class="n">x</span> <span class="o">-</span> <span class="n">pt0</span><span class="p">.</span><span class="n">x</span><span class="p">)</span><span class="o">*</span><span class="n">factor</span> <span class="o">+</span> <span class="n">pt0</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+</span><span class='line'>            <span class="kt">float</span> <span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">pt1</span><span class="p">.</span><span class="n">y</span> <span class="o">-</span> <span class="n">pt0</span><span class="p">.</span><span class="n">y</span><span class="p">)</span><span class="o">*</span><span class="n">factor</span> <span class="o">+</span> <span class="n">pt0</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+</span><span class='line'>            <span class="k">return</span> <span class="p">[</span><span class="n">NSValue</span> <span class="nl">valueWithCGPoint:</span><span class="n">CGPointMake</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)];</span>
+</span><span class='line'>        <span class="p">};</span>
+</span><span class='line'>    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">objCType</span><span class="p">,</span> <span class="k">@encode</span><span class="p">(</span><span class="n">CGSize</span><span class="p">))</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="n">CGSize</span> <span class="n">size0</span><span class="p">,</span> <span class="n">size1</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">[(</span><span class="n">NSValue</span><span class="o">*</span><span class="p">)</span><span class="n">fromValue</span> <span class="nl">getValue:</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">size0</span><span class="p">];</span>
+</span><span class='line'>        <span class="p">[(</span><span class="n">NSValue</span><span class="o">*</span><span class="p">)</span><span class="n">toValue</span> <span class="nl">getValue:</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">size1</span><span class="p">];</span>
+</span><span class='line'>        <span class="k">return</span> <span class="o">^</span><span class="kt">id</span><span class="p">(</span><span class="kt">float</span> <span class="n">factor</span><span class="p">){</span>
+</span><span class='line'>            <span class="kt">float</span> <span class="n">w</span> <span class="o">=</span> <span class="p">(</span><span class="n">size1</span><span class="p">.</span><span class="n">width</span> <span class="o">-</span> <span class="n">size0</span><span class="p">.</span><span class="n">width</span><span class="p">)</span><span class="o">*</span><span class="n">factor</span> <span class="o">+</span> <span class="n">size0</span><span class="p">.</span><span class="n">width</span><span class="p">;</span>
+</span><span class='line'>            <span class="kt">float</span> <span class="n">h</span> <span class="o">=</span> <span class="p">(</span><span class="n">size1</span><span class="p">.</span><span class="n">height</span> <span class="o">-</span> <span class="n">size0</span><span class="p">.</span><span class="n">height</span><span class="p">)</span><span class="o">*</span><span class="n">factor</span> <span class="o">+</span> <span class="n">size0</span><span class="p">.</span><span class="n">height</span><span class="p">;</span>
+</span><span class='line'>            <span class="k">return</span> <span class="p">[</span><span class="n">NSValue</span> <span class="nl">valueWithCGSize:</span><span class="n">CGSizeMake</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">)];</span>
+</span><span class='line'>        <span class="p">};</span>
+</span><span class='line'>    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">objCType</span><span class="p">,</span> <span class="k">@encode</span><span class="p">(</span><span class="n">CGRect</span><span class="p">))</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="n">CGRect</span> <span class="n">rect0</span><span class="p">,</span> <span class="n">rect1</span><span class="p">;</span>
+</span><span class='line'>        <span class="p">[(</span><span class="n">NSValue</span><span class="o">*</span><span class="p">)</span><span class="n">fromValue</span> <span class="nl">getValue:</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">rect0</span><span class="p">];</span>
+</span><span class='line'>        <span class="p">[(</span><span class="n">NSValue</span><span class="o">*</span><span class="p">)</span><span class="n">toValue</span> <span class="nl">getValue:</span><span class="o">&amp;</span><span class="n">amp</span><span class="p">;</span><span class="n">rect1</span><span class="p">];</span>
+</span><span class='line'>        <span class="k">return</span> <span class="o">^</span><span class="kt">id</span><span class="p">(</span><span class="kt">float</span> <span class="n">factor</span><span class="p">){</span>
+</span><span class='line'>            <span class="kt">float</span> <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="n">rect1</span><span class="p">.</span><span class="n">origin</span><span class="p">.</span><span class="n">x</span> <span class="o">-</span> <span class="n">rect0</span><span class="p">.</span><span class="n">origin</span><span class="p">.</span><span class="n">x</span><span class="p">)</span><span class="o">*</span><span class="n">factor</span> <span class="o">+</span> <span class="n">rect0</span><span class="p">.</span><span class="n">origin</span><span class="p">.</span><span class="n">x</span><span class="p">;</span>
+</span><span class='line'>            <span class="kt">float</span> <span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">rect1</span><span class="p">.</span><span class="n">origin</span><span class="p">.</span><span class="n">y</span> <span class="o">-</span> <span class="n">rect0</span><span class="p">.</span><span class="n">origin</span><span class="p">.</span><span class="n">y</span><span class="p">)</span><span class="o">*</span><span class="n">factor</span> <span class="o">+</span> <span class="n">rect0</span><span class="p">.</span><span class="n">origin</span><span class="p">.</span><span class="n">y</span><span class="p">;</span>
+</span><span class='line'>            <span class="kt">float</span> <span class="n">w</span> <span class="o">=</span> <span class="p">(</span><span class="n">rect1</span><span class="p">.</span><span class="n">size</span><span class="p">.</span><span class="n">width</span> <span class="o">-</span> <span class="n">rect0</span><span class="p">.</span><span class="n">size</span><span class="p">.</span><span class="n">width</span><span class="p">)</span><span class="o">*</span><span class="n">factor</span> <span class="o">+</span> <span class="n">rect0</span><span class="p">.</span><span class="n">size</span><span class="p">.</span><span class="n">width</span><span class="p">;</span>
+</span><span class='line'>            <span class="kt">float</span> <span class="n">h</span> <span class="o">=</span> <span class="p">(</span><span class="n">rect1</span><span class="p">.</span><span class="n">size</span><span class="p">.</span><span class="n">height</span> <span class="o">-</span> <span class="n">rect0</span><span class="p">.</span><span class="n">size</span><span class="p">.</span><span class="n">height</span><span class="p">)</span><span class="o">*</span><span class="n">factor</span> <span class="o">+</span> <span class="n">rect0</span><span class="p">.</span><span class="n">size</span><span class="p">.</span><span class="n">height</span><span class="p">;</span>
+</span><span class='line'>            <span class="k">return</span> <span class="p">[</span><span class="n">NSValue</span> <span class="nl">valueWithCGRect:</span><span class="n">CGRectMake</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">h</span><span class="p">)];</span>
+</span><span class='line'>        <span class="p">};</span>
+</span><span class='line'>    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">objCType</span><span class="p">,</span> <span class="k">@encode</span><span class="p">(</span><span class="n">CATransform3D</span><span class="p">))</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>        <span class="n">NSAssert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">@&quot;CATransform3D type currently not supported&quot;</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span><span class='line'>        <span class="n">NSAssert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">@&quot;Unknown NSValue type %s&quot;</span><span class="p">,</span><span class="n">objCType</span><span class="p">);</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">if</span> <span class="p">(</span><span class="n">CFGetTypeID</span><span class="p">((</span><span class="n">__bridge</span> <span class="n">CFTypeRef</span><span class="p">)</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="n">CGColorGetTypeID</span><span class="p">())</span> <span class="p">{</span>
+</span><span class='line'>    <span class="k">return</span> <span class="o">^</span><span class="kt">id</span><span class="p">(</span><span class="kt">float</span> <span class="n">factor</span><span class="p">){</span>
+</span><span class='line'>        <span class="n">CGColorRef</span> <span class="n">fromColor</span> <span class="o">=</span> <span class="p">(</span><span class="n">__bridge</span> <span class="n">CGColorRef</span><span class="p">)</span><span class="n">fromValue</span><span class="p">;</span>
+</span><span class='line'>        <span class="n">CGColorRef</span> <span class="n">toColor</span> <span class="o">=</span> <span class="p">(</span><span class="n">__bridge</span> <span class="n">CGColorRef</span><span class="p">)</span><span class="n">toValue</span><span class="p">;</span>
+</span><span class='line'>        <span class="n">size_t</span> <span class="n">num</span> <span class="o">=</span> <span class="n">CGColorGetNumberOfComponents</span><span class="p">(</span><span class="n">fromColor</span><span class="p">);</span>
+</span><span class='line'>        <span class="k">const</span> <span class="n">CGFloat</span> <span class="o">*</span><span class="n">fromComp</span> <span class="o">=</span> <span class="n">CGColorGetComponents</span><span class="p">(</span><span class="n">fromColor</span><span class="p">);</span>
+</span><span class='line'>        <span class="k">const</span> <span class="n">CGFloat</span> <span class="o">*</span><span class="n">toComp</span> <span class="o">=</span> <span class="n">CGColorGetComponents</span><span class="p">(</span><span class="n">toColor</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="n">CGFloat</span> <span class="n">newComp</span><span class="p">[</span><span class="n">num</span><span class="p">];</span> <span class="c1">// same as malloca</span>
+</span><span class='line'>        <span class="k">for</span> <span class="p">(</span><span class="n">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">num</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>            <span class="n">newComp</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">toComp</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">fromComp</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">*</span> <span class="n">factor</span> <span class="o">+</span> <span class="n">fromComp</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+</span><span class='line'>        <span class="p">}</span>
+</span><span class='line'>        <span class="n">CGColorRef</span> <span class="n">retColor</span> <span class="o">=</span> <span class="n">CGColorCreate</span><span class="p">(</span><span class="n">CGColorGetColorSpace</span><span class="p">(</span><span class="n">fromColor</span><span class="p">),</span> <span class="n">newComp</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>        <span class="k">return</span> <span class="p">(</span><span class="n">__bridge_transfer</span> <span class="kt">id</span><span class="p">)</span><span class="n">retColor</span><span class="p">;</span>
+</span><span class='line'>    <span class="p">};</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="k">if</span> <span class="p">(</span><span class="n">CFGetTypeID</span><span class="p">((</span><span class="n">__bridge</span> <span class="n">CFTypeRef</span><span class="p">)</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="n">CGImageGetTypeID</span><span class="p">())</span> <span class="p">{</span>
+</span><span class='line'>    <span class="n">NSAssert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">@&quot;CGImageRef should be handled in another class&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">NSAssert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s">@&quot;value type unknown&quot;</span><span class="p">);</span>
+</span><span class='line'><span class="k">return</span> <span class="o">^</span><span class="kt">id</span><span class="p">(</span><span class="kt">float</span> <span class="n">factor</span><span class="p">){</span> <span class="k">return</span> <span class="nb">nil</span><span class="p">;};</span>    <span class="c1">// turn off compiler warnings } </span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+</code></pre>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>It is amazing that a langauge so close to C can create such a rich type system
+without byte code, VM, or complex sybol tricks (like what C++ does). Though
+handling differnt types can be a bit painful sometimes, but it brings powerful
+polimorphsm to the language. Thus programmer can create highly abstract API
+and framework with differnt data types that share the same methods.</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li><a href="http://www.cocoawithlove.com/2010/10/testing-if-arbitrary-pointer-is-valid.html">how to test if an arbitary pointer is a valid NSObject</a></li>
+  <li><a href="https://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/ObjCRuntimeGuide/Articles/ocrtTypeEncodings.html#//apple_ref/doc/uid/TP40008048-CH100">Objective C type encoding</a></li>
+  <li><a href="http://developer.apple.com/library/mac/#documentation/CoreFoundation/Conceptual/CFDesignConcepts/Articles/Inspecting.html">Inspecting core foundation object</a></li>
+</ul>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[C/ObjC block syntax explained]]></title>
@@ -906,289 +1288,6 @@ $ --prefix=/opt/curl --without-ssl
 </code></pre>
 
 <p>You can find the <code>$IP</code> in minicom remote shell by <code>ifconfig</code>.</p>
-
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Grand central dispatch vs OpenMP]]></title>
-    <link href="http://www.idryman.org/blog/2012/08/05/grand-central-dispatch-vs-openmp/"/>
-    <updated>2012-08-05T12:41:00+08:00</updated>
-    <id>http://www.idryman.org/blog/2012/08/05/grand-central-dispatch-vs-openmp</id>
-    <content type="html"><![CDATA[<p>In 2009 Apple released a new task parallelism technology called 
-<a href="http://developer.apple.com/library/ios/#documentation/Performance/Reference/GCD_libdispatch_Ref/Reference/reference.html">Grand Central Dispatch (GCD)</a>. Apple worked hard on tuning GCD; stated that only 15
-instructions are required to queue up a work unit in GCD, while creating a
-traditional thread could easily require several hundred instructions.<br />
-The main advantage of GCD is that programmer/user does not required to choose
-how many thread for application that optimize the most. It can save a lot of
-time for programmers because getting the most power out of CPUs requires a lot
-of measurement. With GCD, let the operating system decide it for you, <em>it just
-works.</em></p>
-
-<!-- more -->
-
-<p>Most GCD documentation provided by Apple take focus on user applications:
-background process, asynchronous callbacks, non-blocking UI, dispatched IOs
-…etc. GCD and c/obj-c blocks works pretty good in those scenarios, but we
-want a more general comparison between GCD and traditional thread models. <strong>Which
-is faster?</strong>
-Currently no one has made a general benchmark for this. I targeted to use an
-industry standard benchmark for GCD vs threads, and I ended up by picking 
-<a href="http://en.wikipedia.org/wiki/Conjugate_gradient_method">Conjugate Gradient</a> computation in 
-<a href="http://www.nas.nasa.gov/publications/npb.html">NAS Parallel Benchmark (NPB) maintained by NASA</a> as my benchmark model.</p>
-
-<p>I uses <a href="http://openmp.org/wp/">OpenMP</a> implementation in CG problem. It is an shared memory
-threading API which is much easier to use then POSIX thread. However it is still
-required for programmer/user to pick thread number in run time or in compile time.
-NASA only provide fortran code, so I uses <a href="http://jason.cse.ohio-state.edu/examples/npb/index.html">Ohio’s C implementation</a>.</p>
-
-<h2 id="benchmark-result">Benchmark result</h2>
-
-<p><img src="/images/npb_cg.png" alt="NPB CG" title="figure 1" /></p>
-
-<p>The result is quite promising! Problem sizes in NPB are predefined and indicated
-as different classes: </p>
-
-<ul>
-  <li>Class W: vector size: 7000, iterations: 15 (90’s workstation size, now likely
-too small)</li>
-  <li>Class A: vector size: 14000, iterations: 15</li>
-  <li>Class B: vector size: 75000, iterations: 75</li>
-</ul>
-
-<p>I tested OpenMP with different thread numbers and it performs differently on
-different problem size. It not quite obvious to choose a correct thread number
-for the problem, and GCD implementations beats them all.</p>
-
-<h2 id="bottleneck-implementation">Bottleneck implementation</h2>
-
-<p>The OpenMP implementation looks like this:</p>
-
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'>    <span class="cp">#pragma omp parallel {  </span><span class="c1">// Spawn threads for all computations in the block</span>
-</span><span class='line'>    <span class="cm">/* </span>
-</span><span class='line'><span class="cm">      some other code… </span>
-</span><span class='line'><span class="cm">    */</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="err">#</span><span class="n">pragma</span> <span class="n">omp</span> <span class="k">for</span> <span class="n">private</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">k</span><span class="p">)</span>  <span class="c1">// Bottleneck</span>
-</span><span class='line'>  <span class="k">for</span> <span class="p">(</span><span class="n">j</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">j</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">=</span> <span class="n">lastrow</span><span class="o">-</span><span class="n">firstrow</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>    <span class="kt">int</span> <span class="n">iresidue</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">double</span> <span class="n">sum1</span><span class="p">,</span> <span class="n">sum2</span><span class="p">;</span>
-</span><span class='line'>    <span class="n">i</span> <span class="o">=</span> <span class="n">rowstr</span><span class="p">[</span><span class="n">j</span><span class="p">];</span>
-</span><span class='line'>    <span class="n">iresidue</span> <span class="o">=</span> <span class="p">(</span><span class="n">rowstr</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">i</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span><span class="p">;</span>
-</span><span class='line'>    <span class="n">sum1</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
-</span><span class='line'>    <span class="n">sum2</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
-</span><span class='line'>    <span class="k">if</span> <span class="p">(</span><span class="n">iresidue</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="n">sum1</span> <span class="o">=</span> <span class="n">sum1</span> <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">p</span><span class="p">[</span><span class="n">colidx</span><span class="p">[</span><span class="n">i</span><span class="p">]];</span>
-</span><span class='line'>    <span class="k">for</span> <span class="p">(</span><span class="n">k</span> <span class="o">=</span> <span class="n">i</span><span class="o">+</span><span class="n">iresidue</span><span class="p">;</span> <span class="n">k</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">=</span> <span class="n">rowstr</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">2</span><span class="p">;</span> <span class="n">k</span> <span class="o">+=</span> <span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>      <span class="n">sum1</span> <span class="o">=</span> <span class="n">sum1</span> <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>   <span class="o">*</span> <span class="n">p</span><span class="p">[</span><span class="n">colidx</span><span class="p">[</span><span class="n">k</span><span class="p">]];</span>
-</span><span class='line'>      <span class="n">sum2</span> <span class="o">=</span> <span class="n">sum2</span> <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span><span class="p">[</span><span class="n">colidx</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]];</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>      <span class="n">q</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">sum1</span> <span class="o">+</span> <span class="n">sum2</span><span class="p">;</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>  <span class="cm">/* more code */</span>
-</span><span class='line'>  <span class="p">}</span> <span class="cm">/* end parallel */</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-</code></pre>
-
-<p>Other code instead of bottleneck are basically vector initialization, copy,
-multiply and norm computations. I tested all of these, but they don’t make
-big differences between OpenMP, GCD, and BLAS1 functions.</p>
-
-<p>GCD implementation looks much like the original code:</p>
-
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'>      <span class="c1">// c_queue is a concurrent queue</span>
-</span><span class='line'>      <span class="n">dispatch_apply</span> <span class="p">(</span><span class="n">NA</span><span class="p">,</span> <span class="n">c_queue</span><span class="p">,</span> <span class="o">^</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">idx</span><span class="p">){</span>
-</span><span class='line'>        <span class="kt">size_t</span> <span class="n">j</span> <span class="o">=</span> <span class="n">idx</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span>
-</span><span class='line'>        <span class="kt">double</span> <span class="n">sum</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
-</span><span class='line'>        <span class="kt">double</span> <span class="n">sum1</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">sum2</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
-</span><span class='line'>        <span class="kt">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="n">rowstr</span><span class="p">[</span><span class="n">j</span><span class="p">];</span>
-</span><span class='line'>        <span class="kt">size_t</span> <span class="n">iresidue</span> <span class="o">=</span> <span class="p">(</span><span class="n">rowstr</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">i</span><span class="p">)</span> <span class="o">%</span><span class="mi">2</span><span class="p">;</span>
-</span><span class='line'>        <span class="k">if</span> <span class="p">(</span><span class="n">iresidue</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="n">sum1</span> <span class="o">=</span> <span class="n">sum1</span> <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">p</span><span class="p">[</span><span class="n">colidx</span><span class="p">[</span><span class="n">i</span><span class="p">]];</span>
-</span><span class='line'>        <span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">k</span> <span class="o">=</span> <span class="n">i</span><span class="o">+</span><span class="n">iresidue</span><span class="p">;</span> <span class="n">k</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">=</span> <span class="n">rowstr</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">2</span><span class="p">;</span> <span class="n">k</span> <span class="o">+=</span> <span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>          <span class="n">sum1</span> <span class="o">=</span> <span class="n">sum1</span> <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>   <span class="o">*</span> <span class="n">p</span><span class="p">[</span><span class="n">colidx</span><span class="p">[</span><span class="n">k</span><span class="p">]];</span>
-</span><span class='line'>          <span class="n">sum2</span> <span class="o">=</span> <span class="n">sum2</span> <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span><span class="p">[</span><span class="n">colidx</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]];</span>
-</span><span class='line'>        <span class="p">}</span> <span class="o">&lt;</span><span class="n">br</span> <span class="o">/&gt;</span>
-</span><span class='line'>        <span class="n">q</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">sum1</span> <span class="o">+</span> <span class="n">sum2</span><span class="p">;</span>
-</span><span class='line'>      <span class="p">});</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
-
-<p>What a great news! It is much easier then I thought to transfer the original
-code into GCD.</p>
-
-<h2 id="parallel-reduction-in-openmp-gcd-and-blas">Parallel reduction in OpenMP, GCD, and BLAS</h2>
-
-<p>As I concluded before, it doesn’t make big difference between three of these.
-The implementations are:</p>
-
-<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>OpenMP  </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'>    <span class="cp">#pragma omp parallel private (i,j,k)</span>
-</span><span class='line'>    <span class="p">{</span>
-</span><span class='line'>    <span class="cp">#pragma omp single nowait</span>
-</span><span class='line'>      <span class="n">rho</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
-</span><span class='line'>    <span class="cp">#pragma omp for reduction(+:rho)</span>
-</span><span class='line'>      <span class="k">for</span> <span class="p">(</span><span class="n">j</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span> <span class="n">j</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">NA</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>        <span class="n">rho</span> <span class="o">=</span> <span class="n">rho</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="n">j</span><span class="p">];</span>
-</span><span class='line'>      <span class="p">}</span>
-</span><span class='line'>    <span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
-
-<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>GCD  </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'>    <span class="o">/*</span> <span class="n">clang</span> <span class="o">-</span><span class="n">fblocks</span> <span class="o">-</span><span class="n">O3</span> <span class="o">-</span><span class="n">DCACHE_LINE_SIZE</span><span class="o">=</span><span class="err">$</span><span class="p">(</span><span class="n">shell</span> <span class="n">sysctl</span> <span class="o">-</span><span class="n">n</span> <span class="n">hw</span><span class="p">.</span><span class="n">cachelinesize</span><span class="p">)</span> <span class="o">&lt;</span><span class="n">em</span><span class="o">&gt;/</span>
-</span><span class='line'>    <span class="cp">#include &amp;lt;dispatch/dispatch.h&amp;gt;</span>
-</span><span class='line'>    <span class="cp">#define STRIDE (1024&lt;/em&gt;(CACHE_LINE_SIZE/sizeof(double)))</span>
-</span><span class='line'>    <span class="cp">#define DIVIDE (NA/STRIDE)</span>
-</span><span class='line'>    <span class="cp">#define RESIDUE (NA%STRIDE)&lt;/p&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">__block</span> <span class="kt">double</span> <span class="n">rho</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
-</span><span class='line'><span class="n">dispatch_async</span><span class="p">(</span><span class="n">s_queue</span><span class="p">,</span><span class="o">^</span><span class="p">{</span>
-</span><span class='line'>  <span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">j</span> <span class="o">=</span> <span class="n">DIVIDE</span><span class="o">*</span><span class="n">STRIDE</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span> <span class="n">j</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">NA</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">){</span>
-</span><span class='line'>    <span class="n">rho</span> <span class="o">+=</span> <span class="n">x</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="n">j</span><span class="p">];</span>
-</span><span class='line'>  <span class="p">}</span>
-</span><span class='line'><span class="p">});</span>
-</span><span class='line'><span class="n">dispatch_apply</span><span class="p">(</span><span class="n">DIVIDE</span><span class="p">,</span> <span class="n">c_queue</span><span class="p">,</span> <span class="o">^</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">idx</span><span class="p">){</span>
-</span><span class='line'>  <span class="kt">size_t</span> <span class="n">j</span> <span class="o">=</span> <span class="n">idx</span> <span class="o">*</span> <span class="n">STRIDE</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span>
-</span><span class='line'>  <span class="kt">size_t</span> <span class="n">j_e</span> <span class="o">=</span> <span class="n">j</span> <span class="o">+</span> <span class="n">STRIDE</span><span class="p">;</span>
-</span><span class='line'>  <span class="kt">double</span> <span class="n">sum</span><span class="o">=</span><span class="mf">0.0</span><span class="p">;</span>
-</span><span class='line'>  <span class="k">do</span> <span class="p">{</span>
-</span><span class='line'>    <span class="n">sum</span> <span class="o">+=</span> <span class="n">x</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="n">j</span><span class="p">];</span>
-</span><span class='line'>  <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="o">++</span><span class="n">j</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">j_e</span><span class="p">);</span>
-</span><span class='line'>  <span class="n">dispatch_sync</span><span class="p">(</span><span class="n">s_queue</span><span class="p">,</span><span class="o">^</span><span class="p">{</span>
-</span><span class='line'>    <span class="n">rho</span> <span class="o">+=</span> <span class="n">sum</span><span class="p">;</span>
-</span><span class='line'>  <span class="p">});</span>
-</span><span class='line'><span class="p">});</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-</code></pre>
-
-<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>CBLAS  </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'>    <span class="cm">/* clang -lcblas </span>
-</span><span class='line'><span class="cm">       when linking */</span>
-</span><span class='line'>    <span class="cp">#include &amp;lt;Accelerate/Accelerate.h&amp;gt; </span><span class="c1">// header for OSX&lt;/p&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="c1">// rho = x.x</span>
-</span><span class='line'><span class="c1">//               size, vectorX,  incX, vectorY, incY</span>
-</span><span class='line'><span class="n">rho</span> <span class="o">=</span> <span class="n">cblas_ddot</span><span class="p">(</span>  <span class="n">NA</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">amp</span><span class="p">;(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>  <span class="mi">1</span>  <span class="p">,</span>  <span class="o">&amp;</span><span class="n">amp</span><span class="p">;(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>    <span class="mi">1</span><span class="p">);</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-</code></pre>
-
-<p>I think it does not make difference because those operations are all one
-dimensional BLAS1 problems.</p>
-
-<h4 id="note-on-cache-line-size">Note on cache line size</h4>
-
-<p>I thought that cache line size matters when I start implementing GCD version of
-parallel reduction. But it ended up that you just need to give it a large enough
-size for compiler to generate SIMD optimization. Note that you can get the CPU
-cache line size by command <code>sysctl -n hw.cachelinesize</code> from shell.</p>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>I think the best practice so far is to use BLAS whenever you can. It’s cleaner
-and highly optimized by libraries developed by Apple, Intel, or other HPC
-foundations. For other operation that BLAS don’t support, GCD is a good choice
-and easy to migrate to. The pros and cons go as follows:</p>
-
-<h4 id="openmp-over-gcd">OpenMP over GCD</h4>
-
-<ul>
-  <li>Supported by gcc, while clang doesn’t.</li>
-  <li>Can be used on C, CPP, and Fortran (and many more?)</li>
-  <li>Many existing numerical code uses OpenMP</li>
-  <li>Easier to get start with. eg. <code>#omp parallel for</code></li>
-  <li>Better syntax in reduction: <code>#omp reduction (+:sum)</code></li>
-</ul>
-
-<h4 id="gcd-over-openmp">GCD over OpenMP</h4>
-
-<ul>
-  <li>Much easier to tune performance.</li>
-  <li>Tighter logic construction. Everything is encapsulated in blocks.</li>
-  <li>No separated thread spawns and private variables like OpenMP.</li>
-  <li>Much less parameters to adjust in compile time and run time.</li>
-  <li>Highly optimized in any kinks of problem sizes.</li>
-  <li>Works on iOS (OpenMP does not)</li>
-</ul>
-
-<p>I think the greatest advantage you can gain from GCD is that it is highly optimized 
-on different problem sizes, because operating system takeovers task load balancing. 
-It surprised me that on class W problem, OpenMP version with 16 threads is twice
-as slow compares to 1 thread version. With GCD, you no longer need to handle
-this unexpected result! Cheers.</p>
 
 ]]></content>
   </entry>

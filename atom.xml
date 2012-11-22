@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-11-21T16:44:04+08:00</updated>
+  <updated>2012-11-22T09:34:33+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -203,18 +203,11 @@ vulnerability issues.</p>
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[Dance With Objective C Dynamic Types]]></title>
+    <title type="html"><![CDATA[Dance with Objective-C dynamic types]]></title>
     <link href="http://www.idryman.org/blog/2012/10/30/dance-with-objective-c-dynamic-types/"/>
-    <updated>2012-10-30T00:00:00+08:00</updated>
+    <updated>2012-10-30T13:58:00+08:00</updated>
     <id>http://www.idryman.org/blog/2012/10/30/dance-with-objective-c-dynamic-types</id>
-    <content type="html"><![CDATA[<p>— layout: post
-title: “Dance with Objective-C dynamic types”
-date: 2012-10-30 13:58
-comments: true
-categories: Objective-C Cocoa
-—</p>
-
-<p>Objective-C is a super set of C language. The entire language is a preprocessor
+    <content type="html"><![CDATA[<p>Objective-C is a super set of C language. The entire language is a preprocessor
 skin added to C language and a powerful runtime system. With this runtime system,
 one can have full featured object oriented programming interface, functional
 programming environment, and magical dynamic typing system. </p>
