@@ -117,12 +117,16 @@
         <lastmod>2012-11-21T16:43:57+08:00</lastmod>
     </url>
     <url>
+        <loc>http://www.idryman.org/blog/2012/11/22/arc-best-practices-and-pitfalls/</loc>
+        <lastmod>2012-11-22T15:42:12+08:00</lastmod>
+    </url>
+    <url>
         <loc>http://www.idryman.org/about-me/</loc>
         <lastmod>2012-10-31T09:55:15+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/archives/</loc>
-        <lastmod>2012-11-22T09:32:30+08:00</lastmod>
+        <lastmod>2012-11-22T15:42:12+08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/double-pendulum/</loc>
@@ -138,6 +142,6 @@
     </url>
     <url>
         <loc>http://www.idryman.org/</loc>
-        <lastmod>2012-11-22T09:32:30+08:00</lastmod>
+        <lastmod>2012-11-22T15:42:12+08:00</lastmod>
     </url>
 </urlset>

@@ -1,0 +1,697 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Objective-C ARC best practices and pitfalls - Carpe diem (Felix's blog)</title>
+  <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
+
+  
+  <meta name="description" content="Objective-C is a really cool programming language that is designed for Mac OSX and
+iOS software development. TIOBE has announced November Haedline: &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://www.idryman.org/blog/2012/11/22/arc-best-practices-and-pitfalls/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Carpe diem (Felix's blog)" type="application/atom+xml">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- mathjax config similar to math.stackexchange -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/HTML-CSS"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-23425996-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <!--div id="logo">
+  	<div id="logoLeft">{</div>
+  	<div id="logoText">mob</div>
+  	<div id="logoRight">}</div>
+  	<div class="clear"></div>
+  </div-->
+  <h1><a href="/">Carpe diem (Felix's blog)</a></h1>
+  
+    <h2>Work hard and enjoy every moments...</h2>
+  
+  <div class="clear"></div>
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:www.idryman.org" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about-me">About Me</a></li>
+  <li><a href="http://idryman.tumblr.com/">Drawings</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      
+        <h1 class="entry-title">Objective-C ARC Best Practices and Pitfalls</h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-11-22T09:28:00+08:00" pubdate data-updated="true">Nov 22<span>nd</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Objective-C is a really cool programming language that is designed for Mac OSX and
+iOS software development. TIOBE has announced November Haedline: <a href="http://www.tiobe.com/index.php/content/paperinfo/tpci/index.html">Objective-C on
+its way to become “language of the year” again</a>. It is popular not only because
+the platform, but also its great performance on mobile devices. Objective-C
+featured in its manually memory management instead of garbage collection. Yet,
+its not that <em>manual</em> in modern Objective-C. Apple introduced Automatic
+Reference Counting, ARC, that inserts memory management code for you on compile
+time. In most cases of Objective-C development, it JUST WORKS. However, it
+is often confusing when you mix ARC code with Core Foundation objects (low level
+C references on apple’s platform). Today, I’ll talk about pitfalls and concepts
+of ARC especially when gluing CF objects with <strong>toll-free bridging</strong>.</p>
+
+<!-- more -->
+
+<h2 id="daily-arc">Daily ARC</h2>
+
+<p>I’ll first make a quick go through of ARC in two major uses: Objective-C
+properties and ARC type qualifiers. Then we’ll cut deep into memory management
+of Core Foundation Framework.</p>
+
+<h3 id="arc-and-objective-c-properties">ARC and Objective-C properties</h3>
+
+<ul>
+  <li>object instance variables which needs to be retained should use <code>strong</code>.</li>
+</ul>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">strong</span><span class="p">)</span> <span class="kt">id</span> <span class="n">childObject</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<ul>
+  <li>To break reference cycle, use <code>weak</code>.</li>
+</ul>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">weak</span><span class="p">)</span> <span class="kt">id</span> <span class="n">delegate</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+<ul>
+  <li>use <code>assign</code> for scalar properties </li>
+</ul>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">assign</span><span class="p">)</span> <span class="n">CGFloat</span> <span class="n">width</span><span class="p">;</span>
+</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">assign</span><span class="p">)</span> <span class="n">CGFloat</span> <span class="n">height</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<ul>
+  <li>use <code>copy</code> for immutable containers, strings and block. Avoid using mutable
+containers in properties (<code>NSMutableArray</code>…etc.) If you use mutable
+containers, use <code>strong</code>.</li>
+</ul>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">copy</span><span class="p">)</span> <span class="n">NSString</span><span class="o">*</span> <span class="n">name</span><span class="p">;</span>
+</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">copy</span><span class="p">)</span> <span class="n">NSArray</span><span class="o">*</span> <span class="n">components</span><span class="p">;</span>
+</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">copy</span><span class="p">)</span> <span class="p">(</span><span class="kt">void</span> <span class="p">(</span><span class="o">^</span><span class="p">)(</span><span class="kt">void</span><span class="p">))</span> <span class="n">job</span><span class="p">;</span>
+</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">strong</span><span class="p">)</span> <span class="n">NSMutableArray</span><span class="o">*</span> <span class="n">badPatterns</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<ul>
+  <li>In dealloc
+    <ul>
+      <li>remove observers</li>
+      <li>unregister notifications</li>
+      <li>disable timers that use this object</li>
+    </ul>
+  </li>
+  <li>IBOutlets should generally be <code>weak</code> except File’s Owner to top-level objects
+in a nib file. If you set it to <code>strong</code>, you should set it to <code>nil</code> in
+<code>-(void)viewDidUnload</code>.</li>
+</ul>
+
+<h3 id="arc-specific-type-qualifiers">ARC specific type qualifiers</h3>
+
+<p>About type qualifier rules, you can see my <a href="http://www.idryman.org/blog/2012/10/29/type-qualifiers/">previous post</a>. There
+are four ARC specific type qualifiers introduced by Apple:</p>
+
+<ol>
+  <li><code>__strong</code> is the default. An object remains <strong>alive</strong> as long as there is a strong
+  pointer to it.</li>
+  <li><code>__weak</code> specifies a reference that does not keep the referenced object alive. A
+  weak reference is set to <code>nil</code> when there are no strong references to the object.</li>
+  <li><code>__unsafe_unretained</code> specifies a reference that does not keep the referenced
+  object alive and is not set to <code>nil</code> when there are no strong references to the
+  object. If the object it references is deallocated, the pointer is left
+  dangling.</li>
+  <li><code>__autoreleasing</code> is used to denote arguments that are passed by reference <code>(id *)</code>
+  and are autoreleased on return.</li>
+</ol>
+
+<p>Beware that ARC type qualifiers are used for POINTER TYPE. That is, you must put
+the qualifier at the right hand side of the star. </p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="n">MyClass</span> <span class="o">*</span> <span class="n">__weak</span> <span class="n">w_self</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span>    <span class="c1">// correct</span>
+</span><span class="line"><span class="n">MyClass</span> <span class="n">__weak</span> <span class="o">*</span> <span class="n">w_self</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span>    <span class="c1">// wrong! May cause serious bugs!</span>
+</span><span class="line"><span class="n">__weak</span> <span class="n">MyClass</span> <span class="o">*</span> <span class="n">w_self</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span>    <span class="c1">// wrong!</span>
+</span><span class="line">
+</span><span class="line"><span class="n">__weak</span> <span class="n">typeof</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="n">w_self</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span>
+</span><span class="line"><span class="c1">// correct, will expand to (See gcc manual of typeof)</span>
+</span><span class="line"><span class="c1">// __weak (MyClass *) w_self = self;</span>
+</span><span class="line">
+</span><span class="line"><span class="n">typeof</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="n">__weak</span> <span class="n">w_self</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span> <span class="c1">// correct, its safer</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>You might wonder that there is so many wrong format on the internet. But
+[Apple officially] said so:</p>
+
+<blockquote>
+  <p>You should decorate variables correctly. When using qualifiers in an object
+variable declaration, the correct format is:
+<code>ClassName * qualifier variableName;</code></p>
+</blockquote>
+
+<h2 id="arc-and-toll-free-bridging">ARC and toll-free bridging</h2>
+
+<p>The biggest problem of ARC occurs when you mix it with Core Foundation
+references. The rules of thumb are</p>
+
+<ul>
+  <li>When you transfer an Objective-C object to a CF reference, you
+retain it.</li>
+  <li>When you transfer a CF reference to an Objective-C object, you
+release it.</li>
+  <li>It is dangerous if you didn’t change ownership of objects. Sometimes Clang
+corrects it for you, sometimes don’t.</li>
+  <li>There is no autorelease in Core Foundation, and you must follow the Core
+Foundation memory management naming convention:
+    <ul>
+      <li>Those object returned from function with <code>Create</code> or <code>Copy</code>, you <strong>own</strong> the
+object, thus you must release it.</li>
+      <li>If the function name contains the word <code>Get</code>, you do not own the object. Do
+not release it.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>There are two ways to retain a CF object: a type casting like syntax
+<code>(__birdge_retained)</code> or C function <code>CFBridgingRetain</code>.  Though clang show up
+diagnostics to use the former syntax, I prefer to use the latter one because it
+is easier to read for me. </p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="n">CFArrayRef</span> <span class="n">arr</span> <span class="o">=</span> <span class="n">CFBridgingRetain</span><span class="p">(</span> <span class="err">@</span><span class="p">[</span><span class="s">@&quot;abc&quot;</span><span class="p">,</span> <span class="s">@&quot;def&quot;</span><span class="p">,</span> <span class="err">@</span><span class="mf">3.14</span><span class="p">]</span> <span class="p">);</span>
+</span><span class="line"><span class="c1">// or CFArrayRef arr = (__bridge_retained CFArrayRef)@[...];</span>
+</span><span class="line"><span class="c1">// do stuffs..</span>
+</span><span class="line"><span class="n">CFRelease</span><span class="p">(</span><span class="n">arr</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>When you get an object from Core Foundation with name containing <code>Create</code> or
+<code>Copy</code>, use <code>(__bridge_transfer)</code> or <code>CFBridgingRelease</code>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">logFirstNameOfPerson:</span><span class="p">(</span><span class="n">ABRecordRef</span><span class="p">)</span><span class="nv">person</span> <span class="p">{</span>
+</span><span class="line">
+</span><span class="line">    <span class="n">NSString</span> <span class="o">*</span><span class="n">name</span> <span class="o">=</span> <span class="p">(</span><span class="n">NSString</span> <span class="o">*</span><span class="p">)</span><span class="n">CFBridgingRelease</span><span class="p">(</span><span class="n">ABRecordCopyValue</span><span class="p">(</span><span class="n">person</span><span class="p">,</span> <span class="n">kABPersonFirstNameProperty</span><span class="p">));</span>
+</span><span class="line">    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;Person&#39;s first name: %@&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">);</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h3 id="pitfalls-in-toll-free-bridging">Pitfalls in toll-free bridging</h3>
+
+<p>When you see a code like this:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="n">CGColorRef</span><span class="p">)</span><span class="nf">foo</span> <span class="p">{</span>
+</span><span class="line">    <span class="n">UIColor</span><span class="o">*</span> <span class="n">color</span> <span class="o">=</span> <span class="p">[</span><span class="n">UIColor</span> <span class="n">redColor</span><span class="p">];</span>
+</span><span class="line">    <span class="k">return</span> <span class="p">[</span><span class="n">color</span> <span class="n">CGColor</span><span class="p">];</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Beware! It might crash at any time. Since we do not hold the reference of
+UIColor, it would be released right after you create it! The CGColor it owns
+would be released as well and thus cause a crash. There are three ways to fix
+it:</p>
+
+<ol>
+  <li>Use <code>__autorelease</code> type qualifier. UIColor would be released at the end of
+current run loop. It can fix the crash.</li>
+</ol>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="n">CGColorRef</span><span class="p">)</span><span class="nf">getFooColor</span> <span class="p">{</span>
+</span><span class="line">    <span class="n">UIColor</span><span class="o">*</span> <span class="n">__autoreleasing</span> <span class="n">color</span> <span class="o">=</span> <span class="p">[</span><span class="n">UIColor</span> <span class="n">redColor</span><span class="p">];</span>
+</span><span class="line">    <span class="k">return</span> <span class="p">[</span><span class="n">color</span> <span class="n">CGColor</span><span class="p">];</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<ol>
+  <li>Use Core Foundation naming convention and change the owner ship to the
+receiver.</li>
+</ol>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="n">CGColorRef</span><span class="p">)</span><span class="nf">fooColorCopy</span> <span class="p">{</span>
+</span><span class="line">    <span class="n">UIColor</span><span class="o">*</span> <span class="n">color</span> <span class="o">=</span> <span class="p">[</span><span class="n">UIColor</span> <span class="n">redColor</span><span class="p">];</span>
+</span><span class="line">    <span class="n">CGColorRef</span> <span class="n">c</span> <span class="o">=</span> <span class="n">CFRetain</span><span class="p">([</span><span class="n">color</span> <span class="n">CGColor</span><span class="p">]);</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">c</span><span class="p">;</span>
+</span><span class="line"><span class="p">}</span>
+</span><span class="line">
+</span><span class="line">
+</span><span class="line"><span class="n">CGColorRef</span> <span class="n">c</span> <span class="o">=</span> <span class="p">[</span><span class="n">obj</span> <span class="n">fooColorCopy</span><span class="p">];</span>
+</span><span class="line"><span class="c1">// do stuffs</span>
+</span><span class="line"><span class="n">CFRelease</span><span class="p">(</span><span class="n">c</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<ol>
+  <li>Owns the CF object by self. If self is dealloced, the reference would still
+cause a crash.</li>
+</ol>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="n">CGColorRef</span><span class="p">)</span><span class="nf">getFooColor</span> <span class="p">{</span>
+</span><span class="line">    <span class="n">CGColorRef</span> <span class="n">c</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">myColor</span><span class="p">.</span><span class="n">CGColor</span><span class="p">;</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">c</span><span class="p">;</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="summary">Summary</h2>
+
+<p>ARC is handy, but not easy. When you facing complex memory ownership model,
+wrting some testing code to know how retain count being managed is still a
+recommanded pactice.  The below snippet is how I test retain count when mixing
+CF object, block, and objective-c object:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">testCGColorRetainCount1</span>
+</span><span class="line"><span class="p">{</span>
+</span><span class="line">    <span class="n">CGColorRef</span> <span class="n">s_ref</span><span class="p">;</span>
+</span><span class="line">    <span class="err">@</span><span class="n">autoreleasepool</span> <span class="p">{</span>
+</span><span class="line">        <span class="n">UIColor</span> <span class="o">*</span> <span class="n">__autoreleasing</span> <span class="n">shadowColor</span> <span class="o">=</span> <span class="p">[</span><span class="n">UIColor</span> <span class="nl">colorWithRed:</span><span class="mf">0.12</span> <span class="nl">green:</span><span class="mf">0.12</span> <span class="nl">blue:</span><span class="mf">0.12</span> <span class="nl">alpha:</span><span class="mf">1.0</span><span class="p">];</span>
+</span><span class="line">        <span class="n">s_ref</span> <span class="o">=</span> <span class="n">shadowColor</span><span class="p">.</span><span class="n">CGColor</span><span class="p">;</span>
+</span><span class="line">        <span class="n">CFRetain</span><span class="p">(</span><span class="n">s_ref</span><span class="p">);</span>
+</span><span class="line">    <span class="p">}</span>
+</span><span class="line">    <span class="n">STAssertEquals</span><span class="p">(</span><span class="n">CFGetRetainCount</span><span class="p">(</span><span class="n">s_ref</span><span class="p">),</span> <span class="mi">1L</span><span class="p">,</span> <span class="s">@&quot;retain count owned by us&quot;</span><span class="p">);</span>
+</span><span class="line">
+</span><span class="line">    <span class="n">CGColorRef</span><span class="p">(</span><span class="o">^</span><span class="n">strangeBlock</span><span class="p">)(</span><span class="kt">void</span><span class="p">)</span> <span class="o">=</span> <span class="o">^</span><span class="p">{</span>
+</span><span class="line">        <span class="k">return</span> <span class="n">CGColorCreateCopy</span><span class="p">(</span><span class="n">s_ref</span><span class="p">);</span>
+</span><span class="line">    <span class="p">};</span>
+</span><span class="line">
+</span><span class="line">    <span class="n">CGColorRef</span> <span class="n">myCopy</span> <span class="o">=</span> <span class="n">strangeBlock</span><span class="p">();</span>
+</span><span class="line">    <span class="n">STAssertEquals</span><span class="p">(</span><span class="n">CFGetRetainCount</span><span class="p">(</span><span class="n">s_ref</span><span class="p">),</span> <span class="mi">2L</span><span class="p">,</span> <span class="s">@&quot;retain count owned by block and us&quot;</span><span class="p">);</span>
+</span><span class="line">    <span class="n">CFRelease</span><span class="p">(</span><span class="n">s_ref</span><span class="p">);</span>
+</span><span class="line">    <span class="n">STAssertEquals</span><span class="p">(</span><span class="n">CFGetRetainCount</span><span class="p">(</span><span class="n">s_ref</span><span class="p">),</span> <span class="mi">1L</span><span class="p">,</span> <span class="s">@&quot;retain count owned by block&quot;</span><span class="p">);</span>
+</span><span class="line">    <span class="n">STAssertEquals</span><span class="p">(</span><span class="n">CFGetRetainCount</span><span class="p">(</span><span class="n">myCopy</span><span class="p">),</span> <span class="mi">1L</span><span class="p">,</span> <span class="s">@&quot;retain count owned by us&quot;</span><span class="p">);</span>
+</span><span class="line">    <span class="n">CFRelease</span><span class="p">(</span><span class="n">myCopy</span><span class="p">);</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Hope these helps! Comments and sharing are welcome!</p>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-11-22T09:28:00+08:00" pubdate data-updated="true">Nov 22<span>nd</span>, 2012</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/objective-c/'>Objective-C</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2012/11/22/arc-best-practices-and-pitfalls/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2012/11/22/arc-best-practices-and-pitfalls/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left articlenav" href="/blog/2012/11/21/integer-promotion/" title="Previous Post: Deep C: Integer Promotion">&laquo; Deep C: Integer Promotion</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/11/22/arc-best-practices-and-pitfalls/">Objective-C ARC best practices and pitfalls</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/11/21/integer-promotion/">Deep C: Integer Promotion</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/10/30/dance-with-objective-c-dynamic-types/">Dance with Objective-C dynamic types</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/10/29/type-qualifiers/">Type Qualifiers and friends</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/30/c-objc-block-and-debugger/">C/ObjC block and debugger</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/29/c-objc-block-byref-internals/">C/ObjC block byref internals</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/29/c-objc-block-quizzes/">C/ObjC block quizzes</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/21/c-slash-objc-c-block-syntax-explained/">C/ObjC block syntax explained</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/16/taiwan-typhoon-app-2/">Taiwan Typhoon App (2)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/09/16/taiwan-typhoon-app-1/">Taiwan Typhoon App (1)</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("idryman", 4, true);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/idryman" class="twitter-follow-button" data-show-count="false">Follow @idryman</a>
+  
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2012 - dryman (Felix Ren-Chyan Chern) -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'dryblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.idryman.org/blog/2012/11/22/arc-best-practices-and-pitfalls/';
+        var disqus_url = 'http://www.idryman.org/blog/2012/11/22/arc-best-practices-and-pitfalls/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+<!--
+hn like button plugin for jekyll/octopress
+Author: dryman (Felix Ren-Chyan Chern)
+
+Inpired from http://hnlike.com/ written by sbashyal
+
+(The MIT License)
+
+Copyright © 2012-2013 Felix Ren-Chyan Chern
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the ‘Software’), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED ‘AS IS’, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+  <script type="text/javascript">
+    (function(){
+      var hn_like = document.createElement('iframe');
+      hn_like.frameborder="no";
+      hn_like.scrolling="no";
+      hn_like.height="28px";
+      hn_like.width="115px";
+      hn_like.src = "http://hnlike.com/upvote.php?link="
+                    + encodeURIComponent(document.location)
+                    + "&title="
+                    + encodeURIComponent("Objective-C ARC best practices and pitfalls");
+      hn_like.innerHTML="iframes not supported by your browser";
+      var twitter = document.getElementsByClassName("twitter-share-button")[0];
+
+      twitter.parentNode.insertBefore(
+        hn_like,
+        twitter
+      );
+    })();
+  </script>
+
+<!-- end of hn like button -->
+
+
+
+
+
+</body>
+</html>

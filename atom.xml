@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-11-22T09:34:33+08:00</updated>
+  <updated>2012-11-22T15:42:20+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,322 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Objective-C ARC best practices and pitfalls]]></title>
+    <link href="http://www.idryman.org/blog/2012/11/22/arc-best-practices-and-pitfalls/"/>
+    <updated>2012-11-22T09:28:00+08:00</updated>
+    <id>http://www.idryman.org/blog/2012/11/22/arc-best-practices-and-pitfalls</id>
+    <content type="html"><![CDATA[<p>Objective-C is a really cool programming language that is designed for Mac OSX and
+iOS software development. TIOBE has announced November Haedline: <a href="http://www.tiobe.com/index.php/content/paperinfo/tpci/index.html">Objective-C on
+its way to become “language of the year” again</a>. It is popular not only because
+the platform, but also its great performance on mobile devices. Objective-C
+featured in its manually memory management instead of garbage collection. Yet,
+its not that <em>manual</em> in modern Objective-C. Apple introduced Automatic
+Reference Counting, ARC, that inserts memory management code for you on compile
+time. In most cases of Objective-C development, it JUST WORKS. However, it
+is often confusing when you mix ARC code with Core Foundation objects (low level
+C references on apple’s platform). Today, I’ll talk about pitfalls and concepts
+of ARC especially when gluing CF objects with <strong>toll-free bridging</strong>.</p>
+
+<!-- more -->
+
+<h2 id="daily-arc">Daily ARC</h2>
+
+<p>I’ll first make a quick go through of ARC in two major uses: Objective-C
+properties and ARC type qualifiers. Then we’ll cut deep into memory management
+of Core Foundation Framework.</p>
+
+<h3 id="arc-and-objective-c-properties">ARC and Objective-C properties</h3>
+
+<ul>
+  <li>object instance variables which needs to be retained should use <code>strong</code>.</li>
+</ul>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">strong</span><span class="p">)</span> <span class="kt">id</span> <span class="n">childObject</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<ul>
+  <li>To break reference cycle, use <code>weak</code>.</li>
+</ul>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">weak</span><span class="p">)</span> <span class="kt">id</span> <span class="n">delegate</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+<ul>
+  <li>use <code>assign</code> for scalar properties </li>
+</ul>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">assign</span><span class="p">)</span> <span class="n">CGFloat</span> <span class="n">width</span><span class="p">;</span>
+</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">assign</span><span class="p">)</span> <span class="n">CGFloat</span> <span class="n">height</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<ul>
+  <li>use <code>copy</code> for immutable containers, strings and block. Avoid using mutable
+containers in properties (<code>NSMutableArray</code>…etc.) If you use mutable
+containers, use <code>strong</code>.</li>
+</ul>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">copy</span><span class="p">)</span> <span class="n">NSString</span><span class="o">*</span> <span class="n">name</span><span class="p">;</span>
+</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">copy</span><span class="p">)</span> <span class="n">NSArray</span><span class="o">*</span> <span class="n">components</span><span class="p">;</span>
+</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">copy</span><span class="p">)</span> <span class="p">(</span><span class="kt">void</span> <span class="p">(</span><span class="o">^</span><span class="p">)(</span><span class="kt">void</span><span class="p">))</span> <span class="n">job</span><span class="p">;</span>
+</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">strong</span><span class="p">)</span> <span class="n">NSMutableArray</span><span class="o">*</span> <span class="n">badPatterns</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<ul>
+  <li>In dealloc
+    <ul>
+      <li>remove observers</li>
+      <li>unregister notifications</li>
+      <li>disable timers that use this object</li>
+    </ul>
+  </li>
+  <li>IBOutlets should generally be <code>weak</code> except File’s Owner to top-level objects
+in a nib file. If you set it to <code>strong</code>, you should set it to <code>nil</code> in
+<code>-(void)viewDidUnload</code>.</li>
+</ul>
+
+<h3 id="arc-specific-type-qualifiers">ARC specific type qualifiers</h3>
+
+<p>About type qualifier rules, you can see my <a href="http://www.idryman.org/blog/2012/10/29/type-qualifiers/">previous post</a>. There
+are four ARC specific type qualifiers introduced by Apple:</p>
+
+<ol>
+  <li><code>__strong</code> is the default. An object remains <strong>alive</strong> as long as there is a strong
+  pointer to it.</li>
+  <li><code>__weak</code> specifies a reference that does not keep the referenced object alive. A
+  weak reference is set to <code>nil</code> when there are no strong references to the object.</li>
+  <li><code>__unsafe_unretained</code> specifies a reference that does not keep the referenced
+  object alive and is not set to <code>nil</code> when there are no strong references to the
+  object. If the object it references is deallocated, the pointer is left
+  dangling.</li>
+  <li><code>__autoreleasing</code> is used to denote arguments that are passed by reference <code>(id *)</code>
+  and are autoreleased on return.</li>
+</ol>
+
+<p>Beware that ARC type qualifiers are used for POINTER TYPE. That is, you must put
+the qualifier at the right hand side of the star. </p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="n">MyClass</span> <span class="o">*</span> <span class="n">__weak</span> <span class="n">w_self</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span>    <span class="c1">// correct</span>
+</span><span class="line"><span class="n">MyClass</span> <span class="n">__weak</span> <span class="o">*</span> <span class="n">w_self</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span>    <span class="c1">// wrong! May cause serious bugs!</span>
+</span><span class="line"><span class="n">__weak</span> <span class="n">MyClass</span> <span class="o">*</span> <span class="n">w_self</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span>    <span class="c1">// wrong!</span>
+</span><span class="line">
+</span><span class="line"><span class="n">__weak</span> <span class="n">typeof</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="n">w_self</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span>
+</span><span class="line"><span class="c1">// correct, will expand to (See gcc manual of typeof)</span>
+</span><span class="line"><span class="c1">// __weak (MyClass *) w_self = self;</span>
+</span><span class="line">
+</span><span class="line"><span class="n">typeof</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="n">__weak</span> <span class="n">w_self</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span> <span class="c1">// correct, its safer</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>You might wonder that there is so many wrong format on the internet. But
+[Apple officially] said so:</p>
+
+<blockquote>
+  <p>You should decorate variables correctly. When using qualifiers in an object
+variable declaration, the correct format is:
+<code>ClassName * qualifier variableName;</code></p>
+</blockquote>
+
+<h2 id="arc-and-toll-free-bridging">ARC and toll-free bridging</h2>
+
+<p>The biggest problem of ARC occurs when you mix it with Core Foundation
+references. The rules of thumb are</p>
+
+<ul>
+  <li>When you transfer an Objective-C object to a CF reference, you
+retain it.</li>
+  <li>When you transfer a CF reference to an Objective-C object, you
+release it.</li>
+  <li>It is dangerous if you didn’t change ownership of objects. Sometimes Clang
+corrects it for you, sometimes don’t.</li>
+  <li>There is no autorelease in Core Foundation, and you must follow the Core
+Foundation memory management naming convention:
+    <ul>
+      <li>Those object returned from function with <code>Create</code> or <code>Copy</code>, you <strong>own</strong> the
+object, thus you must release it.</li>
+      <li>If the function name contains the word <code>Get</code>, you do not own the object. Do
+not release it.</li>
+    </ul>
+  </li>
+</ul>
+
+<p>There are two ways to retain a CF object: a type casting like syntax
+<code>(__birdge_retained)</code> or C function <code>CFBridgingRetain</code>.  Though clang show up
+diagnostics to use the former syntax, I prefer to use the latter one because it
+is easier to read for me. </p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="n">CFArrayRef</span> <span class="n">arr</span> <span class="o">=</span> <span class="n">CFBridgingRetain</span><span class="p">(</span> <span class="err">@</span><span class="p">[</span><span class="s">@&quot;abc&quot;</span><span class="p">,</span> <span class="s">@&quot;def&quot;</span><span class="p">,</span> <span class="err">@</span><span class="mf">3.14</span><span class="p">]</span> <span class="p">);</span>
+</span><span class="line"><span class="c1">// or CFArrayRef arr = (__bridge_retained CFArrayRef)@[...];</span>
+</span><span class="line"><span class="c1">// do stuffs..</span>
+</span><span class="line"><span class="n">CFRelease</span><span class="p">(</span><span class="n">arr</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>When you get an object from Core Foundation with name containing <code>Create</code> or
+<code>Copy</code>, use <code>(__bridge_transfer)</code> or <code>CFBridgingRelease</code>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">logFirstNameOfPerson:</span><span class="p">(</span><span class="n">ABRecordRef</span><span class="p">)</span><span class="nv">person</span> <span class="p">{</span>
+</span><span class="line">
+</span><span class="line">    <span class="n">NSString</span> <span class="o">*</span><span class="n">name</span> <span class="o">=</span> <span class="p">(</span><span class="n">NSString</span> <span class="o">*</span><span class="p">)</span><span class="n">CFBridgingRelease</span><span class="p">(</span><span class="n">ABRecordCopyValue</span><span class="p">(</span><span class="n">person</span><span class="p">,</span> <span class="n">kABPersonFirstNameProperty</span><span class="p">));</span>
+</span><span class="line">    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;Person&#39;s first name: %@&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">);</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h3 id="pitfalls-in-toll-free-bridging">Pitfalls in toll-free bridging</h3>
+
+<p>When you see a code like this:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="n">CGColorRef</span><span class="p">)</span><span class="nf">foo</span> <span class="p">{</span>
+</span><span class="line">    <span class="n">UIColor</span><span class="o">*</span> <span class="n">color</span> <span class="o">=</span> <span class="p">[</span><span class="n">UIColor</span> <span class="n">redColor</span><span class="p">];</span>
+</span><span class="line">    <span class="k">return</span> <span class="p">[</span><span class="n">color</span> <span class="n">CGColor</span><span class="p">];</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Beware! It might crash at any time. Since we do not hold the reference of
+UIColor, it would be released right after you create it! The CGColor it owns
+would be released as well and thus cause a crash. There are three ways to fix
+it:</p>
+
+<ol>
+  <li>Use <code>__autorelease</code> type qualifier. UIColor would be released at the end of
+current run loop. It can fix the crash.</li>
+</ol>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="n">CGColorRef</span><span class="p">)</span><span class="nf">getFooColor</span> <span class="p">{</span>
+</span><span class="line">    <span class="n">UIColor</span><span class="o">*</span> <span class="n">__autoreleasing</span> <span class="n">color</span> <span class="o">=</span> <span class="p">[</span><span class="n">UIColor</span> <span class="n">redColor</span><span class="p">];</span>
+</span><span class="line">    <span class="k">return</span> <span class="p">[</span><span class="n">color</span> <span class="n">CGColor</span><span class="p">];</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<ol>
+  <li>Use Core Foundation naming convention and change the owner ship to the
+receiver.</li>
+</ol>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="n">CGColorRef</span><span class="p">)</span><span class="nf">fooColorCopy</span> <span class="p">{</span>
+</span><span class="line">    <span class="n">UIColor</span><span class="o">*</span> <span class="n">color</span> <span class="o">=</span> <span class="p">[</span><span class="n">UIColor</span> <span class="n">redColor</span><span class="p">];</span>
+</span><span class="line">    <span class="n">CGColorRef</span> <span class="n">c</span> <span class="o">=</span> <span class="n">CFRetain</span><span class="p">([</span><span class="n">color</span> <span class="n">CGColor</span><span class="p">]);</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">c</span><span class="p">;</span>
+</span><span class="line"><span class="p">}</span>
+</span><span class="line">
+</span><span class="line">
+</span><span class="line"><span class="n">CGColorRef</span> <span class="n">c</span> <span class="o">=</span> <span class="p">[</span><span class="n">obj</span> <span class="n">fooColorCopy</span><span class="p">];</span>
+</span><span class="line"><span class="c1">// do stuffs</span>
+</span><span class="line"><span class="n">CFRelease</span><span class="p">(</span><span class="n">c</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<ol>
+  <li>Owns the CF object by self. If self is dealloced, the reference would still
+cause a crash.</li>
+</ol>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="n">CGColorRef</span><span class="p">)</span><span class="nf">getFooColor</span> <span class="p">{</span>
+</span><span class="line">    <span class="n">CGColorRef</span> <span class="n">c</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">myColor</span><span class="p">.</span><span class="n">CGColor</span><span class="p">;</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">c</span><span class="p">;</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="summary">Summary</h2>
+
+<p>ARC is handy, but not easy. When you facing complex memory ownership model,
+wrting some testing code to know how retain count being managed is still a
+recommanded pactice.  The below snippet is how I test retain count when mixing
+CF object, block, and objective-c object:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">testCGColorRetainCount1</span>
+</span><span class="line"><span class="p">{</span>
+</span><span class="line">    <span class="n">CGColorRef</span> <span class="n">s_ref</span><span class="p">;</span>
+</span><span class="line">    <span class="err">@</span><span class="n">autoreleasepool</span> <span class="p">{</span>
+</span><span class="line">        <span class="n">UIColor</span> <span class="o">*</span> <span class="n">__autoreleasing</span> <span class="n">shadowColor</span> <span class="o">=</span> <span class="p">[</span><span class="n">UIColor</span> <span class="nl">colorWithRed:</span><span class="mf">0.12</span> <span class="nl">green:</span><span class="mf">0.12</span> <span class="nl">blue:</span><span class="mf">0.12</span> <span class="nl">alpha:</span><span class="mf">1.0</span><span class="p">];</span>
+</span><span class="line">        <span class="n">s_ref</span> <span class="o">=</span> <span class="n">shadowColor</span><span class="p">.</span><span class="n">CGColor</span><span class="p">;</span>
+</span><span class="line">        <span class="n">CFRetain</span><span class="p">(</span><span class="n">s_ref</span><span class="p">);</span>
+</span><span class="line">    <span class="p">}</span>
+</span><span class="line">    <span class="n">STAssertEquals</span><span class="p">(</span><span class="n">CFGetRetainCount</span><span class="p">(</span><span class="n">s_ref</span><span class="p">),</span> <span class="mi">1L</span><span class="p">,</span> <span class="s">@&quot;retain count owned by us&quot;</span><span class="p">);</span>
+</span><span class="line">
+</span><span class="line">    <span class="n">CGColorRef</span><span class="p">(</span><span class="o">^</span><span class="n">strangeBlock</span><span class="p">)(</span><span class="kt">void</span><span class="p">)</span> <span class="o">=</span> <span class="o">^</span><span class="p">{</span>
+</span><span class="line">        <span class="k">return</span> <span class="n">CGColorCreateCopy</span><span class="p">(</span><span class="n">s_ref</span><span class="p">);</span>
+</span><span class="line">    <span class="p">};</span>
+</span><span class="line">
+</span><span class="line">    <span class="n">CGColorRef</span> <span class="n">myCopy</span> <span class="o">=</span> <span class="n">strangeBlock</span><span class="p">();</span>
+</span><span class="line">    <span class="n">STAssertEquals</span><span class="p">(</span><span class="n">CFGetRetainCount</span><span class="p">(</span><span class="n">s_ref</span><span class="p">),</span> <span class="mi">2L</span><span class="p">,</span> <span class="s">@&quot;retain count owned by block and us&quot;</span><span class="p">);</span>
+</span><span class="line">    <span class="n">CFRelease</span><span class="p">(</span><span class="n">s_ref</span><span class="p">);</span>
+</span><span class="line">    <span class="n">STAssertEquals</span><span class="p">(</span><span class="n">CFGetRetainCount</span><span class="p">(</span><span class="n">s_ref</span><span class="p">),</span> <span class="mi">1L</span><span class="p">,</span> <span class="s">@&quot;retain count owned by block&quot;</span><span class="p">);</span>
+</span><span class="line">    <span class="n">STAssertEquals</span><span class="p">(</span><span class="n">CFGetRetainCount</span><span class="p">(</span><span class="n">myCopy</span><span class="p">),</span> <span class="mi">1L</span><span class="p">,</span> <span class="s">@&quot;retain count owned by us&quot;</span><span class="p">);</span>
+</span><span class="line">    <span class="n">CFRelease</span><span class="p">(</span><span class="n">myCopy</span><span class="p">);</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Hope these helps! Comments and sharing are welcome!</p>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Deep C: Integer Promotion]]></title>
@@ -4589,266 +4905,6 @@ property of red or black.</p>
 
 <p>So that when <code>Lisp</code> want to print a <code>rb</code> with data is <code>8</code> and red is <code>nil</code>, it
 would print <code>8-b</code> instead of <code>#S(RB :data 8 :red nil)</code>.</p>
-
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[persistent red black tree in lisp (2)]]></title>
-    <link href="http://www.idryman.org/blog/2012/03/31/persistent-red-black-tree-in-lisp-2/"/>
-    <updated>2012-03-31T09:22:00+08:00</updated>
-    <id>http://www.idryman.org/blog/2012/03/31/persistent-red-black-tree-in-lisp-2</id>
-    <content type="html"><![CDATA[<h3 id="single-rotate">Single rotate</h3>
-
-<p>Using the <code>kid</code> utility, we can make rotate single to be simpler too:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="c1">;;       x              y</span>
-</span><span class="line"><span class="c1">;;     /   \          /   \</span>
-</span><span class="line"><span class="c1">;;    y     c   =&gt;   a     x       </span>
-</span><span class="line"><span class="c1">;;  /   \                 / \</span>
-</span><span class="line"><span class="c1">;; a     b               b   c</span>
-</span><span class="line"><span class="c1">;;</span>
-</span><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">rotate-s</span> <span class="p">(</span><span class="nv">root</span> <span class="nv">dir</span><span class="p">)</span>
-</span><span class="line">  <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">x</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">))</span>
-</span><span class="line">        <span class="p">(</span><span class="nv">y</span> <span class="p">(</span><span class="nb">cadr</span> <span class="p">(</span><span class="nv">kid</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">))))</span>
-</span><span class="line">        <span class="p">(</span><span class="nv">a</span> <span class="p">(</span><span class="nv">kid</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">)</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">)))</span>
-</span><span class="line">        <span class="p">(</span><span class="nv">b</span> <span class="p">(</span><span class="nv">kid</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">)</span> <span class="nv">dir</span><span class="p">))</span>
-</span><span class="line">        <span class="p">(</span><span class="nv">c</span> <span class="p">(</span><span class="nv">kid</span> <span class="nv">dir</span><span class="p">)))</span>
-</span><span class="line">    <span class="p">(</span><span class="k">if</span> <span class="nv">dir</span>
-</span><span class="line">        <span class="p">(</span><span class="nb">list</span> <span class="nv">a</span> <span class="nv">y</span> <span class="p">(</span><span class="nb">list</span> <span class="nv">b</span> <span class="nv">x</span> <span class="nv">c</span><span class="p">))</span>
-</span><span class="line">        <span class="p">(</span><span class="nb">list</span> <span class="p">(</span><span class="nb">list</span> <span class="nv">c</span> <span class="nv">x</span> <span class="nv">b</span><span class="p">)</span> <span class="nv">y</span> <span class="nv">a</span><span class="p">))))</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>Observe that the two return form is nested reversed. Why not write a macro that
-generate this form? Then we only need to write the right case!</p>
-
-<!-- more -->
-
-<h3 id="reverse-the-tree">Reverse the tree</h3>
-
-<p>First we need to write a function that take a nested form and return it in
-reversed order (also nested.) To achieve this, we use double recursion.</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">tree-to-rev</span> <span class="p">(</span><span class="nv">tree</span> <span class="nv">acc</span><span class="p">)</span>
-</span><span class="line">   <span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nb">null</span> <span class="nv">tree</span><span class="p">)</span> <span class="nv">acc</span><span class="p">)</span>
-</span><span class="line">         <span class="p">((</span><span class="nb">consp</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">tree</span><span class="p">))</span>
-</span><span class="line">          <span class="p">(</span><span class="nv">tree-to-rev</span> <span class="p">(</span><span class="nb">cdr</span> <span class="nv">tree</span><span class="p">)</span>
-</span><span class="line">               <span class="p">(</span><span class="nb">cons</span> <span class="p">(</span><span class="nv">tree-to-rev</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">tree</span><span class="p">)</span> <span class="no">nil</span><span class="p">)</span> <span class="nv">acc</span><span class="p">)))</span>
-</span><span class="line">         <span class="p">(</span><span class="no">T</span> <span class="p">(</span><span class="nv">tree-to-rev</span> <span class="p">(</span><span class="nb">cdr</span> <span class="nv">tree</span><span class="p">)</span> <span class="p">(</span><span class="nb">cons</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">tree</span><span class="p">)</span> <span class="nv">acc</span><span class="p">)))))</span>
-</span><span class="line">
-</span><span class="line"><span class="nv">CL-USER&gt;</span> <span class="p">(</span><span class="nv">tree-to-rev</span> <span class="o">&#39;</span><span class="p">(</span><span class="nv">a</span> <span class="nv">b</span> <span class="p">(</span><span class="nv">c</span> <span class="nv">d</span> <span class="nv">e</span><span class="p">))</span> <span class="no">nil</span><span class="p">)</span>
-</span><span class="line"><span class="p">((</span><span class="nv">E</span> <span class="nv">D</span> <span class="nv">C</span><span class="p">)</span> <span class="nv">B</span> <span class="nv">A</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>Recall that we need to add <code>list</code> at the beginning of returned form. So rewrite
-the function as</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-<span class="line-number">16</span>
-<span class="line-number">17</span>
-<span class="line-number">18</span>
-<span class="line-number">19</span>
-<span class="line-number">20</span>
-</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">tree-to-rev-list</span> <span class="p">(</span><span class="nv">tree</span> <span class="nv">acc</span><span class="p">)</span>
-</span><span class="line">   <span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nb">null</span> <span class="nv">tree</span><span class="p">)</span> <span class="p">(</span><span class="nb">cons</span> <span class="ss">&#39;list</span> <span class="nv">acc</span><span class="p">))</span>
-</span><span class="line">         <span class="p">((</span><span class="nb">consp</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">tree</span><span class="p">))</span>
-</span><span class="line">          <span class="p">(</span><span class="nv">tree-to-rev-list</span> <span class="p">(</span><span class="nb">cdr</span> <span class="nv">tree</span><span class="p">)</span>
-</span><span class="line">               <span class="p">(</span><span class="nb">cons</span> <span class="p">(</span><span class="nv">tree-to-rev-list</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">tree</span><span class="p">)</span> <span class="no">nil</span><span class="p">)</span> <span class="nv">acc</span><span class="p">)))</span>
-</span><span class="line">         <span class="p">(</span><span class="no">T</span> <span class="p">(</span><span class="nv">tree-to-rev-list</span> <span class="p">(</span><span class="nb">cdr</span> <span class="nv">tree</span><span class="p">)</span> <span class="p">(</span><span class="nb">cons</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">tree</span><span class="p">)</span> <span class="nv">acc</span><span class="p">)))))</span>
-</span><span class="line">
-</span><span class="line">
-</span><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">tree-to-list</span> <span class="p">(</span><span class="nv">tree</span> <span class="nv">acc</span><span class="p">)</span>
-</span><span class="line">   <span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nb">null</span> <span class="nv">tree</span><span class="p">)</span> <span class="p">(</span><span class="nb">cons</span> <span class="ss">&#39;list</span> <span class="p">(</span><span class="nb">reverse</span> <span class="nv">acc</span><span class="p">)))</span>
-</span><span class="line">         <span class="p">((</span><span class="nb">consp</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">tree</span><span class="p">))</span>
-</span><span class="line">          <span class="p">(</span><span class="nv">tree-to-list</span> <span class="p">(</span><span class="nb">cdr</span> <span class="nv">tree</span><span class="p">)</span>
-</span><span class="line">               <span class="p">(</span><span class="nb">cons</span> <span class="p">(</span><span class="nv">tree-to-list</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">tree</span><span class="p">)</span> <span class="no">nil</span><span class="p">)</span> <span class="nv">acc</span><span class="p">)))</span>
-</span><span class="line">         <span class="p">(</span><span class="no">T</span> <span class="p">(</span><span class="nv">tree-to-list</span> <span class="p">(</span><span class="nb">cdr</span> <span class="nv">tree</span><span class="p">)</span> <span class="p">(</span><span class="nb">cons</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">tree</span><span class="p">)</span> <span class="nv">acc</span><span class="p">)))))</span>
-</span><span class="line">
-</span><span class="line"><span class="nv">CL-USER&gt;</span> <span class="p">(</span><span class="nv">tree-to-rev-list</span> <span class="o">&#39;</span><span class="p">(</span><span class="nv">a</span> <span class="nv">b</span> <span class="p">(</span><span class="nv">c</span> <span class="nv">d</span> <span class="nv">e</span><span class="p">))</span> <span class="no">nil</span><span class="p">)</span>
-</span><span class="line"><span class="p">(</span><span class="nv">LIST</span> <span class="p">(</span><span class="nv">LIST</span> <span class="nv">E</span> <span class="nv">D</span> <span class="nv">C</span><span class="p">)</span> <span class="nv">B</span> <span class="nv">A</span><span class="p">)</span>
-</span><span class="line">
-</span><span class="line"><span class="nv">CL-USER&gt;</span> <span class="p">(</span><span class="nv">tree-to-list</span> <span class="o">&#39;</span><span class="p">(</span><span class="nv">a</span> <span class="nv">b</span> <span class="p">(</span><span class="nv">c</span> <span class="nv">d</span> <span class="nv">e</span><span class="p">))</span> <span class="no">nil</span><span class="p">)</span>
-</span><span class="line"><span class="p">(</span><span class="nv">LIST</span> <span class="nv">A</span> <span class="nv">B</span> <span class="p">(</span><span class="nv">LIST</span> <span class="nv">C</span> <span class="nv">D</span> <span class="nv">E</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<h3 id="macro-that-simplify-the-return-form">Macro that simplify the return form</h3>
-
-<p>Now we write a macro that we only need to pass it the right case:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">defmacro</span> <span class="nv">mtree-expand</span> <span class="p">(</span><span class="nv">dir</span> <span class="nv">tree</span><span class="p">)</span>
-</span><span class="line">  <span class="o">`</span><span class="p">(</span><span class="k">if</span> <span class="o">,</span><span class="nv">dir</span>
-</span><span class="line">      <span class="o">,</span><span class="p">(</span><span class="nv">tree-to-list</span> <span class="nv">tree</span> <span class="no">nil</span><span class="p">)</span>
-</span><span class="line">      <span class="o">,</span><span class="p">(</span><span class="nv">tree-to-rev-list</span> <span class="nv">tree</span> <span class="no">nil</span><span class="p">)))</span>
-</span><span class="line">
-</span><span class="line"><span class="nv">CL-USER&gt;</span> <span class="p">(</span><span class="nb">macroexpand-1</span> <span class="o">&#39;</span><span class="p">(</span><span class="nv">mtree-expand</span> <span class="nv">dir</span> <span class="p">(</span><span class="nv">a</span> <span class="nv">y</span> <span class="p">(</span><span class="nv">b</span> <span class="nv">x</span> <span class="nv">c</span><span class="p">))))</span>
-</span><span class="line"><span class="p">(</span><span class="nv">IF</span> <span class="nv">DIR</span>
-</span><span class="line">    <span class="p">(</span><span class="nv">LIST</span> <span class="nv">A</span> <span class="nv">Y</span> <span class="p">(</span><span class="nv">LIST</span> <span class="nv">B</span> <span class="nv">X</span> <span class="nv">C</span><span class="p">))</span>
-</span><span class="line">    <span class="p">(</span><span class="nv">LIST</span> <span class="p">(</span><span class="nv">LIST</span> <span class="nv">C</span> <span class="nv">X</span> <span class="nv">B</span><span class="p">)</span> <span class="nv">Y</span> <span class="nv">A</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>Now the <code>insert-binary-r</code> and <code>rotate-s</code> can be re-written only in right form!</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-<span class="line-number">16</span>
-<span class="line-number">17</span>
-<span class="line-number">18</span>
-<span class="line-number">19</span>
-<span class="line-number">20</span>
-<span class="line-number">21</span>
-<span class="line-number">22</span>
-</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="c1">;;       x              y</span>
-</span><span class="line"><span class="c1">;;     /   \          /   \</span>
-</span><span class="line"><span class="c1">;;    y     c   =&gt;   a     x       </span>
-</span><span class="line"><span class="c1">;;  /   \                 / \</span>
-</span><span class="line"><span class="c1">;; a     b               b   c</span>
-</span><span class="line"><span class="c1">;;</span>
-</span><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">rotate-s</span> <span class="p">(</span><span class="nv">root</span> <span class="nv">dir</span><span class="p">)</span>
-</span><span class="line">  <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">x</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">))</span>
-</span><span class="line">        <span class="p">(</span><span class="nv">y</span> <span class="p">(</span><span class="nb">cadr</span> <span class="p">(</span><span class="nv">kid</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">))))</span>
-</span><span class="line">        <span class="p">(</span><span class="nv">a</span> <span class="p">(</span><span class="nv">kid</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">)</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">)))</span>
-</span><span class="line">        <span class="p">(</span><span class="nv">b</span> <span class="p">(</span><span class="nv">kid</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">)</span> <span class="nv">dir</span><span class="p">))</span>
-</span><span class="line">        <span class="p">(</span><span class="nv">c</span> <span class="p">(</span><span class="nv">kid</span> <span class="nv">dir</span><span class="p">)))</span>
-</span><span class="line">    <span class="p">(</span><span class="nv">mtree-expand</span> <span class="nv">dir</span> <span class="p">(</span><span class="nv">a</span> <span class="nv">y</span> <span class="p">(</span><span class="nv">b</span> <span class="nv">x</span> <span class="nv">c</span><span class="p">)))))</span>
-</span><span class="line">
-</span><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">insert-binary-r</span> <span class="p">(</span><span class="nv">root</span> <span class="nv">data</span><span class="p">)</span>
-</span><span class="line">  <span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nb">null</span> <span class="nv">root</span><span class="p">)</span> <span class="o">`</span><span class="p">(</span><span class="no">nil</span> <span class="o">,</span><span class="p">(</span><span class="nv">make-rb</span> <span class="ss">:data</span> <span class="nv">data</span><span class="p">)</span> <span class="no">nil</span><span class="p">))</span>
-</span><span class="line">        <span class="p">((</span><span class="nb">=</span> <span class="nv">data</span> <span class="p">(</span><span class="nv">node-data</span> <span class="nv">root</span><span class="p">))</span> <span class="nv">root</span><span class="p">)</span>
-</span><span class="line">        <span class="p">(</span><span class="no">T</span> <span class="p">(</span><span class="k">let*</span> <span class="p">((</span><span class="nv">dir</span> <span class="p">(</span><span class="nb">&gt;</span> <span class="nv">data</span> <span class="p">(</span><span class="nv">node-data</span> <span class="nv">root</span><span class="p">)))</span>
-</span><span class="line">                  <span class="p">(</span><span class="nv">x</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">))</span>
-</span><span class="line">                  <span class="p">(</span><span class="nv">a</span> <span class="p">(</span><span class="nv">kid</span> <span class="nv">root</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">)))</span>
-</span><span class="line">                  <span class="p">(</span><span class="nv">b</span> <span class="p">(</span><span class="nv">binary-insert-r</span> <span class="p">(</span><span class="nv">kid</span> <span class="nv">root</span> <span class="nv">dir</span><span class="p">)</span> <span class="nv">data</span><span class="p">)))</span>
-</span><span class="line">             <span class="p">(</span><span class="nv">mtree-expand</span> <span class="nv">dir</span> <span class="p">(</span><span class="nv">a</span> <span class="nv">x</span> <span class="nv">b</span><span class="p">))))))</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<h3 id="macro-that-simplify-the-input-form">Macro that simplify the input form</h3>
-
-<p>We also want to simplify that ugly <code>let</code> form, so we create this function and
-macro:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">gen-let</span> <span class="p">(</span><span class="nv">dir</span> <span class="nv">node</span> <span class="nv">form</span> <span class="nv">dirs</span><span class="p">)</span>
-</span><span class="line">  <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nb">atom</span> <span class="nv">form</span><span class="p">)</span>
-</span><span class="line">    <span class="o">`</span><span class="p">((</span><span class="o">,</span><span class="nv">form</span> <span class="p">(</span><span class="nb">apply</span> <span class="nf">#&#39;</span><span class="nv">kid</span> <span class="o">,</span><span class="nv">node</span> <span class="o">,</span><span class="p">(</span><span class="nb">cons</span> <span class="ss">&#39;list</span> <span class="p">(</span><span class="nb">reverse</span> <span class="nv">dirs</span><span class="p">)))))</span>
-</span><span class="line">    <span class="p">(</span><span class="nb">cons</span> <span class="o">`</span><span class="p">(</span><span class="o">,</span><span class="p">(</span><span class="nb">cadr</span> <span class="nv">form</span><span class="p">)</span>
-</span><span class="line">            <span class="p">(</span><span class="nb">cadr</span> <span class="p">(</span><span class="nb">apply</span> <span class="nf">#&#39;</span><span class="nv">kid</span> <span class="o">,</span><span class="nv">node</span> <span class="o">,</span><span class="p">(</span><span class="nb">cons</span> <span class="ss">&#39;list</span> <span class="p">(</span><span class="nb">reverse</span> <span class="nv">dirs</span><span class="p">)))))</span>
-</span><span class="line">          <span class="p">(</span><span class="nb">append</span> <span class="p">(</span><span class="nv">gen-let</span> <span class="nv">dir</span> <span class="nv">node</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">form</span><span class="p">)</span> <span class="p">(</span><span class="nb">cons</span> <span class="o">`</span><span class="p">(</span><span class="nb">not</span> <span class="o">,</span><span class="nv">dir</span><span class="p">)</span> <span class="nv">dirs</span><span class="p">))</span>
-</span><span class="line">                  <span class="p">(</span><span class="nv">gen-let</span> <span class="nv">dir</span> <span class="nv">node</span> <span class="p">(</span><span class="nb">caddr</span> <span class="nv">form</span><span class="p">)</span> <span class="p">(</span><span class="nb">cons</span> <span class="nv">dir</span> <span class="nv">dirs</span><span class="p">))))))</span>
-</span><span class="line">
-</span><span class="line"><span class="p">(</span><span class="nb">defmacro</span> <span class="nv">mtree-let</span> <span class="p">(</span><span class="nv">dir</span> <span class="nv">node</span> <span class="nv">form</span> <span class="nv">let-var</span> <span class="k">&amp;body</span> <span class="nv">body</span><span class="p">)</span>
-</span><span class="line">   <span class="o">`</span><span class="p">(</span><span class="k">let</span> <span class="o">,</span><span class="p">(</span><span class="nv">gen-let</span> <span class="nv">dir</span> <span class="nv">node</span> <span class="nv">form</span> <span class="no">nil</span><span class="p">)</span>
-</span><span class="line">       <span class="p">(</span><span class="k">let*</span> <span class="o">,</span><span class="nv">let-var</span>
-</span><span class="line">           <span class="o">,@</span><span class="nv">body</span><span class="p">)))</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>And then you can rewrite <code>rotate-s</code>:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">rotate-s</span> <span class="p">(</span><span class="nv">node</span> <span class="nv">dir</span><span class="p">)</span>
-</span><span class="line">  <span class="p">(</span><span class="nv">mtree-let</span> <span class="nv">dir</span> <span class="nv">node</span> <span class="p">((</span><span class="nv">a</span> <span class="nv">y</span> <span class="nv">b</span><span class="p">)</span> <span class="nv">x</span> <span class="nv">c</span><span class="p">)</span>
-</span><span class="line">    <span class="no">nil</span>
-</span><span class="line">    <span class="p">(</span><span class="nv">mtree-expand</span> <span class="p">(</span><span class="nv">a</span> <span class="nv">y</span> <span class="p">(</span><span class="nv">b</span> <span class="nv">x</span> <span class="nv">c</span><span class="p">)))))</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>See? We don’t need to write the comment to remind us the relative position of
-variables. The code express itself! You can see what this code will expand
-to by expanding the macro:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="nv">CL-USER&gt;</span> <span class="p">(</span><span class="nb">macroexpand-1</span> <span class="o">&#39;</span><span class="p">(</span><span class="nv">mtree-let</span> <span class="nv">dir</span> <span class="nv">node</span> <span class="p">((</span><span class="nv">a</span> <span class="nv">y</span> <span class="nv">b</span><span class="p">)</span> <span class="nv">x</span> <span class="nv">c</span><span class="p">)</span>
-</span><span class="line">                          <span class="no">nil</span>
-</span><span class="line">                          <span class="p">(</span><span class="nv">mtree-expand</span> <span class="nv">dir</span> <span class="p">(</span><span class="nv">a</span> <span class="nv">y</span> <span class="p">(</span><span class="nv">b</span> <span class="nv">x</span> <span class="nv">c</span><span class="p">)))))</span>
-</span><span class="line"><span class="p">(</span><span class="nv">LET</span> <span class="p">((</span><span class="nv">X</span> <span class="p">(</span><span class="nv">CADR</span> <span class="p">(</span><span class="nv">APPLY</span> <span class="nf">#&#39;</span><span class="nv">KID</span> <span class="nv">NODE</span> <span class="p">(</span><span class="nv">LIST</span><span class="p">))))</span>
-</span><span class="line">      <span class="p">(</span><span class="nv">Y</span> <span class="p">(</span><span class="nv">CADR</span> <span class="p">(</span><span class="nv">APPLY</span> <span class="nf">#&#39;</span><span class="nv">KID</span> <span class="nv">NODE</span> <span class="p">(</span><span class="nv">LIST</span> <span class="p">(</span><span class="nv">NOT</span> <span class="nv">DIR</span><span class="p">)))))</span>
-</span><span class="line">      <span class="p">(</span><span class="nv">A</span> <span class="p">(</span><span class="nv">APPLY</span> <span class="nf">#&#39;</span><span class="nv">KID</span> <span class="nv">NODE</span> <span class="p">(</span><span class="nv">LIST</span> <span class="p">(</span><span class="nv">NOT</span> <span class="nv">DIR</span><span class="p">)</span> <span class="p">(</span><span class="nv">NOT</span> <span class="nv">DIR</span><span class="p">))))</span>
-</span><span class="line">      <span class="p">(</span><span class="nv">B</span> <span class="p">(</span><span class="nv">APPLY</span> <span class="nf">#&#39;</span><span class="nv">KID</span> <span class="nv">NODE</span> <span class="p">(</span><span class="nv">LIST</span> <span class="p">(</span><span class="nv">NOT</span> <span class="nv">DIR</span><span class="p">)</span> <span class="nv">DIR</span><span class="p">)))</span>
-</span><span class="line">      <span class="p">(</span><span class="nv">C</span> <span class="p">(</span><span class="nv">APPLY</span> <span class="nf">#&#39;</span><span class="nv">KID</span> <span class="nv">NODE</span> <span class="p">(</span><span class="nv">LIST</span> <span class="nv">DIR</span><span class="p">))))</span>
-</span><span class="line">  <span class="p">(</span><span class="nv">LET*</span> <span class="p">()</span>
-</span><span class="line">    <span class="p">(</span><span class="nv">MTREE-EXPAND</span> <span class="nv">DIR</span> <span class="p">(</span><span class="nv">A</span> <span class="nv">Y</span> <span class="p">(</span><span class="nv">B</span> <span class="nv">X</span> <span class="nv">C</span><span class="p">)))))</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
 
 ]]></content>
   </entry>
