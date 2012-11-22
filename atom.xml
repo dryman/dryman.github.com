@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-11-22T15:50:51+08:00</updated>
+  <updated>2012-11-22T16:10:27+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -197,7 +197,7 @@ is easier to read for me. </p>
 </span><span class="line"><span class="p">}</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
-<h3 id="pitfalls-in-toll-free-bridging">Pitfalls in toll-free bridging</h3>
+<h2 id="pitfalls-in-toll-free-bridging">Pitfalls in toll-free bridging</h2>
 
 <p>When you see a code like this:</p>
 
@@ -271,6 +271,88 @@ cause a crash.</li>
 </span><span class="line">    <span class="n">CGColorRef</span> <span class="n">c</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">myColor</span><span class="p">.</span><span class="n">CGColor</span><span class="p">;</span>
 </span><span class="line">    <span class="k">return</span> <span class="n">c</span><span class="p">;</span>
 </span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="pitfalls-on-block-and-arc">Pitfalls on block and ARC</h2>
+
+<p>When you use a ivar in self owned block, it will implicitly contain self in your
+block and thus cause a retain cycle:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">@interface</span> <span class="nc">MyClass</span> <span class="p">{</span>
+</span><span class="line">    <span class="kt">id</span> <span class="n">child</span><span class="p">;</span>
+</span><span class="line"><span class="p">}</span>
+</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">strong</span><span class="p">)</span> <span class="p">(</span><span class="kt">void</span><span class="p">(</span><span class="o">^</span><span class="p">)(</span><span class="kt">void</span><span class="p">))</span> <span class="n">job</span><span class="p">;</span>
+</span><span class="line"><span class="k">@end</span>
+</span><span class="line">
+</span><span class="line"><span class="k">@implementation</span> <span class="nc">MyClass</span>
+</span><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">foo</span> <span class="p">{</span>
+</span><span class="line">    <span class="n">self</span><span class="p">.</span><span class="n">job</span> <span class="o">=</span> <span class="o">^</span><span class="p">{</span>
+</span><span class="line">        <span class="p">[</span><span class="n">child</span> <span class="n">work</span><span class="p">];</span>
+</span><span class="line">        <span class="c1">// will expand to [self-&gt;child work]</span>
+</span><span class="line">    <span class="p">};</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The only way to implement this safely is to use weak reference of self, and
+setup a strong reference to weak self only in the scope of this block. The
+reason we need to use a strong reference in scope is weak reference can be zero
+out at any time. We must claim we own the object when we are using it.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">foo</span> <span class="p">{</span>
+</span><span class="line">    <span class="n">MyClass</span><span class="o">*</span> <span class="n">__weak</span> <span class="n">w_self</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span>
+</span><span class="line">    <span class="n">self</span><span class="p">.</span><span class="n">block</span> <span class="o">=</span> <span class="o">^</span><span class="p">{</span>
+</span><span class="line">        <span class="n">MyClass</span><span class="o">*</span> <span class="n">s_self</span> <span class="o">=</span> <span class="n">w_self</span><span class="p">;</span> <span class="c1">// self retained, but only in this scope!</span>
+</span><span class="line">        <span class="k">if</span> <span class="p">(</span><span class="n">s_self</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">            <span class="p">[</span><span class="n">s_self</span><span class="o">-&gt;</span><span class="n">child</span> <span class="n">work</span><span class="p">];</span>
+</span><span class="line">            <span class="c1">// do other stuffs</span>
+</span><span class="line">        <span class="p">}</span>
+</span><span class="line">    <span class="p">};</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="pitfalls-on-nserror">Pitfalls on NSError</h2>
+
+<p>If you are implementing methods that take NSError, be sure to use the correct
+format of type qualifier!</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">doStuffWithError:</span><span class="p">(</span><span class="n">NSError</span><span class="o">*</span> <span class="n">__autoreleasing</span> <span class="o">*</span><span class="p">)</span><span class="nv">error</span><span class="p">;</span> <span class="c1">// correct</span>
+</span><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">doStuffWithError:</span><span class="p">(</span><span class="n">__autoreleasing</span> <span class="n">NSError</span> <span class="o">**</span><span class="p">)</span><span class="nv">error</span><span class="p">;</span> <span class="c1">// wrong!</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Actually, when you craete a NSError object, it is always best to declare it is
+an autoreleasing object:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="n">NSError</span><span class="o">*</span> <span class="n">__autoreleasing</span> <span class="n">error</span> <span class="o">=</span> <span class="nb">nil</span><span class="p">;</span> <span class="c1">// correct</span>
+</span><span class="line"><span class="n">__autoreleasing</span> <span class="n">NSError</span><span class="o">*</span> <span class="n">error</span> <span class="o">=</span> <span class="nb">nil</span><span class="p">;</span> <span class="c1">// wrong</span>
+</span><span class="line"><span class="n">NSError</span><span class="o">*</span> <span class="n">error</span> <span class="o">=</span> <span class="nb">nil</span><span class="p">;</span> <span class="c1">// Will be corrected by clang</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
 <h2 id="summary">Summary</h2>

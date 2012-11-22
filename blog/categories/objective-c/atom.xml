@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Objective-C | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/objective-c/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-11-22T15:50:51+08:00</updated>
+  <updated>2012-11-22T16:10:27+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -175,7 +175,7 @@ CFRelease(arr);
 NSLog(@"Person's first name: %@", name); } ```
 </code></pre>
 
-<h3 id="pitfalls-in-toll-free-bridging">Pitfalls in toll-free bridging</h3>
+<h2 id="pitfalls-in-toll-free-bridging">Pitfalls in toll-free bridging</h2>
 
 <p>When you see a code like this:</p>
 
@@ -230,6 +230,64 @@ cause a crash.</li>
     CGColorRef c = self.myColor.CGColor;
     return c;
 }
+</code></p>
+
+<h2 id="pitfalls-on-block-and-arc">Pitfalls on block and ARC</h2>
+
+<p>When you use a ivar in self owned block, it will implicitly contain self in your
+block and thus cause a retain cycle:</p>
+
+<p>```obj-c
+@interface MyClass {
+    id child;
+}
+@property (nonautomic, strong) (void(^)(void)) job;
+@end</p>
+
+<p>@implementation MyClass
+- (void)foo {
+    self.job = ^{
+        [child work];
+        // will expand to [self-&gt;child work]
+    };
+}
+```</p>
+
+<p>The only way to implement this safely is to use weak reference of self, and
+setup a strong reference to weak self only in the scope of this block. The
+reason we need to use a strong reference in scope is weak reference can be zero
+out at any time. We must claim we own the object when we are using it.</p>
+
+<p><code>obj-c
+- (void)foo {
+    MyClass* __weak w_self = self;
+    self.block = ^{
+        MyClass* s_self = w_self; // self retained, but only in this scope!
+        if (s_self) {
+            [s_self-&gt;child work];
+            // do other stuffs
+        }
+    };
+}
+</code></p>
+
+<h2 id="pitfalls-on-nserror">Pitfalls on NSError</h2>
+
+<p>If you are implementing methods that take NSError, be sure to use the correct
+format of type qualifier!</p>
+
+<p><code>obj-c
+- (void)doStuffWithError:(NSError* __autoreleasing *)error; // correct
+- (void)doStuffWithError:(__autoreleasing NSError **)error; // wrong!
+</code></p>
+
+<p>Actually, when you craete a NSError object, it is always best to declare it is
+an autoreleasing object:</p>
+
+<p><code>obj-c
+NSError* __autoreleasing error = nil; // correct
+__autoreleasing NSError* error = nil; // wrong
+NSError* error = nil; // Will be corrected by clang
 </code></p>
 
 <h2 id="summary">Summary</h2>
