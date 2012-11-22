@@ -1,7 +1,7 @@
 source "http://rubygems.org"
 
 group :development do
-  gem 'rake', '~> 0.9.2'
+  gem 'rake', '~> 10.0.1'
   gem 'kramdown', '~> 0.13.6'
   gem 'rack', '~> 1.4.1'
   gem 'jekyll', '~> 0.11.2'
