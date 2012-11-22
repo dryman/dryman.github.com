@@ -329,10 +329,10 @@ UIColor, it would be released right after you create it! The CGColor it owns
 would be released as well and thus cause a crash. There are three ways to fix
 it:</p>
 
-<ol>
+<ul>
   <li>Use <code>__autorelease</code> type qualifier. UIColor would be released at the end of
 current run loop. It can fix the crash.</li>
-</ol>
+</ul>
 
 <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
@@ -344,10 +344,10 @@ current run loop. It can fix the crash.</li>
 </span><span class="line"><span class="p">}</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
-<ol>
+<ul>
   <li>Use Core Foundation naming convention and change the owner ship to the
-receiver.</li>
-</ol>
+ receiver.</li>
+</ul>
 
 <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
@@ -371,10 +371,10 @@ receiver.</li>
 </span><span class="line"><span class="n">CFRelease</span><span class="p">(</span><span class="n">c</span><span class="p">);</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
-<ol>
+<ul>
   <li>Owns the CF object by self. If self is dealloced, the reference would still
 cause a crash.</li>
-</ol>
+</ul>
 
 <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
