@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Objective-C | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/objective-c/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-11-23T09:00:01+08:00</updated>
+  <updated>2012-11-23T09:17:13+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -355,9 +355,10 @@ CFRelease(myCopy); } ```
 <div class="footnotes">
   <ol>
     <li id="fn:foot">
-      <p>I didn’t reference back to @amattn’s ARC best practices at the first.
-I am really sorry about this and I appreciate his pioneer work. I can’t write 
-this article without his awesome collection of how to write good ARC code.<a href="#fnref:foot" rel="reference">&#8617;</a></p>
+      <p>I didn’t reference back to @amattn’s ARC best practices when I first
+post this article.  I am really sorry that I didn’t do it and I really
+appreciate his pioneer work. I couldn’t write this article without his awesome
+collection of how to write good ARC code.<a href="#fnref:foot" rel="reference">&#8617;</a></p>
     </li>
   </ol>
 </div>
