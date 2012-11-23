@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Objective-C | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/objective-c/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-11-23T09:17:13+08:00</updated>
+  <updated>2012-11-23T15:51:39+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -115,6 +115,7 @@ containers, use <code>strong</code>.</li>
 in a nib file. If you set it to <code>strong</code>, you should set it to <code>nil</code> in
 <code>-(void)viewDidUnload</code>.</li>
 </ul>
+<footer><cite><a href="http://amattn.com/2011/12/07/arc_best_practices.html"> ARC Best Practices</a></cite></footer>
 </blockquote>
 
 <h3 id="arc-specific-type-qualifiers">ARC specific type qualifiers</h3>

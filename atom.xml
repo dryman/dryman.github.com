@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-11-23T09:17:13+08:00</updated>
+  <updated>2012-11-23T15:51:39+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,66 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[apologize to @amattn]]></title>
+    <link href="http://www.idryman.org/blog/2012/11/23/apologize-to-at-amattn/"/>
+    <updated>2012-11-23T15:10:00+08:00</updated>
+    <id>http://www.idryman.org/blog/2012/11/23/apologize-to-at-amattn</id>
+    <content type="html"><![CDATA[<p>My last post <a href="http://www.idryman.org/blog/2012/11/22/arc-best-practices-and-pitfalls/">Effective Obj-C ARC and Pitfalls in It</a> had some
+content copied directly from <a href="https://twitter.com/amattn">@amattn</a>’s blog post 
+<a href="http://amattn.com/2011/12/07/arc_best_practices.html">ARC best practices</a> without referencing it. More specifically
+is the section <strong>ARC and Objective-C properties</strong>. I’ve now replaced the section
+with direct link to <a href="https://twitter.com/amattn">@amattn</a>’s blog and an toggled quote cite to
+his post.</p>
+
+<!--more-->
+
+<p><a href="https://twitter.com/amattn">@amattn</a> did an awesome pioneer work on discovering great patterns when
+you code Objective-C with ARC. It is really hard to write an article about ARC
+without using the concepts in <a href="http://amattn.com/2011/12/07/arc_best_practices.html">ARC best practices</a>. We all
+talked about:</p>
+
+<ul>
+  <li>Common pattern of specifying Objective-C properties</li>
+  <li>ARC type qualifiers</li>
+  <li>Toll free bridging</li>
+  <li>NSError and <code>__autoreleasing</code></li>
+  <li>Block and <code>__weak</code> reference</li>
+  <li><code>__autoreleasing</code> and CGColor</li>
+</ul>
+
+<p><a href="http://amattn.com/2011/12/07/arc_best_practices.html">ARC best practices</a> has detailed examination of how each
+statement works. My article focused on correct format of type qualifiers.</p>
+
+<p>Still, I have to mention that Clang will compile your code without diagnostics when
+you put type qualifier in the wrong place. In the runtime, the weak objects and
+auto release objects may not behave as you might think it is. This is really
+dangerous and super hard to debug. Imagine:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="n">__weak</span> <span class="n">MyClass</span><span class="o">*</span> <span class="n">w_self</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span>
+</span><span class="line"><span class="n">self</span><span class="p">.</span><span class="n">block</span> <span class="o">=</span> <span class="o">^</span><span class="p">{</span>
+</span><span class="line">    <span class="n">MyClass</span><span class="o">*</span> <span class="n">s_self</span> <span class="o">=</span> <span class="n">w_self</span><span class="p">;</span>
+</span><span class="line">    <span class="p">...</span>
+</span><span class="line"><span class="p">};</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>You thought it should work, and Clang didn’t report any diagnostic about it. But
+it does cause a retain cycle, and thus a memory leak. The correct format is
+replace the line with <code>MyClass* __weak w_self = self</code>. I have a detailed 
+<a href="http://www.idryman.org/blog/2012/10/29/type-qualifiers/">article for type qualifiers</a>, I recommend everyone to take a look at it.</p>
+
+<p>I really appreciate <a href="https://twitter.com/amattn">@amattn</a> and his work.  We both share our knowledge
+to the public because the passion of programming. I feel really sorry of my
+mistake for copying his work without referencing his post.</p>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Effective Obj-C ARC and pitfalls in it]]></title>
@@ -115,6 +175,7 @@ containers, use <code>strong</code>.</li>
 in a nib file. If you set it to <code>strong</code>, you should set it to <code>nil</code> in
 <code>-(void)viewDidUnload</code>.</li>
 </ul>
+<footer><cite><a href="http://amattn.com/2011/12/07/arc_best_practices.html"> ARC Best Practices</a></cite></footer>
 </blockquote>
 
 <h3 id="arc-specific-type-qualifiers">ARC specific type qualifiers</h3>
@@ -4668,359 +4729,6 @@ other language you are trained to think top-down, while in lisp you are
 encouraged to think back and forth. This process can shorten required time to
 get enough experiences of programming. You don’t need a lot experiences to build
 a complex algorithm in a bottom-up design process. It’s just come up naturally.</p>
-
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[persistent red black tree in lisp (3)]]></title>
-    <link href="http://www.idryman.org/blog/2012/03/31/persistent-red-black-tree-in-lisp-3/"/>
-    <updated>2012-03-31T16:33:00+08:00</updated>
-    <id>http://www.idryman.org/blog/2012/03/31/persistent-red-black-tree-in-lisp-3</id>
-    <content type="html"><![CDATA[<h2 id="red-black-tree-algorithms">Red black tree algorithms</h2>
-
-<p>There are two good articles that have good explanation on red-black tree
-algorithms. For your references:</p>
-
-<ol>
-  <li><a href="http://eternallyconfuzzled.com/tuts/datastructures/jsw_tut_rbtree.aspx">Julienne Walker’s red black tree tutorial</a></li>
-  <li><a href="http://www.mew.org/~kazu/proj/red-black-tree/">Kazu Yamamoto’s purely functional left-leaning red black trees</a></li>
-</ol>
-
-<p>Julienne wrote a beautiful review article that show us not only the algorithm of
-red black tree, but <em>how it is designed like so</em>. He also implemented an elegant
-C program that can balance the tree in bottom-up or top-down ways. My previous
-function <code>(kid root dir dir)</code> was inspired from his implementation.</p>
-
-<p>Kazu reorganized several red black tree insertion algorithms, including Chris
-Okasaki’s purely functional way. He also introduced a left-leaning insertion
-algorithm that reduces one pattern matching compare to Okasaki’s one. The
-programs are elegantly written in Haskell.</p>
-
-<!-- more -->
-
-<h3 id="orinal-red-black-tree-algorithm">Orinal red black tree algorithm</h3>
-
-<p>In 1979, Guibas and Sedgewick published the original imperative red black trees:</p>
-
-<pre><code>Leo J. Guibas and Robert Sedgewick.
-"A dichromatic framework for balanced trees",
-In Proceedings of the 19th Annual Symposium on Computer Science,
-pp8-21,
-IEEE Computer Society,
-1978
-</code></pre>
-
-<p>The original one has eight <em>unbalanced</em> cases to deal with, while two are
-reduced in “Introduction to Algorithms”. The algorithm was derived from
-symmetric binary B-tree (2-3-4 tree) which was suggested by Rudof Bayer. All
-paths from the root to a leaf in a SBB-tree contains the same number of nodes,
-thus make it a perfectly balanced tree. However, it is not a binary search tree.
-So Rober Sedgewick and Leonidas Guibas came up with a mnemonic abstraction that
-can use red-nodes and black-nodes of a binary tree to simulate SBB-Tree. This is
-how the algorithm is formed. To know the details, see 
-<a href="http://eternallyconfuzzled.com/tuts/datastructures/jsw_tut_rbtree.aspx">Julienne’s guide</a>.</p>
-
-<p>Julienne modified the original bottom up algorithm to a no parent pointers
-style:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>Julienne&#8217;s red black tree insert implementation  </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-<span class="line-number">16</span>
-<span class="line-number">17</span>
-<span class="line-number">18</span>
-<span class="line-number">19</span>
-<span class="line-number">20</span>
-<span class="line-number">21</span>
-<span class="line-number">22</span>
-<span class="line-number">23</span>
-<span class="line-number">24</span>
-<span class="line-number">25</span>
-<span class="line-number">26</span>
-<span class="line-number">27</span>
-<span class="line-number">28</span>
-<span class="line-number">29</span>
-<span class="line-number">30</span>
-<span class="line-number">31</span>
-<span class="line-number">32</span>
-<span class="line-number">33</span>
-<span class="line-number">34</span>
-<span class="line-number">35</span>
-<span class="line-number">36</span>
-<span class="line-number">37</span>
-<span class="line-number">38</span>
-<span class="line-number">39</span>
-<span class="line-number">40</span>
-<span class="line-number">41</span>
-<span class="line-number">42</span>
-<span class="line-number">43</span>
-<span class="line-number">44</span>
-<span class="line-number">45</span>
-<span class="line-number">46</span>
-<span class="line-number">47</span>
-<span class="line-number">48</span>
-<span class="line-number">49</span>
-<span class="line-number">50</span>
-<span class="line-number">51</span>
-<span class="line-number">52</span>
-<span class="line-number">53</span>
-<span class="line-number">54</span>
-</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="k">struct</span> <span class="n">jsw_node</span> <span class="o">*</span><span class="nf">jsw_single</span> <span class="p">(</span> <span class="k">struct</span> <span class="n">jsw_node</span> <span class="o">*</span><span class="n">root</span><span class="p">,</span> <span class="kt">int</span> <span class="n">dir</span> <span class="p">)</span>
-</span><span class="line"><span class="p">{</span>
-</span><span class="line">  <span class="k">struct</span> <span class="n">jsw_node</span> <span class="o">*</span><span class="n">save</span> <span class="o">=</span> <span class="n">root</span><span class="o">-&gt;</span><span class="n">link</span><span class="p">[</span><span class="o">!</span><span class="n">dir</span><span class="p">];</span>
-</span><span class="line">
-</span><span class="line">  <span class="n">root</span><span class="o">-&gt;</span><span class="n">link</span><span class="p">[</span><span class="o">!</span><span class="n">dir</span><span class="p">]</span> <span class="o">=</span> <span class="n">save</span><span class="o">-&gt;</span><span class="n">link</span><span class="p">[</span><span class="n">dir</span><span class="p">];</span>
-</span><span class="line">  <span class="n">save</span><span class="o">-&gt;</span><span class="n">link</span><span class="p">[</span><span class="n">dir</span><span class="p">]</span> <span class="o">=</span> <span class="n">root</span><span class="p">;</span>
-</span><span class="line">
-</span><span class="line">  <span class="n">root</span><span class="o">-&gt;</span><span class="n">red</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>  <span class="c1">// Note that there&#39;s color changing here!</span>
-</span><span class="line">  <span class="n">save</span><span class="o">-&gt;</span><span class="n">red</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-</span><span class="line">
-</span><span class="line">  <span class="k">return</span> <span class="n">save</span><span class="p">;</span>
-</span><span class="line"><span class="p">}</span>
-</span><span class="line">
-</span><span class="line"><span class="k">struct</span> <span class="n">jsw_node</span> <span class="o">*</span><span class="nf">jsw_double</span> <span class="p">(</span> <span class="k">struct</span> <span class="n">jsw_node</span> <span class="o">*</span><span class="n">root</span><span class="p">,</span> <span class="kt">int</span> <span class="n">dir</span> <span class="p">)</span>
-</span><span class="line"><span class="p">{</span>
-</span><span class="line">  <span class="n">root</span><span class="o">-&gt;</span><span class="n">link</span><span class="p">[</span><span class="o">!</span><span class="n">dir</span><span class="p">]</span> <span class="o">=</span> <span class="n">jsw_single</span> <span class="p">(</span> <span class="n">root</span><span class="o">-&gt;</span><span class="n">link</span><span class="p">[</span><span class="o">!</span><span class="n">dir</span><span class="p">],</span> <span class="o">!</span><span class="n">dir</span> <span class="p">);</span>
-</span><span class="line">  <span class="k">return</span> <span class="n">jsw_single</span> <span class="p">(</span> <span class="n">root</span><span class="p">,</span> <span class="n">dir</span> <span class="p">);</span>
-</span><span class="line"><span class="p">}</span>
-</span><span class="line">
-</span><span class="line"><span class="k">struct</span> <span class="n">jsw_node</span> <span class="o">*</span><span class="nf">jsw_insert_r</span> <span class="p">(</span> <span class="k">struct</span> <span class="n">jsw_node</span> <span class="o">*</span><span class="n">root</span><span class="p">,</span> <span class="kt">int</span> <span class="n">data</span> <span class="p">)</span>
-</span><span class="line"><span class="p">{</span>
-</span><span class="line">  <span class="k">if</span> <span class="p">(</span> <span class="n">root</span> <span class="o">==</span> <span class="nb">NULL</span> <span class="p">)</span>
-</span><span class="line">    <span class="n">root</span> <span class="o">=</span> <span class="n">make_node</span> <span class="p">(</span> <span class="n">data</span> <span class="p">);</span>
-</span><span class="line">  <span class="k">else</span> <span class="k">if</span> <span class="p">(</span> <span class="n">data</span> <span class="o">!=</span> <span class="n">root</span><span class="o">-&gt;</span><span class="n">data</span> <span class="p">)</span> <span class="p">{</span>
-</span><span class="line">    <span class="kt">int</span> <span class="n">dir</span> <span class="o">=</span> <span class="n">root</span><span class="o">-&gt;</span><span class="n">data</span> <span class="o">&lt;</span> <span class="n">data</span><span class="p">;</span>
-</span><span class="line">
-</span><span class="line">    <span class="n">root</span><span class="o">-&gt;</span><span class="n">link</span><span class="p">[</span><span class="n">dir</span><span class="p">]</span> <span class="o">=</span> <span class="n">jsw_insert_r</span> <span class="p">(</span> <span class="n">root</span><span class="o">-&gt;</span><span class="n">link</span><span class="p">[</span><span class="n">dir</span><span class="p">],</span> <span class="n">data</span> <span class="p">);</span>
-</span><span class="line">
-</span><span class="line">    <span class="k">if</span> <span class="p">(</span> <span class="n">is_red</span> <span class="p">(</span> <span class="n">root</span><span class="o">-&gt;</span><span class="n">link</span><span class="p">[</span><span class="n">dir</span><span class="p">]</span> <span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
-</span><span class="line">      <span class="k">if</span> <span class="p">(</span> <span class="n">is_red</span> <span class="p">(</span> <span class="n">root</span><span class="o">-&gt;</span><span class="n">link</span><span class="p">[</span><span class="o">!</span><span class="n">dir</span><span class="p">]</span> <span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
-</span><span class="line">        <span class="cm">/* Case 1 Color flip */</span>
-</span><span class="line">        <span class="n">root</span><span class="o">-&gt;</span><span class="n">red</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-</span><span class="line">        <span class="n">root</span><span class="o">-&gt;</span><span class="n">link</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">red</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-</span><span class="line">        <span class="n">root</span><span class="o">-&gt;</span><span class="n">link</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">red</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-</span><span class="line">      <span class="p">}</span>
-</span><span class="line">      <span class="k">else</span> <span class="p">{</span>
-</span><span class="line">        <span class="cm">/* Cases 2 &amp; 3 */</span>
-</span><span class="line">        <span class="k">if</span> <span class="p">(</span> <span class="n">is_red</span> <span class="p">(</span> <span class="n">root</span><span class="o">-&gt;</span><span class="n">link</span><span class="p">[</span><span class="n">dir</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">link</span><span class="p">[</span><span class="n">dir</span><span class="p">]</span> <span class="p">)</span> <span class="p">)</span>
-</span><span class="line">          <span class="n">root</span> <span class="o">=</span> <span class="n">jsw_single</span> <span class="p">(</span> <span class="n">root</span><span class="p">,</span> <span class="o">!</span><span class="n">dir</span> <span class="p">);</span>
-</span><span class="line">        <span class="k">else</span> <span class="k">if</span> <span class="p">(</span> <span class="n">is_red</span> <span class="p">(</span> <span class="n">root</span><span class="o">-&gt;</span><span class="n">link</span><span class="p">[</span><span class="n">dir</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">link</span><span class="p">[</span><span class="o">!</span><span class="n">dir</span><span class="p">]</span> <span class="p">)</span> <span class="p">)</span>
-</span><span class="line">          <span class="n">root</span> <span class="o">=</span> <span class="n">jsw_double</span> <span class="p">(</span> <span class="n">root</span><span class="p">,</span> <span class="o">!</span><span class="n">dir</span> <span class="p">);</span>
-</span><span class="line">      <span class="p">}</span>
-</span><span class="line">    <span class="p">}</span>
-</span><span class="line">  <span class="p">}</span>
-</span><span class="line">
-</span><span class="line">  <span class="k">return</span> <span class="n">root</span><span class="p">;</span>
-</span><span class="line"><span class="p">}</span>
-</span><span class="line">
-</span><span class="line"><span class="kt">int</span> <span class="nf">jsw_insert</span> <span class="p">(</span> <span class="k">struct</span> <span class="n">jsw_tree</span> <span class="o">*</span><span class="n">tree</span><span class="p">,</span> <span class="kt">int</span> <span class="n">data</span> <span class="p">)</span>
-</span><span class="line"><span class="p">{</span>
-</span><span class="line">  <span class="n">tree</span><span class="o">-&gt;</span><span class="n">root</span> <span class="o">=</span> <span class="n">jsw_insert_r</span> <span class="p">(</span> <span class="n">tree</span><span class="o">-&gt;</span><span class="n">root</span><span class="p">,</span> <span class="n">data</span> <span class="p">);</span>
-</span><span class="line">  <span class="n">tree</span><span class="o">-&gt;</span><span class="n">root</span><span class="o">-&gt;</span><span class="n">red</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
-</span><span class="line">  <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
-</span><span class="line"><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<h3 id="implementation-in-lisp">Implementation in Lisp</h3>
-
-<p>Julienne’s bottom-up algorithm can be easily to be re-written in purely
-functional style. The ugly part is the color flipping and assign new branches to
-nodes.</p>
-
-<p>Though we can do the color flipping as</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">setf</span> <span class="p">(</span><span class="nv">rb-red</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">))</span> <span class="no">nil</span>
-</span><span class="line">      <span class="p">(</span><span class="nv">rb-red</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">a</span><span class="p">))</span> <span class="no">T</span>
-</span><span class="line">      <span class="p">(</span><span class="nv">rb-red</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">b</span><span class="p">))</span> <span class="no">T</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>but the tree would be non-persistent. So we need to create new node with new
-property of red or black.</p>
-
-<p>I also separate the cases into two function <code>color-flip</code> and
-<code>rb-insert-case-rest</code>. Thus the code would be easier to debug and profile.</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-<span class="line-number">16</span>
-<span class="line-number">17</span>
-<span class="line-number">18</span>
-<span class="line-number">19</span>
-<span class="line-number">20</span>
-<span class="line-number">21</span>
-<span class="line-number">22</span>
-<span class="line-number">23</span>
-<span class="line-number">24</span>
-<span class="line-number">25</span>
-<span class="line-number">26</span>
-<span class="line-number">27</span>
-<span class="line-number">28</span>
-<span class="line-number">29</span>
-<span class="line-number">30</span>
-<span class="line-number">31</span>
-<span class="line-number">32</span>
-<span class="line-number">33</span>
-<span class="line-number">34</span>
-<span class="line-number">35</span>
-<span class="line-number">36</span>
-<span class="line-number">37</span>
-<span class="line-number">38</span>
-<span class="line-number">39</span>
-<span class="line-number">40</span>
-<span class="line-number">41</span>
-<span class="line-number">42</span>
-<span class="line-number">43</span>
-<span class="line-number">44</span>
-<span class="line-number">45</span>
-<span class="line-number">46</span>
-<span class="line-number">47</span>
-<span class="line-number">48</span>
-<span class="line-number">49</span>
-<span class="line-number">50</span>
-</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">rotate-s</span> <span class="p">(</span><span class="nv">node</span> <span class="nv">dir</span><span class="p">)</span>
-</span><span class="line">  <span class="p">(</span><span class="nv">mtree-let</span> <span class="nv">dir</span> <span class="nv">node</span> <span class="p">((</span><span class="nv">a</span> <span class="nv">y</span> <span class="nv">b</span><span class="p">)</span> <span class="nv">x</span> <span class="nv">c</span><span class="p">)</span>
-</span><span class="line">            <span class="p">((</span><span class="nv">x-r</span> <span class="p">(</span><span class="nv">to-r</span> <span class="nv">x</span><span class="p">))</span> <span class="p">(</span><span class="nv">y-b</span> <span class="p">(</span><span class="nv">to-b</span> <span class="nv">y</span><span class="p">)))</span>
-</span><span class="line">            <span class="p">(</span><span class="nv">mtree-expand</span> <span class="nv">dir</span> <span class="p">(</span><span class="nv">a</span> <span class="nv">y-b</span> <span class="p">(</span><span class="nv">b</span> <span class="nv">x-r</span> <span class="nv">c</span><span class="p">)))))</span>
-</span><span class="line">
-</span><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">rotate-d</span> <span class="p">(</span><span class="nv">node</span> <span class="nv">dir</span><span class="p">)</span>
-</span><span class="line">  <span class="p">(</span><span class="nv">mtree-let</span> <span class="nv">dir</span> <span class="nv">node</span> <span class="p">(</span><span class="nv">a</span> <span class="nv">x</span> <span class="nv">b</span><span class="p">)</span>
-</span><span class="line">            <span class="p">((</span><span class="nv">a-new</span> <span class="p">(</span><span class="nv">rotate-s</span> <span class="nv">a</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">))))</span>
-</span><span class="line">            <span class="p">(</span><span class="nv">rotate-s</span> <span class="p">(</span><span class="nv">mtree-expand</span> <span class="nv">dir</span> <span class="p">(</span><span class="nv">a-new</span> <span class="nv">x</span> <span class="nv">b</span><span class="p">))</span> <span class="nv">dir</span><span class="p">)))</span>
-</span><span class="line">
-</span><span class="line"><span class="c1">;; Color flipping utilities </span>
-</span><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">to-r</span> <span class="p">(</span><span class="nv">x</span><span class="p">)</span> <span class="p">(</span><span class="nv">make-rb</span> <span class="ss">:data</span> <span class="p">(</span><span class="nv">rb-data</span> <span class="nv">x</span><span class="p">)</span> <span class="ss">:red</span> <span class="no">T</span><span class="p">))</span>
-</span><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">to-b</span> <span class="p">(</span><span class="nv">x</span><span class="p">)</span> <span class="p">(</span><span class="nv">make-rb</span> <span class="ss">:data</span> <span class="p">(</span><span class="nv">rb-data</span> <span class="nv">x</span><span class="p">)</span> <span class="ss">:red</span> <span class="no">nil</span><span class="p">))</span>
-</span><span class="line">
-</span><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">color-flip</span> <span class="p">(</span><span class="nv">root</span> <span class="nv">dir</span><span class="p">)</span>
-</span><span class="line">  <span class="p">(</span><span class="nv">mtree-let</span> <span class="nv">dir</span> <span class="nv">root</span> <span class="p">((</span><span class="nv">a</span> <span class="nv">y</span> <span class="nv">b</span><span class="p">)</span> <span class="nv">x</span> <span class="p">(</span><span class="nv">c</span> <span class="nv">z</span> <span class="nv">d</span><span class="p">))</span>
-</span><span class="line">             <span class="p">((</span><span class="nv">x-r</span> <span class="p">(</span><span class="nv">to-r</span> <span class="nv">x</span><span class="p">))</span>
-</span><span class="line">              <span class="p">(</span><span class="nv">y-b</span> <span class="p">(</span><span class="nv">to-b</span> <span class="nv">y</span><span class="p">))</span>
-</span><span class="line">              <span class="p">(</span><span class="nv">z-b</span> <span class="p">(</span><span class="nv">to-b</span> <span class="nv">z</span><span class="p">)))</span>
-</span><span class="line">             <span class="p">(</span><span class="nv">mtree-expand</span> <span class="nv">dir</span> <span class="p">((</span><span class="nv">a</span> <span class="nv">y-b</span> <span class="nv">b</span><span class="p">)</span> <span class="nv">x-r</span> <span class="p">(</span><span class="nv">c</span> <span class="nv">z-b</span> <span class="nv">d</span><span class="p">)))))</span>
-</span><span class="line">
-</span><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">rb-insert-case-rest</span> <span class="p">(</span><span class="nv">root</span> <span class="nv">dir</span><span class="p">)</span>
-</span><span class="line">  <span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nv">is-red</span> <span class="p">(</span><span class="nv">kid</span> <span class="nv">root</span> <span class="nv">dir</span> <span class="nv">dir</span><span class="p">))</span> <span class="p">(</span><span class="nv">rotate-s</span> <span class="nv">root</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">)))</span>
-</span><span class="line">        <span class="p">((</span><span class="nv">is-red</span> <span class="p">(</span><span class="nv">kid</span> <span class="nv">root</span> <span class="nv">dir</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">)))</span> <span class="p">(</span><span class="nv">rotate-d</span> <span class="nv">root</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">)))</span>
-</span><span class="line">        <span class="p">(</span><span class="no">T</span> <span class="nv">root</span><span class="p">)))</span>
-</span><span class="line">
-</span><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">rb-insert-r</span> <span class="p">(</span><span class="nv">root</span> <span class="nv">data</span><span class="p">)</span>
-</span><span class="line">  <span class="p">(</span><span class="k">declare</span> <span class="p">(</span><span class="k">type</span> <span class="kt">fixnum</span> <span class="nv">data</span><span class="p">))</span>
-</span><span class="line">  <span class="p">(</span><span class="nb">cond</span> <span class="p">((</span><span class="nb">null</span> <span class="nv">root</span><span class="p">)</span> <span class="o">`</span><span class="p">(</span><span class="no">nil</span> <span class="o">,</span><span class="p">(</span><span class="nv">make-rb</span> <span class="ss">:data</span> <span class="nv">data</span><span class="p">)</span> <span class="no">nil</span><span class="p">))</span>
-</span><span class="line">        <span class="p">((</span><span class="nb">=</span> <span class="nv">data</span> <span class="p">(</span><span class="nv">node-data</span> <span class="nv">root</span><span class="p">))</span> <span class="nv">root</span><span class="p">)</span>
-</span><span class="line">        <span class="p">(</span><span class="no">T</span> <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">dir</span> <span class="p">(</span><span class="nb">&gt;</span> <span class="nv">data</span> <span class="p">(</span><span class="nv">node-data</span> <span class="nv">root</span><span class="p">))))</span>
-</span><span class="line">             <span class="p">(</span><span class="nv">mtree-let</span> <span class="nv">dir</span> <span class="nv">root</span> <span class="p">(</span><span class="nv">a</span> <span class="nv">x</span> <span class="nv">b</span><span class="p">)</span>
-</span><span class="line">               <span class="p">((</span><span class="nv">b</span> <span class="p">(</span><span class="nv">rb-insert-r</span> <span class="nv">b</span> <span class="nv">data</span><span class="p">))</span>
-</span><span class="line">                <span class="p">(</span><span class="nv">root</span> <span class="p">(</span><span class="nv">mtree-expand</span> <span class="nv">dir</span> <span class="p">(</span><span class="nv">a</span> <span class="nv">x</span> <span class="nv">b</span><span class="p">))))</span>
-</span><span class="line">               <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nv">is-red</span> <span class="nv">b</span><span class="p">)</span>
-</span><span class="line">                 <span class="p">(</span><span class="k">if</span> <span class="p">(</span><span class="nv">is-red</span> <span class="nv">a</span><span class="p">)</span>
-</span><span class="line">                   <span class="p">(</span><span class="nv">color-flip</span> <span class="nv">root</span> <span class="nv">dir</span><span class="p">)</span>            <span class="c1">; case 1</span>
-</span><span class="line">                   <span class="p">(</span><span class="nv">rb-insert-case-rest</span> <span class="nv">root</span> <span class="nv">dir</span><span class="p">))</span>  <span class="c1">; case 2 and 3</span>
-</span><span class="line">                 <span class="nv">root</span><span class="p">))))))</span>
-</span><span class="line">
-</span><span class="line">
-</span><span class="line"><span class="p">(</span><span class="nb">defparameter</span> <span class="vg">*tree*</span> <span class="no">nil</span><span class="p">)</span>
-</span><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">rb-insert</span> <span class="p">(</span><span class="nv">data</span><span class="p">)</span>
-</span><span class="line">  <span class="p">(</span><span class="k">declare</span> <span class="p">(</span><span class="k">type</span> <span class="kt">fixnum</span> <span class="nv">data</span><span class="p">))</span>
-</span><span class="line">  <span class="p">(</span><span class="k">let*</span> <span class="p">((</span><span class="nv">ret</span> <span class="p">(</span><span class="nv">rb-insert-r</span> <span class="vg">*tree*</span> <span class="nv">data</span><span class="p">))</span>
-</span><span class="line">         <span class="p">(</span><span class="nv">a</span> <span class="p">(</span><span class="nb">car</span> <span class="nv">ret</span><span class="p">))</span>            <span class="c1">;; Set the root node to be black</span>
-</span><span class="line">         <span class="p">(</span><span class="nv">x-b</span> <span class="p">(</span><span class="nv">to-b</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">ret</span><span class="p">)))</span>
-</span><span class="line">         <span class="p">(</span><span class="nv">b</span> <span class="p">(</span><span class="nb">caddr</span> <span class="nv">ret</span><span class="p">)))</span>
-</span><span class="line">    <span class="p">(</span><span class="nb">setf</span> <span class="vg">*tree*</span> <span class="p">(</span><span class="nb">list</span> <span class="nv">a</span> <span class="nv">x-b</span> <span class="nv">b</span><span class="p">))</span>
-</span><span class="line">    <span class="vg">*tree*</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>When the cases in function are separated, it is easy to tell how the program is being called:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-<span class="line-number">16</span>
-<span class="line-number">17</span>
-<span class="line-number">18</span>
-</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="nv">CL-USER&gt;</span> <span class="p">(</span><span class="nb">trace</span> <span class="nv">rb-insert-r</span> <span class="nv">rb-insert-case-rest</span> <span class="nv">color-flip</span> <span class="nv">rotate-s</span> <span class="nv">rotate-d</span><span class="p">)</span>
-</span><span class="line">
-</span><span class="line"><span class="nv">CL-USER&gt;</span> <span class="p">(</span><span class="nv">rb-insert</span> <span class="mi">3</span><span class="p">)</span>
-</span><span class="line">  <span class="nv">0:</span> <span class="p">(</span><span class="nv">RB-INSERT-R</span> <span class="p">((</span><span class="no">NIL</span> <span class="nv">5-b</span> <span class="no">NIL</span><span class="p">)</span> <span class="nv">6-b</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">7-b</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">8-r</span> <span class="no">NIL</span><span class="p">)))</span> <span class="mi">3</span><span class="p">)</span>
-</span><span class="line">    <span class="nv">1:</span> <span class="p">(</span><span class="nv">RB-INSERT-CASE-REST</span> <span class="p">((</span><span class="no">NIL</span> <span class="nv">3-r</span> <span class="no">NIL</span><span class="p">)</span> <span class="nv">5-b</span> <span class="no">NIL</span><span class="p">)</span> <span class="no">NIL</span><span class="p">)</span>
-</span><span class="line">    <span class="nv">1:</span> <span class="nv">RB-INSERT-CASE-REST</span> <span class="nv">returned</span> <span class="p">((</span><span class="no">NIL</span> <span class="nv">3-r</span> <span class="no">NIL</span><span class="p">)</span> <span class="nv">5-b</span> <span class="no">NIL</span><span class="p">)</span>
-</span><span class="line">  <span class="nv">0:</span> <span class="nv">RB-INSERT-R</span> <span class="nv">returned</span> <span class="p">(((</span><span class="no">NIL</span> <span class="nv">3-r</span> <span class="no">NIL</span><span class="p">)</span> <span class="nv">5-b</span> <span class="no">NIL</span><span class="p">)</span> <span class="nv">6-b</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">7-b</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">8-r</span> <span class="no">NIL</span><span class="p">)))</span>
-</span><span class="line">
-</span><span class="line"><span class="nv">CL-USER&gt;</span> <span class="p">(</span><span class="nv">rb-insert</span> <span class="mi">100</span><span class="p">)</span>
-</span><span class="line">  <span class="nv">0:</span> <span class="p">(</span><span class="nv">RB-INSERT-R</span> <span class="p">(((</span><span class="no">NIL</span> <span class="nv">3-r</span> <span class="no">NIL</span><span class="p">)</span> <span class="nv">5-b</span> <span class="no">NIL</span><span class="p">)</span> <span class="nv">6-b</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">7-b</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">8-r</span> <span class="no">NIL</span><span class="p">)))</span> <span class="mi">100</span><span class="p">)</span>
-</span><span class="line">    <span class="nv">1:</span> <span class="p">(</span><span class="nv">RB-INSERT-CASE-REST</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">8-r</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">100-r</span> <span class="no">NIL</span><span class="p">))</span> <span class="no">T</span><span class="p">)</span>
-</span><span class="line">    <span class="nv">1:</span> <span class="nv">RB-INSERT-CASE-REST</span> <span class="nv">returned</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">8-r</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">100-r</span> <span class="no">NIL</span><span class="p">))</span>
-</span><span class="line">    <span class="nv">1:</span> <span class="p">(</span><span class="nv">RB-INSERT-CASE-REST</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">7-b</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">8-r</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">100-r</span> <span class="no">NIL</span><span class="p">)))</span> <span class="no">T</span><span class="p">)</span>
-</span><span class="line">      <span class="nv">2:</span> <span class="p">(</span><span class="nv">ROTATE-S</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">7-b</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">8-r</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">100-r</span> <span class="no">NIL</span><span class="p">)))</span> <span class="no">NIL</span><span class="p">)</span>
-</span><span class="line">      <span class="nv">2:</span> <span class="nv">ROTATE-S</span> <span class="nv">returned</span> <span class="p">((</span><span class="no">NIL</span> <span class="nv">7-r</span> <span class="no">NIL</span><span class="p">)</span> <span class="nv">8-b</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">100-r</span> <span class="no">NIL</span><span class="p">))</span>
-</span><span class="line">    <span class="nv">1:</span> <span class="nv">RB-INSERT-CASE-REST</span> <span class="nv">returned</span> <span class="p">((</span><span class="no">NIL</span> <span class="nv">7-r</span> <span class="no">NIL</span><span class="p">)</span> <span class="nv">8-b</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">100-r</span> <span class="no">NIL</span><span class="p">))</span>
-</span><span class="line">  <span class="nv">0:</span> <span class="nv">RB-INSERT-R</span> <span class="nv">returned</span>
-</span><span class="line">       <span class="p">(((</span><span class="no">NIL</span> <span class="nv">3-r</span> <span class="no">NIL</span><span class="p">)</span> <span class="nv">5-b</span> <span class="no">NIL</span><span class="p">)</span> <span class="nv">6-b</span> <span class="p">((</span><span class="no">NIL</span> <span class="nv">7-r</span> <span class="no">NIL</span><span class="p">)</span> <span class="nv">8-b</span> <span class="p">(</span><span class="no">NIL</span> <span class="nv">100-r</span> <span class="no">NIL</span><span class="p">)))</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<hr />
-
-<p>I modified the definition of <code>rb</code> structure to make it print prettier:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">defstruct</span>
-</span><span class="line">  <span class="p">(</span><span class="nv">rb</span> <span class="p">(</span><span class="ss">:print-function</span>
-</span><span class="line">        <span class="p">(</span><span class="k">lambda</span> <span class="p">(</span><span class="nv">p</span> <span class="nv">s</span> <span class="nv">k</span><span class="p">)</span>
-</span><span class="line">          <span class="p">(</span><span class="k">declare</span> <span class="p">(</span><span class="k">ignore</span> <span class="nv">k</span><span class="p">)(</span><span class="k">type</span> <span class="nc">stream</span> <span class="nv">s</span><span class="p">))</span>
-</span><span class="line">          <span class="p">(</span><span class="nb">format</span> <span class="nv">s</span> <span class="s">&quot;~d-~:[b~;r~]&quot;</span> <span class="p">(</span><span class="nv">rb-data</span> <span class="nv">p</span><span class="p">)</span> <span class="p">(</span><span class="nv">rb-red</span> <span class="nv">p</span><span class="p">)))))</span>
-</span><span class="line">  <span class="p">(</span><span class="nv">red</span> <span class="no">T</span> <span class="ss">:read-only</span> <span class="no">T</span><span class="p">)</span>
-</span><span class="line">  <span class="p">(</span><span class="nv">data</span> <span class="mi">0</span> <span class="ss">:type</span> <span class="kt">fixnum</span> <span class="ss">:read-only</span> <span class="no">T</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>So that when <code>Lisp</code> want to print a <code>rb</code> with data is <code>8</code> and red is <code>nil</code>, it
-would print <code>8-b</code> instead of <code>#S(RB :data 8 :red nil)</code>.</p>
 
 ]]></content>
   </entry>
