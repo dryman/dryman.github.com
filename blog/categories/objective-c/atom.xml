@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Objective-C | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/objective-c/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-11-23T08:52:24+08:00</updated>
+  <updated>2012-11-23T08:55:01+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -222,7 +222,8 @@ it:</p>
 
 <ul>
   <li>Use <code>__autorelease</code> type qualifier. UIColor would be released at the end of
-current run loop. It can fix the crash.</li>
+current run loop. It can fix the crash. I believe <a href="https://twitter.com/amattn">@amattn</a> is the first
+one who discovered this solution.</li>
 </ul>
 
 <p><code>obj-c
@@ -261,7 +262,7 @@ cause a crash.</li>
 }
 </code></p>
 
-<h2 id="pitfalls-on-block-and-arc">Pitfalls on block and ARC</h2>
+<h2 id="pitfalls-in-block-and-arc">Pitfalls in block and ARC</h2>
 
 <p>When you use a ivar in self owned block, it will implicitly contain self in your
 block and thus cause a retain cycle:</p>
@@ -300,7 +301,7 @@ out at any time. We must claim we own the object when we are using it.</p>
 }
 </code></p>
 
-<h2 id="pitfalls-on-nserror">Pitfalls on NSError</h2>
+<h2 id="pitfalls-in-nserror">Pitfalls in NSError</h2>
 
 <p>If you are implementing methods that take NSError, be sure to use the correct
 format of type qualifier!</p>

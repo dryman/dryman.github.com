@@ -354,7 +354,8 @@ it:</p>
 
 <ul>
   <li>Use <code>__autorelease</code> type qualifier. UIColor would be released at the end of
-current run loop. It can fix the crash.</li>
+current run loop. It can fix the crash. I believe <a href="https://twitter.com/amattn">@amattn</a> is the first
+one who discovered this solution.</li>
 </ul>
 
 <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
@@ -409,7 +410,7 @@ cause a crash.</li>
 </span><span class="line"><span class="p">}</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
-<h2 id="pitfalls-on-block-and-arc">Pitfalls on block and ARC</h2>
+<h2 id="pitfalls-in-block-and-arc">Pitfalls in block and ARC</h2>
 
 <p>When you use a ivar in self owned block, it will implicitly contain self in your
 block and thus cause a retain cycle:</p>
@@ -469,7 +470,7 @@ out at any time. We must claim we own the object when we are using it.</p>
 </span><span class="line"><span class="p">}</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
-<h2 id="pitfalls-on-nserror">Pitfalls on NSError</h2>
+<h2 id="pitfalls-in-nserror">Pitfalls in NSError</h2>
 
 <p>If you are implementing methods that take NSError, be sure to use the correct
 format of type qualifier!</p>
