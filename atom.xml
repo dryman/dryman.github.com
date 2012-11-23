@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-11-22T16:10:27+08:00</updated>
+  <updated>2012-11-23T08:52:24+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -14,7 +14,7 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Objective-C ARC best practices and pitfalls]]></title>
+    <title type="html"><![CDATA[Effective Obj-C ARC and pitfalls in it]]></title>
     <link href="http://www.idryman.org/blog/2012/11/22/arc-best-practices-and-pitfalls/"/>
     <updated>2012-11-22T09:28:00+08:00</updated>
     <id>http://www.idryman.org/blog/2012/11/22/arc-best-practices-and-pitfalls</id>
@@ -40,30 +40,52 @@ of Core Foundation Framework.</p>
 
 <h3 id="arc-and-objective-c-properties">ARC and Objective-C properties</h3>
 
+<script language="javascript">
+function toggleContent(){
+    var link = document.getElementById("expand_link");
+    var content = document.getElementById("expand_content");
+    if (content.style.display == 'block') {
+        content.style.display = 'none';
+        link.innerHTML = "Expand highlight of ARC best pracitices by @amattn";
+    } else {
+        content.style.display = 'block';
+        link.innerHTML = "Toggle highlight";
+    }
+}
+</script>
+
+<p>It is really hard to write a new article about ARC without <a href="https://twitter.com/amattn">@amattn</a>’s
+collection of <a href="http://amattn.com/2011/12/07/arc_best_practices.html">ARC Best Practices</a>. You can find the complete
+best practices there, and below <a href="javascirpt:toggleContent()">link</a>
+is my highlight of his article <sup id="fnref:foot"><a href="#fn:foot" rel="footnote">1</a></sup>:</p>
+
+<p><a id="expand_link" href="javascript:toggleContent()"> Expand highlight of ARC best pracitices by @amattn</a> </p>
+
+<blockquote style="display: none;" id="expand_content" cite="http://amattn.com/2011/12/07/arc_best_practices.html">
 <ul>
   <li>object instance variables which needs to be retained should use <code>strong</code>.</li>
 </ul>
 
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<div class="bogus-wrapper"><notextile><div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 </pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">strong</span><span class="p">)</span> <span class="kt">id</span> <span class="n">childObject</span><span class="p">;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
+</span></code></pre></td></tr></table></div></figure></notextile></div></notextile></div>
 
 <ul>
   <li>To break reference cycle, use <code>weak</code>.</li>
 </ul>
 
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<div class="bogus-wrapper"><notextile><div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 </pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">weak</span><span class="p">)</span> <span class="kt">id</span> <span class="n">delegate</span><span class="p">;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
+</span></code></pre></td></tr></table></div></figure></notextile></div></notextile></div>
 <ul>
   <li>use <code>assign</code> for scalar properties </li>
 </ul>
 
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<div class="bogus-wrapper"><notextile><div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
-</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">assign</span><span class="p">)</span> <span class="n">CGFloat</span> <span class="n">width</span><span class="p">;</span>
-</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">assign</span><span class="p">)</span> <span class="n">CGFloat</span> <span class="n">height</span><span class="p">;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">assign</span><span class="p">)</span> <span class="n">CGFloat</span> <span class="n">width</span><span class="p">;</span>
+</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">assign</span><span class="p">)</span> <span class="n">CGFloat</span> <span class="n">height</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></notextile></div>
 
 <ul>
   <li>use <code>copy</code> for immutable containers, strings and block. Avoid using mutable
@@ -71,15 +93,15 @@ containers in properties (<code>NSMutableArray</code>…etc.) If you use mutable
 containers, use <code>strong</code>.</li>
 </ul>
 
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<div class="bogus-wrapper"><notextile><div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
 <span class="line-number">3</span>
 <span class="line-number">4</span>
-</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">copy</span><span class="p">)</span> <span class="n">NSString</span><span class="o">*</span> <span class="n">name</span><span class="p">;</span>
-</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">copy</span><span class="p">)</span> <span class="n">NSArray</span><span class="o">*</span> <span class="n">components</span><span class="p">;</span>
-</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">copy</span><span class="p">)</span> <span class="p">(</span><span class="kt">void</span> <span class="p">(</span><span class="o">^</span><span class="p">)(</span><span class="kt">void</span><span class="p">))</span> <span class="n">job</span><span class="p">;</span>
-</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">strong</span><span class="p">)</span> <span class="n">NSMutableArray</span><span class="o">*</span> <span class="n">badPatterns</span><span class="p">;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">copy</span><span class="p">)</span> <span class="n">NSString</span><span class="o">*</span> <span class="n">name</span><span class="p">;</span>
+</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">copy</span><span class="p">)</span> <span class="n">NSArray</span><span class="o">*</span> <span class="n">components</span><span class="p">;</span>
+</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">copy</span><span class="p">)</span> <span class="p">(</span><span class="kt">void</span> <span class="p">(</span><span class="o">^</span><span class="p">)(</span><span class="kt">void</span><span class="p">))</span> <span class="n">job</span><span class="p">;</span>
+</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">strong</span><span class="p">)</span> <span class="n">NSMutableArray</span><span class="o">*</span> <span class="n">badPatterns</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></notextile></div>
 
 <ul>
   <li>In dealloc
@@ -93,6 +115,7 @@ containers, use <code>strong</code>.</li>
 in a nib file. If you set it to <code>strong</code>, you should set it to <code>nil</code> in
 <code>-(void)viewDidUnload</code>.</li>
 </ul>
+</blockquote>
 
 <h3 id="arc-specific-type-qualifiers">ARC specific type qualifiers</h3>
 
@@ -168,7 +191,7 @@ not release it.</li>
 </ul>
 
 <p>There are two ways to retain a CF object: a type casting like syntax
-<code>(__birdge_retained)</code> or C function <code>CFBridgingRetain</code>.  Though clang show up
+<code>(__bridge_retained)</code> or C function <code>CFBridgingRetain</code>.  Though clang show up
 diagnostics to use the former syntax, I prefer to use the latter one because it
 is easier to read for me. </p>
 
@@ -408,6 +431,15 @@ CF object, block, and objective-c object:</p>
 
 <p>Hope these helps! Comments and sharing are welcome!</p>
 
+<div class="footnotes">
+  <ol>
+    <li id="fn:foot">
+      <p>I didn’t reference back to @amattn’s ARC best practices at the first.
+I am really sorry about this and I appreciate his pioneer work. I can’t write 
+this article without his awesome collection of how to write good ARC code.<a href="#fnref:foot" rel="reference">&#8617;</a></p>
+    </li>
+  </ol>
+</div>
 ]]></content>
   </entry>
   
