@@ -175,38 +175,42 @@ is my highlight of his article <sup id="fnref:foot"><a href="#fn:foot" rel="foot
 <p><a id="expand_link" href="javascript:toggleContent()"> Expand my highlight of ARC best pracitices by @amattn</a> </p>
 
 <blockquote style="display: none;" id="expand_content" cite="http://amattn.com/2011/12/07/arc_best_practices.html">
-<ul>
-  <li>object instance variables which needs to be retained should use <code>strong</code>.</li>
-</ul>
 
-<div class="bogus-wrapper"><notextile><div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <ul>
+    <li>object instance variables which needs to be retained should use <code>strong</code>.</li>
+  </ul>
+
+  <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 </pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">strong</span><span class="p">)</span> <span class="kt">id</span> <span class="n">childObject</span><span class="p">;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></notextile></div>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
 
-<ul>
-  <li>To break reference cycle, use <code>weak</code>.</li>
-</ul>
+  <ul>
+    <li>To break reference cycle, use <code>weak</code> <sup id="fnref:foot2"><a href="#fn:foot2" rel="footnote">2</a></sup>.</li>
+  </ul>
 
-<div class="bogus-wrapper"><notextile><div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
 </pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">weak</span><span class="p">)</span> <span class="kt">id</span> <span class="n">delegate</span><span class="p">;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></notextile></div>
-<ul>
-  <li>use <code>assign</code> for scalar properties </li>
-</ul>
+</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">weak</span><span class="p">)</span> <span class="n">NSTimer</span> <span class="n">timer</span><span class="p">;</span> <span class="c1">// NSTimer retains target</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
 
-<div class="bogus-wrapper"><notextile><div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <ul>
+    <li>use <code>assign</code> for scalar properties</li>
+  </ul>
+
+  <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
 </pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">assign</span><span class="p">)</span> <span class="n">CGFloat</span> <span class="n">width</span><span class="p">;</span>
 </span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">assign</span><span class="p">)</span> <span class="n">CGFloat</span> <span class="n">height</span><span class="p">;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></notextile></div>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
 
-<ul>
-  <li>use <code>copy</code> for immutable containers, strings and block. Avoid using mutable
-containers in properties (<code>NSMutableArray</code>…etc.) If you use mutable
+  <ul>
+    <li>use <code>copy</code> for immutable containers, strings and block. Avoid using mutable
+containers in properties (<code>NSMutableArray</code>, for example.) If you use mutable
 containers, use <code>strong</code>.</li>
-</ul>
+  </ul>
 
-<div class="bogus-wrapper"><notextile><div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+  <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
 <span class="line-number">3</span>
 <span class="line-number">4</span>
@@ -214,21 +218,21 @@ containers, use <code>strong</code>.</li>
 </span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">copy</span><span class="p">)</span> <span class="n">NSArray</span><span class="o">*</span> <span class="n">components</span><span class="p">;</span>
 </span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">copy</span><span class="p">)</span> <span class="p">(</span><span class="kt">void</span> <span class="p">(</span><span class="o">^</span><span class="p">)(</span><span class="kt">void</span><span class="p">))</span> <span class="n">job</span><span class="p">;</span>
 </span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">strong</span><span class="p">)</span> <span class="n">NSMutableArray</span><span class="o">*</span> <span class="n">badPatterns</span><span class="p">;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></notextile></div>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
 
-<ul>
-  <li>In dealloc
-    <ul>
-      <li>remove observers</li>
-      <li>unregister notifications</li>
-      <li>disable timers that use this object</li>
-    </ul>
-  </li>
-  <li>IBOutlets should generally be <code>weak</code> except File’s Owner to top-level objects
-in a nib file. If you set it to <code>strong</code>, you should set it to <code>nil</code> in
+  <ul>
+    <li>In dealloc
+      <ul>
+        <li>remove observers</li>
+        <li>unregister notifications</li>
+      </ul>
+    </li>
+    <li>IBOutlets should generally be <code>weak</code> except File’s Owner to top-level objects in
+a nib file. If you set it to <code>strong</code>, you should set it to <code>nil</code> in
 <code>-(void)viewDidUnload</code>.</li>
-</ul>
-<footer><cite><a href="http://amattn.com/2011/12/07/arc_best_practices.html"> ARC Best Practices</a></cite></footer>
+  </ul>
+
+  <footer><cite><a href="http://amattn.com/2011/12/07/arc_best_practices.html"> ARC Best Practices</a></cite></footer>
 </blockquote>
 
 <h3 id="arc-specific-type-qualifiers">ARC specific type qualifiers</h3>
@@ -553,6 +557,11 @@ CF object, block, and objective-c object:</p>
 post this article.  I am really sorry that I didn’t do it and I really
 appreciate his pioneer work. I couldn’t write this article without his awesome
 collection of how to write good ARC code.<a href="#fnref:foot" rel="reference">&#8617;</a></p>
+    </li>
+    <li id="fn:foot2">
+      <p>Thanks to Tinghui’s comment that <code>NSTimer</code> should not be invalidated in
+dealloc. <code>NSTimer</code> retains its target, so one should  use weak references if
+the timer is a member of target’s property, else just leave it is fine.<a href="#fnref:foot2" rel="reference">&#8617;</a></p>
     </li>
   </ol>
 </div>
