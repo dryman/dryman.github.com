@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-12-04T10:34:18+08:00</updated>
+  <updated>2012-12-04T20:13:06+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -74,7 +74,7 @@ mistake for copying his work without referencing his post.</p>
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[Effective Obj-C ARC and pitfalls in it]]></title>
+    <title type="html"><![CDATA[Objective-C ARC common pitfalls and best practices]]></title>
     <link href="http://www.idryman.org/blog/2012/11/22/arc-best-practices-and-pitfalls/"/>
     <updated>2012-11-22T09:28:00+08:00</updated>
     <id>http://www.idryman.org/blog/2012/11/22/arc-best-practices-and-pitfalls</id>
