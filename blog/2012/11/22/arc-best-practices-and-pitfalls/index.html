@@ -181,7 +181,7 @@ is my highlight of his article <sup id="fnref:foot"><a href="#fn:foot" rel="foot
   </ul>
 
   <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">strong</span><span class="p">)</span> <span class="kt">id</span> <span class="n">childObject</span><span class="p">;</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">strong</span><span class="p">)</span> <span class="kt">id</span> <span class="n">childObject</span><span class="p">;</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
   <ul>
@@ -190,8 +190,8 @@ is my highlight of his article <sup id="fnref:foot"><a href="#fn:foot" rel="foot
 
   <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
-</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">weak</span><span class="p">)</span> <span class="kt">id</span> <span class="n">delegate</span><span class="p">;</span>
-</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">weak</span><span class="p">)</span> <span class="n">NSTimer</span> <span class="n">timer</span><span class="p">;</span> <span class="c1">// NSTimer retains target</span>
+</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">weak</span><span class="p">)</span> <span class="kt">id</span> <span class="n">delegate</span><span class="p">;</span>
+</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">weak</span><span class="p">)</span> <span class="n">NSTimer</span> <span class="n">timer</span><span class="p">;</span> <span class="c1">// NSTimer retains target</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
   <ul>
@@ -436,7 +436,7 @@ block and thus cause a retain cycle:</p>
 </pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">@interface</span> <span class="nc">MyClass</span> <span class="p">{</span>
 </span><span class="line">    <span class="kt">id</span> <span class="n">child</span><span class="p">;</span>
 </span><span class="line"><span class="p">}</span>
-</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonautomic</span><span class="p">,</span> <span class="n">strong</span><span class="p">)</span> <span class="p">(</span><span class="kt">void</span><span class="p">(</span><span class="o">^</span><span class="p">)(</span><span class="kt">void</span><span class="p">))</span> <span class="n">job</span><span class="p">;</span>
+</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">strong</span><span class="p">)</span> <span class="p">(</span><span class="kt">void</span><span class="p">(</span><span class="o">^</span><span class="p">)(</span><span class="kt">void</span><span class="p">))</span> <span class="n">job</span><span class="p">;</span>
 </span><span class="line"><span class="k">@end</span>
 </span><span class="line">
 </span><span class="line"><span class="k">@implementation</span> <span class="nc">MyClass</span>

@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Objective-C | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/objective-c/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-12-03T16:34:22+08:00</updated>
+  <updated>2012-12-04T10:34:18+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -68,7 +68,7 @@ is my highlight of his article <sup id="fnref:foot"><a href="#fn:foot" rel="foot
   </ul>
 
   <p><code>obj-c
-@property (nonautomic, strong) id childObject;
+@property (nonatomic, strong) id childObject;
 </code></p>
 
   <ul>
@@ -76,8 +76,8 @@ is my highlight of his article <sup id="fnref:foot"><a href="#fn:foot" rel="foot
   </ul>
 
   <p><code>obj-c
-@property (nonautomic, weak) id delegate;
-@property (nonautomic, weak) NSTimer timer; // NSTimer retains target
+@property (nonatomic, weak) id delegate;
+@property (nonatomic, weak) NSTimer timer; // NSTimer retains target
 </code></p>
 
   <ul>
@@ -271,7 +271,7 @@ block and thus cause a retain cycle:</p>
 @interface MyClass {
     id child;
 }
-@property (nonautomic, strong) (void(^)(void)) job;
+@property (nonatomic, strong) (void(^)(void)) job;
 @end</p>
 
 <p>@implementation MyClass
