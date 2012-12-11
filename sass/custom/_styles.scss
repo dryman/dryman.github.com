@@ -1,2 +1,30 @@
 // This File is imported last, and will override other styles in the cascade
 // Add styles here to make changes without digging in too much
+
+sup {
+    font-size: smaller;
+    vertical-align: super;
+}
+
+div.footnotes {
+    font-size: smaller;
+    color: #aaa;
+}
+
+.table table {
+    margin-left:auto;
+    margin-right:auto;
+    margin-bottom: 30px;
+    text-align: left;
+    
+    th {
+        color: #039;
+        padding: 10px 8px;
+        border-bottom: 2px solid #6678b1;
+    }
+    td {
+        color: #669;
+        font-size: 0.8em;
+        padding: 9px 8px 0px 8px;
+    }
+}
