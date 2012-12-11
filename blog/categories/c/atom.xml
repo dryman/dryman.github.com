@@ -4,7 +4,7 @@
   <title><![CDATA[Category: C | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/c/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-12-04T20:13:06+08:00</updated>
+  <updated>2012-12-11T13:03:50+08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,294 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Deep C: Understanding The Design of C Integer Types]]></title>
+    <link href="http://www.idryman.org/blog/2012/12/03/the-design-of-c-integer-types/"/>
+    <updated>2012-12-03T15:32:00+08:00</updated>
+    <id>http://www.idryman.org/blog/2012/12/03/the-design-of-c-integer-types</id>
+    <content type="html"><![CDATA[<p>C is a popular language designed for cross platform development. However, when
+you dig deeper and deeper, you might get confused for the ambiguity of C
+integer types. Take <code>char</code> for example, number of bits can be 8, 9, or more; the
+minimum of a signed char is not strictly defined as -128 but <em>-127 or less</em>.</p>
+
+<div class="table">
+
+  <table>
+    <thead>
+      <tr>
+        <th style="text-align: center">name</th>
+        <th style="text-align: center">express</th>
+        <th style="text-align: center">value</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="text-align: center"><code>CHAR_BIT</code></td>
+        <td style="text-align: center">Number of bits for a char object (byte)</td>
+        <td style="text-align: center">8 or greater</td>
+      </tr>
+      <tr>
+        <td style="text-align: center"><code>SCHAR_MIN</code></td>
+        <td style="text-align: center">Minimum value for an object of type signed char</td>
+        <td style="text-align: center">-127 or less</td>
+      </tr>
+      <tr>
+        <td style="text-align: center"><code>SCHAR_MAX</code></td>
+        <td style="text-align: center">Maximum value for an object of type signed char</td>
+        <td style="text-align: center">127 or more</td>
+      </tr>
+      <tr>
+        <td style="text-align: center"><code>UChar_MAX</code></td>
+        <td style="text-align: center">Maximum value for an object of type unsigned char</td>
+        <td style="text-align: center">255 or more</td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+<p>Why does C is designed like so? In this article I’ll discuss the design and the
+sprits of C.</p>
+
+<!--more-->
+
+<h1 id="c-type-system">C type system</h1>
+
+<p>Before we dig into C’s integer types, we need to understand what a <em>type</em>
+actually means to C language.</p>
+
+<blockquote>
+  <p>The meaning of a value stored in an object or returned by a function is
+determined by the <em>type</em> of the expression used to access it.</p>
+  <footer><cite>C99 6.2.5</cite></footer>
+</blockquote>
+
+<p>In other words, a region of data storage (specified as <em>object</em> in C99) is
+treated as some kinds of human readable value via the type system.</p>
+
+<h2 id="float">Float</h2>
+
+<p>Take <code>float</code> for example. A float number <code>1.0</code> is stored as <code>0x3f800000</code> on my
+intel mac. <code>0x3f800000</code> can be a unsigned int, int, long, or other self defined
+struct type as well. If we treated it as float, we use floating point register to
+operate it; If we use other type, the register may be different, the arithmetic
+operation may be different, too.</p>
+
+<p>```c
+/* cc -std=c99 -Wall play_float.c -o play_float */
+#include <stdio.h /></p>
+
+<p>int main (void)
+{
+    unsigned int object = 0;
+    object |= 127 « 23; </p>
+
+<pre><code>float* force_float = (float*)&amp;object;
+
+printf("stored object is 0x%08x, float representation is %f\n", object, *force_float);
+
+(*force_float)++;
+printf("++\n");
+
+printf("stored object is 0x%08x, float representation is %f\n", object, *force_float);
+
+return 0; } ```
+</code></pre>
+
+<p>The output would be:</p>
+
+<p><code>
+stored object is 0x3f800000, float representation is 1.000000
+++
+stored object is 0x40000000, float representation is 2.000000
+</code></p>
+
+<p><a href="http://ridiculousfish.com">Ridiculous fish</a> has a great article 
+<a href="http://ridiculousfish.com/blog/posts/float.html">about floating point representation</a>. That is a really interesting
+article. I can’t explain better than he does.</p>
+
+<h2 id="integer-promotion">Integer promotion</h2>
+
+<p>C integer promotion is another example of same data storage, but different
+arithmetic operation depend on type. On x86 machine, when you do arithmetic
+operations (+, -, /, ==, etc.) on a <code>signed short</code>, it is <em>promoted</em> to an 
+<code>int</code> with extended signed bit. </p>
+
+<p>```c
+short a = 0xffff; // 0xffff on disk space</p>
+
+<p>/* 
+ * loaded into register as 0xffffffff 
+ * calculated as 0xffffffff + 0x00000001
+ * then store back to disk with possible 
+ * truncation
+ */
+a++;            <br />
+```</p>
+
+<p>If you use <code>unsigned short</code> instead of <code>signed short</code> the arithmetic operation
+would be different! It will loaded into register without signed bit. 
+A unsigned short with <code>0xffff</code> stored on disk, would be <code>0x0000ffff</code> in
+register. So, if you have a code like this:</p>
+
+<p>```c
+short          a = 0xffff;
+unsigned short b = 0xffff;</p>
+
+<p>printf(“%s\n”, a==b? “equal” : “not equal”);
+/* 
+ * not equal, because one is 0xffffffff and 
+ * another is 0x0000ffff in register
+ */
+```</p>
+
+<p>It will not equal, even if they have the same disk storage! For further
+discussion see my previous post <a href="http://www.idryman.org/blog/2012/11/21/integer-promotion/">Deep C: Integer Promotion</a>.</p>
+
+<h1 id="the-spirit-of-c">The spirit of C</h1>
+
+<p>Some of the facets of the spirit of C can be summarized in phrases like:</p>
+
+<blockquote>
+  <ul>
+    <li>Trust the programmer.</li>
+    <li>Don’t prevent the programmer from doing what needs to be done.</li>
+    <li>Keep the language small and simple.</li>
+    <li>Make it fast, even if it is not guaranteed to be portable.</li>
+  </ul>
+
+  <p>The last proverb needs a little explanation. The potential for efficient code
+generation is one of the most important strengths of C. To help ensure that no
+code explosion occurs for what appears to be a very simple operation, many
+operations are defined to be how the target  machine’s hardware does it rather
+than by a general abstract rule.</p>
+  <footer><cite>C99 Rationale v5.10 page 3</cite></footer>
+</blockquote>
+
+<p>When you look at C spec, you should remember that C is designed <em>to run fast on
+target machine</em>, not designed <em>for simplicity of abstract machine</em>. This design
+goal directly affect the spec of C’s type system, since C’s type system is the
+rule of how machine arithmetic logic unit operates on data.</p>
+
+<h2 id="int">int</h2>
+
+<p><code>int</code> is a special type, it is defined to be <strong>the fastest implementation to
+represent an integer</strong>. It is mostly implemented to be the fastest register on
+the machine. For 16-bit machine, it is 16-bit; for 24-bit machine, it is 24-bit;
+for 32-bit machine, it is 32-bit; for 64-bit machine, well, the fastest register
+is 32-bit, so the most seen implementation is 32-bit.</p>
+
+<p>The size of <code>int</code> is also the size that integer promotion promotes to.
+On 32-bit machine, smaller integers like 8-bit and 16-bit will promote to 32-bit
+register when need to do calculations. On 16-bit machine, 16-bit integers don’t
+do promotion, but 8-bit integers do.</p>
+
+<h2 id="size-of-integer-types-in-limith">Size of integer types in <code>limit.h</code></h2>
+
+<p>The numerical limits were, and still are, presented as <em>minimum maxima</em>. That is,
+lower limit defined in SPEC, upper limits specified by the implementation. For
+example, the minimum of a <code>signed short</code> is <code>-128</code> on modern two’s complement
+machine. But on an one’s complement or sign-magnitude machine, the minimum value
+of <code>signed short</code> can only be <code>-127</code>. Some of the limits are listed below:</p>
+
+<div class="table">
+
+  <table>
+    <thead>
+      <tr>
+        <th style="text-align: left">name</th>
+        <th style="text-align: left">expresses</th>
+        <th style="text-align: left">value</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="text-align: left">CHAR_BIT</td>
+        <td style="text-align: left">Number of bits for a char object (byte) 8 or greater</td>
+        <td style="text-align: left"> </td>
+      </tr>
+      <tr>
+        <td style="text-align: left">SCHAR_MIN</td>
+        <td style="text-align: left">Minimum value for an object of type signed char</td>
+        <td style="text-align: left">-127 or less</td>
+      </tr>
+      <tr>
+        <td style="text-align: left">SCHAR_MAX</td>
+        <td style="text-align: left">Maximum value for an object of type signed char</td>
+        <td style="text-align: left">127 or more</td>
+      </tr>
+      <tr>
+        <td style="text-align: left">UCHAR_MAX</td>
+        <td style="text-align: left">Maximum value for an object of type unsigned char</td>
+        <td style="text-align: left">255 or more</td>
+      </tr>
+      <tr>
+        <td style="text-align: left">CHAR_MIN</td>
+        <td style="text-align: left">Minimum value for an object of type char</td>
+        <td style="text-align: left">either SCHAR_MIN or 0</td>
+      </tr>
+      <tr>
+        <td style="text-align: left">CHAR_MAX</td>
+        <td style="text-align: left">Maximum value for an object of type char</td>
+        <td style="text-align: left">either SCHAR_MAX or UCHAR_MAX</td>
+      </tr>
+      <tr>
+        <td style="text-align: left">SHRT_MIN</td>
+        <td style="text-align: left">Minimum value for an object of type short int</td>
+        <td style="text-align: left">-32767 or less</td>
+      </tr>
+      <tr>
+        <td style="text-align: left">SHRT_MAX</td>
+        <td style="text-align: left">Maximum value for an object of type short int</td>
+        <td style="text-align: left">32767 or greater</td>
+      </tr>
+      <tr>
+        <td style="text-align: left">USHRT_MAX</td>
+        <td style="text-align: left">Maximum value for an object of type unsigned short int</td>
+        <td style="text-align: left">65535 or greater</td>
+      </tr>
+      <tr>
+        <td style="text-align: left">LONG_MIN</td>
+        <td style="text-align: left">Minimum value for an object of type long int</td>
+        <td style="text-align: left">-2147483647 or less</td>
+      </tr>
+      <tr>
+        <td style="text-align: left">LONG_MAX</td>
+        <td style="text-align: left">Maximum value for an object of type long int</td>
+        <td style="text-align: left">2147483647 or greater</td>
+      </tr>
+      <tr>
+        <td style="text-align: left">ULONG_MAX</td>
+        <td style="text-align: left">Maximum value for an object of type unsigned long int</td>
+        <td style="text-align: left">4294967295 or greater</td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+<h1 id="summary">Summary</h1>
+
+<p>The spirit of C targets on program speed instead of consistency of abstract
+machine across different platforms. It makes us easy to write programs that run
+fast for free, but the programmer have to take care to make the program
+<strong>safe</strong>. For calculations that is sensitive to data limits, one should use
+unambiguous type specifications like <code>int8_t</code>, <code>int32_t</code> specified in
+<code>inttypes.h</code>, and check the bounds with <code>limits.h</code> and static analyzers.</p>
+
+<h1 id="see-also">See also</h1>
+
+<ul>
+  <li><a href="http://www.open-std.org/jtc1/sc22/wg14">C99 specifications</a></li>
+  <li><a href="http://www.open-std.org/jtc1/sc22/wg14">C99 rationale</a></li>
+  <li><a href="http://www.unix.org/whitepapers/64bit.html">The UNIX system – 64bit and Data Size Neutrality</a></li>
+  <li><a href="http://ridiculousfish.com/blog/posts/float.html">Ridiculous fish’s article on float</a></li>
+  <li><a href="http://www.idryman.org/blog/2012/11/21/integer-promotion/">C Integer Promotion</a></li>
+</ul>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Deep C: Integer Promotion]]></title>

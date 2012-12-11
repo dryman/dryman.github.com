@@ -9,8 +9,8 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="My last post Effective Obj-C ARC and Pitfalls in It had some
-content copied directly from @amattn’s blog post ARC best practices without referencing &hellip;">
+  <meta name="description" content="C is a popular language designed for cross platform development. However, when
+you dig deeper and deeper, you might get confused for the ambiguity of &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -103,6 +103,91 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2012/12/03/the-design-of-c-integer-types/">Deep C: Understanding the Design of C Integer Types</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-12-03T15:32:00+08:00" pubdate data-updated="true">Dec 3<span>rd</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>C is a popular language designed for cross platform development. However, when
+you dig deeper and deeper, you might get confused for the ambiguity of C
+integer types. Take <code>char</code> for example, number of bits can be 8, 9, or more; the
+minimum of a signed char is not strictly defined as -128 but <em>-127 or less</em>.</p>
+
+<div class="table">
+
+  <table>
+    <thead>
+      <tr>
+        <th style="text-align: center">name</th>
+        <th style="text-align: center">express</th>
+        <th style="text-align: center">value</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="text-align: center"><code>CHAR_BIT</code></td>
+        <td style="text-align: center">Number of bits for a char object (byte)</td>
+        <td style="text-align: center">8 or greater</td>
+      </tr>
+      <tr>
+        <td style="text-align: center"><code>SCHAR_MIN</code></td>
+        <td style="text-align: center">Minimum value for an object of type signed char</td>
+        <td style="text-align: center">-127 or less</td>
+      </tr>
+      <tr>
+        <td style="text-align: center"><code>SCHAR_MAX</code></td>
+        <td style="text-align: center">Maximum value for an object of type signed char</td>
+        <td style="text-align: center">127 or more</td>
+      </tr>
+      <tr>
+        <td style="text-align: center"><code>UChar_MAX</code></td>
+        <td style="text-align: center">Maximum value for an object of type unsigned char</td>
+        <td style="text-align: center">255 or more</td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+<p>Why does C is designed like so? In this article I’ll discuss the design and the
+sprits of C.</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2012/12/03/the-design-of-c-integer-types/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -570,59 +655,6 @@ same problem as I did.</p>
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/09/16/taiwan-typhoon-app-2/">Taiwan Typhoon App (2)</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-09-16T17:30:00+08:00" pubdate data-updated="true">Sep 16<span>th</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>I start from a single view application with <strong>MKMapView</strong>. Remeber to link
-<code>MapKit.framework</code> in project setting.</p>
-
-<p>This is just a prototyping app, so everything will be handled in
-<code>FCViewController</code>, including</p>
-
-<ul>
-  <li><code>NSURLConnection</code> delegate: handle request and incoming data stream.</li>
-  <li>Read data as string, and process it with regular expression and JSON parsing.</li>
-  <li><code>MKMapView</code> delegate: create and draw annotations and overlays.</li>
-</ul>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/09/16/taiwan-typhoon-app-2/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -636,6 +668,10 @@ same problem as I did.</p>
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2012/12/03/the-design-of-c-integer-types/">Deep C: Understanding The Design of C Integer Types</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2012/11/23/apologize-to-at-amattn/">apologize to @amattn</a>
@@ -671,10 +707,6 @@ same problem as I did.</p>
     
       <li class="post">
         <a href="/blog/2012/09/21/c-slash-objc-c-block-syntax-explained/">C/ObjC block syntax explained</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/09/16/taiwan-typhoon-app-2/">Taiwan Typhoon App (2)</a>
       </li>
     
   </ul>
@@ -815,6 +847,17 @@ SOFTWARE.
 
 
 
+
+<script type="text/javascript">
+ $(function() {
+        /* For zebra striping */
+        $("table tr:nth-child(odd)").addClass("odd-row");
+        /* For cell text alignment */
+        $("table td:first-child, table th:first-child").addClass("first");
+        /* For removing the last border */
+        $("table td:last-child, table th:last-child").addClass("last");
+});
+</script>
 
 
 </body>

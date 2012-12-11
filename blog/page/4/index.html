@@ -5,12 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Lisp development on Mac - Carpe diem (Felix's blog)</title>
+  <title>Carpe diem (Felix's blog)</title>
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="Setting up a development environment is such a pain. In short, here is my final
-configs: Aquamacs emacs SLIME without SLDB mode clisp with debugger &hellip;">
+  <meta name="description" content="installation note This is an installation note for Octopress blogging framework. My configuration is developed on OSX with ruby 1.9.2, and xcode 4.2. ">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -19,7 +18,7 @@ configs: Aquamacs emacs SLIME without SLDB mode clisp with debugger &hellip;">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.idryman.org/blog/2012/03/24/lisp-development-on-mac/">
+  <link rel="canonical" href="http://www.idryman.org/blog/page/4/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -101,13 +100,16 @@ MathJax.Hub.Config({
 </nav>
   <div id="main">
     <div id="content">
-      <div>
-<article class="hentry" role="article">
+      <div class="blog-index">
   
+  
+  
+    <article>
+      
   <header>
     
-      
-        <h1 class="entry-title">Lisp Development on Mac</h1>
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2012/03/10/my-octopress-configs/">My Octopress Configs</a></h1>
       
     
     
@@ -124,146 +126,36 @@ MathJax.Hub.Config({
   
 
 
-<time datetime="2012-03-24T16:46:00+08:00" pubdate data-updated="true">Mar 24<span>th</span>, 2012</time>
+<time datetime="2012-03-10T16:12:00+08:00" pubdate data-updated="true">Mar 10<span>th</span>, 2012</time>
         
       </p>
     
   </header>
 
 
-<div class="entry-content"><p>Setting up a development environment is such a pain. In short, here is my final
-configs:</p>
+  <div class="entry-content"><h2 id="installation-note">installation note</h2>
 
-<ul>
-  <li><a href="http://aquamacs.org/">Aquamacs emacs</a></li>
-  <li><a href="http://common-lisp.net/project/slime/">SLIME</a> without SLDB mode</li>
-  <li><a href="http://www.clisp.org/">clisp</a> with debugger commands working</li>
-  <li><a href="http://www.quicklisp.org/beta/">quicklisp</a> (lisp package manager)
-    <ul>
-      <li><a href="http://www.cliki.net/asdf">asdf.lisp</a> that ships with <a href="http://www.quicklisp.org/beta/">quicklisp</a> (Bridge between lisp and
-SLIME)</li>
-    </ul>
-  </li>
-</ul>
-
-<!-- more -->
-
-<p>I also tried many other combinations. For example, <a href="http://www.sbcl.org/">sbcl</a> should be a faster
-alternative to <a href="http://www.clisp.org/">clisp</a>, but I can’t make its debugger work. <a href="http://www.sbcl.org/">sbcl</a> also support
-better linking to slime and sldb, but sldb isn’t working well. <a href="http://emacsformacosx.com/builds">Emacs 24</a> seems to
-be a better emacs environment because it has package manager built right into
-it. However, I tired <a href="https://github.com/technomancy/emacs-starter-kit">emacs starter-kit</a> and slime installation through its
-package manager, and it just don’t work. Any suggestions would be greatly
-welcome. ;)</p>
-
-<hr />
-
-<h3 id="instructions">Instructions</h3>
-
-<ol>
-  <li>Download <a href="https://github.com/kennethreitz/osx-gcc-installer">osx-gcc</a> if you haven’t.</li>
-  <li>Install <a href="http://mxcl.github.com/homebrew/">homebrew</a>.</li>
-  <li><code>brew install clisp</code>.</li>
-  <li>Setting up <a href="http://www.quicklisp.org/beta/">quicklisp</a>.
-    <ol>
-      <li>Download <a href="http://www.quicklisp.org/beta/">quicklisp.lisp</a></li>
-      <li><code>clisp -i quicklisp.lisp</code></li>
-      <li><code>[1]&gt; (quicklisp-quickstart:install)</code></li>
-      <li><code>[2]&gt; (ql:add-to-init-file)</code></li>
-      <li><code>[3]&gt; (quit)</code></li>
-    </ol>
-  </li>
-  <li>Download Aquamacs emacs</li>
-  <li>Install <a href="http://braeburn.aquamacs.org/plugins/">Aquamacs emacs SLIME plugin</a></li>
-  <li><code>cat '(setq inferior-lisp-program "/usr/local/bin/clisp")' &gt;&gt; ~/.emacs</code></li>
-</ol>
-
-<p>Then you can use <code>trace</code>, <code>step</code> and other debug utilities in emacs SLIME. Enjoy
-it!</p>
-
-<hr />
-
-<h3 id="update">Update</h3>
-
-<p>I found out how to enable <code>STEP-MODE</code> in <a href="http://www.sbcl.org/">sbcl</a> form <a href="http://www.lispforum.com/viewtopic.php?f=2&amp;t=628">this post</a>. 
-In short, put this in your <code>.sbclrc</code>.</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="nb">declaim</span> <span class="p">(</span><span class="k">optimize</span> <span class="p">(</span><span class="nv">debug</span> <span class="mi">3</span><span class="p">)))</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>and in your <code>.emacs</code></p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="p">(</span><span class="k">setq</span> <span class="nv">inferior-lisp-program</span> <span class="s">&quot;/usr/local/bin/sbcl&quot;</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
+<p>This is an installation note for <a href="http://octopress.org">Octopress</a> blogging framework. My configuration is developed on OSX with ruby 1.9.2, and xcode 4.2.</p>
 
 </div>
-
-
-  <footer>
-    <p class="meta">
-      
   
-
-<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
-
-      
-
-
-
-
-
-
-
-
+  
+    <footer>
+      <a rel="full-article" href="/blog/2012/03/10/my-octopress-configs/">Read on &rarr;</a>
+    </footer>
   
 
 
-<time datetime="2012-03-24T16:46:00+08:00" pubdate data-updated="true">Mar 24<span>th</span>, 2012</time>
-      
-
-<span class="categories">
+    </article>
   
-    <a class='category' href='/blog/categories/lisp/'>Lisp</a>
-  
-</span>
-
-
-    </p>
+  <div class="pagination">
     
-      <div class="sharing">
-  
-  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2012/03/24/lisp-development-on-mac/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2012/03/24/lisp-development-on-mac/" >Tweet</a>
-  
-  
-  <div class="g-plusone" data-size="medium"></div>
-  
-  
-    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
-  
-</div>
-
+    <a href="/blog/archives">Blog Archives</a>
     
-    <p class="meta">
-      
-        <a class="basic-alignment left articlenav" href="/blog/2012/03/14/the-nlp-day/" title="Previous Post: The NLP Day">&laquo; The NLP Day</a>
-      
-      
-        <a class="basic-alignment right articlenav" href="/blog/2012/03/26/lisp-debugging-tools/" title="Next Post: Lisp Debugging Tools">Lisp Debugging Tools &raquo;</a>
-      
-    </p>
-  </footer>
-</article>
-
-  <section>
-    <h1>Comments</h1>
-    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a class="next" href="/blog/page/3/">Newer &rarr;</a>
+    
+  </div>
 </div>
-  </section>
-
-</div>
-
 <aside class="sidebar">
   
     <section>
@@ -317,7 +209,7 @@ In short, put this in your <code>.sbclrc</code>.</p>
 <section>
   <h1>Latest Tweets</h1>
   <ul id="tweets">
-    <li class="loading">Status updating...</li>
+    <li class="loading">Status updating&#8230;</li>
   </ul>
   <script type="text/javascript">
     $.domReady(function(){
@@ -337,7 +229,6 @@ In short, put this in your <code>.sbclrc</code>.</p>
   
 </aside>
 
-
     </div>
   </div>
   <footer role="contentinfo"><p>
@@ -352,10 +243,7 @@ In short, put this in your <code>.sbclrc</code>.</p>
       var disqus_shortname = 'dryblog';
       
         
-        // var disqus_developer = 1;
-        var disqus_identifier = 'http://www.idryman.org/blog/2012/03/24/lisp-development-on-mac/';
-        var disqus_url = 'http://www.idryman.org/blog/2012/03/24/lisp-development-on-mac/';
-        var disqus_script = 'embed.js';
+        var disqus_script = 'count.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
@@ -437,7 +325,7 @@ SOFTWARE.
       hn_like.src = "http://hnlike.com/upvote.php?link="
                     + encodeURIComponent(document.location)
                     + "&title="
-                    + encodeURIComponent("Lisp development on Mac");
+                    + encodeURIComponent("");
       hn_like.innerHTML="iframes not supported by your browser";
       var twitter = document.getElementsByClassName("twitter-share-button")[0];
 
