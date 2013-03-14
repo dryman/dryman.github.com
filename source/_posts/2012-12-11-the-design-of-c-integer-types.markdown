@@ -78,6 +78,7 @@ stored object is 0x3f800000, float representation is 1.000000
 stored object is 0x40000000, float representation is 2.000000
 ```
 
+
 [Ridiculous fish][fish] has a great article 
 [about floating point representation][float]. That is a really interesting
 article. I can't explain better than he does.
