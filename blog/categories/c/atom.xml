@@ -4,7 +4,7 @@
   <title><![CDATA[Category: C | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/c/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-12-11T13:03:50+08:00</updated>
+  <updated>2013-03-13T17:06:41-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Deep C: Understanding The Design of C Integer Types]]></title>
     <link href="http://www.idryman.org/blog/2012/12/03/the-design-of-c-integer-types/"/>
-    <updated>2012-12-03T15:32:00+08:00</updated>
+    <updated>2012-12-03T15:32:00-08:00</updated>
     <id>http://www.idryman.org/blog/2012/12/03/the-design-of-c-integer-types</id>
     <content type="html"><![CDATA[<p>C is a popular language designed for cross platform development. However, when
 you dig deeper and deeper, you might get confused for the ambiguity of C
@@ -304,7 +304,7 @@ unambiguous type specifications like <code>int8_t</code>, <code>int32_t</code> s
   <entry>
     <title type="html"><![CDATA[Deep C: Integer Promotion]]></title>
     <link href="http://www.idryman.org/blog/2012/11/21/integer-promotion/"/>
-    <updated>2012-11-21T14:15:00+08:00</updated>
+    <updated>2012-11-21T14:15:00-08:00</updated>
     <id>http://www.idryman.org/blog/2012/11/21/integer-promotion</id>
     <content type="html"><![CDATA[<p>Almost every programmer has learned about C, and a lot of them use it for their
 career. It is certainly one of the most popular programming languages on
@@ -493,7 +493,7 @@ vulnerability issues.</p>
   <entry>
     <title type="html"><![CDATA[Type Qualifiers and friends]]></title>
     <link href="http://www.idryman.org/blog/2012/10/29/type-qualifiers/"/>
-    <updated>2012-10-29T08:55:00+08:00</updated>
+    <updated>2012-10-29T08:55:00-07:00</updated>
     <id>http://www.idryman.org/blog/2012/10/29/type-qualifiers</id>
     <content type="html"><![CDATA[<p>Type qualifiers are heavily used in C and Objective C. In C99 there are three
 type qualifiers: <code>const</code>, <code>restrict</code>, and <code>volatile</code>. In objective C,

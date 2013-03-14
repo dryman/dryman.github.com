@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Cocoa | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/cocoa/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-12-11T13:03:50+08:00</updated>
+  <updated>2013-03-13T17:06:41-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Dance with Objective-C dynamic types]]></title>
     <link href="http://www.idryman.org/blog/2012/10/30/dance-with-objective-c-dynamic-types/"/>
-    <updated>2012-10-30T13:58:00+08:00</updated>
+    <updated>2012-10-30T13:58:00-07:00</updated>
     <id>http://www.idryman.org/blog/2012/10/30/dance-with-objective-c-dynamic-types</id>
     <content type="html"><![CDATA[<p>Objective-C is a super set of C language. The entire language is a preprocessor
 skin added to C language and a powerful runtime system. With this runtime system,
@@ -398,7 +398,7 @@ and framework with differnt data types that share the same methods.</p>
   <entry>
     <title type="html"><![CDATA[C/ObjC block syntax explained]]></title>
     <link href="http://www.idryman.org/blog/2012/09/21/c-slash-objc-c-block-syntax-explained/"/>
-    <updated>2012-09-21T20:33:00+08:00</updated>
+    <updated>2012-09-21T20:33:00-07:00</updated>
     <id>http://www.idryman.org/blog/2012/09/21/c-slash-objc-c-block-syntax-explained</id>
     <content type="html"><![CDATA[<p>Block is heavily used in objective-c  APIs. If you want to
 write concurrent and responsive interface, you will need blocks and grand
@@ -674,7 +674,7 @@ management and grand central dispatch. I’ll discuss them in next few posts.</p
   <entry>
     <title type="html"><![CDATA[Taiwan Typhoon App (2)]]></title>
     <link href="http://www.idryman.org/blog/2012/09/16/taiwan-typhoon-app-2/"/>
-    <updated>2012-09-16T17:30:00+08:00</updated>
+    <updated>2012-09-16T17:30:00-07:00</updated>
     <id>http://www.idryman.org/blog/2012/09/16/taiwan-typhoon-app-2</id>
     <content type="html"><![CDATA[<p>I start from a single view application with <strong>MKMapView</strong>. Remeber to link
 <code>MapKit.framework</code> in project setting.</p>
@@ -986,7 +986,7 @@ overlays, you can subclass them and implement drawing functions in delegate.</p>
   <entry>
     <title type="html"><![CDATA[Taiwan Typhoon App (1)]]></title>
     <link href="http://www.idryman.org/blog/2012/09/16/taiwan-typhoon-app-1/"/>
-    <updated>2012-09-16T16:11:00+08:00</updated>
+    <updated>2012-09-16T16:11:00-07:00</updated>
     <id>http://www.idryman.org/blog/2012/09/16/taiwan-typhoon-app-1</id>
     <content type="html"><![CDATA[<p>Taiwan is an island next to Pacific ocean, and one kind of serious disaster in
 Taiwan is typhoon. Fortunately, We have best typhoon researches in the world,
@@ -1088,7 +1088,7 @@ write it in much more verbose Objective-C.</p>
   <entry>
     <title type="html"><![CDATA[Earthquake early warning prototype]]></title>
     <link href="http://www.idryman.org/blog/2012/09/15/earthquake-early-warning-prototype/"/>
-    <updated>2012-09-15T14:48:00+08:00</updated>
+    <updated>2012-09-15T14:48:00-07:00</updated>
     <id>http://www.idryman.org/blog/2012/09/15/earthquake-early-warning-prototype</id>
     <content type="html"><![CDATA[<p>I made a  prototype of earthquake early warning system in one week. The scenario
 goes as follows: We use a Friendly ARM SBC (Single-Board Computer) as an

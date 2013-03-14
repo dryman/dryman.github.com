@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: python | Carpe diem (Felix's blog)]]></title>
+  <link href="http://www.idryman.org/blog/categories/python/atom.xml" rel="self"/>
+  <link href="http://www.idryman.org/"/>
+  <updated>2013-03-13T17:06:41-07:00</updated>
+  <id>http://www.idryman.org/</id>
+  <author>
+    <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Setting up Python on OSX Mountain Lion]]></title>
+    <link href="http://www.idryman.org/blog/2013/03/13/python-setup-on-mac-osx/"/>
+    <updated>2013-03-13T08:47:00-07:00</updated>
+    <id>http://www.idryman.org/blog/2013/03/13/python-setup-on-mac-osx</id>
+    <content type="html"><![CDATA[<p>Setting up programming environment is frustrating for newcomers. Although it is much easier than it was before, it’s still worth it to take note.</p>
+
+<!--more-->
+
+<h2 id="apple-developer-tools">1. Apple developer tools</h2>
+
+<p>Not only the python development but all kinds of programming tasks on OSX require Apple developer tools. The instruction is easy; you download XCode from Mac AppStore, then you download <em>Command Line Tools</em> in the Downloads menu from the XCode Preference panel.</p>
+
+<h2 id="homebrew">2. Homebrew</h2>
+
+<p>Next, install OSX most popular package manager <a href="http://mxcl.github.com/homebrew/">homebrew</a>. Just copy and paste this command in the terminal.</p>
+
+<p><code>bash
+ruby -e "$(curl -fsSL https://raw.github.com/mxcl/homebrew/go)"
+</code></p>
+
+<p>If it shows an error about user permission, do the following</p>
+
+<p><code>bash
+cd /usr/local
+sudo chown -R USER_NAME local
+</code></p>
+
+<p>Now you can install the followings with <em>homebrew</em>.</p>
+
+<p><code>bash
+brew install python
+brew install gfortran
+</code></p>
+
+<p>Years before Mountain Lion, I used to install fortran via <a href="http://hpc.sourceforge.net">High Performance Computing for Mac OSX</a>, but it doesn’t work well with homebrew. Now it’s best to install everything with <em>homebrew</em>.</p>
+
+<h2 id="python">3. Python</h2>
+
+<p>Install scipy, numpy, ipython, and matplot.</p>
+
+<p><code>bash
+pip install scipy
+pip install numpy
+pip install ipython
+pip install matplot
+</code></p>
+
+<p>Finally, install opencv</p>
+
+<p><code>bash
+brew install opencv
+</code></p>
+
+<p>If you want a additional nice GUI application for ipython, you can download it from <a href="https://github.com/liyanage/ipython-notebook#readme">IPython Notebook</a>.</p>
+
+<p><img width="50%" style="margin-left:25%;" src="http://www.idryman.org/images/ipython_notebook.png" /></p>
+
+<h2 id="trouble-shooting">Trouble shooting</h2>
+
+<p>Sometimes homebrew has trouble with fetching the source code. If you found it is stuck on downloading the files, do the following</p>
+
+<p><code>bash
+brew install -v opencv
+</code></p>
+
+<p>It will show the URL of the file it is going to download. Stop the command with ctrl-c, paste the URL to your browser and download it. After the download is complete, move the file to <code>/Library/Cache/Homebrew</code>.</p>
+
+<p><code>bash
+mv OpenCV-2.4.4a.tar.bz2 /Library/Caches/Homebrew/
+</code></p>
+
+<p>Continue the installation by</p>
+
+<p><code>bash
+brew install opencv
+</code></p>
+]]></content>
+  </entry>
+  
+</feed>

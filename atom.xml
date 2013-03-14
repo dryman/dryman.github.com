@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2012-12-11T13:03:50+08:00</updated>
+  <updated>2013-03-13T17:06:41-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -14,9 +14,94 @@
 
   
   <entry>
+    <title type="html"><![CDATA[Setting up Python on OSX Mountain Lion]]></title>
+    <link href="http://www.idryman.org/blog/2013/03/13/python-setup-on-mac-osx/"/>
+    <updated>2013-03-13T08:47:00-07:00</updated>
+    <id>http://www.idryman.org/blog/2013/03/13/python-setup-on-mac-osx</id>
+    <content type="html"><![CDATA[<p>Setting up programming environment is frustrating for newcomers. Although it is much easier than it was before, it’s still worth it to take note.</p>
+
+<!--more-->
+
+<h2 id="apple-developer-tools">1. Apple developer tools</h2>
+
+<p>Not only the python development but all kinds of programming tasks on OSX require Apple developer tools. The instruction is easy; you download XCode from Mac AppStore, then you download <em>Command Line Tools</em> in the Downloads menu from the XCode Preference panel.</p>
+
+<h2 id="homebrew">2. Homebrew</h2>
+
+<p>Next, install OSX most popular package manager <a href="http://mxcl.github.com/homebrew/">homebrew</a>. Just copy and paste this command in the terminal.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">ruby -e <span class="s2">&quot;$(curl -fsSL https://raw.github.com/mxcl/homebrew/go)&quot;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>If it shows an error about user permission, do the following</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="nb">cd</span> /usr/local
+</span><span class="line">sudo chown -R USER_NAME <span class="nb">local</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Now you can install the followings with <em>homebrew</em>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">brew install python
+</span><span class="line">brew install gfortran
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Years before Mountain Lion, I used to install fortran via <a href="http://hpc.sourceforge.net">High Performance Computing for Mac OSX</a>, but it doesn’t work well with homebrew. Now it’s best to install everything with <em>homebrew</em>.</p>
+
+<h2 id="python">3. Python</h2>
+
+<p>Install scipy, numpy, ipython, and matplot.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">pip install scipy
+</span><span class="line">pip install numpy
+</span><span class="line">pip install ipython
+</span><span class="line">pip install matplot
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Finally, install opencv</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">brew install opencv
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>If you want a additional nice GUI application for ipython, you can download it from <a href="https://github.com/liyanage/ipython-notebook#readme">IPython Notebook</a>.</p>
+
+<p><img width="50%" style="margin-left:25%;" src="http://www.idryman.org/images/ipython_notebook.png" /></p>
+
+<h2 id="trouble-shooting">Trouble shooting</h2>
+
+<p>Sometimes homebrew has trouble with fetching the source code. If you found it is stuck on downloading the files, do the following</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">brew install -v opencv
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>It will show the URL of the file it is going to download. Stop the command with ctrl-c, paste the URL to your browser and download it. After the download is complete, move the file to <code>/Library/Cache/Homebrew</code>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">mv OpenCV-2.4.4a.tar.bz2 /Library/Caches/Homebrew/
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Continue the installation by</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">brew install opencv
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+]]></content>
+  </entry>
+  
+  <entry>
     <title type="html"><![CDATA[Deep C: Understanding The Design of C Integer Types]]></title>
     <link href="http://www.idryman.org/blog/2012/12/03/the-design-of-c-integer-types/"/>
-    <updated>2012-12-03T15:32:00+08:00</updated>
+    <updated>2012-12-03T15:32:00-08:00</updated>
     <id>http://www.idryman.org/blog/2012/12/03/the-design-of-c-integer-types</id>
     <content type="html"><![CDATA[<p>C is a popular language designed for cross platform development. However, when
 you dig deeper and deeper, you might get confused for the ambiguity of C
@@ -340,7 +425,7 @@ unambiguous type specifications like <code>int8_t</code>, <code>int32_t</code> s
   <entry>
     <title type="html"><![CDATA[apologize to @amattn]]></title>
     <link href="http://www.idryman.org/blog/2012/11/23/apologize-to-at-amattn/"/>
-    <updated>2012-11-23T15:10:00+08:00</updated>
+    <updated>2012-11-23T15:10:00-08:00</updated>
     <id>http://www.idryman.org/blog/2012/11/23/apologize-to-at-amattn</id>
     <content type="html"><![CDATA[<p>My last post <a href="http://www.idryman.org/blog/2012/11/22/arc-best-practices-and-pitfalls/">Effective Obj-C ARC and Pitfalls in It</a> had some
 content copied directly from <a href="https://twitter.com/amattn">@amattn</a>’s blog post 
@@ -400,7 +485,7 @@ mistake for copying his work without referencing his post.</p>
   <entry>
     <title type="html"><![CDATA[Objective-C ARC common pitfalls and best practices]]></title>
     <link href="http://www.idryman.org/blog/2012/11/22/arc-best-practices-and-pitfalls/"/>
-    <updated>2012-11-22T09:28:00+08:00</updated>
+    <updated>2012-11-22T09:28:00-08:00</updated>
     <id>http://www.idryman.org/blog/2012/11/22/arc-best-practices-and-pitfalls</id>
     <content type="html"><![CDATA[<p>Objective-C is a really cool programming language that is designed for Mac OSX and
 iOS software development. TIOBE has announced November Haedline: <a href="http://www.tiobe.com/index.php/content/paperinfo/tpci/index.html">Objective-C on
@@ -842,7 +927,7 @@ the timer is a member of target’s property, else just leave it is fine.<a href
   <entry>
     <title type="html"><![CDATA[Deep C: Integer Promotion]]></title>
     <link href="http://www.idryman.org/blog/2012/11/21/integer-promotion/"/>
-    <updated>2012-11-21T14:15:00+08:00</updated>
+    <updated>2012-11-21T14:15:00-08:00</updated>
     <id>http://www.idryman.org/blog/2012/11/21/integer-promotion</id>
     <content type="html"><![CDATA[<p>Almost every programmer has learned about C, and a lot of them use it for their
 career. It is certainly one of the most popular programming languages on
@@ -1031,7 +1116,7 @@ vulnerability issues.</p>
   <entry>
     <title type="html"><![CDATA[Dance with Objective-C dynamic types]]></title>
     <link href="http://www.idryman.org/blog/2012/10/30/dance-with-objective-c-dynamic-types/"/>
-    <updated>2012-10-30T13:58:00+08:00</updated>
+    <updated>2012-10-30T13:58:00-07:00</updated>
     <id>http://www.idryman.org/blog/2012/10/30/dance-with-objective-c-dynamic-types</id>
     <content type="html"><![CDATA[<p>Objective-C is a super set of C language. The entire language is a preprocessor
 skin added to C language and a powerful runtime system. With this runtime system,
@@ -1414,7 +1499,7 @@ and framework with differnt data types that share the same methods.</p>
   <entry>
     <title type="html"><![CDATA[Type Qualifiers and friends]]></title>
     <link href="http://www.idryman.org/blog/2012/10/29/type-qualifiers/"/>
-    <updated>2012-10-29T08:55:00+08:00</updated>
+    <updated>2012-10-29T08:55:00-07:00</updated>
     <id>http://www.idryman.org/blog/2012/10/29/type-qualifiers</id>
     <content type="html"><![CDATA[<p>Type qualifiers are heavily used in C and Objective C. In C99 there are three
 type qualifiers: <code>const</code>, <code>restrict</code>, and <code>volatile</code>. In objective C,
@@ -1678,7 +1763,7 @@ take a look at Big Nerd Ranch’s
   <entry>
     <title type="html"><![CDATA[C/ObjC block and debugger]]></title>
     <link href="http://www.idryman.org/blog/2012/09/30/c-objc-block-and-debugger/"/>
-    <updated>2012-09-30T14:32:00+08:00</updated>
+    <updated>2012-09-30T14:32:00-07:00</updated>
     <id>http://www.idryman.org/blog/2012/09/30/c-objc-block-and-debugger</id>
     <content type="html"><![CDATA[<p>In the last post, we discussed block byref internal structures and showed the
 sample code of how to <code>printf</code> it. However, we don’t want to write that much
@@ -1838,7 +1923,7 @@ descriptor-&gt;layout: 0x0 '(null)'
   <entry>
     <title type="html"><![CDATA[C/ObjC block byref internals]]></title>
     <link href="http://www.idryman.org/blog/2012/09/29/c-objc-block-byref-internals/"/>
-    <updated>2012-09-29T15:21:00+08:00</updated>
+    <updated>2012-09-29T15:21:00-07:00</updated>
     <id>http://www.idryman.org/blog/2012/09/29/c-objc-block-byref-internals</id>
     <content type="html"><![CDATA[<p>In the last post, I mentioned that <code>__block</code> variable (here we named it block
 byref) will be retained if multiple blocks referenced it. Here are some sample
@@ -2179,7 +2264,7 @@ functions for <code>gdb</code> or <code>lldb</code>. These will be discussed in 
   <entry>
     <title type="html"><![CDATA[C/ObjC block quizzes]]></title>
     <link href="http://www.idryman.org/blog/2012/09/29/c-objc-block-quizzes/"/>
-    <updated>2012-09-29T12:15:00+08:00</updated>
+    <updated>2012-09-29T12:15:00-07:00</updated>
     <id>http://www.idryman.org/blog/2012/09/29/c-objc-block-quizzes</id>
     <content type="html"><![CDATA[<p>Apple introduced blocks (anonymous functions or lambdas) as C extensions for its
 parallel programming model <a href="https://developer.apple.com/documentation/Performance/Reference/GCD_libdispatch_Ref/Reference/reference.html">Grand Central Dispatch</a>. Unlike ordinary C
@@ -2535,7 +2620,7 @@ End of quiz 5
   <entry>
     <title type="html"><![CDATA[C/ObjC block syntax explained]]></title>
     <link href="http://www.idryman.org/blog/2012/09/21/c-slash-objc-c-block-syntax-explained/"/>
-    <updated>2012-09-21T20:33:00+08:00</updated>
+    <updated>2012-09-21T20:33:00-07:00</updated>
     <id>http://www.idryman.org/blog/2012/09/21/c-slash-objc-c-block-syntax-explained</id>
     <content type="html"><![CDATA[<p>Block is heavily used in objective-c  APIs. If you want to
 write concurrent and responsive interface, you will need blocks and grand
@@ -2805,7 +2890,7 @@ management and grand central dispatch. I’ll discuss them in next few posts.</p
   <entry>
     <title type="html"><![CDATA[Taiwan Typhoon App (2)]]></title>
     <link href="http://www.idryman.org/blog/2012/09/16/taiwan-typhoon-app-2/"/>
-    <updated>2012-09-16T17:30:00+08:00</updated>
+    <updated>2012-09-16T17:30:00-07:00</updated>
     <id>http://www.idryman.org/blog/2012/09/16/taiwan-typhoon-app-2</id>
     <content type="html"><![CDATA[<p>I start from a single view application with <strong>MKMapView</strong>. Remeber to link
 <code>MapKit.framework</code> in project setting.</p>
@@ -3114,7 +3199,7 @@ overlays, you can subclass them and implement drawing functions in delegate.</p>
   <entry>
     <title type="html"><![CDATA[Taiwan Typhoon App (1)]]></title>
     <link href="http://www.idryman.org/blog/2012/09/16/taiwan-typhoon-app-1/"/>
-    <updated>2012-09-16T16:11:00+08:00</updated>
+    <updated>2012-09-16T16:11:00-07:00</updated>
     <id>http://www.idryman.org/blog/2012/09/16/taiwan-typhoon-app-1</id>
     <content type="html"><![CDATA[<p>Taiwan is an island next to Pacific ocean, and one kind of serious disaster in
 Taiwan is typhoon. Fortunately, We have best typhoon researches in the world,
@@ -3215,7 +3300,7 @@ write it in much more verbose Objective-C.</p>
   <entry>
     <title type="html"><![CDATA[Earthquake early warning prototype]]></title>
     <link href="http://www.idryman.org/blog/2012/09/15/earthquake-early-warning-prototype/"/>
-    <updated>2012-09-15T14:48:00+08:00</updated>
+    <updated>2012-09-15T14:48:00-07:00</updated>
     <id>http://www.idryman.org/blog/2012/09/15/earthquake-early-warning-prototype</id>
     <content type="html"><![CDATA[<p>I made a  prototype of earthquake early warning system in one week. The scenario
 goes as follows: We use a Friendly ARM SBC (Single-Board Computer) as an
@@ -3414,7 +3499,7 @@ $ --prefix=/opt/curl --without-ssl
   <entry>
     <title type="html"><![CDATA[Grand central dispatch vs OpenMP]]></title>
     <link href="http://www.idryman.org/blog/2012/08/05/grand-central-dispatch-vs-openmp/"/>
-    <updated>2012-08-05T12:41:00+08:00</updated>
+    <updated>2012-08-05T12:41:00-07:00</updated>
     <id>http://www.idryman.org/blog/2012/08/05/grand-central-dispatch-vs-openmp</id>
     <content type="html"><![CDATA[<p>In 2009 Apple released a new task parallelism technology called 
 <a href="http://developer.apple.com/library/ios/#documentation/Performance/Reference/GCD_libdispatch_Ref/Reference/reference.html">Grand Central Dispatch (GCD)</a>. Apple worked hard on tuning GCD; stated that only 15
@@ -3694,7 +3779,7 @@ this unexpected result! Cheers.</p>
   <entry>
     <title type="html"><![CDATA[Handle touch events in UIWebView]]></title>
     <link href="http://www.idryman.org/blog/2012/06/18/handle-touch-events-in-uiwebview/"/>
-    <updated>2012-06-18T17:53:00+08:00</updated>
+    <updated>2012-06-18T17:53:00-07:00</updated>
     <id>http://www.idryman.org/blog/2012/06/18/handle-touch-events-in-uiwebview</id>
     <content type="html"><![CDATA[<p>This is an annoying problem that related to my recent project. The goal is
 simple: </p>
@@ -3987,7 +4072,7 @@ every time we start the timer.</p>
   <entry>
     <title type="html"><![CDATA[Debug UIWebView in your iOS app]]></title>
     <link href="http://www.idryman.org/blog/2012/06/17/debug-uiwebview-in-your-ios-app/"/>
-    <updated>2012-06-17T15:44:00+08:00</updated>
+    <updated>2012-06-17T15:44:00-07:00</updated>
     <id>http://www.idryman.org/blog/2012/06/17/debug-uiwebview-in-your-ios-app</id>
     <content type="html"><![CDATA[<p>It is often to embed a UIWebView in an iOS app. However it doesn’t provide the
 powerful webkit inspector by default. Nathan de Vries has written a
@@ -4048,7 +4133,7 @@ of accessing WebKit’s private api won’t ship with your production code.</p>
   <entry>
     <title type="html"><![CDATA[Recursion best practices]]></title>
     <link href="http://www.idryman.org/blog/2012/04/14/recursion-best-practices/"/>
-    <updated>2012-04-14T08:26:00+08:00</updated>
+    <updated>2012-04-14T08:26:00-07:00</updated>
     <id>http://www.idryman.org/blog/2012/04/14/recursion-best-practices</id>
     <content type="html"><![CDATA[<p>There are many programming languages that support recursion. However, recursion
 is hard to write, and even harder to write it well.</p>
@@ -4421,7 +4506,7 @@ recursion’s accumulator</li>
   <entry>
     <title type="html"><![CDATA[Practical software verification using SPIN]]></title>
     <link href="http://www.idryman.org/blog/2012/04/10/practical-software-verification-using-SPIN/"/>
-    <updated>2012-04-10T10:31:00+08:00</updated>
+    <updated>2012-04-10T10:31:00-07:00</updated>
     <id>http://www.idryman.org/blog/2012/04/10/practical-software-verification-using-SPIN</id>
     <content type="html"><![CDATA[<p>This is a note for the talk <a href="http://www.iis.sinica.edu.tw/page/events/FILE/120409.pdf">New frontiers in formal software verification</a> 
 spoken by <a href="http://spinroot.com/gerard/">Gerard J. Holzmann</a>, software verification architect for 
@@ -4685,7 +4770,7 @@ tracing at 3:00AM. :D</p>
   <entry>
     <title type="html"><![CDATA[Jekyll/Octopress hacker news plugin]]></title>
     <link href="http://www.idryman.org/blog/2012/04/05/jekyll-octopress-hacker-news-plugin/"/>
-    <updated>2012-04-05T14:49:00+08:00</updated>
+    <updated>2012-04-05T14:49:00-07:00</updated>
     <id>http://www.idryman.org/blog/2012/04/05/jekyll-octopress-hacker-news-plugin</id>
     <content type="html"><![CDATA[<h3 id="inspiration">Inspiration</h3>
 
@@ -4815,64 +4900,6 @@ post and can be reached via HN search API.</p>
 
 <p>I changed my domain name and all HN/Twitter/FB/G+ counts reset to zero. So I
 submit the post to HN again.</p>
-
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Jekyll/Octopress graphviz plugin]]></title>
-    <link href="http://www.idryman.org/blog/2012/04/04/jekyll-graphviz-plugin/"/>
-    <updated>2012-04-04T17:37:00+08:00</updated>
-    <id>http://www.idryman.org/blog/2012/04/04/jekyll-graphviz-plugin</id>
-    <content type="html"><![CDATA[<p>I created a graphviz plugin for Octopress/Jekyll today. For example:</p>
-
-<pre><code>{% graphviz %}
-digraph G {
-  compound=true;
-  subgraph cluster0 {
-  a -&gt; b;
-  a -&gt; c;
-  b -&gt; d;
-  c -&gt; d;
-  }
-  subgraph cluster1 {
-  e -&gt; g;
-  e -&gt; f;
-  }
-  b -&gt; f [lhead=cluster1];
-  d -&gt; e;
-  c -&gt; g [ltail=cluster0, lhead=cluster1];
-  c -&gt; e [ltail=cluster0];
-  d -&gt; h;
-}
-{% endgraphviz %}
-</code></pre>
-
-<p>will produce:</p>
-
-<p><img src="http://www.idryman.org/images/graphviz/g-3feb8846aa4bb9767add244df8bed05a.svg" /></p>
-
-<!-- more -->
-
-<p>You can see how it works on real post:</p>
-
-<ol>
-  <li><a href="http://www.idryman.org/blog/2012/04/10/practical-software-verification-using-SPIN/">Practical Software Verification Using SPIN</a></li>
-  <li><a href="http://www.idryman.org/blog/2012/04/14/recursion-best-practices/">Recursion Best Practices</a></li>
-</ol>
-
-<hr />
-
-<h3 id="installation">Installation:</h3>
-
-<ol>
-  <li>Download the file from <a href="https://github.com/dryman/dryman.github.com/blob/src/plugins/graphviz_block.rb">here</a>.</li>
-  <li>Put it into your <code>my_octopress/plugin</code> folder.</li>
-  <li>Add one line <code>source/images/graphviz</code> into your <code>.gitignore</code> file</li>
-</ol>
-
-<p>Remeber that you should have graphviz installed in your system. Else it will
-raise an error.</p>
 
 ]]></content>
   </entry>
