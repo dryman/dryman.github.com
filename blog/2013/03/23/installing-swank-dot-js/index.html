@@ -5,11 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Setting up Python on OSX Mountain Lion - Carpe diem (Felix's blog)</title>
+  <title>Installing swank.js - Carpe diem (Felix's blog)</title>
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="Setting up programming environment is frustrating for newcomers. Although it is much easier than it was before, it’s still worth it to take note. 1. &hellip;">
+  <meta name="description" content="People say that emacs is the most extendable editor in the world; however, I didn’t really understand how powerful it is until one of it extension &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.idryman.org/blog/2013/03/13/python-setup-on-mac-osx/">
+  <link rel="canonical" href="http://www.idryman.org/blog/2013/03/23/installing-swank-dot-js/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -106,7 +106,7 @@ MathJax.Hub.Config({
   <header>
     
       
-        <h1 class="entry-title">Setting Up Python on OSX Mountain Lion</h1>
+        <h1 class="entry-title">Installing swank.js</h1>
       
     
     
@@ -123,90 +123,159 @@ MathJax.Hub.Config({
   
 
 
-<time datetime="2013-03-13T08:47:00-07:00" pubdate data-updated="true">Mar 13<span>th</span>, 2013</time>
+<time datetime="2013-03-23T08:05:00-07:00" pubdate data-updated="true">Mar 23<span>rd</span>, 2013</time>
         
       </p>
     
   </header>
 
 
-<div class="entry-content"><p>Setting up programming environment is frustrating for newcomers. Although it is much easier than it was before, it’s still worth it to take note.</p>
+<div class="entry-content"><p>People say that emacs is the most extendable editor in the world; however, I didn’t really understand how powerful it is until one of it extension <strong>Swank.js</strong> blowed my mind. Take a look at this awesome screen cast produced by <a href="http://emacsrocks.com">emacs rocks</a>.</p>
+
+<iframe width="560" height="315" src="http://www.youtube.com/embed/qwtVtcQQfqc" frameborder="0" allowfullscreen=""></iframe>
 
 <!--more-->
 
-<h2 id="apple-developer-tools">1. Apple developer tools</h2>
+<p>Awesome, is it? However, installing <code>swank.js</code> is really nontrivial. As a result, I want to share my note on setting up <code>swank.js</code> on my machine.</p>
 
-<p>Not only the python development but all kinds of programming tasks on OSX require Apple developer tools. The instruction is easy; you download XCode from Mac AppStore, then you download <em>Command Line Tools</em> in the Downloads menu from the XCode Preference panel.</p>
+<h2 id="system-information">System information</h2>
 
-<h2 id="homebrew">2. Homebrew</h2>
+<ul>
+  <li>Mac OSX 10.8</li>
+  <li>Emacs 24.3</li>
+  <li>package manager: <a href="http://mxcl.github.com/homebrew/">homebrew</a></li>
+  <li>C compiler: Apple LLVM version 4.2 (clang-425.0.27) (based on LLVM 3.2svn) Target: x86_64-apple-darwin12.3.0</li>
+</ul>
 
-<p>Next, install OSX most popular package manager <a href="http://mxcl.github.com/homebrew/">homebrew</a>. Just copy and paste this command in the terminal.</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line">ruby -e <span class="s2">&quot;$(curl -fsSL https://raw.github.com/mxcl/homebrew/go)&quot;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>If it shows an error about user permission, do the following</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="nb">cd</span> /usr/local
-</span><span class="line">sudo chown -R USER_NAME <span class="nb">local</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>Now you can install the followings with <em>homebrew</em>.</p>
+<p>My Emacs is installed via <a href="http://mxcl.github.com/homebrew/">homebrew</a>.</p>
 
 <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line">brew install python
-</span><span class="line">brew install gfortran
+</pre></td><td class="code"><pre><code class="sh"><span class="line">brew install emacs --cocoa
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
-<p>Years before Mountain Lion, I used to install fortran via <a href="http://hpc.sourceforge.net">High Performance Computing for Mac OSX</a>, but it doesn’t work well with homebrew. Now it’s best to install everything with <em>homebrew</em>.</p>
+<h2 id="installation-steps">Installation steps</h2>
 
-<h2 id="python">3. Python</h2>
-
-<p>Install scipy, numpy, ipython, and matplot.</p>
+<h3 id="section">1.</h3>
+<p>Setting up emacs ecosystem. In <code>~/.emacs</code> or <code>~/.emacs.d/init.el</code>:</p>
 
 <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
 <span class="line-number">3</span>
 <span class="line-number">4</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line">pip install scipy
-</span><span class="line">pip install numpy
-</span><span class="line">pip install ipython
-</span><span class="line">pip install matplot
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="scm"><span class="line"><span class="p">(</span><span class="nf">require</span> <span class="ss">&#39;package</span><span class="p">)</span>
+</span><span class="line"><span class="p">(</span><span class="nf">add-to-list</span> <span class="ss">&#39;package-archives</span>
+</span><span class="line">  <span class="o">&#39;</span><span class="p">(</span><span class="s">&quot;marmalade&quot;</span> <span class="o">.</span> <span class="s">&quot;http://marmalade-repo.org/packages/&quot;</span><span class="p">))</span>
+</span><span class="line"><span class="p">(</span><span class="nf">add-to-list</span> <span class="ss">&#39;package-archives</span>
+</span><span class="line"><span class="o">&#39;</span><span class="p">(</span><span class="s">&quot;melpa&quot;</span> <span class="o">.</span> <span class="s">&quot;http://melpa.milkbox.net/packages/&quot;</span><span class="p">)</span> <span class="nv">t</span><span class="p">)</span>
+</span><span class="line"><span class="p">(</span><span class="nf">package-initialize</span><span class="p">)</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
-<p>Finally, install opencv</p>
+<p>Remember to evaluate the buffer <code>M-x eval-buffer</code>.</p>
+
+<h3 id="section-1">2.</h3>
+<p><code>node.js</code>, <code>npm</code>, and <code>swank-js</code> server.</p>
 
 <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line">brew install opencv
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">brew install npm
+</span><span class="line"><span class="nb">export </span><span class="nv">PATH</span><span class="o">=</span><span class="s2">&quot;/usr/local/share/npm/bin:$PATH&quot;</span>    <span class="c"># put this in .bash_profile</span>
+</span><span class="line">npm install -g swank-js
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
-<p>If you want a additional nice GUI application for ipython, you can download it from <a href="https://github.com/liyanage/ipython-notebook#readme">IPython Notebook</a>.</p>
-
-<p><img width="50%" style="margin-left:25%;" src="/images/ipython_notebook.png" /></p>
-
-<h2 id="trouble-shooting">Trouble shooting</h2>
-
-<p>Sometimes homebrew has trouble with fetching the source code. If you found it is stuck on downloading the files, do the following</p>
+<h3 id="section-2">3.</h3>
+<p>Setting up <code>slime</code> (lisp-emacs protocol)</p>
 
 <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line">brew install -v opencv
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">brew install sbcl
+</span><span class="line"><span class="nb">cd</span> ~/.emacs.d/
+</span><span class="line">git clone https://github.com/antifuchs/slime.git
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
-<p>It will show the URL of the file it is going to download. Stop the command with ctrl-c, paste the URL to your browser and download it. After the download is complete, move the file to <code>/Library/Cache/Homebrew</code>.</p>
+<p>In <code>.emacs</code>:</p>
 
 <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line">mv OpenCV-2.4.4a.tar.bz2 /Library/Caches/Homebrew/
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="scm"><span class="line"><span class="p">(</span><span class="nf">add-to-list</span> <span class="ss">&#39;load-path</span> <span class="s">&quot;~/.emacs.d/slime&quot;</span><span class="p">)</span>
+</span><span class="line"><span class="p">(</span><span class="nf">setq</span> <span class="nv">inferior-lisp-program</span> <span class="s">&quot;/usr/local/bin/sbcl&quot;</span><span class="p">)</span>
+</span><span class="line"><span class="p">(</span><span class="nf">require</span> <span class="ss">&#39;slime</span><span class="p">)</span>
+</span><span class="line"><span class="p">(</span><span class="nf">slime-setup</span><span class="p">)</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
-<p>Continue the installation by</p>
+<h3 id="section-3">4.</h3>
+<p>Install <code>swank.js</code> dependencies in emacs:</p>
+
+<pre><code>M-x package-install exec-path-from-shell
+M-x package-install js2-mode
+M-x package-install slime
+M-x package-install slime-js
+M-x package-isntall js2-refactor
+M-x package-install ac-slime
+</code></pre>
+
+<h3 id="section-4">5.</h3>
+<p>Useful configurations written by <a href="https://github.com/magnars">Magnar Sveen</a> (author of <a href="http://emacsrocks.com">emacs rocks</a>.</p>
 
 <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line">brew install opencv
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nb">cd</span> ~/.emacs.d/
+</span><span class="line">curl -LO https://raw.github.com/magnars/.emacs.d/master/setup-slime-js.el
 </span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h3 id="section-5">6.</h3>
+<p>Final configurations in <code>.emacs</code></p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td><td class="code"><pre><code class="scm"><span class="line"><span class="c1">;; swank-js settings</span>
+</span><span class="line"><span class="p">(</span><span class="nf">autoload</span> <span class="ss">&#39;js2-mode</span> <span class="s">&quot;js2-mode&quot;</span> <span class="nv">nil</span> <span class="nv">t</span><span class="p">)</span>
+</span><span class="line"><span class="p">(</span><span class="nf">add-to-list</span> <span class="ss">&#39;auto-mode-alist</span> <span class="o">&#39;</span><span class="p">(</span><span class="s">&quot;\\.js$&quot;</span> <span class="o">.</span> <span class="nv">js2-mode</span><span class="p">))</span>
+</span><span class="line"><span class="p">(</span><span class="nf">global-set-key</span> <span class="err">[</span><span class="nv">f5</span><span class="err">]</span> <span class="ss">&#39;slime-js-reload</span><span class="p">)</span>
+</span><span class="line"><span class="p">(</span><span class="nf">add-hook</span> <span class="ss">&#39;js2-mode-hook</span>
+</span><span class="line">          <span class="p">(</span><span class="k">lambda </span><span class="p">()</span>
+</span><span class="line">            <span class="p">(</span><span class="nf">slime-js-minor-mode</span> <span class="mi">1</span><span class="p">)))</span>
+</span><span class="line"><span class="p">(</span><span class="nf">load-file</span> <span class="s">&quot;~/.emacs.d/setup-slime-js.el&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="usage">Usage</h2>
+
+<p>First, you need a real server running at port 3000. You can do that either using <code>python -m SimpleHTTPServer 3000</code> or other server programs like Ruby on Rails. You can change the default port setting by overwritten the variable <code>slime-js-target-url</code> in your <code>.emacs</code>.</p>
+
+<p>Next, use the command <code>M-x slime-js-jack-in-browser</code> in emacs. It should open up Chrome in your workspace. However, my Chrome browser didn’t work well with <code>swank-js</code>; an alternative solution is to open <code>localhost:8009</code> in safari. It worked for me anyway. Now, you should see that emacs shows a prompt like this:</p>
+
+<pre><code>; SLIME 2013-03-12
+Remote attached: (browser) Safari6.0
+ 
+NODE&gt; 
+</code></pre>
+
+<p>Type in <code>alert("hello world!")</code> and press enter. You should see your browser pop up an alert window with <strong>hello world</strong>, and that’s it! You’ve successfully installed <code>swank.js</code>!!</p>
+
+<p><img src="/images/swank-js-screenshot-50.png" alt="Swank JS Screenshot" /></p>
+
+<p>Wow, it’s really complicated. I can’t remember it unless I write it down.</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li><a href="https://github.com/swank-js/swank-js">Swank JS</a></li>
+  <li><a href="https://github.com/antifuchs/slime">Slime github mirror</a></li>
+  <li><a href="https://github.com/magnars/.emacs.d/blob/master/setup-slime-js.el">Setup slime js</a></li>
+  <li><a href="http://emacsrocks.com/e11.html">Emacs Rocks discussions</a></li>
+</ul>
+
 </div>
 
 
@@ -229,12 +298,12 @@ MathJax.Hub.Config({
   
 
 
-<time datetime="2013-03-13T08:47:00-07:00" pubdate data-updated="true">Mar 13<span>th</span>, 2013</time>
+<time datetime="2013-03-23T08:05:00-07:00" pubdate data-updated="true">Mar 23<span>rd</span>, 2013</time>
       
 
 <span class="categories">
   
-    <a class='category' href='/blog/categories/python/'>python</a>
+    <a class='category' href='/blog/categories/emacs/'>emacs</a>
   
 </span>
 
@@ -243,7 +312,7 @@ MathJax.Hub.Config({
     
       <div class="sharing">
   
-  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2013/03/13/python-setup-on-mac-osx/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2013/03/13/python-setup-on-mac-osx/" >Tweet</a>
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2013/03/23/installing-swank-dot-js/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2013/03/23/installing-swank-dot-js/" >Tweet</a>
   
   
   <div class="g-plusone" data-size="medium"></div>
@@ -256,10 +325,8 @@ MathJax.Hub.Config({
     
     <p class="meta">
       
-        <a class="basic-alignment left articlenav" href="/blog/2012/12/03/the-design-of-c-integer-types/" title="Previous Post: Deep C: Understanding The Design of C Integer Types">&laquo; Deep C: Understanding The Design of C Integer Types</a>
+        <a class="basic-alignment left articlenav" href="/blog/2013/03/13/python-setup-on-mac-osx/" title="Previous Post: Setting up Python on OSX Mountain Lion">&laquo; Setting up Python on OSX Mountain Lion</a>
       
-      
-        <a class="basic-alignment right articlenav" href="/blog/2013/03/23/installing-swank-dot-js/" title="Next Post: Installing swank.js">Installing swank.js &raquo;</a>
       
     </p>
   </footer>
@@ -362,8 +429,8 @@ MathJax.Hub.Config({
       
         
         // var disqus_developer = 1;
-        var disqus_identifier = 'http://www.idryman.org/blog/2013/03/13/python-setup-on-mac-osx/';
-        var disqus_url = 'http://www.idryman.org/blog/2013/03/13/python-setup-on-mac-osx/';
+        var disqus_identifier = 'http://www.idryman.org/blog/2013/03/23/installing-swank-dot-js/';
+        var disqus_url = 'http://www.idryman.org/blog/2013/03/23/installing-swank-dot-js/';
         var disqus_script = 'embed.js';
       
     (function () {
@@ -446,7 +513,7 @@ SOFTWARE.
       hn_like.src = "http://hnlike.com/upvote.php?link="
                     + encodeURIComponent(document.location)
                     + "&title="
-                    + encodeURIComponent("Setting up Python on OSX Mountain Lion");
+                    + encodeURIComponent("Installing swank.js");
       hn_like.innerHTML="iframes not supported by your browser";
       var twitter = document.getElementsByClassName("twitter-share-button")[0];
 

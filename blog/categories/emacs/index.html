@@ -5,12 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>The recursion theorem - Carpe diem (Felix's blog)</title>
+  <title>Category: emacs - Carpe diem (Felix's blog)</title>
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="I’m studying theorem of computation myself. Theorem of computation is an
-interesting field. It addresses questions as: What is a theorem? What is a &hellip;">
+  <meta name="description" content="Category: emacs">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -19,7 +18,7 @@ interesting field. It addresses questions as: What is a theorem? What is a &hell
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.idryman.org/blog/2012/03/12/the-recursion-theorem/">
+  <link rel="canonical" href="http://www.idryman.orgblog/categories/emacs/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -102,158 +101,36 @@ MathJax.Hub.Config({
   <div id="main">
     <div id="content">
       <div>
-<article class="hentry" role="article">
+<article role="article">
   
   <header>
-    
-      
-        <h1 class="entry-title">The Recursion Theorem</h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-03-12T08:42:00-07:00" pubdate data-updated="true">Mar 12<span>th</span>, 2012</time>
-        
-      </p>
+    <h1 class="entry-title">Category: Emacs</h1>
     
   </header>
-
-
-<div class="entry-content"><p>I’m studying theorem of computation myself. Theorem of computation is an
-interesting field. It addresses questions as: What is a theorem? What is a
-proof? What is truth? Can an algorithm decide which statements are true? Can
-a computer calculates everything in the universe? These questions are linked by
-the question:</p>
-
-<blockquote>
-  <p>What are the fundamental capabilities and limitations of computers?</p>
-</blockquote>
-
-<p>This question goes back to the 1930s when mathematical logicians first began to
-explore the meaning of computation. Thus, three major theorem of computation has
-born: <em>automata</em>, <em>computability</em>, and <em>complexity</em>. There are a lot of algebras
-and proofs in this field. Of all the theorems, I love the <strong>recursion
-theorem</strong> the most.</p>
-
-<!-- more -->
-
-<hr />
-
-<h3 id="self-reference">SELF-REFERENCE</h3>
-
-<p>First we introduce a Turing Machine that <em>ignores its input and prints out a
-copy of its own description</em>. We call this machine $SELF$.</p>
-
-<dl>
-  <dt><strong>LEMMA</strong></dt>
-  <dd>There is a computable function $q: \Sigma^\ast\longrightarrow\Sigma^\ast$,</dd>
-  <dd>where if $w$ is any string, $q(w)$ is the description of a Turing machine $P_w$</dd>
-  <dd>that prints out $w$ and then halts.</dd>
-  <dt><strong>PROOF</strong></dt>
-  <dd>The following TM $Q$ computes $q(w)$</dd>
-</dl>
-
-<script type="math/tex; mode=display">% <![CDATA[
-
-\begin{align}
-   Q=& \mbox{On input string $w$:} \\
-     & 1.\; \mbox{Construct the following Turing machine $P_w$} \\
-     & \quad    P_w = \mbox{On any input:} \\
-     & \qquad   1.\; \mbox{Erase input.} \\
-     & \qquad   2.\; \mbox{Write w on the tape.} \\
-     & \qquad   3.\; \mbox{Halt.}  \\
-     & 2.\; \mbox{Output }\langle P_w\rangle  \\
-\end{align}
- %]]></script>
-
-<p>Now we construct $SELF$ in two parts $A$ and $B$. We want $SELF$ to print out
-$\langle SELF\rangle = \langle AB\rangle$.</p>
-
-<script type="math/tex; mode=display">% <![CDATA[
-
-\begin{align}
-A=&P_{\langle B\rangle}, \\
-B=&\mbox{On input $\langle M\rangle$, where $M$ is a portion of a TM:}\\
-  & 1.\;\mbox{Compute $q(\langle M\rangle)$.} \\
-  & 2.\;\mbox{Combine the result with $\langle M\rangle$ to make a complete TM.} \\
-  & 3.\;\mbox{Print the description of this TM and halt.} \\
-\end{align}
- %]]></script>
-</div>
-
-
-  <footer>
-    <p class="meta">
-      
   
-
-<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
-
-      
-
-
-
-
-
+  <div id="blog-archives" class="category">
 
 
 
   
+  <h2>2013</h2>
+
+<article>
+  
+<h1><a href="/blog/2013/03/23/installing-swank-dot-js/">Installing swank.js</a></h1>
+<time datetime="2013-03-23T08:05:00-07:00" pubdate><span class='month'>Mar</span> <span class='day'>23</span> <span class='year'>2013</span></time>
+
+<footer>
+  <span class="categories">posted in <a class='category' href='/blog/categories/emacs/'>emacs</a></span>
+</footer>
 
 
-<time datetime="2012-03-12T08:42:00-07:00" pubdate data-updated="true">Mar 12<span>th</span>, 2012</time>
-      
-
-<span class="categories">
-  
-    <a class='category' href='/blog/categories/theorem-of-comptation/'>Theorem of comptation</a>
-  
-</span>
-
-
-    </p>
-    
-      <div class="sharing">
-  
-  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2012/03/12/the-recursion-theorem/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2012/03/12/the-recursion-theorem/" >Tweet</a>
-  
-  
-  <div class="g-plusone" data-size="medium"></div>
-  
-  
-    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
-  
-</div>
-
-    
-    <p class="meta">
-      
-        <a class="basic-alignment left articlenav" href="/blog/2012/03/10/writing-math-equations-on-octopress/" title="Previous Post: Writing math equations on Octopress">&laquo; Writing math equations on Octopress</a>
-      
-      
-        <a class="basic-alignment right articlenav" href="/blog/2012/03/13/handcraft-algorithm-environment-in-kramdown/" title="Next Post: handcraft algorithm environment in kramdown">handcraft algorithm environment in kramdown &raquo;</a>
-      
-    </p>
-  </footer>
 </article>
 
-  <section>
-    <h1>Comments</h1>
-    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
 </div>
-  </section>
+
+  
+</article>
 
 </div>
 
@@ -345,10 +222,7 @@ B=&\mbox{On input $\langle M\rangle$, where $M$ is a portion of a TM:}\\
       var disqus_shortname = 'dryblog';
       
         
-        // var disqus_developer = 1;
-        var disqus_identifier = 'http://www.idryman.org/blog/2012/03/12/the-recursion-theorem/';
-        var disqus_url = 'http://www.idryman.org/blog/2012/03/12/the-recursion-theorem/';
-        var disqus_script = 'embed.js';
+        var disqus_script = 'count.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
@@ -430,7 +304,7 @@ SOFTWARE.
       hn_like.src = "http://hnlike.com/upvote.php?link="
                     + encodeURIComponent(document.location)
                     + "&title="
-                    + encodeURIComponent("The recursion theorem");
+                    + encodeURIComponent("Category: emacs");
       hn_like.innerHTML="iframes not supported by your browser";
       var twitter = document.getElementsByClassName("twitter-share-button")[0];
 

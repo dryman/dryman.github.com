@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: emacs | Carpe diem (Felix's blog)]]></title>
+  <link href="http://www.idryman.org/blog/categories/emacs/atom.xml" rel="self"/>
+  <link href="http://www.idryman.org/"/>
+  <updated>2013-03-23T09:43:47-07:00</updated>
+  <id>http://www.idryman.org/</id>
+  <author>
+    <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Installing swank.js]]></title>
+    <link href="http://www.idryman.org/blog/2013/03/23/installing-swank-dot-js/"/>
+    <updated>2013-03-23T08:05:00-07:00</updated>
+    <id>http://www.idryman.org/blog/2013/03/23/installing-swank-dot-js</id>
+    <content type="html"><![CDATA[<p>People say that emacs is the most extendable editor in the world; however, I didn’t really understand how powerful it is until one of it extension <strong>Swank.js</strong> blowed my mind. Take a look at this awesome screen cast produced by <a href="http://emacsrocks.com">emacs rocks</a>.</p>
+
+<iframe width="560" height="315" src="http://www.youtube.com/embed/qwtVtcQQfqc" frameborder="0" allowfullscreen=""></iframe>
+
+<!--more-->
+
+<p>Awesome, is it? However, installing <code>swank.js</code> is really nontrivial. As a result, I want to share my note on setting up <code>swank.js</code> on my machine.</p>
+
+<h2 id="system-information">System information</h2>
+
+<ul>
+  <li>Mac OSX 10.8</li>
+  <li>Emacs 24.3</li>
+  <li>package manager: <a href="http://mxcl.github.com/homebrew/">homebrew</a></li>
+  <li>C compiler: Apple LLVM version 4.2 (clang-425.0.27) (based on LLVM 3.2svn) Target: x86_64-apple-darwin12.3.0</li>
+</ul>
+
+<p>My Emacs is installed via <a href="http://mxcl.github.com/homebrew/">homebrew</a>.</p>
+
+<p><code>sh
+brew install emacs --cocoa
+</code></p>
+
+<h2 id="installation-steps">Installation steps</h2>
+
+<h3 id="section">1.</h3>
+<p>Setting up emacs ecosystem. In <code>~/.emacs</code> or <code>~/.emacs.d/init.el</code>:</p>
+
+<p><code>scm
+(require 'package)
+(add-to-list 'package-archives
+  '("marmalade" . "http://marmalade-repo.org/packages/"))
+(add-to-list 'package-archives
+'("melpa" . "http://melpa.milkbox.net/packages/") t)
+(package-initialize)
+</code></p>
+
+<p>Remember to evaluate the buffer <code>M-x eval-buffer</code>.</p>
+
+<h3 id="section-1">2.</h3>
+<p><code>node.js</code>, <code>npm</code>, and <code>swank-js</code> server.</p>
+
+<p><code>sh
+brew install npm
+export PATH="/usr/local/share/npm/bin:$PATH"    # put this in .bash_profile
+npm install -g swank-js
+</code></p>
+
+<h3 id="section-2">3.</h3>
+<p>Setting up <code>slime</code> (lisp-emacs protocol)</p>
+
+<p><code>sh
+brew install sbcl
+cd ~/.emacs.d/
+git clone https://github.com/antifuchs/slime.git
+</code></p>
+
+<p>In <code>.emacs</code>:</p>
+
+<p><code>scm
+(add-to-list 'load-path "~/.emacs.d/slime")
+(setq inferior-lisp-program "/usr/local/bin/sbcl")
+(require 'slime)
+(slime-setup)
+</code></p>
+
+<h3 id="section-3">4.</h3>
+<p>Install <code>swank.js</code> dependencies in emacs:</p>
+
+<pre><code>M-x package-install exec-path-from-shell
+M-x package-install js2-mode
+M-x package-install slime
+M-x package-install slime-js
+M-x package-isntall js2-refactor
+M-x package-install ac-slime
+</code></pre>
+
+<h3 id="section-4">5.</h3>
+<p>Useful configurations written by <a href="https://github.com/magnars">Magnar Sveen</a> (author of <a href="http://emacsrocks.com">emacs rocks</a>.</p>
+
+<p><code>sh
+cd ~/.emacs.d/
+curl -LO https://raw.github.com/magnars/.emacs.d/master/setup-slime-js.el
+</code></p>
+
+<h3 id="section-5">6.</h3>
+<p>Final configurations in <code>.emacs</code></p>
+
+<p><code>scm
+;; swank-js settings
+(autoload 'js2-mode "js2-mode" nil t)
+(add-to-list 'auto-mode-alist '("\\.js$" . js2-mode))
+(global-set-key [f5] 'slime-js-reload)
+(add-hook 'js2-mode-hook
+          (lambda ()
+            (slime-js-minor-mode 1)))
+(load-file "~/.emacs.d/setup-slime-js.el")
+</code></p>
+
+<h2 id="usage">Usage</h2>
+
+<p>First, you need a real server running at port 3000. You can do that either using <code>python -m SimpleHTTPServer 3000</code> or other server programs like Ruby on Rails. You can change the default port setting by overwritten the variable <code>slime-js-target-url</code> in your <code>.emacs</code>.</p>
+
+<p>Next, use the command <code>M-x slime-js-jack-in-browser</code> in emacs. It should open up Chrome in your workspace. However, my Chrome browser didn’t work well with <code>swank-js</code>; an alternative solution is to open <code>localhost:8009</code> in safari. It worked for me anyway. Now, you should see that emacs shows a prompt like this:</p>
+
+<pre><code>; SLIME 2013-03-12
+Remote attached: (browser) Safari6.0
+ 
+NODE&gt; 
+</code></pre>
+
+<p>Type in <code>alert("hello world!")</code> and press enter. You should see your browser pop up an alert window with <strong>hello world</strong>, and that’s it! You’ve successfully installed <code>swank.js</code>!!</p>
+
+<p><img src="/images/swank-js-screenshot-50.png" alt="Swank JS Screenshot" /></p>
+
+<p>Wow, it’s really complicated. I can’t remember it unless I write it down.</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li><a href="https://github.com/swank-js/swank-js">Swank JS</a></li>
+  <li><a href="https://github.com/antifuchs/slime">Slime github mirror</a></li>
+  <li><a href="https://github.com/magnars/.emacs.d/blob/master/setup-slime-js.el">Setup slime js</a></li>
+  <li><a href="http://emacsrocks.com/e11.html">Emacs Rocks discussions</a></li>
+</ul>
+
+]]></content>
+  </entry>
+  
+</feed>
