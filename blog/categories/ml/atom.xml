@@ -4,7 +4,7 @@
   <title><![CDATA[Category: ML | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/ml/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2013-05-21T12:27:24-07:00</updated>
+  <updated>2013-05-21T13:16:04-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -86,6 +86,18 @@ MOC = moc</p>
 
 <p><img src="/images/select_heart_scale.png" alt="Select heart_scale" />
 <img src="/images/svm_toy.png" alt="svm toy" /></p>
+
+<h3 id="python-interface">Python interface</h3>
+
+<p>To use the python interface, just export the <code>PYTHONPATH</code> variable to where python utility fuction located at.</p>
+
+<p><code>bash
+cd libsvm-3.17/python
+echo "export PYTHONPATH=\$PYTHONPATH:$(pwd)" &gt;&gt; ~/.bash_profile
+source ~/.bash_profile
+</code></p>
+
+<p>Then read the README file in the same directory, and try out the example usage of python interface.</p>
 ]]></content>
   </entry>
   

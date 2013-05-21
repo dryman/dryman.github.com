@@ -236,6 +236,20 @@ MathJax.Hub.Config({
 
 <p><img src="/images/select_heart_scale.png" alt="Select heart_scale" />
 <img src="/images/svm_toy.png" alt="svm toy" /></p>
+
+<h3 id="python-interface">Python interface</h3>
+
+<p>To use the python interface, just export the <code>PYTHONPATH</code> variable to where python utility fuction located at.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="nb">cd </span>libsvm-3.17/python
+</span><span class="line"><span class="nb">echo</span> <span class="s2">&quot;export PYTHONPATH=\$PYTHONPATH:$(pwd)&quot;</span> &gt;&gt; ~/.bash_profile
+</span><span class="line"><span class="nb">source</span> ~/.bash_profile
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Then read the README file in the same directory, and try out the example usage of python interface.</p>
 </div>
 
 
