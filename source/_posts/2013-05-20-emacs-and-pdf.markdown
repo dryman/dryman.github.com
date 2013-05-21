@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "emacs and pdf"
+title: "Emacs and PDF"
 date: 2013-05-20 22:07
 comments: true
 categories: emacs
