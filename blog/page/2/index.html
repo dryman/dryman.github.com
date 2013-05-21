@@ -9,8 +9,8 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="In the last post, I mentioned that __block variable (here we named it block
-byref) will be retained if multiple blocks referenced it. Here are some &hellip;">
+  <meta name="description" content="In the last post, we discussed block byref internal structures and showed the
+sample code of how to printf it. However, we don’t want to write that &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -103,6 +103,53 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2012/09/30/c-objc-block-and-debugger/">C/ObjC Block and Debugger</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-09-30T14:32:00-07:00" pubdate data-updated="true">Sep 30<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>In the last post, we discussed block byref internal structures and showed the
+sample code of how to <code>printf</code> it. However, we don’t want to write that much
+helper functions every time! Thanks for
+<a href="http://www.informit.com/articles/article.aspx?p=1749597&amp;seqNum=12">Big Nerd Ranch: Advanced Mac OSX Programming</a>, we can now load
+<code>gdb</code>/<code>lldb</code> plugins and no need to do that anymore! ;D</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2012/09/30/c-objc-block-and-debugger/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -555,65 +602,6 @@ powerful webkit inspector by default. Nathan de Vries has written a
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/04/14/recursion-best-practices/">Recursion Best Practices</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-04-14T08:26:00-07:00" pubdate data-updated="true">Apr 14<span>th</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>There are many programming languages that support recursion. However, recursion
-is hard to write, and even harder to write it well.</p>
-
-<blockquote>
-  <p>To iterate is human, to recurse, divine.</p>
-</blockquote>
-
-<p>If you also surveyed deeply in FP area, you will find a lot of patterns, such as
-tail recursion, continuous passing style, combination of higher order functions,
-fixed point y-combinator, memoization, and many more. You can see that a simple
-factorial can be written in <a href="http://www.willamette.edu/~fruehr/haskell/evolution.html">23 different forms</a>. How do we
-pick a better one?</p>
-
-<blockquote>
-  <p>In short, the only pattern you should use heavily is <em>tail recursion</em>. Use
-other patterns only when necessary.</p>
-</blockquote>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/04/14/recursion-best-practices/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/3/">&larr; Older</a>
@@ -629,6 +617,10 @@ other patterns only when necessary.</p>
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/05/21/libsvm-on-mac-osx/">LibSVM on Mac OSX</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2013/05/20/emacs-and-pdf/">Emacs and PDF</a>
@@ -664,10 +656,6 @@ other patterns only when necessary.</p>
     
       <li class="post">
         <a href="/blog/2012/10/29/type-qualifiers/">Type Qualifiers and friends</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/09/30/c-objc-block-and-debugger/">C/ObjC block and debugger</a>
       </li>
     
   </ul>

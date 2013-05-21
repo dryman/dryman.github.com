@@ -4,7 +4,7 @@
   <title><![CDATA[Category: python | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/python/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2013-05-21T11:00:03-07:00</updated>
+  <updated>2013-05-21T12:27:24-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -94,6 +94,7 @@ pip install numpy
 pip install scipy
 pip install ipython
 pip install matplotlib
+pip install pandas
 </code></p>
 
 <p>Finally, install opencv</p>

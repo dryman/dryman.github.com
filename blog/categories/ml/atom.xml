@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: ML | Carpe diem (Felix's blog)]]></title>
+  <link href="http://www.idryman.org/blog/categories/ml/atom.xml" rel="self"/>
+  <link href="http://www.idryman.org/"/>
+  <updated>2013-05-21T12:27:24-07:00</updated>
+  <id>http://www.idryman.org/</id>
+  <author>
+    <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[LibSVM on Mac OSX]]></title>
+    <link href="http://www.idryman.org/blog/2013/05/21/libsvm-on-mac-osx/"/>
+    <updated>2013-05-21T11:51:00-07:00</updated>
+    <id>http://www.idryman.org/blog/2013/05/21/libsvm-on-mac-osx</id>
+    <content type="html"><![CDATA[<p><code>bash
+brew install gnuplot
+brew install qt4
+brew install libsvm
+</code></p>
+
+<p>Installing <code>libsvm</code> itself in system path is easy, however hombrew does not include demo-data, python/java integration, or other goodies. The finally installation in homebrew only consists these files:</p>
+
+<p><code>
+libsvm
+libsvm/3.17
+libsvm/3.17/bin
+libsvm/3.17/bin/svm-predict
+libsvm/3.17/bin/svm-scale
+libsvm/3.17/bin/svm-train
+libsvm/3.17/COPYRIGHT
+libsvm/3.17/include
+libsvm/3.17/include/svm.h
+libsvm/3.17/INSTALL_RECEIPT.json
+libsvm/3.17/lib
+libsvm/3.17/lib/libsvm.2.dylib
+libsvm/3.17/lib/libsvm.dylib
+libsvm/3.17/README
+</code>
+In this post, I’ll show you how to modify some Makefiles and create mac specific binaries.</p>
+
+<!--more-->
+
+<h2 id="python-java-or-gui-applications-qt">Python, java, or GUI applications (Qt)</h2>
+
+<p>First, fetch the source code of <code>libsvm</code>, and compile it.</p>
+
+<p><code>bash
+curl -LO http://www.csie.ntu.edu.tw/~cjlin/cgi-bin/libsvm.cgi?+http://www.csie.ntu.edu.tw/~cjlin/libsvm+tar.gz
+tar xzvpf libsvm+tar.gz
+cd libsvm-3.17
+make
+</code></p>
+
+<h3 id="svm-toy-gui">SVM-Toy (GUI)</h3>
+
+<p>Now, goto <code>svm-toy/qt</code> directory. Change the CFLAGS and MOC variable in the <code>Makefile</code>.</p>
+
+<p>```make
+CXX? = g++</p>
+
+<p>CFLAGS = -Wall -O3 -I$(INCLUDE) -I$(INCLUDE)/QtGui -framework QtCore -framework QtGui -F/usr/local/Cellar/qt/4.8.4/lib/
+INCLUDE = /usr/local/Cellar/qt/4.8.4/include/
+MOC = moc</p>
+
+<p>svm-toy: svm-toy.cpp svm-toy.moc ../../svm.o
+	$(CXX) $(CFLAGS) svm-toy.cpp ../../svm.o -o svm-toy</p>
+
+<p>svm-toy.moc: svm-toy.cpp
+	$(MOC) svm-toy.cpp -o svm-toy.moc</p>
+
+<p>../../svm.o: ../../svm.cpp ../../svm.h
+	make -C ../.. svm.o</p>
+
+<p>clean:
+	rm -f *~ svm-toy svm-toy.moc ../../svm.o</p>
+
+<p>```</p>
+
+<p>Then <code>make</code>. The compile step should run successfully. Try the program <code>./svm-toy</code>, press <strong>load</strong> button and select a demo svm-file (heart_scale for example), then press <strong>run</strong>, you should see the result!</p>
+
+<p><img src="/images/select_heart_scale.png" alt="Select heart_scale" />
+<img src="/images/svm_toy.png" alt="svm toy" /></p>
+]]></content>
+  </entry>
+  
+</feed>
