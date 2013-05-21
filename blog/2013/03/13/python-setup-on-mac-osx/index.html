@@ -166,10 +166,12 @@ MathJax.Hub.Config({
 <span class="line-number">2</span>
 <span class="line-number">3</span>
 <span class="line-number">4</span>
+<span class="line-number">5</span>
 </pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="nb">source</span> ~/.bash_profile
 </span><span class="line">brew install python --with-brewed-openssl
 </span><span class="line">brew install gfortran
 </span><span class="line">brew install freetype
+</span><span class="line">brew install zmq
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
 <p>Years before Mountain Lion, I used to install fortran via <a href="http://hpc.sourceforge.net">High Performance Computing for Mac OSX</a>, but it doesn’t work well with homebrew. Now it’s best to install everything with <em>homebrew</em>.</p>
@@ -231,11 +233,17 @@ MathJax.Hub.Config({
 <span class="line-number">3</span>
 <span class="line-number">4</span>
 <span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
 </pre></td><td class="code"><pre><code class="bash"><span class="line">pip install numpy
 </span><span class="line">pip install scipy
 </span><span class="line">pip install ipython
 </span><span class="line">pip install matplotlib
 </span><span class="line">pip install pandas
+</span><span class="line">pip install tornado
+</span><span class="line">pip install pyzmq
+</span><span class="line">pip install ipython
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
 <p>Finally, install opencv</p>
@@ -272,16 +280,7 @@ MathJax.Hub.Config({
 
 <h2 id="reference">Reference</h2>
 <ol>
-  <li>
-    <table>
-      <tbody>
-        <tr>
-          <td>[Python and Virtualenv on Mac OSX Mountain Lion 10.8</td>
-          <td>Hacker Codex](http://hackercodex.com/guide/python-virtualenv-on-mac-osx-mountain-lion-10.8/)</td>
-        </tr>
-      </tbody>
-    </table>
-  </li>
+  <li><a href="http://hackercodex.com/guide/python-virtualenv-on-mac-osx-mountain-lion-10.8/">Python and Virtualenv on Mac OSX Mountain Lion 10.8 - Hacker Codex</a></li>
   <li><a href="http://www.calvinx.com/2012/11/02/virtualenv-with-numpy-scipy/">Virtualenv with numpy and scipy on Mac OSX - Calvin’s</a></li>
   <li><a href="https://pypi.python.org/pypi/virtualenv">Virtualenv 1.9.1 : Python Package Index</a></li>
 </ol>
