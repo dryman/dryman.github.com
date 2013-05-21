@@ -4,7 +4,7 @@
   <title><![CDATA[Category: emacs | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/emacs/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2013-03-31T14:29:28-07:00</updated>
+  <updated>2013-05-20T21:53:15-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,66 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Emacs W3m]]></title>
+    <link href="http://www.idryman.org/blog/2013/05/20/emacs-w3m/"/>
+    <updated>2013-05-20T21:18:00-07:00</updated>
+    <id>http://www.idryman.org/blog/2013/05/20/emacs-w3m</id>
+    <content type="html"><![CDATA[<p>This year I switched from vim to emacs. The reason is quite simple, I want to try different things, that’s all. Emacs is a highly configurable editor that you can use it to read emails, chat on irc, read pdf files, or whatever you can imagine. One of the most useful plugin is using <code>emacs-w3m</code> to browse websites.</p>
+
+<!--more-->
+
+<h3 id="install">Install</h3>
+
+<p>Emacs-w3m is an old package, luckily the latest package still functions well :D</p>
+
+<p>This installation guide is mac specific, but you can replace the first command to other platform-specific package installer. I use Mac OSX 10.8, and the latest homebrew until May 15, 2013. In your shell, type in the following:</p>
+
+<p>```bash
+brew install w3m
+mkdir -p ~/.emacs.d/vendor
+cd ~/.emacs.d/vendor
+cvs -d :pserver:anonymous@cvs.namazu.org:/storage/cvsroot login
+cvs -d :pserver:anonymous@cvs.namazu.org:/storage/cvsroot co emacs-w3m</p>
+
+<p>cd emacs-w3m
+autoconf
+make
+```</p>
+
+<p>Then, in your <code>.emacs</code>,</p>
+
+<p><code>scm
+(add-to-list 'load-path "~/.emacs.d/vendor/emacs-w3m/")
+(require 'w3m-load)
+</code></p>
+
+<p>That’s all you need. :)</p>
+
+<p><img src="/images/emacs/emacs-w3m.png" alt="emacs-w3m" /></p>
+
+<h3 id="other-settings">Other settings</h3>
+
+<p>If you want to open url links in w3m from org files, you can use the following setting, reference to <a href="http://www.emacswiki.org/emacs/BrowseUrl#toc26">emacs wiki post</a>.</p>
+
+<p><code>scm
+(defadvice org-open-at-point (around org-open-at-point-choose-browser activate)
+  (let ((browse-url-browser-function
+         (cond ((equal (ad-get-arg 0) '(4))
+                'browse-url-generic)
+               ((equal (ad-get-arg 0) '(16))
+                'choose-browser)
+               (t
+                (lambda (url &amp;optional new)
+                  (w3m-browse-url url t)))
+               )))
+    ad-do-it))
+</code></p>
+
+<p>If you want more from <code>emacs-w3m</code>, check out <a href="http://www.emacswiki.org/emacs/emacs-w3m">EmacsWiki: emacs-w3m</a>.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Installing swank.js]]></title>
@@ -131,7 +191,7 @@ NODE&gt;
 
 <p>Type in <code>alert("hello world!")</code> and press enter. You should see your browser pop up an alert window with <strong>hello world</strong>, and that’s it! You’ve successfully installed <code>swank.js</code>!!</p>
 
-<p><img src="/images/swank-js-screenshot-50.png" alt="Swank JS Screenshot" /></p>
+<p><img src="/images/emacs/swank-js-screenshot-50.png" alt="Swank JS Screenshot" /></p>
 
 <p>Wow, it’s really complicated. I can’t remember it unless I write it down.</p>
 

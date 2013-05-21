@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2013-03-31T14:29:28-07:00</updated>
+  <updated>2013-05-20T21:53:15-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,85 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Emacs W3m]]></title>
+    <link href="http://www.idryman.org/blog/2013/05/20/emacs-w3m/"/>
+    <updated>2013-05-20T21:18:00-07:00</updated>
+    <id>http://www.idryman.org/blog/2013/05/20/emacs-w3m</id>
+    <content type="html"><![CDATA[<p>This year I switched from vim to emacs. The reason is quite simple, I want to try different things, that’s all. Emacs is a highly configurable editor that you can use it to read emails, chat on irc, read pdf files, or whatever you can imagine. One of the most useful plugin is using <code>emacs-w3m</code> to browse websites.</p>
+
+<!--more-->
+
+<h3 id="install">Install</h3>
+
+<p>Emacs-w3m is an old package, luckily the latest package still functions well :D</p>
+
+<p>This installation guide is mac specific, but you can replace the first command to other platform-specific package installer. I use Mac OSX 10.8, and the latest homebrew until May 15, 2013. In your shell, type in the following:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">brew install w3m
+</span><span class="line">mkdir -p ~/.emacs.d/vendor
+</span><span class="line"><span class="nb">cd</span> ~/.emacs.d/vendor
+</span><span class="line">cvs -d :pserver:anonymous@cvs.namazu.org:/storage/cvsroot login
+</span><span class="line">cvs -d :pserver:anonymous@cvs.namazu.org:/storage/cvsroot co emacs-w3m
+</span><span class="line">
+</span><span class="line"><span class="nb">cd </span>emacs-w3m
+</span><span class="line">autoconf
+</span><span class="line">make
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Then, in your <code>.emacs</code>,</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="scm"><span class="line"><span class="p">(</span><span class="nf">add-to-list</span> <span class="ss">&#39;load-path</span> <span class="s">&quot;~/.emacs.d/vendor/emacs-w3m/&quot;</span><span class="p">)</span>
+</span><span class="line"><span class="p">(</span><span class="nf">require</span> <span class="ss">&#39;w3m-load</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>That’s all you need. :)</p>
+
+<p><img src="http://www.idryman.org/images/emacs/emacs-w3m.png" alt="emacs-w3m" /></p>
+
+<h3 id="other-settings">Other settings</h3>
+
+<p>If you want to open url links in w3m from org files, you can use the following setting, reference to <a href="http://www.emacswiki.org/emacs/BrowseUrl#toc26">emacs wiki post</a>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+</pre></td><td class="code"><pre><code class="scm"><span class="line"><span class="p">(</span><span class="nf">defadvice</span> <span class="nv">org-open-at-point</span> <span class="p">(</span><span class="nf">around</span> <span class="nv">org-open-at-point-choose-browser</span> <span class="nv">activate</span><span class="p">)</span>
+</span><span class="line">  <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">browse-url-browser-function</span>
+</span><span class="line">         <span class="p">(</span><span class="k">cond </span><span class="p">((</span><span class="nf">equal</span> <span class="p">(</span><span class="nf">ad-get-arg</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
+</span><span class="line">                <span class="ss">&#39;browse-url-generic</span><span class="p">)</span>
+</span><span class="line">               <span class="p">((</span><span class="nf">equal</span> <span class="p">(</span><span class="nf">ad-get-arg</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">16</span><span class="p">))</span>
+</span><span class="line">                <span class="ss">&#39;choose-browser</span><span class="p">)</span>
+</span><span class="line">               <span class="p">(</span><span class="nf">t</span>
+</span><span class="line">                <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">url</span> <span class="nv">&amp;optional</span> <span class="nv">new</span><span class="p">)</span>
+</span><span class="line">                  <span class="p">(</span><span class="nf">w3m-browse-url</span> <span class="nv">url</span> <span class="nv">t</span><span class="p">)))</span>
+</span><span class="line">               <span class="p">)))</span>
+</span><span class="line">    <span class="nv">ad-do-it</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>If you want more from <code>emacs-w3m</code>, check out <a href="http://www.emacswiki.org/emacs/emacs-w3m">EmacsWiki: emacs-w3m</a>.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Installing swank.js]]></title>
@@ -151,7 +230,7 @@ NODE&gt;
 
 <p>Type in <code>alert("hello world!")</code> and press enter. You should see your browser pop up an alert window with <strong>hello world</strong>, and that’s it! You’ve successfully installed <code>swank.js</code>!!</p>
 
-<p><img src="http://www.idryman.org/images/swank-js-screenshot-50.png" alt="Swank JS Screenshot" /></p>
+<p><img src="http://www.idryman.org/images/emacs/swank-js-screenshot-50.png" alt="Swank JS Screenshot" /></p>
 
 <p>Wow, it’s really complicated. I can’t remember it unless I write it down.</p>
 
@@ -4858,143 +4937,6 @@ tracing at 3:00AM. :D</p>
     </li>
   </ol>
 </div>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Jekyll/Octopress hacker news plugin]]></title>
-    <link href="http://www.idryman.org/blog/2012/04/05/jekyll-octopress-hacker-news-plugin/"/>
-    <updated>2012-04-05T14:49:00-07:00</updated>
-    <id>http://www.idryman.org/blog/2012/04/05/jekyll-octopress-hacker-news-plugin</id>
-    <content type="html"><![CDATA[<h3 id="inspiration">Inspiration</h3>
-
-<p>I found out that some cool blogs have a cute <em>hacker news like button</em> on each of its
-posts. </p>
-
-<p><img src="http://www.idryman.org/images/hn_like.png" /></p>
-
-<p>The service is <a href="http://hnlike.com/">HN Like Button</a>, created by <a href="http://hacksandthoughts.posterous.com/">shashyal</a>.
-To use it you can use the generator like so:</p>
-
-<p><img src="http://www.idryman.org/images/gen_hn_like.png" /></p>
-
-<p>However, we don’t want to do that every time, right? So I decided to write a
-small Jekyll plugin to generate the button automatically. Hope you can enjoy it!</p>
-
-<!-- more -->
-
-<h3 id="the-hidden-api-of-hnlike">The hidden API of HNLike</h3>
-
-<p>Well…not really. The generated html snippet looks like this:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-</pre></td><td class="code"><pre><code class="html"><span class="line"><span class="nt">&lt;iframe</span> <span class="na">frameborder=</span><span class="s">&quot;no&quot;</span> <span class="na">scrolling=</span><span class="s">&quot;no&quot;</span> <span class="na">height=</span><span class="s">&quot;50px&quot;</span> <span class="na">width=</span><span class="s">&quot;350px&quot;</span>
-</span><span class="line"> <span class="na">src=</span><span class="s">&quot;http://hnlike.com/upvote.php?link=http%3A%2F%2Fdryman.github.com%2Fblog%2F2012%2F04%2F04%2Fjekyll-graphviz-plugin%2F&amp;title=Jekyll%20Graphviz%20Plugin&quot;</span>
-</span><span class="line"> <span class="nt">&gt;</span>iframes not supported by your browser<span class="nt">&lt;/iframe&gt;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>Observe that in the <code>src</code> after the <code>upvote.php?</code> there are only two
-key valure pairs:</p>
-
-<ol>
-  <li><code>link=</code><strong>html link</strong></li>
-  <li><code>&amp;title=</code><strong>title text</strong></li>
-</ol>
-
-<p>We just need to replace the <strong>html link</strong> and <strong>title text</strong> to our URL-escaped
-string and it is done.</p>
-
-<h3 id="integrate-with-jekyll">Integrate with Jekyll</h3>
-
-<p>Jekyll/Octopress is designed to extend its functionality by users. For details
-you can take a look at <a href="http://octopress.org/docs/theme/template/">Theming and Customization - Octopress</a>. Follow
-the instructions, I simply added a new html snippet in <code>source/_includes/</code>.</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>hn_like.html </span><a href="https://github.com/dryman/dryman.github.com/blob/src/source/_includes/hn_like.html">link </a></figcaption> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-<span class="line-number">16</span>
-<span class="line-number">17</span>
-<span class="line-number">18</span>
-<span class="line-number">19</span>
-<span class="line-number">20</span>
-<span class="line-number">21</span>
-<span class="line-number">22</span>
-</pre></td><td class="code"><pre><code class="html"><span class="line">{% if site.hn_like_button %}
-</span><span class="line">  <span class="nt">&lt;script </span><span class="na">type=</span><span class="s">&quot;text/javascript&quot;</span><span class="nt">&gt;</span>
-</span><span class="line">    <span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
-</span><span class="line">      <span class="kd">var</span> <span class="nx">hn_like</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="s1">&#39;iframe&#39;</span><span class="p">);</span>
-</span><span class="line">      <span class="nx">hn_like</span><span class="p">.</span><span class="nx">frameborder</span><span class="o">=</span><span class="s2">&quot;no&quot;</span><span class="p">;</span>
-</span><span class="line">      <span class="nx">hn_like</span><span class="p">.</span><span class="nx">scrolling</span><span class="o">=</span><span class="s2">&quot;no&quot;</span><span class="p">;</span>
-</span><span class="line">      <span class="nx">hn_like</span><span class="p">.</span><span class="nx">height</span><span class="o">=</span><span class="s2">&quot;28px&quot;</span><span class="p">;</span>
-</span><span class="line">      <span class="nx">hn_like</span><span class="p">.</span><span class="nx">width</span><span class="o">=</span><span class="s2">&quot;115px&quot;</span><span class="p">;</span>
-</span><span class="line">      <span class="nx">hn_like</span><span class="p">.</span><span class="nx">src</span> <span class="o">=</span> <span class="s2">&quot;http://hnlike.com/upvote.php?link=&quot;</span>
-</span><span class="line">                    <span class="o">+</span> <span class="nb">encodeURIComponent</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">location</span><span class="p">)</span>
-</span><span class="line">                    <span class="o">+</span> <span class="s2">&quot;&amp;title=&quot;</span>
-</span><span class="line">                    <span class="o">+</span> <span class="nb">encodeURIComponent</span><span class="p">(</span><span class="s2">&quot;{{ page.title }}&quot;</span><span class="p">);</span>
-</span><span class="line">      <span class="nx">hn_like</span><span class="p">.</span><span class="nx">innerHTML</span><span class="o">=</span><span class="s2">&quot;iframes not supported by your browser&quot;</span><span class="p">;</span>
-</span><span class="line">      <span class="kd">var</span> <span class="nx">twitter</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementsByClassName</span><span class="p">(</span><span class="s2">&quot;twitter-share-button&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">];</span>
-</span><span class="line">
-</span><span class="line">      <span class="nx">twitter</span><span class="p">.</span><span class="nx">parentNode</span><span class="p">.</span><span class="nx">insertBefore</span><span class="p">(</span>
-</span><span class="line">        <span class="nx">hn_like</span><span class="p">,</span>
-</span><span class="line">        <span class="nx">twitter</span>
-</span><span class="line">      <span class="p">);</span>
-</span><span class="line">    <span class="p">})();</span>
-</span><span class="line">  <span class="nt">&lt;/script&gt;</span>
-</span><span class="line">{% endif %}
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>I modified the height and width otherwise it will be too big. Also I use jekyll
-liquid helpers instead of <code>document.title</code> to form title text. Finally I use the
-<code>twitter-share-button</code> element to position where I should insert the button in.</p>
-
-<h3 id="installation-steps">Installation steps</h3>
-
-<ol>
-  <li>
-    <p>To extend the built in snippet, download <a href="https://github.com/dryman/dryman.github.com/blob/src/source/_includes/hn_like.html">hn_like.html</a> into your 
-<code>source/_includes</code> directory</p>
-  </li>
-  <li>
-    <p>Add one line  <code>{% include hn_like.html %}</code>  into <code>source/_includes/after_footer.html</code>.</p>
-  </li>
-  <li>
-    <p>Add</p>
-  </li>
-</ol>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-</pre></td><td class="code"><pre><code class="yaml"><span class="line"><span class="c1"># hacker news like button</span>
-</span><span class="line"><span class="l-Scalar-Plain">hn_like_button</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">true</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>into your <code>_config.yml</code>.</p>
-
-<h2 id="edit">Edit:</h2>
-
-<p>The vote won’t update immediately. It will show up until hacker news index the
-post and can be reached via HN search API.</p>
-
-<h2 id="edit-2012-04-07">Edit: 2012-04-07</h2>
-
-<p>I changed my domain name and all HN/Twitter/FB/G+ counts reset to zero. So I
-submit the post to HN again.</p>
-
 ]]></content>
   </entry>
   

@@ -5,11 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Category: emacs - Carpe diem (Felix's blog)</title>
+  <title>Emacs W3m - Carpe diem (Felix's blog)</title>
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="Category: emacs">
+  <meta name="description" content="This year I switched from vim to emacs. The reason is quite simple, I want to try different things, that’s all. Emacs is a highly configurable editor &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.idryman.orgblog/categories/emacs/">
+  <link rel="canonical" href="http://www.idryman.org/blog/2013/05/20/emacs-w3m/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -101,50 +101,167 @@ MathJax.Hub.Config({
   <div id="main">
     <div id="content">
       <div>
-<article role="article">
+<article class="hentry" role="article">
   
   <header>
-    <h1 class="entry-title">Category: Emacs</h1>
+    
+      
+        <h1 class="entry-title">Emacs W3m</h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-20T21:18:00-07:00" pubdate data-updated="true">May 20<span>th</span>, 2013</time>
+        
+      </p>
     
   </header>
-  
-  <div id="blog-archives" class="category">
 
 
+<div class="entry-content"><p>This year I switched from vim to emacs. The reason is quite simple, I want to try different things, that’s all. Emacs is a highly configurable editor that you can use it to read emails, chat on irc, read pdf files, or whatever you can imagine. One of the most useful plugin is using <code>emacs-w3m</code> to browse websites.</p>
 
-  
-  <h2>2013</h2>
+<!--more-->
 
-<article>
-  
-<h1><a href="/blog/2013/05/20/emacs-w3m/">Emacs W3m</a></h1>
-<time datetime="2013-05-20T21:18:00-07:00" pubdate><span class='month'>May</span> <span class='day'>20</span> <span class='year'>2013</span></time>
+<h3 id="install">Install</h3>
 
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/emacs/'>emacs</a></span>
-</footer>
+<p>Emacs-w3m is an old package, luckily the latest package still functions well :D</p>
 
+<p>This installation guide is mac specific, but you can replace the first command to other platform-specific package installer. I use Mac OSX 10.8, and the latest homebrew until May 15, 2013. In your shell, type in the following:</p>
 
-</article>
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">brew install w3m
+</span><span class="line">mkdir -p ~/.emacs.d/vendor
+</span><span class="line"><span class="nb">cd</span> ~/.emacs.d/vendor
+</span><span class="line">cvs -d :pserver:anonymous@cvs.namazu.org:/storage/cvsroot login
+</span><span class="line">cvs -d :pserver:anonymous@cvs.namazu.org:/storage/cvsroot co emacs-w3m
+</span><span class="line">
+</span><span class="line"><span class="nb">cd </span>emacs-w3m
+</span><span class="line">autoconf
+</span><span class="line">make
+</span></code></pre></td></tr></table></div></figure></notextile></div>
 
+<p>Then, in your <code>.emacs</code>,</p>
 
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="scm"><span class="line"><span class="p">(</span><span class="nf">add-to-list</span> <span class="ss">&#39;load-path</span> <span class="s">&quot;~/.emacs.d/vendor/emacs-w3m/&quot;</span><span class="p">)</span>
+</span><span class="line"><span class="p">(</span><span class="nf">require</span> <span class="ss">&#39;w3m-load</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
 
-<article>
-  
-<h1><a href="/blog/2013/03/23/installing-swank-dot-js/">Installing swank.js</a></h1>
-<time datetime="2013-03-23T08:05:00-07:00" pubdate><span class='month'>Mar</span> <span class='day'>23</span> <span class='year'>2013</span></time>
+<p>That’s all you need. :)</p>
 
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/emacs/'>emacs</a></span>
-</footer>
+<p><img src="/images/emacs/emacs-w3m.png" alt="emacs-w3m" /></p>
 
+<h3 id="other-settings">Other settings</h3>
 
-</article>
+<p>If you want to open url links in w3m from org files, you can use the following setting, reference to <a href="http://www.emacswiki.org/emacs/BrowseUrl#toc26">emacs wiki post</a>.</p>
 
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+</pre></td><td class="code"><pre><code class="scm"><span class="line"><span class="p">(</span><span class="nf">defadvice</span> <span class="nv">org-open-at-point</span> <span class="p">(</span><span class="nf">around</span> <span class="nv">org-open-at-point-choose-browser</span> <span class="nv">activate</span><span class="p">)</span>
+</span><span class="line">  <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">browse-url-browser-function</span>
+</span><span class="line">         <span class="p">(</span><span class="k">cond </span><span class="p">((</span><span class="nf">equal</span> <span class="p">(</span><span class="nf">ad-get-arg</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
+</span><span class="line">                <span class="ss">&#39;browse-url-generic</span><span class="p">)</span>
+</span><span class="line">               <span class="p">((</span><span class="nf">equal</span> <span class="p">(</span><span class="nf">ad-get-arg</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">16</span><span class="p">))</span>
+</span><span class="line">                <span class="ss">&#39;choose-browser</span><span class="p">)</span>
+</span><span class="line">               <span class="p">(</span><span class="nf">t</span>
+</span><span class="line">                <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">url</span> <span class="nv">&amp;optional</span> <span class="nv">new</span><span class="p">)</span>
+</span><span class="line">                  <span class="p">(</span><span class="nf">w3m-browse-url</span> <span class="nv">url</span> <span class="nv">t</span><span class="p">)))</span>
+</span><span class="line">               <span class="p">)))</span>
+</span><span class="line">    <span class="nv">ad-do-it</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>If you want more from <code>emacs-w3m</code>, check out <a href="http://www.emacswiki.org/emacs/emacs-w3m">EmacsWiki: emacs-w3m</a>.</p>
 </div>
 
+
+  <footer>
+    <p class="meta">
+      
   
+
+<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-20T21:18:00-07:00" pubdate data-updated="true">May 20<span>th</span>, 2013</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/emacs/'>emacs</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2013/05/20/emacs-w3m/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2013/05/20/emacs-w3m/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left articlenav" href="/blog/2013/03/23/installing-swank-dot-js/" title="Previous Post: Installing swank.js">&laquo; Installing swank.js</a>
+      
+      
+    </p>
+  </footer>
 </article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
 
 </div>
 
@@ -236,7 +353,10 @@ MathJax.Hub.Config({
       var disqus_shortname = 'dryblog';
       
         
-        var disqus_script = 'count.js';
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.idryman.org/blog/2013/05/20/emacs-w3m/';
+        var disqus_url = 'http://www.idryman.org/blog/2013/05/20/emacs-w3m/';
+        var disqus_script = 'embed.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
@@ -318,7 +438,7 @@ SOFTWARE.
       hn_like.src = "http://hnlike.com/upvote.php?link="
                     + encodeURIComponent(document.location)
                     + "&title="
-                    + encodeURIComponent("Category: emacs");
+                    + encodeURIComponent("Emacs W3m");
       hn_like.innerHTML="iframes not supported by your browser";
       var twitter = document.getElementsByClassName("twitter-share-button")[0];
 
