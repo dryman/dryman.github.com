@@ -5,11 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Category: Objective-C - Carpe diem (Felix's blog)</title>
+  <title>emacs and pdf - Carpe diem (Felix's blog)</title>
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="Category: Objective-C">
+  <meta name="description" content="Emacs has a built-in pdf viewer named doc-view-mode. It require ghostscript to convert the pdf files. On my OSX 10.8 laptop, I use ghostscript 9.07 ( &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.idryman.orgblog/categories/objective-c/">
+  <link rel="canonical" href="http://www.idryman.org/blog/2013/05/20/emacs-and-pdf/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -101,64 +101,123 @@ MathJax.Hub.Config({
   <div id="main">
     <div id="content">
       <div>
-<article role="article">
+<article class="hentry" role="article">
   
   <header>
-    <h1 class="entry-title">Category: Objective-C</h1>
+    
+      
+        <h1 class="entry-title">Emacs and Pdf</h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-20T22:07:00-07:00" pubdate data-updated="true">May 20<span>th</span>, 2013</time>
+        
+      </p>
     
   </header>
-  
-  <div id="blog-archives" class="category">
 
 
+<div class="entry-content"><p>Emacs has a built-in pdf viewer named <code>doc-view-mode</code>. It require ghostscript to convert the pdf files. On my OSX 10.8 laptop, I use <code>ghostscript 9.07 (2013-02-14)</code> version, installed by</p>
 
-  
-  <h2>2012</h2>
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">brew install ghostscript
+</span></code></pre></td></tr></table></div></figure></notextile></div>
 
-<article>
-  
-<h1><a href="/blog/2012/11/22/arc-best-practices-and-pitfalls/">Objective-C ARC common pitfalls and best practices</a></h1>
-<time datetime="2012-11-22T09:28:00-08:00" pubdate><span class='month'>Nov</span> <span class='day'>22</span> <span class='year'>2012</span></time>
+<h3 id="screen-shot">screen shot</h3>
 
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/objective-c/'>Objective-C</a></span>
-</footer>
+<p><img src="/images/emacs/emacs-docview.png" alt="Screen shot" /></p>
 
+<h3 id="usage-and-configs">Usage and configs</h3>
 
-</article>
+<p>Using docview is pretty simple, just use your emacs to open the file and it’s done. I added two keyboard macro to help me navigate the PDF.</p>
 
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="scm"><span class="line"><span class="c1">;; view docs</span>
+</span><span class="line"><span class="p">(</span><span class="nf">fset</span> <span class="ss">&#39;doc-prev</span> <span class="s">&quot;\C-xo\C-x[\C-xo&quot;</span><span class="p">)</span>
+</span><span class="line"><span class="p">(</span><span class="nf">fset</span> <span class="ss">&#39;doc-next</span> <span class="s">&quot;\C-xo\C-x]\C-xo&quot;</span><span class="p">)</span>
+</span><span class="line"><span class="p">(</span><span class="nf">global-set-key</span> <span class="p">(</span><span class="nf">kbd</span> <span class="s">&quot;M-[&quot;</span><span class="p">)</span> <span class="ss">&#39;doc-prev</span><span class="p">)</span>
+</span><span class="line"><span class="p">(</span><span class="nf">global-set-key</span> <span class="p">(</span><span class="nf">kbd</span> <span class="s">&quot;M-]&quot;</span><span class="p">)</span> <span class="ss">&#39;doc-next</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
 
-
-<article>
-  
-<h1><a href="/blog/2012/10/30/dance-with-objective-c-dynamic-types/">Dance with Objective-C dynamic types</a></h1>
-<time datetime="2012-10-30T13:58:00-07:00" pubdate><span class='month'>Oct</span> <span class='day'>30</span> <span class='year'>2012</span></time>
-
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/cocoa/'>Cocoa</a>, <a class='category' href='/blog/categories/objective-c/'>Objective-C</a></span>
-</footer>
-
-
-</article>
-
-
-
-<article>
-  
-<h1><a href="/blog/2012/10/29/type-qualifiers/">Type Qualifiers and friends</a></h1>
-<time datetime="2012-10-29T08:55:00-07:00" pubdate><span class='month'>Oct</span> <span class='day'>29</span> <span class='year'>2012</span></time>
-
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/c/'>C</a>, <a class='category' href='/blog/categories/objective-c/'>Objective-C</a></span>
-</footer>
-
-
-</article>
-
+<p>The keybindings is only for two windows layout. You can use <code>M-[</code> or <code>M-]</code> to navigate the pages while your cursor is in another window. So that you can write your notes and navigate without leaving your notes! Pretty neat, right?</p>
 </div>
 
+
+  <footer>
+    <p class="meta">
+      
   
+
+<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-20T22:07:00-07:00" pubdate data-updated="true">May 20<span>th</span>, 2013</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/emacs/'>emacs</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2013/05/20/emacs-and-pdf/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2013/05/20/emacs-and-pdf/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left articlenav" href="/blog/2013/05/20/emacs-w3m/" title="Previous Post: Emacs W3m">&laquo; Emacs W3m</a>
+      
+      
+    </p>
+  </footer>
 </article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
 
 </div>
 
@@ -250,7 +309,10 @@ MathJax.Hub.Config({
       var disqus_shortname = 'dryblog';
       
         
-        var disqus_script = 'count.js';
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.idryman.org/blog/2013/05/20/emacs-and-pdf/';
+        var disqus_url = 'http://www.idryman.org/blog/2013/05/20/emacs-and-pdf/';
+        var disqus_script = 'embed.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
@@ -332,7 +394,7 @@ SOFTWARE.
       hn_like.src = "http://hnlike.com/upvote.php?link="
                     + encodeURIComponent(document.location)
                     + "&title="
-                    + encodeURIComponent("Category: Objective-C");
+                    + encodeURIComponent("emacs and pdf");
       hn_like.innerHTML="iframes not supported by your browser";
       var twitter = document.getElementsByClassName("twitter-share-button")[0];
 
