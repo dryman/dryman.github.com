@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2013-05-20T22:23:52-07:00</updated>
+  <updated>2013-05-21T11:00:03-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -14,7 +14,7 @@
 
   
   <entry>
-    <title type="html"><![CDATA[emacs and pdf]]></title>
+    <title type="html"><![CDATA[Emacs and PDF]]></title>
     <link href="http://www.idryman.org/blog/2013/05/20/emacs-and-pdf/"/>
     <updated>2013-05-20T22:07:00-07:00</updated>
     <id>http://www.idryman.org/blog/2013/05/20/emacs-and-pdf</id>
@@ -282,7 +282,7 @@ NODE&gt;
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[Setting up Python on OSX Mountain Lion]]></title>
+    <title type="html"><![CDATA[Setting up Python on OSX Mountain Lion (updated at May 21, 2013)]]></title>
     <link href="http://www.idryman.org/blog/2013/03/13/python-setup-on-mac-osx/"/>
     <updated>2013-03-13T08:47:00-07:00</updated>
     <id>http://www.idryman.org/blog/2013/03/13/python-setup-on-mac-osx</id>
@@ -310,17 +310,75 @@ NODE&gt;
 </span><span class="line">sudo chown -R USER_NAME <span class="nb">local</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
+<p>and setup environment variables in <code>~/.bash_profile</code> (if the file does not exist, create one)</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="nb">export </span><span class="nv">PATH</span><span class="o">=</span><span class="s2">&quot;~/bin:/usr/local/share/python:/usr/local/bin:$PATH&quot;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
 <p>Now you can install the followings with <em>homebrew</em>.</p>
 
 <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line">brew install python
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="nb">source</span> ~/.bash_profile
+</span><span class="line">brew install python --with-brewed-openssl
 </span><span class="line">brew install gfortran
+</span><span class="line">brew install freetype
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
 <p>Years before Mountain Lion, I used to install fortran via <a href="http://hpc.sourceforge.net">High Performance Computing for Mac OSX</a>, but it doesn’t work well with homebrew. Now it’s best to install everything with <em>homebrew</em>.</p>
 
-<h2 id="python">3. Python</h2>
+<h2 id="python-virtualenv">3. Python Virtualenv</h2>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">pip install virtualenv
+</span><span class="line">mkdir ~/.virtualenvs ~/.pip
+</span><span class="line"><span class="nb">export </span><span class="nv">VIRTUALENV_DISTRIBUTE</span><span class="o">=</span><span class="nb">true</span>
+</span><span class="line"><span class="nb">export </span><span class="nv">PIP_VIRTUALENV_BASE</span><span class="o">=</span><span class="nv">$HOME</span>/.virtualenvs
+</span><span class="line"><span class="nb">export </span><span class="nv">PIP_REQUIRE_VIRTUALENV</span><span class="o">=</span><span class="nb">true</span>
+</span><span class="line"><span class="nb">export </span><span class="nv">PIP_DOWNLOAD_CACHE</span><span class="o">=</span><span class="nv">$HOME</span>/.pip/cache
+</span><span class="line">
+</span><span class="line">cat <span class="s">&lt;&lt;END &gt;&gt; ~/.bash_profile</span>
+</span><span class="line"><span class="s"># virtualenv should use Distribute instead of legacy setuptools</span>
+</span><span class="line"><span class="s">export VIRTUALENV_DISTRIBUTE=true</span>
+</span><span class="line"><span class="s"># Centralized location for new virtual environments</span>
+</span><span class="line"><span class="s">export PIP_VIRTUALENV_BASE=$HOME/.virtualenvs</span>
+</span><span class="line"><span class="s"># pip should only run if there is a virtualenv currently activated</span>
+</span><span class="line"><span class="s">export PIP_REQUIRE_VIRTUALENV=true</span>
+</span><span class="line"><span class="s"># cache pip-installed packages to avoid re-downloading</span>
+</span><span class="line"><span class="s">export PIP_DOWNLOAD_CACHE=$HOME/.pip/cache</span>
+</span><span class="line"><span class="s">END</span>
+</span><span class="line">
+</span><span class="line"><span class="nb">cd</span> ~/.virtualenvs
+</span><span class="line">virtualenv data-scientists
+</span><span class="line"><span class="nb">source </span>data-scientists/bin/activate
+</span><span class="line"><span class="nb">echo</span> <span class="s2">&quot;source $HOME/.virtualenvs/data-scientists/bin/activate&quot;</span> &gt;&gt; ~/.bash_profile
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Now, if you type <code>which pip</code> it should print <code>/Users/YOUR_HOME/.virtualenvs/data-scientists/bin/pip</code>.</p>
 
 <p>Install scipy, numpy, ipython, and matplot.</p>
 
@@ -328,21 +386,23 @@ NODE&gt;
 <span class="line-number">2</span>
 <span class="line-number">3</span>
 <span class="line-number">4</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line">pip install scipy
-</span><span class="line">pip install numpy
+</pre></td><td class="code"><pre><code class="bash"><span class="line">pip install numpy
+</span><span class="line">pip install scipy
 </span><span class="line">pip install ipython
-</span><span class="line">pip install matplot
+</span><span class="line">pip install matplotlib
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
 <p>Finally, install opencv</p>
 
 <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line">brew install opencv
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">brew tap homebrew/science
+</span><span class="line">brew install opencv
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
 <p>If you want a additional nice GUI application for ipython, you can download it from <a href="https://github.com/liyanage/ipython-notebook#readme">IPython Notebook</a>.</p>
 
-<p><img width="50%" style="margin-left:25%;" src="http://www.idryman.org/images/ipython_notebook.png" /></p>
+<p><img src="http://www.idryman.org/images/ipython_notebook.png" alt="ipython notebook" /></p>
 
 <h2 id="trouble-shooting">Trouble shooting</h2>
 
@@ -363,6 +423,22 @@ NODE&gt;
 <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 </pre></td><td class="code"><pre><code class="bash"><span class="line">brew install opencv
 </span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="reference">Reference</h2>
+<ol>
+  <li>
+    <table>
+      <tbody>
+        <tr>
+          <td>[Python and Virtualenv on Mac OSX Mountain Lion 10.8</td>
+          <td>Hacker Codex](http://hackercodex.com/guide/python-virtualenv-on-mac-osx-mountain-lion-10.8/)</td>
+        </tr>
+      </tbody>
+    </table>
+  </li>
+  <li><a href="http://www.calvinx.com/2012/11/02/virtualenv-with-numpy-scipy/">Virtualenv with numpy and scipy on Mac OSX - Calvin’s</a></li>
+  <li><a href="https://pypi.python.org/pypi/virtualenv">Virtualenv 1.9.1 : Python Package Index</a></li>
+</ol>
 ]]></content>
   </entry>
   
