@@ -4,7 +4,7 @@
   <title><![CDATA[Category: python | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/python/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2013-05-21T14:40:35-07:00</updated>
+  <updated>2013-05-28T09:48:21-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -130,6 +130,7 @@ mv OpenCV-2.4.4a.tar.bz2 /Library/Caches/Homebrew/
 
 <p><code>bash
 brew install opencv
+cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr . &amp;&amp; make all install
 </code></p>
 
 <h2 id="reference">Reference</h2>
