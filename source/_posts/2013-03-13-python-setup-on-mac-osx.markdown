@@ -122,6 +122,7 @@ Continue the installation by
 
 ```bash
 brew install opencv
+cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr . && make all install
 ```
 
 Reference

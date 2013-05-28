@@ -6,6 +6,8 @@ comments: true
 categories: ML
 ---
 
+Here are the basic steps to install libSVM on Mac OSX.
+
 ```bash
 brew install gnuplot
 brew install qt4
