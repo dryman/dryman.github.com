@@ -4,7 +4,7 @@
   <title><![CDATA[Category: emacs | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/emacs/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2013-05-28T09:48:21-07:00</updated>
+  <updated>2013-05-29T12:08:07-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,48 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Emacs loves iPython Notebook]]></title>
+    <link href="http://www.idryman.org/blog/2013/05/29/emacs-loves-ipython-notebook/"/>
+    <updated>2013-05-29T11:41:00-07:00</updated>
+    <id>http://www.idryman.org/blog/2013/05/29/emacs-loves-ipython-notebook</id>
+    <content type="html"><![CDATA[<!--more-->
+
+<h2 id="install">Install</h2>
+
+<p>Installing emacs ipython notebook is pretty simple.</p>
+
+<ol>
+  <li>
+    <p>follow the steps in <a href="/blog/2013/03/13/python-setup-on-mac-osx/">Setting up Python on OSX Mountain Lion</a>.</p>
+  </li>
+  <li>
+    <p>Refresh emacs packages <code>M-x package-refresh-contents</code></p>
+  </li>
+  <li>
+    <p><code>M-x package-install</code> <code>ein</code></p>
+  </li>
+</ol>
+
+<h2 id="usage">Usage</h2>
+
+<ol>
+  <li>
+    <p><code>cd directory</code></p>
+  </li>
+  <li>
+    <p><code>ipython notebook --pylab inline</code></p>
+  </li>
+  <li>
+    <p><code>M-x ein:notebooklist-open</code></p>
+  </li>
+</ol>
+
+<p>Than, check on <a href="https://github.com/tkf/emacs-ipython-notebook">Emacs IPython Notebook</a> to see what key-bindings you can use in EIN mode. I only use <code>C-c C-c</code> to execute a buffer, and <code>C-c C-u</code> for changing the cell type. </p>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Emacs and PDF]]></title>

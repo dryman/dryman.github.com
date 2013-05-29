@@ -9,8 +9,8 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="It is often to embed a UIWebView in an iOS app. However it doesn’t provide the
-powerful webkit inspector by default. Nathan de Vries has written a &hellip;">
+  <meta name="description" content="This is an annoying problem that related to my recent project. The goal is
+simple: handle single touch event in UIWebView and let it handle other &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -103,6 +103,65 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2012/06/18/handle-touch-events-in-uiwebview/">Handle Touch Events in UIWebView</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-06-18T17:53:00-07:00" pubdate data-updated="true">Jun 18<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>This is an annoying problem that related to my recent project. The goal is
+simple: </p>
+
+<blockquote>
+  <p>handle <strong>single touch event</strong> in <code>UIWebView</code> and let it handle other touch
+events as defaults.</p>
+</blockquote>
+
+<p>However this is really hard to achive…</p>
+
+<h3 id="edit-620">Edit: 6/20</h3>
+
+<p>I found this post:<a href="http://mithin.in/2009/08/26/detecting-taps-and-events-on-uiwebview-the-right-way/">DETECTING TAPS AND EVENTS ON UIWEBVIEW – THE RIGHT
+WAY</a>.
+He handles touch event via <code>- (void) sendEvent:(UIEvent*) event</code> instead of
+UIGesutreRecognizer. His approach is more general and less hacky than mine. Have
+a look at it also!</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2012/06/18/handle-touch-events-in-uiwebview/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -681,94 +740,6 @@ highly recommended by great hackers. </p>
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/03/26/lisp-debugging-tools/">Lisp Debugging Tools</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-03-26T09:51:00-07:00" pubdate data-updated="true">Mar 26<span>th</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h2 id="debug-in-step-mode">Debug in Step Mode</h2>
-
-<p>I’m an old school debugger, and I love to use gdb like debug tools. The
-alternative debug environment in lisp is the <code>step mode</code>. To enter it, simply
-enter:</p>
-
-<pre><code>CL-USER&gt; (step (whatever-function arg1 arg2 arg3))
-step 1 --&gt; (WHATEVER-FUNCTION ARG1 ARG2 ARG3)
-Step 1 [2]&gt;
-</code></pre>
-
-<p>Now you can enter most commands you are familiar in gdb and other cool stuffs
-lisp provides to you. Try type <code>:h</code> and see what <a href="http://www.clisp.org/">clisp</a> outputs:</p>
-
-<pre><code>Commands may be abbreviated as shown in the second column.
-COMMAND        ABBR     DESCRIPTION
-Help           :h, ?    print this command list
-Error          :e       print the last error message
-Inspect        :i       inspect the last error
-Abort          :a       abort to the next recent input loop
-Unwind         :uw      abort to the next recent input loop
-Reset          :re      toggle *PACKAGE* and *READTABLE* between the
-                          local bindings and the sane values
-Quit           :q       quit to the top-level input loop
-Where          :w       inspect this frame
-Up             :u       go up one frame, inspect it
-Top            :t       go to top frame, inspect it
-Down           :d       go down one frame, inspect it
-Bottom         :b       go to bottom (most recent) frame, inspect it
-Mode mode      :m       set stack mode for Backtrace: 1=all the stack elements
-             2=all the frames                         3=only lexical frames
-             4=only EVAL and APPLY frames (default)   5=only APPLY frames
-Frame-limit n  :fl      set the frame-limit for Backtrace. This many frames
-                          will be printed in a backtrace at most.
-Backtrace [mode [limit]] :bt  inspect the stack
-Break+         :br+     set breakpoint in EVAL frame
-Break-         :br-     disable breakpoint in EVAL frame
-Redo           :rd      re-evaluate form in EVAL frame
-Return value   :rt      leave EVAL frame, prescribing the return values
-Step           :s       step into form: evaluate this form in single step mode
-Next           :n       step over form: evaluate this form at once
-Over           :o       step over this level: evaluate at once up to the next return
-Continue       :c       switch off single step mode, continue evaluation
--- Step-until :su, Next-until :nu, Over-until :ou, Continue-until :cu --
-           same as above, specify a condition when to stop
-</code></pre>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/03/26/lisp-debugging-tools/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/4/">&larr; Older</a>
@@ -784,6 +755,10 @@ Continue       :c       switch off single step mode, continue evaluation
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/05/29/emacs-loves-ipython-notebook/">Emacs loves iPython Notebook</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2013/05/25/clojure-bookmarks/">Popular Clojure Projects</a>
@@ -819,10 +794,6 @@ Continue       :c       switch off single step mode, continue evaluation
     
       <li class="post">
         <a href="/blog/2012/11/21/integer-promotion/">Deep C: Integer Promotion</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/10/30/dance-with-objective-c-dynamic-types/">Dance with Objective-C dynamic types</a>
       </li>
     
   </ul>
