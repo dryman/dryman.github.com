@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2013-05-29T12:08:07-07:00</updated>
+  <updated>2013-06-15T22:16:50-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,144 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Install Graphite on OSX]]></title>
+    <link href="http://www.idryman.org/blog/2013/05/31/graphite-on-osx/"/>
+    <updated>2013-05-31T16:59:00-07:00</updated>
+    <id>http://www.idryman.org/blog/2013/05/31/graphite-on-osx</id>
+    <content type="html"><![CDATA[<p>Installing graphite on OSX is a <em>pain</em>. This post is a quick note that I would never want to go through again. If you are looking this post, I’d suggest you to install graphite on linux.</p>
+
+<p>Most installation steps are from this <a href="https://gist.github.com/oyiptong/2430817">gist</a>.</p>
+
+<!--more-->
+
+<h2 id="xquartz-and-cairo">Xquartz and Cairo</h2>
+
+<p>If you don’t have X11 installed, go to <a href="http://xquartz.macosforge.org/landing/">xquartz</a> and install it on your mac. Then, install cairo via <code>homebrew</code>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">brew install cairo
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="pythonbrew">Pythonbrew</h2>
+
+<p>Install pythonbrew and setup environment variables.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">curl -kL http://xrl.us/pythonbrewinstall | bash
+</span><span class="line"><span class="nb">echo</span> <span class="s1">&#39;[[ -s $HOME/.pythonbrew/etc/bashrc ]] &amp;&amp; source $HOME/.pythonbrew/etc/bashrc&#39;</span> &gt;&gt; ~/.bashrc
+</span><span class="line"><span class="o">[[</span> -s <span class="nv">$HOME</span>/.pythonbrew/etc/bashrc <span class="o">]]</span> <span class="o">&amp;&amp;</span> <span class="nb">source</span> <span class="nv">$HOME</span>/.pythonbrew/etc/bashrc
+</span><span class="line">pythonbrew install -framework -f 2.7.2
+</span><span class="line">pythonbrew use 2.7.2
+</span><span class="line">pythonbrew venv create graphite
+</span><span class="line">pythonbrew venv use graphite
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h3 id="python-cairo">Python-cairo</h3>
+
+<p>This part is the real pain. On linux, just use <code>sudo apt-get install python-cairo</code>, it’s much much more simpler.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">brew install autotools
+</span><span class="line">
+</span><span class="line"><span class="nb">cd</span> ~/tmp
+</span><span class="line">git clone git://git.cairographics.org/git/py2cairo
+</span><span class="line"><span class="nb">cd </span>py2cairo
+</span><span class="line">
+</span><span class="line"><span class="nb">export </span><span class="nv">ACLOCAL_FLAGS</span><span class="o">=</span><span class="s2">&quot;-I /usr/local/Cellar/pkg-config/0.28/share/aclocal/&quot;</span>
+</span><span class="line"><span class="nb">export </span><span class="nv">MY_PYTHON_PATH</span><span class="o">=</span><span class="sb">`</span>python -c <span class="s1">&#39;import sys; print sys.prefix&#39;</span>|perl -nle <span class="s1">&#39;m|^.*(?=/bin)|&#39;</span><span class="o">)</span>;print <span class="nv">$&amp;</span><span class="sb">`</span>
+</span><span class="line">./autogen.sh --prefix<span class="o">=</span><span class="nv">$MY_PYTHON_PATH</span>
+</span><span class="line">./configure
+</span><span class="line">
+</span><span class="line"><span class="nv">PKG_CONFIG_PATH</span><span class="o">=</span><span class="sb">`</span>brew --prefix cairo<span class="sb">`</span>/lib/pkgconfig ./configure --prefix<span class="o">=</span><span class="nv">$MY_PYTHON_PATH</span>
+</span><span class="line">
+</span><span class="line"><span class="nb">export </span><span class="nv">CAIRO_CFLAGS</span><span class="o">=</span><span class="s2">&quot;-I/usr/local/Cellar/cairo/1.12.14/include/cairo/&quot;</span>
+</span><span class="line"><span class="nb">export </span><span class="nv">CAIRO_LIBS</span><span class="o">=</span><span class="s2">&quot;-L/usr/local/Cellar/cairo/1.12.14/lib/ -lcairo&quot;</span>
+</span><span class="line">
+</span><span class="line"><span class="nv">C_INCLUDE_PATH</span><span class="o">=</span>/opt/X11/include/ make
+</span><span class="line">make install
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="python-dependencies">Python dependencies</h2>
+
+<p>For the rest of the steps are all copied from the <a href="https://gist.github.com/oyiptong/2430817">gist</a>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">pip install carbon
+</span><span class="line">pip install whisper
+</span><span class="line">pip install <span class="nv">django</span><span class="o">==</span>1.3.1
+</span><span class="line">pip install django-tagging
+</span><span class="line">pip install graphite-web
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="setup-graphite">Setup graphite</h2>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="nb">cd</span> /opt/graphite/webapp/graphite
+</span><span class="line">python manage.py syncdb
+</span><span class="line">
+</span><span class="line"><span class="nb">cd</span> /opt/graphite/conf
+</span><span class="line">cp storage-schemas.conf.example storage-schemas.conf
+</span><span class="line">cp carbon.conf.example carbon.conf
+</span><span class="line">
+</span><span class="line"><span class="nb">cd</span> /opt/graphite/webapp/graphite
+</span><span class="line"><span class="nb">echo</span> <span class="s2">&quot;TIME_ZONE = &#39;America/Los_Angeles&#39;&quot;</span> &gt; local_settings.py
+</span><span class="line"><span class="c"># use appropriate timezone that you&#39;re in</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="running-graphite">Running graphite</h2>
+
+<ol>
+  <li>
+    <p><code>/opt/graphite/bin/carbon-cache.py start</code></p>
+  </li>
+  <li>
+    <p><code>/opt/graphite/bin/run-graphite-devel-server.py /opt/graphite</code></p>
+  </li>
+  <li>
+    <p>Open your browser and hopefully <code>http://localhost:8080</code> is up</p>
+  </li>
+</ol>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Emacs loves iPython Notebook]]></title>
@@ -4094,286 +4232,6 @@ $ --prefix=/opt/curl --without-ssl
 </code></pre>
 
 <p>You can find the <code>$IP</code> in minicom remote shell by <code>ifconfig</code>.</p>
-
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Grand central dispatch vs OpenMP]]></title>
-    <link href="http://www.idryman.org/blog/2012/08/05/grand-central-dispatch-vs-openmp/"/>
-    <updated>2012-08-05T12:41:00-07:00</updated>
-    <id>http://www.idryman.org/blog/2012/08/05/grand-central-dispatch-vs-openmp</id>
-    <content type="html"><![CDATA[<p>In 2009 Apple released a new task parallelism technology called 
-<a href="http://developer.apple.com/library/ios/#documentation/Performance/Reference/GCD_libdispatch_Ref/Reference/reference.html">Grand Central Dispatch (GCD)</a>. Apple worked hard on tuning GCD; stated that only 15
-instructions are required to queue up a work unit in GCD, while creating a
-traditional thread could easily require several hundred instructions.<br />
-The main advantage of GCD is that programmer/user does not required to choose
-how many thread for application that optimize the most. It can save a lot of
-time for programmers because getting the most power out of CPUs requires a lot
-of measurement. With GCD, let the operating system decide it for you, <em>it just
-works.</em></p>
-
-<!-- more -->
-
-<p>Most GCD documentation provided by Apple take focus on user applications:
-background process, asynchronous callbacks, non-blocking UI, dispatched IOs
-…etc. GCD and c/obj-c blocks works pretty good in those scenarios, but we
-want a more general comparison between GCD and traditional thread models. <strong>Which
-is faster?</strong>
-Currently no one has made a general benchmark for this. I targeted to use an
-industry standard benchmark for GCD vs threads, and I ended up by picking 
-<a href="http://en.wikipedia.org/wiki/Conjugate_gradient_method">Conjugate Gradient</a> computation in 
-<a href="http://www.nas.nasa.gov/publications/npb.html">NAS Parallel Benchmark (NPB) maintained by NASA</a> as my benchmark model.</p>
-
-<p>I uses <a href="http://openmp.org/wp/">OpenMP</a> implementation in CG problem. It is an shared memory
-threading API which is much easier to use then POSIX thread. However it is still
-required for programmer/user to pick thread number in run time or in compile time.
-NASA only provide fortran code, so I uses <a href="http://jason.cse.ohio-state.edu/examples/npb/index.html">Ohio’s C implementation</a>.</p>
-
-<h2 id="benchmark-result">Benchmark result</h2>
-
-<p><img src="http://www.idryman.org/images/npb_cg.png" alt="NPB CG" title="figure 1" /></p>
-
-<p>The result is quite promising! Problem sizes in NPB are predefined and indicated
-as different classes: </p>
-
-<ul>
-  <li>Class W: vector size: 7000, iterations: 15 (90’s workstation size, now likely
-too small)</li>
-  <li>Class A: vector size: 14000, iterations: 15</li>
-  <li>Class B: vector size: 75000, iterations: 75</li>
-</ul>
-
-<p>I tested OpenMP with different thread numbers and it performs differently on
-different problem size. It not quite obvious to choose a correct thread number
-for the problem, and GCD implementations beats them all.</p>
-
-<h2 id="bottleneck-implementation">Bottleneck implementation</h2>
-
-<p>The OpenMP implementation looks like this:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-<span class="line-number">16</span>
-<span class="line-number">17</span>
-<span class="line-number">18</span>
-<span class="line-number">19</span>
-<span class="line-number">20</span>
-<span class="line-number">21</span>
-<span class="line-number">22</span>
-<span class="line-number">23</span>
-</pre></td><td class="code"><pre><code class="c"><span class="line">    <span class="cp">#pragma omp parallel {  </span><span class="c1">// Spawn threads for all computations in the block</span>
-</span><span class="line">    <span class="cm">/* </span>
-</span><span class="line"><span class="cm">      some other code... </span>
-</span><span class="line"><span class="cm">    */</span>
-</span><span class="line">
-</span><span class="line">    <span class="cp">#pragma omp for private(i,k)  </span><span class="c1">// Bottleneck</span>
-</span><span class="line">      <span class="k">for</span> <span class="p">(</span><span class="n">j</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;=</span> <span class="n">lastrow</span><span class="o">-</span><span class="n">firstrow</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-</span><span class="line">        <span class="kt">int</span> <span class="n">iresidue</span><span class="p">;</span>
-</span><span class="line">        <span class="kt">double</span> <span class="n">sum1</span><span class="p">,</span> <span class="n">sum2</span><span class="p">;</span>
-</span><span class="line">        <span class="n">i</span> <span class="o">=</span> <span class="n">rowstr</span><span class="p">[</span><span class="n">j</span><span class="p">];</span>
-</span><span class="line">        <span class="n">iresidue</span> <span class="o">=</span> <span class="p">(</span><span class="n">rowstr</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">i</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span><span class="p">;</span>
-</span><span class="line">        <span class="n">sum1</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
-</span><span class="line">        <span class="n">sum2</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
-</span><span class="line">        <span class="k">if</span> <span class="p">(</span><span class="n">iresidue</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="n">sum1</span> <span class="o">=</span> <span class="n">sum1</span> <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">p</span><span class="p">[</span><span class="n">colidx</span><span class="p">[</span><span class="n">i</span><span class="p">]];</span>
-</span><span class="line">        <span class="k">for</span> <span class="p">(</span><span class="n">k</span> <span class="o">=</span> <span class="n">i</span><span class="o">+</span><span class="n">iresidue</span><span class="p">;</span> <span class="n">k</span> <span class="o">&lt;=</span> <span class="n">rowstr</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">2</span><span class="p">;</span> <span class="n">k</span> <span class="o">+=</span> <span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
-</span><span class="line">          <span class="n">sum1</span> <span class="o">=</span> <span class="n">sum1</span> <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>   <span class="o">*</span> <span class="n">p</span><span class="p">[</span><span class="n">colidx</span><span class="p">[</span><span class="n">k</span><span class="p">]];</span>
-</span><span class="line">          <span class="n">sum2</span> <span class="o">=</span> <span class="n">sum2</span> <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span><span class="p">[</span><span class="n">colidx</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]];</span>
-</span><span class="line">        <span class="p">}</span>
-</span><span class="line">          <span class="n">q</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">sum1</span> <span class="o">+</span> <span class="n">sum2</span><span class="p">;</span>
-</span><span class="line">      <span class="p">}</span>
-</span><span class="line">
-</span><span class="line">      <span class="cm">/* more code */</span>
-</span><span class="line">      <span class="p">}</span> <span class="cm">/* end parallel */</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>Other code instead of bottleneck are basically vector initialization, copy,
-multiply and norm computations. I tested all of these, but they don’t make
-big differences between OpenMP, GCD, and BLAS1 functions.</p>
-
-<p>GCD implementation looks much like the original code:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-</pre></td><td class="code"><pre><code class="c"><span class="line">      <span class="c1">// c_queue is a concurrent queue</span>
-</span><span class="line">      <span class="n">dispatch_apply</span> <span class="p">(</span><span class="n">NA</span><span class="p">,</span> <span class="n">c_queue</span><span class="p">,</span> <span class="o">^</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">idx</span><span class="p">){</span>
-</span><span class="line">        <span class="kt">size_t</span> <span class="n">j</span> <span class="o">=</span> <span class="n">idx</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span>
-</span><span class="line">        <span class="kt">double</span> <span class="n">sum</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
-</span><span class="line">        <span class="kt">double</span> <span class="n">sum1</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">sum2</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
-</span><span class="line">        <span class="kt">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="n">rowstr</span><span class="p">[</span><span class="n">j</span><span class="p">];</span>
-</span><span class="line">        <span class="kt">size_t</span> <span class="n">iresidue</span> <span class="o">=</span> <span class="p">(</span><span class="n">rowstr</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">i</span><span class="p">)</span> <span class="o">%</span><span class="mi">2</span><span class="p">;</span>
-</span><span class="line">        <span class="k">if</span> <span class="p">(</span><span class="n">iresidue</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="n">sum1</span> <span class="o">=</span> <span class="n">sum1</span> <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="n">p</span><span class="p">[</span><span class="n">colidx</span><span class="p">[</span><span class="n">i</span><span class="p">]];</span>
-</span><span class="line">        <span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">k</span> <span class="o">=</span> <span class="n">i</span><span class="o">+</span><span class="n">iresidue</span><span class="p">;</span> <span class="n">k</span> <span class="o">&lt;=</span> <span class="n">rowstr</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">2</span><span class="p">;</span> <span class="n">k</span> <span class="o">+=</span> <span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
-</span><span class="line">          <span class="n">sum1</span> <span class="o">=</span> <span class="n">sum1</span> <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>   <span class="o">*</span> <span class="n">p</span><span class="p">[</span><span class="n">colidx</span><span class="p">[</span><span class="n">k</span><span class="p">]];</span>
-</span><span class="line">          <span class="n">sum2</span> <span class="o">=</span> <span class="n">sum2</span> <span class="o">+</span> <span class="n">a</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">p</span><span class="p">[</span><span class="n">colidx</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]];</span>
-</span><span class="line">        <span class="p">}</span>
-</span><span class="line">        <span class="n">q</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">sum1</span> <span class="o">+</span> <span class="n">sum2</span><span class="p">;</span>
-</span><span class="line">      <span class="p">});</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>What a great news! It is much easier then I thought to transfer the original
-code into GCD.</p>
-
-<h2 id="parallel-reduction-in-openmp-gcd-and-blas">Parallel reduction in OpenMP, GCD, and BLAS</h2>
-
-<p>As I concluded before, it doesn’t make big difference between three of these.
-The implementations are:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>OpenMP  </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-</pre></td><td class="code"><pre><code class="c"><span class="line">    <span class="cp">#pragma omp parallel private (i,j,k)</span>
-</span><span class="line">    <span class="p">{</span>
-</span><span class="line">    <span class="cp">#pragma omp single nowait</span>
-</span><span class="line">      <span class="n">rho</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
-</span><span class="line">    <span class="cp">#pragma omp for reduction(+:rho)</span>
-</span><span class="line">      <span class="k">for</span> <span class="p">(</span><span class="n">j</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">NA</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
-</span><span class="line">        <span class="n">rho</span> <span class="o">=</span> <span class="n">rho</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="n">j</span><span class="p">];</span>
-</span><span class="line">      <span class="p">}</span>
-</span><span class="line">    <span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>GCD  </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-<span class="line-number">16</span>
-<span class="line-number">17</span>
-<span class="line-number">18</span>
-<span class="line-number">19</span>
-<span class="line-number">20</span>
-<span class="line-number">21</span>
-<span class="line-number">22</span>
-<span class="line-number">23</span>
-</pre></td><td class="code"><pre><code class="c"><span class="line">    <span class="cm">/* clang -fblocks -O3 -DCACHE_LINE_SIZE=$(shell sysctl -n hw.cachelinesize) */</span>
-</span><span class="line">    <span class="cp">#include &lt;dispatch/dispatch.h&gt;</span>
-</span><span class="line">    <span class="cp">#define STRIDE (1024*(CACHE_LINE_SIZE/sizeof(double)))</span>
-</span><span class="line">    <span class="cp">#define DIVIDE (NA/STRIDE)</span>
-</span><span class="line">    <span class="cp">#define RESIDUE (NA%STRIDE)</span>
-</span><span class="line">
-</span><span class="line">    <span class="n">__block</span> <span class="kt">double</span> <span class="n">rho</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">;</span>
-</span><span class="line">    <span class="n">dispatch_async</span><span class="p">(</span><span class="n">s_queue</span><span class="p">,</span><span class="o">^</span><span class="p">{</span>
-</span><span class="line">      <span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">j</span> <span class="o">=</span> <span class="n">DIVIDE</span><span class="o">*</span><span class="n">STRIDE</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">NA</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span> <span class="n">j</span><span class="o">++</span><span class="p">){</span>
-</span><span class="line">        <span class="n">rho</span> <span class="o">+=</span> <span class="n">x</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="n">j</span><span class="p">];</span>
-</span><span class="line">      <span class="p">}</span>
-</span><span class="line">    <span class="p">});</span>
-</span><span class="line">    <span class="n">dispatch_apply</span><span class="p">(</span><span class="n">DIVIDE</span><span class="p">,</span> <span class="n">c_queue</span><span class="p">,</span> <span class="o">^</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">idx</span><span class="p">){</span>
-</span><span class="line">      <span class="kt">size_t</span> <span class="n">j</span> <span class="o">=</span> <span class="n">idx</span> <span class="o">*</span> <span class="n">STRIDE</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span>
-</span><span class="line">      <span class="kt">size_t</span> <span class="n">j_e</span> <span class="o">=</span> <span class="n">j</span> <span class="o">+</span> <span class="n">STRIDE</span><span class="p">;</span>
-</span><span class="line">      <span class="kt">double</span> <span class="n">sum</span><span class="o">=</span><span class="mf">0.0</span><span class="p">;</span>
-</span><span class="line">      <span class="k">do</span> <span class="p">{</span>
-</span><span class="line">        <span class="n">sum</span> <span class="o">+=</span> <span class="n">x</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="n">j</span><span class="p">];</span>
-</span><span class="line">      <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="o">++</span><span class="n">j</span> <span class="o">&lt;</span> <span class="n">j_e</span><span class="p">);</span>
-</span><span class="line">      <span class="n">dispatch_sync</span><span class="p">(</span><span class="n">s_queue</span><span class="p">,</span><span class="o">^</span><span class="p">{</span>
-</span><span class="line">        <span class="n">rho</span> <span class="o">+=</span> <span class="n">sum</span><span class="p">;</span>
-</span><span class="line">      <span class="p">});</span>
-</span><span class="line">    <span class="p">});</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>CBLAS  </span></figcaption>
- <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-</pre></td><td class="code"><pre><code class="c"><span class="line">    <span class="cm">/* clang -lcblas </span>
-</span><span class="line"><span class="cm">       when linking */</span>
-</span><span class="line">    <span class="cp">#include &lt;Accelerate/Accelerate.h&gt; </span><span class="c1">// header for OSX</span>
-</span><span class="line">
-</span><span class="line">    <span class="c1">// rho = x.x</span>
-</span><span class="line">    <span class="c1">//               size, vectorX,  incX, vectorY, incY</span>
-</span><span class="line">    <span class="n">rho</span> <span class="o">=</span> <span class="n">cblas_ddot</span><span class="p">(</span>  <span class="n">NA</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>  <span class="mi">1</span>  <span class="p">,</span>  <span class="o">&amp;</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>    <span class="mi">1</span><span class="p">);</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>I think it does not make difference because those operations are all one
-dimensional BLAS1 problems.</p>
-
-<h4 id="note-on-cache-line-size">Note on cache line size</h4>
-
-<p>I thought that cache line size matters when I start implementing GCD version of
-parallel reduction. But it ended up that you just need to give it a large enough
-size for compiler to generate SIMD optimization. Note that you can get the CPU
-cache line size by command <code>sysctl -n hw.cachelinesize</code> from shell.</p>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>I think the best practice so far is to use BLAS whenever you can. It’s cleaner
-and highly optimized by libraries developed by Apple, Intel, or other HPC
-foundations. For other operation that BLAS don’t support, GCD is a good choice
-and easy to migrate to. The pros and cons go as follows:</p>
-
-<h4 id="openmp-over-gcd">OpenMP over GCD</h4>
-
-<ul>
-  <li>Supported by gcc, while clang doesn’t.</li>
-  <li>Can be used on C, CPP, and Fortran (and many more?)</li>
-  <li>Many existing numerical code uses OpenMP</li>
-  <li>Easier to get start with. eg. <code>#omp parallel for</code></li>
-  <li>Better syntax in reduction: <code>#omp reduction (+:sum)</code></li>
-</ul>
-
-<h4 id="gcd-over-openmp">GCD over OpenMP</h4>
-
-<ul>
-  <li>Much easier to tune performance.</li>
-  <li>Tighter logic construction. Everything is encapsulated in blocks.</li>
-  <li>No separated thread spawns and private variables like OpenMP.</li>
-  <li>Much less parameters to adjust in compile time and run time.</li>
-  <li>Highly optimized in any kinks of problem sizes.</li>
-  <li>Works on iOS (OpenMP does not)</li>
-</ul>
-
-<p>I think the greatest advantage you can gain from GCD is that it is highly optimized 
-on different problem sizes, because operating system takeovers task load balancing. 
-It surprised me that on class W problem, OpenMP version with 16 threads is twice
-as slow compares to 1 thread version. With GCD, you no longer need to handle
-this unexpected result! Cheers.</p>
 
 ]]></content>
   </entry>

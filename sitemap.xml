@@ -153,12 +153,16 @@
         <lastmod>2013-05-29T12:07:51-07:00</lastmod>
     </url>
     <url>
+        <loc>http://www.idryman.org/blog/2013/05/31/graphite-on-osx/</loc>
+        <lastmod>2013-06-15T22:16:44-07:00</lastmod>
+    </url>
+    <url>
         <loc>http://www.idryman.org/about-me/</loc>
         <lastmod>2012-10-30T18:55:15-07:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/archives/</loc>
-        <lastmod>2013-05-29T12:07:51-07:00</lastmod>
+        <lastmod>2013-06-15T22:16:44-07:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/double-pendulum/</loc>
@@ -174,6 +178,6 @@
     </url>
     <url>
         <loc>http://www.idryman.org/</loc>
-        <lastmod>2013-05-29T12:07:51-07:00</lastmod>
+        <lastmod>2013-06-15T22:16:44-07:00</lastmod>
     </url>
 </urlset>
