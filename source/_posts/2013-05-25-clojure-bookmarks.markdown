@@ -96,9 +96,6 @@ When I want to learn a new programming language, the best way is always learn fr
 
 
 
-
-
-
 ## Testing
 
 * [Midje][] 
@@ -153,3 +150,7 @@ When I want to learn a new programming language, the best way is always learn fr
 * [Clojure style guide][]
 
 [Clojure style guide]: https://github.com/bbatsov/clojure-style-guide
+
+* [classlojure][] Advanced class loading for clojure
+
+[classlojure]: https://github.com/flatland/classlojure
