@@ -9,8 +9,8 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="Almost every programmer has learned about C, and a lot of them use it for their
-career. It is certainly one of the most popular programming languages &hellip;">
+  <meta name="description" content="Objective-C is a really cool programming language that is designed for Mac OSX and
+iOS software development. TIOBE has announced November Haedline: &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -103,6 +103,59 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2012/11/22/arc-best-practices-and-pitfalls/">Objective-C ARC Common Pitfalls and Best Practices</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-11-22T09:28:00-08:00" pubdate data-updated="true">Nov 22<span>nd</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Objective-C is a really cool programming language that is designed for Mac OSX and
+iOS software development. TIOBE has announced November Haedline: <a href="http://www.tiobe.com/index.php/content/paperinfo/tpci/index.html">Objective-C on
+its way to become “language of the year” again</a>. It is popular not only because
+the platform, but also its great performance on mobile devices. Objective-C
+featured in its manually memory management instead of garbage collection. Yet,
+its not that <em>manual</em> in modern Objective-C. Apple introduced Automatic
+Reference Counting, ARC, that inserts memory management code for you on compile
+time. In most cases of Objective-C development, it JUST WORKS. However, it
+is often confusing when you mix ARC code with Core Foundation objects (low level
+C references on apple’s platform). Today, I’ll talk about pitfalls and concepts
+of ARC especially when gluing CF objects with <strong>toll-free bridging</strong>.</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2012/11/22/arc-best-practices-and-pitfalls/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -569,58 +622,6 @@ and I want to make a step further to let people read typhoon predictions on iOS.
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/09/15/earthquake-early-warning-prototype/">Earthquake Early Warning Prototype</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-09-15T14:48:00-07:00" pubdate data-updated="true">Sep 15<span>th</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>I made a  prototype of earthquake early warning system in one week. The scenario
-goes as follows: We use a Friendly ARM SBC (Single-Board Computer) as an
-earthquake signal collector and processor. If the signal was identified as
-serious earthquake, it would send a message to our server. Then our server will
-authenticate the message and use Apple Push Notification Service (APNS) to
-notify some iPhone registered for the notifications.</p>
-
-<p>The demo video:</p>
-
-<iframe width="560" height="315" src="http://www.youtube.com/embed/jpXXkftFtI4" frameborder="0" allowfullscreen=""></iframe>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/09/15/earthquake-early-warning-prototype/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/3/">&larr; Older</a>
@@ -636,6 +637,10 @@ notify some iPhone registered for the notifications.</p>
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/06/27/laziness-and-memoization-in-clojure/">Laziness and memoization in Clojure</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2013/05/31/graphite-on-osx/">Install Graphite on OSX</a>
@@ -671,10 +676,6 @@ notify some iPhone registered for the notifications.</p>
     
       <li class="post">
         <a href="/blog/2012/12/03/the-design-of-c-integer-types/">Deep C: Understanding The Design of C Integer Types</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/11/22/arc-best-practices-and-pitfalls/">Objective-C ARC common pitfalls and best practices</a>
       </li>
     
   </ul>

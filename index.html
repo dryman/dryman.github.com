@@ -9,7 +9,7 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="Installing graphite on OSX is a pain. This post is a quick note that I would never want to go through again. If you are looking this post, I’d &hellip;">
+  <meta name="description" content="I’m now having a job at supplyframe Inc., and luckily I can use Clojure for work! Clojure is a young language created by Rich Hickey on 2007. It uses &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -102,6 +102,55 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2013/06/27/laziness-and-memoization-in-clojure/">Laziness and Memoization in Clojure</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-27T20:01:00-07:00" pubdate data-updated="true">Jun 27<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I’m now having a job at supplyframe Inc., and luckily I can use Clojure for work! Clojure is a young language created by Rich Hickey on 2007. It uses Lisp syntax, immutable data structures by default, and supports both strict and lazy evaluations. As Christ Okasaki suggested:</p>
+
+<blockquote>
+  <p>Strict evaluation is useful in implementing worst-case data structures and lazy evaluation is useful in implementing amortized data structures.</p>
+</blockquote>
+
+<p>It’s really cheap to define lazy or strict data structures in Clojure that has low amortized cost even in a persistent manner. Let’s dig into the source code and see how does Clojure implement it.</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2013/06/27/laziness-and-memoization-in-clojure/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -596,59 +645,6 @@ sprits of C.</p>
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/11/22/arc-best-practices-and-pitfalls/">Objective-C ARC Common Pitfalls and Best Practices</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-11-22T09:28:00-08:00" pubdate data-updated="true">Nov 22<span>nd</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Objective-C is a really cool programming language that is designed for Mac OSX and
-iOS software development. TIOBE has announced November Haedline: <a href="http://www.tiobe.com/index.php/content/paperinfo/tpci/index.html">Objective-C on
-its way to become “language of the year” again</a>. It is popular not only because
-the platform, but also its great performance on mobile devices. Objective-C
-featured in its manually memory management instead of garbage collection. Yet,
-its not that <em>manual</em> in modern Objective-C. Apple introduced Automatic
-Reference Counting, ARC, that inserts memory management code for you on compile
-time. In most cases of Objective-C development, it JUST WORKS. However, it
-is often confusing when you mix ARC code with Core Foundation objects (low level
-C references on apple’s platform). Today, I’ll talk about pitfalls and concepts
-of ARC especially when gluing CF objects with <strong>toll-free bridging</strong>.</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/11/22/arc-best-practices-and-pitfalls/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -662,6 +658,10 @@ of ARC especially when gluing CF objects with <strong>toll-free bridging</strong
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/06/27/laziness-and-memoization-in-clojure/">Laziness and memoization in Clojure</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2013/05/31/graphite-on-osx/">Install Graphite on OSX</a>
@@ -697,10 +697,6 @@ of ARC especially when gluing CF objects with <strong>toll-free bridging</strong
     
       <li class="post">
         <a href="/blog/2012/12/03/the-design-of-c-integer-types/">Deep C: Understanding The Design of C Integer Types</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2012/11/22/arc-best-practices-and-pitfalls/">Objective-C ARC common pitfalls and best practices</a>
       </li>
     
   </ul>

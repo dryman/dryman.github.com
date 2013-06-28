@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2013-06-15T22:16:50-07:00</updated>
+  <updated>2013-06-27T21:23:47-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,195 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Laziness and memoization in Clojure]]></title>
+    <link href="http://www.idryman.org/blog/2013/06/27/laziness-and-memoization-in-clojure/"/>
+    <updated>2013-06-27T20:01:00-07:00</updated>
+    <id>http://www.idryman.org/blog/2013/06/27/laziness-and-memoization-in-clojure</id>
+    <content type="html"><![CDATA[<p>I’m now having a job at supplyframe Inc., and luckily I can use Clojure for work! Clojure is a young language created by Rich Hickey on 2007. It uses Lisp syntax, immutable data structures by default, and supports both strict and lazy evaluations. As Christ Okasaki suggested:</p>
+
+<blockquote>
+  <p>Strict evaluation is useful in implementing worst-case data structures and lazy evaluation is useful in implementing amortized data structures.</p>
+</blockquote>
+
+<p>It’s really cheap to define lazy or strict data structures in Clojure that has low amortized cost even in a persistent manner. Let’s dig into the source code and see how does Clojure implement it.</p>
+
+<!--more-->
+
+<p>Before we go into Clojure’s java source code, we can first look at the <code>memoize</code> function.</p>
+
+<h2 id="memoize">Memoize</h2>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+</pre></td><td class="code"><pre><code class="clj"><span class="line"><span class="p">(</span><span class="kd">defn </span><span class="nv">memoize</span>
+</span><span class="line">  <span class="s">&quot;Returns a memoized version of a referentially transparent function. The</span>
+</span><span class="line"><span class="s">  memoized version of the function keeps a cache of the mapping from arguments</span>
+</span><span class="line"><span class="s">  to results and, when calls with the same arguments are repeated often, has</span>
+</span><span class="line"><span class="s">  higher performance at the expense of higher memory use.&quot;</span>
+</span><span class="line">  <span class="p">{</span><span class="ss">:added</span> <span class="s">&quot;1.0&quot;</span>
+</span><span class="line">   <span class="ss">:static</span> <span class="nv">true</span><span class="p">}</span>
+</span><span class="line">  <span class="p">[</span><span class="nv">f</span><span class="p">]</span>
+</span><span class="line">  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">mem</span> <span class="p">(</span><span class="nf">atom</span> <span class="p">{})]</span>
+</span><span class="line">    <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="o">&amp;</span> <span class="nv">args</span><span class="p">]</span>
+</span><span class="line">      <span class="p">(</span><span class="nb">if-let </span><span class="p">[</span><span class="nv">e</span> <span class="p">(</span><span class="nb">find </span><span class="err">@</span><span class="nv">mem</span> <span class="nv">args</span><span class="p">)]</span>
+</span><span class="line">        <span class="p">(</span><span class="nb">val </span><span class="nv">e</span><span class="p">)</span>
+</span><span class="line">        <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">ret</span> <span class="p">(</span><span class="nb">apply </span><span class="nv">f</span> <span class="nv">args</span><span class="p">)]</span>
+</span><span class="line">          <span class="p">(</span><span class="nf">swap!</span> <span class="nv">mem</span> <span class="nb">assoc </span><span class="nv">args</span> <span class="nv">ret</span><span class="p">)</span>
+</span><span class="line">          <span class="nv">ret</span><span class="p">)))))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The function is elegant; it captures whatever arguments that pass in the function, and pairs the arguments and the returned value to a persistent map. In order to make it thread safe, the persistent map is cast into an <code>atom</code> and can be modified via <code>swap!</code>.</p>
+
+<p>This is nice. And since Clojure uses $\log_{32}(N)$ hash map, it is also fast enough to do a memoized lookup. For the implementation of Clojure’s persistent hash map, you can check out <a href="http://blog.higher-order.net/2009/09/08/understanding-clojures-persistenthashmap-deftwice/">this post</a>.</p>
+
+<h2 id="lazy-seq">lazy-seq</h2>
+
+<p>In contrast to <code>memoize</code>, which is implemented in Clojure, <code>lazy-seq</code> is implemented in java. It contains three fields:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kd">public</span> <span class="kd">final</span> <span class="kd">class</span> <span class="nc">LazySeq</span> <span class="kd">extends</span> <span class="n">Obj</span> <span class="kd">implements</span> <span class="n">ISeq</span><span class="o">,</span> <span class="n">Sequential</span><span class="o">,</span> <span class="n">List</span><span class="o">,</span> <span class="n">IPending</span><span class="o">,</span> <span class="n">IHashEq</span><span class="o">{</span>
+</span><span class="line">
+</span><span class="line"><span class="kd">private</span> <span class="n">IFn</span> <span class="n">fn</span><span class="o">;</span>
+</span><span class="line"><span class="kd">private</span> <span class="n">Object</span> <span class="n">sv</span><span class="o">;</span>
+</span><span class="line"><span class="kd">private</span> <span class="n">ISeq</span> <span class="n">s</span><span class="o">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p><code>fn</code> is an un-evaluated thunk (function without arguments), and <code>sv</code> is the captured value after executing the thunk. The <code>ISeq s</code> is the realized version of the sequence.</p>
+
+<p>When the program tries to realize the lazy sequence, it calls <code>seq()</code> and <code>sval()</code> functions.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kd">final</span> <span class="kd">synchronized</span> <span class="n">Object</span> <span class="nf">sval</span><span class="o">(){</span>
+</span><span class="line">	<span class="k">if</span><span class="o">(</span><span class="n">fn</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span>
+</span><span class="line">		<span class="o">{</span>
+</span><span class="line">		<span class="k">try</span>
+</span><span class="line">			<span class="o">{</span>
+</span><span class="line">			<span class="n">sv</span> <span class="o">=</span> <span class="n">fn</span><span class="o">.</span><span class="na">invoke</span><span class="o">();</span>
+</span><span class="line">			<span class="n">fn</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class="line">			<span class="o">}</span>
+</span><span class="line">		<span class="k">catch</span><span class="o">(</span><span class="n">RuntimeException</span> <span class="n">e</span><span class="o">)</span>
+</span><span class="line">			<span class="o">{</span>
+</span><span class="line">			<span class="k">throw</span> <span class="n">e</span><span class="o">;</span>
+</span><span class="line">			<span class="o">}</span>
+</span><span class="line">		<span class="k">catch</span><span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span>
+</span><span class="line">			<span class="o">{</span>
+</span><span class="line">			<span class="k">throw</span> <span class="n">Util</span><span class="o">.</span><span class="na">sneakyThrow</span><span class="o">(</span><span class="n">e</span><span class="o">);</span>
+</span><span class="line">			<span class="o">}</span>
+</span><span class="line">		<span class="o">}</span>
+</span><span class="line">	<span class="k">if</span><span class="o">(</span><span class="n">sv</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span>
+</span><span class="line">		<span class="k">return</span> <span class="n">sv</span><span class="o">;</span>
+</span><span class="line">	<span class="k">return</span> <span class="n">s</span><span class="o">;</span>
+</span><span class="line"><span class="o">}</span>
+</span><span class="line">
+</span><span class="line"><span class="kd">final</span> <span class="kd">synchronized</span> <span class="kd">public</span> <span class="n">ISeq</span> <span class="nf">seq</span><span class="o">(){</span>
+</span><span class="line">	<span class="n">sval</span><span class="o">();</span>
+</span><span class="line">	<span class="k">if</span><span class="o">(</span><span class="n">sv</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span>
+</span><span class="line">		<span class="o">{</span>
+</span><span class="line">		<span class="n">Object</span> <span class="n">ls</span> <span class="o">=</span> <span class="n">sv</span><span class="o">;</span>
+</span><span class="line">		<span class="n">sv</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class="line">		<span class="k">while</span><span class="o">(</span><span class="n">ls</span> <span class="k">instanceof</span> <span class="n">LazySeq</span><span class="o">)</span>
+</span><span class="line">			<span class="o">{</span>
+</span><span class="line">			<span class="n">ls</span> <span class="o">=</span> <span class="o">((</span><span class="n">LazySeq</span><span class="o">)</span><span class="n">ls</span><span class="o">).</span><span class="na">sval</span><span class="o">();</span>
+</span><span class="line">			<span class="o">}</span>
+</span><span class="line">		<span class="n">s</span> <span class="o">=</span> <span class="n">RT</span><span class="o">.</span><span class="na">seq</span><span class="o">(</span><span class="n">ls</span><span class="o">);</span>
+</span><span class="line">		<span class="o">}</span>
+</span><span class="line">	<span class="k">return</span> <span class="n">s</span><span class="o">;</span>
+</span><span class="line"><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>In the <code>sval()</code> function, Clojure handles the caching elegantly. If <code>fn</code> is not null, execute it and stores the value to <code>sv</code>. If the <code>LazySeq</code> is dereferenced, the whole object will be recycled by the garbage collector, else the object will hold the value and is thread-safe to be accessed by other threads.</p>
+
+<p>The <code>seq()</code> function is the wrapper around <code>sval()</code>. It realizes all <code>LazySeq</code> objects recursively, and wrap it into a <code>seq</code> object that implements <code>ISeq</code> interface.</p>
+
+<p>With the realized <code>seq</code>, it can support common sequence functions like <code>first</code> and <code>next</code>:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kd">public</span> <span class="n">Object</span> <span class="nf">first</span><span class="o">(){</span>
+</span><span class="line">	<span class="n">seq</span><span class="o">();</span>
+</span><span class="line">	<span class="k">if</span><span class="o">(</span><span class="n">s</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span>
+</span><span class="line">		<span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class="line">	<span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="na">first</span><span class="o">();</span>
+</span><span class="line"><span class="o">}</span>
+</span><span class="line">
+</span><span class="line"><span class="kd">public</span> <span class="n">ISeq</span> <span class="nf">next</span><span class="o">(){</span>
+</span><span class="line">	<span class="n">seq</span><span class="o">();</span>
+</span><span class="line">	<span class="k">if</span><span class="o">(</span><span class="n">s</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span>
+</span><span class="line">		<span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class="line">	<span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="na">next</span><span class="o">();</span>	
+</span><span class="line"><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>In Clojure’s documentation, it said that <code>lazy-seq</code> is cached after realizing it, but it didn’t document how it does it. Luckily the source code is pretty easy to understand. Clojure uses lazy sequences a lot, so knowing that it handles lazy sequence efficiently is important for all Clojure programmers. :) </p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Install Graphite on OSX]]></title>
@@ -4033,205 +4222,6 @@ write it in much more verbose Objective-C.</p>
 </span><span class="line">    <span class="n">NSString</span> <span class="o">*</span><span class="n">json</span> <span class="o">=</span> <span class="p">[</span><span class="n">ty_infos</span> <span class="nl">substringWithRange:</span><span class="n">NSMakeRange</span><span class="p">(</span><span class="n">range_of_match</span><span class="p">.</span><span class="n">location</span><span class="p">,</span> <span class="n">range_of_match</span><span class="p">.</span><span class="n">length</span><span class="o">-</span><span class="mi">1</span><span class="p">)];</span>
 </span><span class="line">    <span class="n">NSArray</span><span class="o">*</span> <span class="n">arr</span> <span class="o">=</span> <span class="p">[</span><span class="n">NSJSONSerialization</span> <span class="nl">JSONObjectWithData:</span><span class="p">[</span><span class="n">json</span> <span class="nl">dataUsingEncoding:</span><span class="n">NSUTF8StringEncoding</span><span class="p">]</span> <span class="nl">options:</span><span class="mi">0</span> <span class="nl">error:</span><span class="nb">nil</span><span class="p">];</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
-
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Earthquake early warning prototype]]></title>
-    <link href="http://www.idryman.org/blog/2012/09/15/earthquake-early-warning-prototype/"/>
-    <updated>2012-09-15T14:48:00-07:00</updated>
-    <id>http://www.idryman.org/blog/2012/09/15/earthquake-early-warning-prototype</id>
-    <content type="html"><![CDATA[<p>I made a  prototype of earthquake early warning system in one week. The scenario
-goes as follows: We use a Friendly ARM SBC (Single-Board Computer) as an
-earthquake signal collector and processor. If the signal was identified as
-serious earthquake, it would send a message to our server. Then our server will
-authenticate the message and use Apple Push Notification Service (APNS) to
-notify some iPhone registered for the notifications.</p>
-
-<p>The demo video:</p>
-
-<iframe width="560" height="315" src="http://www.youtube.com/embed/jpXXkftFtI4" frameborder="0" allowfullscreen=""></iframe>
-
-<!-- more -->
-
-<h2 id="apple-push-notification-service-apns">Apple Push Notification Service (APNS)</h2>
-
-<p>There are two ways to show up a notification even if app wasn’t active. One is
-local notification and the other is server-pushed notification.</p>
-
-<blockquote>
-  <p>Local notification are scheduled by an iOS application. It’s iOS only.</p>
-</blockquote>
-
-<blockquote>
-  <p>Push notification are sent by a remote server to Apple Push Notification
-   service, which pushes the notification to devices on which the application is
-   installed.</p>
-</blockquote>
-
-<p>There are a lot of limitation in alert message. So one must use it wisely. The
-maximum size allowed for a notification payload is <em>256 bytes</em>. APNS refuses any
-notification that exceeds this limit. The notification is encoded in a JSON
-string, the properties go as follows:</p>
-
-<ul>
-  <li><strong>alert</strong> If this property is included, iOS display a standard alert. This
-property can be a string or a dictionary. If it was a dictionary, below are
-the properties of <strong>alert</strong>.
-    <ul>
-      <li><strong>body</strong> The text of the alert message</li>
-      <li><strong>action-loc-key</strong> Display an alert with two buttons. The right buttons’s
-title would be this key.</li>
-      <li><strong>loc-key</strong> A key to an alert-message string in a <code>Localizable.strings</code>
-file for the current localization.</li>
-      <li><strong>loc-args</strong> Variable string to appear in place of format specifiers 
-in <strong>loc-key</strong>.</li>
-      <li><strong>launch-image</strong> The file name of an image in application bundle, which
-will be shown on the display message.</li>
-    </ul>
-  </li>
-  <li><strong>badge</strong> The number to display as the badge of the application icon.</li>
-  <li><strong>sound</strong> The name of the sound in the application bundle. Set the property to
-<em>default</em> then the default sound is played.</li>
-</ul>
-
-<p>To develop and deploy the provider side of a client/server application, you must
-get SSL certificatates from Apple Dev Center. Apple has a <a href="http://developer.apple.com/library/ios/#documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/ProvisioningDevelopment/ProvisioningDevelopment.html#//apple_ref/doc/uid/TP40008194-CH104-SW1">guide for
-this</a>.</p>
-
-<p>After setting up provisioning on Dev Center, you can get the certificate and key
-in <code>.pem</code> format, with following commands.</p>
-
-<pre><code>openssl pkcs12 -clcerts -nokeys -out apns-dev-cert.pem -in apns-dev-cert.p12
-openssl pkcs12 -nocerts -out apns-dev-key.pem -in apns-dev-key.p12
-</code></pre>
-
-<p>Remember to setup your bundle identifier and code sign as same as your
-provisioning profile uploaded to apple.</p>
-
-<p>Sometimes you might bump into bugs that your code sign wouldn’t work when you
-renew your bundle identifier. If so, just restart XCode.</p>
-
-<h2 id="server-cgi-script">Server CGI script</h2>
-
-<p>I use Perl to be cgi server. There are already a lot of APNS plugins that you
-can find in most popular languages. So just pick what is comfortable to you
-for implementing server side application.</p>
-
-<p>My script that handles APNS looks like this:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-<span class="line-number">16</span>
-</pre></td><td class="code"><pre><code class="perl"><span class="line"><span class="c1">#!/usr/bin/env perl</span>
-</span><span class="line"><span class="k">use</span> <span class="nn">Net::</span><span class="n">APNS</span><span class="p">;</span>
-</span><span class="line">
-</span><span class="line"><span class="k">my</span> <span class="nv">$apns</span> <span class="o">=</span> <span class="nn">Net::</span><span class="n">APNS</span><span class="o">-&gt;</span><span class="k">new</span><span class="p">;</span>
-</span><span class="line"><span class="k">my</span> <span class="nv">$notifier</span> <span class="o">=</span> <span class="nv">$apns</span><span class="o">-&gt;</span><span class="n">notify</span><span class="p">({</span>
-</span><span class="line">  <span class="n">cert</span> <span class="o">=&gt;</span> <span class="s">&quot;cert.pem&quot;</span><span class="p">,</span>
-</span><span class="line">  <span class="n">key</span> <span class="o">=&gt;</span> <span class="s">&quot;key.pem&quot;</span><span class="p">,</span>
-</span><span class="line">  <span class="n">passwd</span> <span class="o">=&gt;</span> <span class="s">&quot;passwd&quot;</span><span class="p">,</span>
-</span><span class="line"><span class="p">});</span>
-</span><span class="line">
-</span><span class="line"><span class="nv">$notifier</span><span class="o">-&gt;</span><span class="n">devicetoken</span><span class="p">(</span><span class="s">&quot;202154bb3b92e71f02b011183dfc7ad1261b69007346b52d1c8bcdb5aef9f4dd&quot;</span><span class="p">);</span>
-</span><span class="line"><span class="nv">$notifier</span><span class="o">-&gt;</span><span class="n">message</span><span class="p">(</span><span class="s">&quot;Earthquake!!&quot;</span><span class="p">);</span>
-</span><span class="line"><span class="nv">$notifier</span><span class="o">-&gt;</span><span class="n">badge</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
-</span><span class="line"><span class="nv">$notifier</span><span class="o">-&gt;</span><span class="n">sound</span><span class="p">(</span><span class="s">&#39;default&#39;</span><span class="p">);</span>
-</span><span class="line"><span class="nv">$notifier</span><span class="o">-&gt;</span><span class="n">sandbox</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
-</span><span class="line"><span class="nv">$notifier</span><span class="o">-&gt;</span><span class="nb">write</span><span class="p">;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>The device token is generated by your app. You will first register when your app
-launch, then get the token from method <code>- (void)application:(UIApplication
-*)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData
-*)deviceToken</code>.</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-<span class="line-number">16</span>
-</pre></td><td class="code"><pre><code class="objc"><span class="line"><span class="k">@implementation</span> <span class="nc">FCAppDelegate</span>
-</span><span class="line">
-</span><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">BOOL</span><span class="p">)</span><span class="nf">application:</span><span class="p">(</span><span class="n">UIApplication</span> <span class="o">*</span><span class="p">)</span><span class="nv">application</span> <span class="nf">didFinishLaunchingWithOptions:</span><span class="p">(</span><span class="n">NSDictionary</span> <span class="o">*</span><span class="p">)</span><span class="nv">launchOptions</span>
-</span><span class="line"><span class="p">{</span>
-</span><span class="line">    <span class="p">[[</span><span class="n">UIApplication</span> <span class="n">sharedApplication</span><span class="p">]</span> <span class="nl">registerForRemoteNotificationTypes:</span>
-</span><span class="line">        <span class="p">(</span><span class="n">UIRemoteNotificationTypeAlert</span><span class="o">|</span>
-</span><span class="line">         <span class="n">UIRemoteNotificationTypeBadge</span><span class="o">|</span>
-</span><span class="line">         <span class="n">UIRemoteNotificationTypeSound</span><span class="p">)];</span>
-</span><span class="line">    <span class="c1">// Override point for customization after application launch.</span>
-</span><span class="line">    <span class="k">return</span> <span class="n">YES</span><span class="p">;</span>
-</span><span class="line"><span class="p">}</span>
-</span><span class="line">
-</span><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">application:</span><span class="p">(</span><span class="n">UIApplication</span> <span class="o">*</span><span class="p">)</span><span class="nv">application</span> <span class="nf">didRegisterForRemoteNotificationsWithDeviceToken:</span><span class="p">(</span><span class="n">NSData</span> <span class="o">*</span><span class="p">)</span><span class="nv">deviceToken</span> <span class="p">{</span>
-</span><span class="line">    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;My token is %@&quot;</span><span class="p">,</span> <span class="n">deviceToken</span><span class="p">);</span>
-</span><span class="line"><span class="p">}</span>
-</span><span class="line"><span class="k">@end</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<h2 id="arm-board">ARM board</h2>
-
-<p>I use Friendly ARM 6410 for prototyping.</p>
-
-<p><img src="http://www.idryman.org/images/mini6410.jpg" alt="mini6410" title="figure 1" /></p>
-
-<p>Here are some configuration details:</p>
-
-<h3 id="booting">booting</h3>
-
-<p>In <code>minicom</code> remote shell:</p>
-
-<pre><code>&gt; boot-args:
-&gt; root=/dev/mtdblock2 rootfstype=yaffs2 init=/linuxrc console=ttySAC0,115200
-</code></pre>
-
-<p>The boot args is quite important else you won’t get the shell from the device or
-you may not boot it successfully. It took me a while to find the correct boot
-args.</p>
-
-<h3 id="cross-compile">cross compile</h3>
-
-<p>If some desired library are not included in the board, you can cross compile
-it from source. However, the configuration is a bit complex then normal
-compilation:</p>
-
-<pre><code>$ ./configure --host=arm-linux-gnu --target=arm-linux CC=arm-linux-gcc \
-$ AR=arm-linux-ar LD=arm-linux-ld RANLIB=arm-linux-ranlib \
-$ --prefix=/opt/curl --without-ssl
-</code></pre>
-
-<p>The cross compiled library can be uploaded to ARM board via ftp:</p>
-
-<pre><code>$ ncftp -u user -p passwd $IP
-&gt; put curl.tar.gz
-</code></pre>
-
-<p>You can find the <code>$IP</code> in minicom remote shell by <code>ifconfig</code>.</p>
 
 ]]></content>
   </entry>

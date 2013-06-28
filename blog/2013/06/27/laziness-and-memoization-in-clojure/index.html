@@ -1,0 +1,580 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Laziness and memoization in Clojure - Carpe diem (Felix's blog)</title>
+  <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
+
+  
+  <meta name="description" content="I’m now having a job at supplyframe Inc., and luckily I can use Clojure for work! Clojure is a young language created by Rich Hickey on 2007. It uses &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://www.idryman.org/blog/2013/06/27/laziness-and-memoization-in-clojure/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Carpe diem (Felix's blog)" type="application/atom+xml">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- mathjax config similar to math.stackexchange -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/HTML-CSS"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-23425996-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <!--div id="logo">
+  	<div id="logoLeft">{</div>
+  	<div id="logoText">mob</div>
+  	<div id="logoRight">}</div>
+  	<div class="clear"></div>
+  </div-->
+  <h1><a href="/">Carpe diem (Felix's blog)</a></h1>
+  
+    <h2>I am a happy developer</h2>
+  
+  <div class="clear"></div>
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:www.idryman.org" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about-me">About Me</a></li>
+  <li><a href="http://idryman.tumblr.com/">Drawings</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      
+        <h1 class="entry-title">Laziness and Memoization in Clojure</h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-27T20:01:00-07:00" pubdate data-updated="true">Jun 27<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>I’m now having a job at supplyframe Inc., and luckily I can use Clojure for work! Clojure is a young language created by Rich Hickey on 2007. It uses Lisp syntax, immutable data structures by default, and supports both strict and lazy evaluations. As Christ Okasaki suggested:</p>
+
+<blockquote>
+  <p>Strict evaluation is useful in implementing worst-case data structures and lazy evaluation is useful in implementing amortized data structures.</p>
+</blockquote>
+
+<p>It’s really cheap to define lazy or strict data structures in Clojure that has low amortized cost even in a persistent manner. Let’s dig into the source code and see how does Clojure implement it.</p>
+
+<!--more-->
+
+<p>Before we go into Clojure’s java source code, we can first look at the <code>memoize</code> function.</p>
+
+<h2 id="memoize">Memoize</h2>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+</pre></td><td class="code"><pre><code class="clj"><span class="line"><span class="p">(</span><span class="kd">defn </span><span class="nv">memoize</span>
+</span><span class="line">  <span class="s">&quot;Returns a memoized version of a referentially transparent function. The</span>
+</span><span class="line"><span class="s">  memoized version of the function keeps a cache of the mapping from arguments</span>
+</span><span class="line"><span class="s">  to results and, when calls with the same arguments are repeated often, has</span>
+</span><span class="line"><span class="s">  higher performance at the expense of higher memory use.&quot;</span>
+</span><span class="line">  <span class="p">{</span><span class="ss">:added</span> <span class="s">&quot;1.0&quot;</span>
+</span><span class="line">   <span class="ss">:static</span> <span class="nv">true</span><span class="p">}</span>
+</span><span class="line">  <span class="p">[</span><span class="nv">f</span><span class="p">]</span>
+</span><span class="line">  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">mem</span> <span class="p">(</span><span class="nf">atom</span> <span class="p">{})]</span>
+</span><span class="line">    <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="o">&amp;</span> <span class="nv">args</span><span class="p">]</span>
+</span><span class="line">      <span class="p">(</span><span class="nb">if-let </span><span class="p">[</span><span class="nv">e</span> <span class="p">(</span><span class="nb">find </span><span class="err">@</span><span class="nv">mem</span> <span class="nv">args</span><span class="p">)]</span>
+</span><span class="line">        <span class="p">(</span><span class="nb">val </span><span class="nv">e</span><span class="p">)</span>
+</span><span class="line">        <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">ret</span> <span class="p">(</span><span class="nb">apply </span><span class="nv">f</span> <span class="nv">args</span><span class="p">)]</span>
+</span><span class="line">          <span class="p">(</span><span class="nf">swap!</span> <span class="nv">mem</span> <span class="nb">assoc </span><span class="nv">args</span> <span class="nv">ret</span><span class="p">)</span>
+</span><span class="line">          <span class="nv">ret</span><span class="p">)))))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The function is elegant; it captures whatever arguments that pass in the function, and pairs the arguments and the returned value to a persistent map. In order to make it thread safe, the persistent map is cast into an <code>atom</code> and can be modified via <code>swap!</code>.</p>
+
+<p>This is nice. And since Clojure uses $\log_{32}(N)$ hash map, it is also fast enough to do a memoized lookup. For the implementation of Clojure’s persistent hash map, you can check out <a href="http://blog.higher-order.net/2009/09/08/understanding-clojures-persistenthashmap-deftwice/">this post</a>.</p>
+
+<h2 id="lazy-seq">lazy-seq</h2>
+
+<p>In contrast to <code>memoize</code>, which is implemented in Clojure, <code>lazy-seq</code> is implemented in java. It contains three fields:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kd">public</span> <span class="kd">final</span> <span class="kd">class</span> <span class="nc">LazySeq</span> <span class="kd">extends</span> <span class="n">Obj</span> <span class="kd">implements</span> <span class="n">ISeq</span><span class="o">,</span> <span class="n">Sequential</span><span class="o">,</span> <span class="n">List</span><span class="o">,</span> <span class="n">IPending</span><span class="o">,</span> <span class="n">IHashEq</span><span class="o">{</span>
+</span><span class="line">
+</span><span class="line"><span class="kd">private</span> <span class="n">IFn</span> <span class="n">fn</span><span class="o">;</span>
+</span><span class="line"><span class="kd">private</span> <span class="n">Object</span> <span class="n">sv</span><span class="o">;</span>
+</span><span class="line"><span class="kd">private</span> <span class="n">ISeq</span> <span class="n">s</span><span class="o">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p><code>fn</code> is an un-evaluated thunk (function without arguments), and <code>sv</code> is the captured value after executing the thunk. The <code>ISeq s</code> is the realized version of the sequence.</p>
+
+<p>When the program tries to realize the lazy sequence, it calls <code>seq()</code> and <code>sval()</code> functions.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kd">final</span> <span class="kd">synchronized</span> <span class="n">Object</span> <span class="nf">sval</span><span class="o">(){</span>
+</span><span class="line">	<span class="k">if</span><span class="o">(</span><span class="n">fn</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span>
+</span><span class="line">		<span class="o">{</span>
+</span><span class="line">		<span class="k">try</span>
+</span><span class="line">			<span class="o">{</span>
+</span><span class="line">			<span class="n">sv</span> <span class="o">=</span> <span class="n">fn</span><span class="o">.</span><span class="na">invoke</span><span class="o">();</span>
+</span><span class="line">			<span class="n">fn</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class="line">			<span class="o">}</span>
+</span><span class="line">		<span class="k">catch</span><span class="o">(</span><span class="n">RuntimeException</span> <span class="n">e</span><span class="o">)</span>
+</span><span class="line">			<span class="o">{</span>
+</span><span class="line">			<span class="k">throw</span> <span class="n">e</span><span class="o">;</span>
+</span><span class="line">			<span class="o">}</span>
+</span><span class="line">		<span class="k">catch</span><span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span>
+</span><span class="line">			<span class="o">{</span>
+</span><span class="line">			<span class="k">throw</span> <span class="n">Util</span><span class="o">.</span><span class="na">sneakyThrow</span><span class="o">(</span><span class="n">e</span><span class="o">);</span>
+</span><span class="line">			<span class="o">}</span>
+</span><span class="line">		<span class="o">}</span>
+</span><span class="line">	<span class="k">if</span><span class="o">(</span><span class="n">sv</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span>
+</span><span class="line">		<span class="k">return</span> <span class="n">sv</span><span class="o">;</span>
+</span><span class="line">	<span class="k">return</span> <span class="n">s</span><span class="o">;</span>
+</span><span class="line"><span class="o">}</span>
+</span><span class="line">
+</span><span class="line"><span class="kd">final</span> <span class="kd">synchronized</span> <span class="kd">public</span> <span class="n">ISeq</span> <span class="nf">seq</span><span class="o">(){</span>
+</span><span class="line">	<span class="n">sval</span><span class="o">();</span>
+</span><span class="line">	<span class="k">if</span><span class="o">(</span><span class="n">sv</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span>
+</span><span class="line">		<span class="o">{</span>
+</span><span class="line">		<span class="n">Object</span> <span class="n">ls</span> <span class="o">=</span> <span class="n">sv</span><span class="o">;</span>
+</span><span class="line">		<span class="n">sv</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class="line">		<span class="k">while</span><span class="o">(</span><span class="n">ls</span> <span class="k">instanceof</span> <span class="n">LazySeq</span><span class="o">)</span>
+</span><span class="line">			<span class="o">{</span>
+</span><span class="line">			<span class="n">ls</span> <span class="o">=</span> <span class="o">((</span><span class="n">LazySeq</span><span class="o">)</span><span class="n">ls</span><span class="o">).</span><span class="na">sval</span><span class="o">();</span>
+</span><span class="line">			<span class="o">}</span>
+</span><span class="line">		<span class="n">s</span> <span class="o">=</span> <span class="n">RT</span><span class="o">.</span><span class="na">seq</span><span class="o">(</span><span class="n">ls</span><span class="o">);</span>
+</span><span class="line">		<span class="o">}</span>
+</span><span class="line">	<span class="k">return</span> <span class="n">s</span><span class="o">;</span>
+</span><span class="line"><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>In the <code>sval()</code> function, Clojure handles the caching elegantly. If <code>fn</code> is not null, execute it and stores the value to <code>sv</code>. If the <code>LazySeq</code> is dereferenced, the whole object will be recycled by the garbage collector, else the object will hold the value and is thread-safe to be accessed by other threads.</p>
+
+<p>The <code>seq()</code> function is the wrapper around <code>sval()</code>. It realizes all <code>LazySeq</code> objects recursively, and wrap it into a <code>seq</code> object that implements <code>ISeq</code> interface.</p>
+
+<p>With the realized <code>seq</code>, it can support common sequence functions like <code>first</code> and <code>next</code>:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kd">public</span> <span class="n">Object</span> <span class="nf">first</span><span class="o">(){</span>
+</span><span class="line">	<span class="n">seq</span><span class="o">();</span>
+</span><span class="line">	<span class="k">if</span><span class="o">(</span><span class="n">s</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span>
+</span><span class="line">		<span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class="line">	<span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="na">first</span><span class="o">();</span>
+</span><span class="line"><span class="o">}</span>
+</span><span class="line">
+</span><span class="line"><span class="kd">public</span> <span class="n">ISeq</span> <span class="nf">next</span><span class="o">(){</span>
+</span><span class="line">	<span class="n">seq</span><span class="o">();</span>
+</span><span class="line">	<span class="k">if</span><span class="o">(</span><span class="n">s</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span>
+</span><span class="line">		<span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class="line">	<span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="na">next</span><span class="o">();</span>	
+</span><span class="line"><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>In Clojure’s documentation, it said that <code>lazy-seq</code> is cached after realizing it, but it didn’t document how it does it. Luckily the source code is pretty easy to understand. Clojure uses lazy sequences a lot, so knowing that it handles lazy sequence efficiently is important for all Clojure programmers. :) </p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-06-27T20:01:00-07:00" pubdate data-updated="true">Jun 27<span>th</span>, 2013</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/clojure/'>Clojure</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2013/06/27/laziness-and-memoization-in-clojure/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2013/06/27/laziness-and-memoization-in-clojure/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left articlenav" href="/blog/2013/05/31/graphite-on-osx/" title="Previous Post: Install Graphite on OSX">&laquo; Install Graphite on OSX</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/06/27/laziness-and-memoization-in-clojure/">Laziness and memoization in Clojure</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/05/31/graphite-on-osx/">Install Graphite on OSX</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/05/29/emacs-loves-ipython-notebook/">Emacs loves iPython Notebook</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/05/25/clojure-bookmarks/">Popular Clojure Projects</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/05/21/libsvm-on-mac-osx/">LibSVM on Mac OSX</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/05/20/emacs-and-pdf/">Emacs and PDF</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/05/20/emacs-w3m/">Emacs W3m</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/03/23/installing-swank-dot-js/">Installing swank.js</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/03/13/python-setup-on-mac-osx/">Setting up Python on OSX Mountain Lion (updated at May 21, 2013)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2012/12/03/the-design-of-c-integer-types/">Deep C: Understanding The Design of C Integer Types</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("idryman", 4, true);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/idryman" class="twitter-follow-button" data-show-count="false">Follow @idryman</a>
+  
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - dryman (Felix Ren-Chyan Chern) -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'dryblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.idryman.org/blog/2013/06/27/laziness-and-memoization-in-clojure/';
+        var disqus_url = 'http://www.idryman.org/blog/2013/06/27/laziness-and-memoization-in-clojure/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+<!--
+hn like button plugin for jekyll/octopress
+Author: dryman (Felix Ren-Chyan Chern)
+
+Inpired from http://hnlike.com/ written by sbashyal
+
+(The MIT License)
+
+Copyright © 2012-2013 Felix Ren-Chyan Chern
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the ‘Software’), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED ‘AS IS’, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+  <script type="text/javascript">
+    (function(){
+      var hn_like = document.createElement('iframe');
+      hn_like.frameborder="no";
+      hn_like.scrolling="no";
+      hn_like.height="28px";
+      hn_like.width="115px";
+      hn_like.src = "http://hnlike.com/upvote.php?link="
+                    + encodeURIComponent(document.location)
+                    + "&title="
+                    + encodeURIComponent("Laziness and memoization in Clojure");
+      hn_like.innerHTML="iframes not supported by your browser";
+      var twitter = document.getElementsByClassName("twitter-share-button")[0];
+
+      twitter.parentNode.insertBefore(
+        hn_like,
+        twitter
+      );
+    })();
+  </script>
+
+<!-- end of hn like button -->
+
+
+
+
+<script type="text/javascript">
+ $(function() {
+        /* For zebra striping */
+        $("table tr:nth-child(odd)").addClass("odd-row");
+        /* For cell text alignment */
+        $("table td:first-child, table th:first-child").addClass("first");
+        /* For removing the last border */
+        $("table td:last-child, table th:last-child").addClass("last");
+});
+</script>
+
+
+</body>
+</html>
