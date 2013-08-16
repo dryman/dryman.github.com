@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: NodeJS | Carpe diem (Felix's blog)]]></title>
+  <link href="http://www.idryman.org/blog/categories/nodejs/atom.xml" rel="self"/>
+  <link href="http://www.idryman.org/"/>
+  <updated>2013-08-16T16:40:29-07:00</updated>
+  <id>http://www.idryman.org/</id>
+  <author>
+    <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Minimal NodeJS router]]></title>
+    <link href="http://www.idryman.org/blog/2013/08/16/minimal-nodejs-router/"/>
+    <updated>2013-08-16T15:41:00-07:00</updated>
+    <id>http://www.idryman.org/blog/2013/08/16/minimal-nodejs-router</id>
+    <content type="html"><![CDATA[<p>Here comes the problem, you’re prototyping a website that has powerful front-end like <a href="http://emberjs.com">EmberJS</a> or <a href="http://angularjs.org">AngularJS</a>, and sync JSON data with your NodeJS back-end, but you want your nodejs code to be lite and clean.</p>
+
+<p>You can use some nodeJS framework like restify, expressJS, director or whatever, but is there a way to write a minimal router using regex and switch statements? Yes.</p>
+
+<!--more-->
+
+<p>The solution is pretty simple. JS switch statement can accept expressions as comparison keys, so simply do this:</p>
+
+<p><code>js
+var rest = require('./rest_route.js');
+Http.createServer(function(request,response){
+  var url = request.url;
+  switch(true){
+    case RegExp('/api/1/servers$').test(url):
+      rest.servers(request,response);
+      break;
+    case RegExp('/api/1/servers/\\d').test(url):
+      rest.server(request,response); 
+      break;
+    case RegExp('/api/1/nodes').test(url):
+      rest.nodes(request,response); 
+      break;
+    case RegExp('/api/1/url/').test(url):
+      rest.urlapi(request,response); 
+      break;
+    default:
+      response.end();
+  }
+}).listen(3000);
+</code></p>
+
+<p>This may not as consistent as other heavy routers, but it’s really suitable for prototyping a new web app. Have fun and use it to hack your new weekend project!</p>
+]]></content>
+  </entry>
+  
+</feed>
