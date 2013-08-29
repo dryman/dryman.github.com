@@ -9,7 +9,7 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="Here comes the problem, you’re prototyping a website that has powerful front-end like EmberJS or AngularJS, and sync JSON data with your NodeJS back- &hellip;">
+  <meta name="description" content="My desktop emacs config is complecated, however I need a minimal config for emacs installed on ubuntu servers. This is my note of how to configure &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -102,6 +102,166 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2013/08/29/my-emacs-setting-on-servers/">My Emacs Setting on Servers</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-29T10:28:00-07:00" pubdate data-updated="true">Aug 29<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>My desktop emacs config is complecated, however I need a minimal config for emacs installed on ubuntu servers. This is my note of how to configure emacs on servers that works for me.</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2013/08/29/my-emacs-setting-on-servers/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2013/08/17/installing-gentoo-linux-on-mbpr/">Installing Gentoo Linux on MBPR</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-08-17T22:10:00-07:00" pubdate data-updated="true">Aug 17<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="boot-usb">Boot USB</h2>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class=""><span class="line">$ hdiutil convert -format UDRW install-amd64-minimal-20130816.iso -o gentoo.img bs=1m
+</span><span class="line">$ mv gentoo.img.dmg gentoo.img</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td><td class="code"><pre><code class=""><span class="line">$ diskutil list
+</span><span class="line">...
+</span><span class="line">/dev/disk1
+</span><span class="line">   #:                       TYPE NAME                    SIZE       IDENTIFIER
+</span><span class="line">   0:     FDisk_partition_scheme                        *8.0 GB     disk1
+</span><span class="line">   1:                 DOS_FAT_32 GENTOO                  8.0 GB     disk1s1
+</span><span class="line">
+</span><span class="line">$ diskutil unmount /dev/disk1
+</span><span class="line"># dd if=gentoo.img of=/dev/disk1</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="diskutil">DiskUtil</h2>
+
+<p>Partition disk</p>
+
+<p>Varify disk</p>
+
+<p>Repair disk in rescue mode (cmd-r from when reboot)</p>
+
+<h2 id="refind">rEFInd</h2>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class=""><span class="line">./install --esp</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="cflags">CFLAGS</h2>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class=""><span class="line">$ sysctl -n machdep.cpu.brand_string
+</span><span class="line">Intel(R) Core(TM) i7-3615QM CPU @ 2.30GHz</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>http://gcc.gnu.org/onlinedocs/gcc/i386-and-x86_002d64-Options.html</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td><td class="code"><pre><code class=""><span class="line">‘corei7’
+</span><span class="line">Intel Core i7 CPU with 64-bit extensions, MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1 and SSE4.2 instruction set support. 
+</span><span class="line">‘corei7-avx’
+</span><span class="line">Intel Core i7 CPU with 64-bit extensions, MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX, AES and PCLMUL instruction set support. 
+</span><span class="line">‘core-avx-i’
+</span><span class="line">Intel Core CPU with 64-bit extensions, MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX, AES, PCLMUL, FSGSBASE, RDRND and F16C instruction set support. 
+</span><span class="line">‘core-avx2’
+</span><span class="line">Intel Core CPU with 64-bit extensions, MOVBE, MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, AVX, AVX2, AES, PCLMUL, FSGSBASE, RDRND, FMA, BMI, BMI2 and F16C instruction set support.</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class=""><span class="line">-O2 -pipe -march=corei7-avx</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>http://www.broadcom.com/products/Wireless-LAN/802.11-Wireless-LAN-Solutions/BCM4331</p>
+
+<p>Device Driver
+-&gt; Network device support
+-&gt; Wireless Lan
+-&gt; Boardcom 43xx wireless support (mac 80211 stack)</p>
+
+<p>Device Driver
+-&gt; generic input layer
+-&gt; Mice
+apple USB trouchpad support
+apple USB BCM5974 Multitouch trackpad support</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -517,94 +677,6 @@ MathJax.Hub.Config({
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2013/05/20/emacs-w3m/">Emacs W3m</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-05-20T21:18:00-07:00" pubdate data-updated="true">May 20<span>th</span>, 2013</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>This year I switched from vim to emacs. The reason is quite simple, I want to try different things, that’s all. Emacs is a highly configurable editor that you can use it to read emails, chat on irc, read pdf files, or whatever you can imagine. One of the most useful plugin is using <code>emacs-w3m</code> to browse websites.</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2013/05/20/emacs-w3m/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2013/03/23/installing-swank-dot-js/">Installing swank.js</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-03-23T08:05:00-07:00" pubdate data-updated="true">Mar 23<span>rd</span>, 2013</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>People say that emacs is the most extendable editor in the world; however, I didn’t really understand how powerful it is until one of it extension <strong>Swank.js</strong> blowed my mind. Take a look at this awesome screen cast produced by <a href="http://emacsrocks.com">emacs rocks</a>.</p>
-
-<iframe width="560" height="315" src="http://www.youtube.com/embed/qwtVtcQQfqc" frameborder="0" allowfullscreen=""></iframe>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2013/03/23/installing-swank-dot-js/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -618,6 +690,14 @@ MathJax.Hub.Config({
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/08/29/my-emacs-setting-on-servers/">my emacs setting on servers</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/17/installing-gentoo-linux-on-mbpr/">Installing Gentoo Linux on MBPR</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2013/08/16/minimal-nodejs-router/">Minimal NodeJS router</a>
@@ -649,14 +729,6 @@ MathJax.Hub.Config({
     
       <li class="post">
         <a href="/blog/2013/05/20/emacs-and-pdf/">Emacs and PDF</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/05/20/emacs-w3m/">Emacs W3m</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/03/23/installing-swank-dot-js/">Installing swank.js</a>
       </li>
     
   </ul>

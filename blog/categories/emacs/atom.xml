@@ -4,7 +4,7 @@
   <title><![CDATA[Category: emacs | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/emacs/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2013-08-16T16:40:29-07:00</updated>
+  <updated>2013-08-29T10:54:44-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,89 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[my emacs setting on servers]]></title>
+    <link href="http://www.idryman.org/blog/2013/08/29/my-emacs-setting-on-servers/"/>
+    <updated>2013-08-29T10:28:00-07:00</updated>
+    <id>http://www.idryman.org/blog/2013/08/29/my-emacs-setting-on-servers</id>
+    <content type="html"><![CDATA[<p>My desktop emacs config is complecated, however I need a minimal config for emacs installed on ubuntu servers. This is my note of how to configure emacs on servers that works for me.</p>
+
+<!--more-->
+
+<h2 id="emacs24">Emacs24</h2>
+
+<p>First, I need to get Emacs24 installed on ubuntu, which is not by default. This link <a href="http://www.mikeyboldt.com/2011/11/30/install-emacs-24-in-ubuntu/">Install Emacs 24 in Ubuntu</a> is a great guide of how to install emacs 24. Here are the commands you need to type:</p>
+
+<p><code>
+sudo add-apt-repository ppa:cassou/emacs
+sudo apt-get update
+sudo apt-get install emacs24
+</code></p>
+
+<h2 id="configure-packges-archives">Configure Packges Archives</h2>
+
+<p>With Emacs 24, you can use the package managing system easily. Open your <code>~/.emacs</code> file and enter</p>
+
+<p><code>scm
+(require 'package)
+(add-to-list 'package-archives '("marmalade"."http://marmalade-repo.org/packages/"))
+(add-to-list 'package-archives '("melpa"."http://melpa.milkbox.net/packages/") t)
+(package-initialize)
+</code></p>
+
+<p>Save the file, and <code>M-x eval-buffer</code>, then <code>M-x package-refresh-contents</code>. Now you’re ready to install most of the emacs plugins.</p>
+
+<h2 id="plugins-i-installed">Plugins I installed</h2>
+
+<ol>
+  <li>
+    <p><a href="http://www.emacswiki.org/emacs/ParEdit">Paredit.el</a>: a mode for editing structured s-expressions, very useful for lisp based programs including emacs-lisp and clojure.</p>
+  </li>
+  <li>
+    <p><a href="https://github.com/clojure-emacs/clojure-mode">clojure mode</a>: mode for editing clojure files </p>
+  </li>
+  <li>
+    <p><a href="http://www.emacswiki.org/emacs/AceJump">Ace Jump</a>: Move your cursor to where you eyes are looking at.</p>
+  </li>
+</ol>
+
+<h2 id="some-other-configs">Some other configs</h2>
+
+<p>```scm
+(global-visual-line-mode t)
+(tool-bar-mode -1)
+(show-paren-mode t)
+(menu-bar-mode -1)
+(setq inhibit-startup-message t)
+(setq-default indent-tabs-mode nil)</p>
+
+<p>;; it’s dangerous to keep backup files in the same directory on the server
+(setq backup-directory-alist ‘((“.” . “~/.backup_emacs”))
+      auto-save-file-name-transforms ‘((“.*” ”~/.backup_emacs” t))
+      backup-by-copying t    ; Don’t delink hardlinks
+      version-control t      ; Use version numbers on backups
+      delete-old-versions t  ; Automatically delete excess backups
+      kept-new-versions 20   ; how many of the newest versions to keep
+      kept-old-versions 5    ; and how many of the old
+)</p>
+
+<p>;; configure paredit
+(add-hook ‘clojure-mode-hook (lambda () (paredit-mode 1)))
+(add-hook ‘emacs-lisp-mode-hook (lambda () (paredit-mode 1)))</p>
+
+<p>;; auto complete for emacs lisp
+(setq tab-always-indent ‘complete)
+(add-to-list ‘completion-styles ‘initials t)
+(define-key global-map (kbd “RET”) ‘newline-and-indent)</p>
+
+<p>;; ace jump mode
+(global-set-key (kbd “<esc><esc>") 'ace-jump-mode)
+```</esc></esc></p>
+
+<p>Hope these helps :D</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Emacs loves iPython Notebook]]></title>
