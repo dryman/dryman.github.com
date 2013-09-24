@@ -9,9 +9,8 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="Block is heavily used in objective-c APIs. If you want to
-write concurrent and responsive interface, you will need blocks and grand
-central dispatch &hellip;">
+  <meta name="description" content="In the last post, I mentioned that __block variable (here we named it block
+byref) will be retained if multiple blocks referenced it. Here are some &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -104,6 +103,99 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2012/09/29/c-objc-block-byref-internals/">C/ObjC Block Byref Internals</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-09-29T15:21:00-07:00" pubdate data-updated="true">Sep 29<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>In the last post, I mentioned that <code>__block</code> variable (here we named it block
+byref) will be retained if multiple blocks referenced it. Here are some sample
+code to show how runtime deals with reference counts.</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2012/09/29/c-objc-block-byref-internals/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2012/09/29/c-objc-block-quizzes/">C/ObjC Block Quizzes</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-09-29T12:15:00-07:00" pubdate data-updated="true">Sep 29<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Apple introduced blocks (anonymous functions or lambdas) as C extensions for its
+parallel programming model <a href="https://developer.apple.com/documentation/Performance/Reference/GCD_libdispatch_Ref/Reference/reference.html">Grand Central Dispatch</a>. Unlike ordinary C
+functions, blocks can capture surrounding variable contexts. The captured
+variables are casts to <code>const</code> by default, and for mutable variables you can mark
+it with <code>__block</code> storage qualifier. However, there is a lot of pitfalls in
+<code>__block</code> variables.  Can you identify all of them?</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2012/09/29/c-objc-block-quizzes/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -522,109 +614,6 @@ other patterns only when necessary.</p>
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/04/10/practical-software-verification-using-SPIN/">Practical Software Verification Using SPIN</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-04-10T10:31:00-07:00" pubdate data-updated="true">Apr 10<span>th</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>This is a note for the talk <a href="http://www.iis.sinica.edu.tw/page/events/FILE/120409.pdf">New frontiers in formal software verification</a> 
-spoken by <a href="http://spinroot.com/gerard/">Gerard J. Holzmann</a>, software verification architect for 
-<a href="http://www.jpl.nasa.gov/index.cfm">NASA Jet Propulsion Laboratory (JPL)</a>. He introduced a fast automatic software
-verification tool for distributed software system – <a href="http://spinroot.com/spin/whatispin.html">SPIN</a>.</p>
-
-<p><img src="/images/graphviz/g-f44bd3841c23d32cc5d46f28821bf434.svg" />
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/04/10/practical-software-verification-using-SPIN/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/04/05/jekyll-octopress-hacker-news-plugin/">Jekyll/Octopress Hacker News Plugin</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-04-05T14:49:00-07:00" pubdate data-updated="true">Apr 5<span>th</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h3 id="inspiration">Inspiration</h3>
-
-<p>I found out that some cool blogs have a cute <em>hacker news like button</em> on each of its
-posts. </p>
-
-<p><img src="/images/hn_like.png" /></p>
-
-<p>The service is <a href="http://hnlike.com/">HN Like Button</a>, created by <a href="http://hacksandthoughts.posterous.com/">shashyal</a>.
-To use it you can use the generator like so:</p>
-
-<p><img src="/images/gen_hn_like.png" /></p>
-
-<p>However, we don’t want to do that every time, right? So I decided to write a
-small Jekyll plugin to generate the button automatically. Hope you can enjoy it!</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/04/05/jekyll-octopress-hacker-news-plugin/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/4/">&larr; Older</a>
@@ -640,6 +629,14 @@ small Jekyll plugin to generate the button automatically. Hope you can enjoy it!
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-2/">Process Small Files on Hadoop using CombineFileInputFormat (2)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-1/">Process Small Files on Hadoop using CombineFileInputFormat (1)</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2013/08/29/my-emacs-setting-on-servers/">my emacs setting on servers</a>
@@ -671,14 +668,6 @@ small Jekyll plugin to generate the button automatically. Hope you can enjoy it!
     
       <li class="post">
         <a href="/blog/2013/05/21/libsvm-on-mac-osx/">LibSVM on Mac OSX</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/05/20/emacs-and-pdf/">Emacs and PDF</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/05/20/emacs-w3m/">Emacs W3m</a>
       </li>
     
   </ul>

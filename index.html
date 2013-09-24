@@ -9,7 +9,7 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="My desktop emacs config is complecated, however I need a minimal config for emacs installed on ubuntu servers. This is my note of how to configure &hellip;">
+  <meta name="description" content="Followed the previous article, in this post I ran several benchmarks and tuned the performance from 3 hours 34 minutes to 6 minutes 8 seconds! ">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -102,6 +102,92 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-2/">Process Small Files on Hadoop Using CombineFileInputFormat (2)</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-09-22T18:41:00-07:00" pubdate data-updated="true">Sep 22<span>nd</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Followed the previous article, in this post I ran several benchmarks and tuned the performance from 3 hours 34 minutes to 6 minutes 8 seconds!</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-2/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-1/">Process Small Files on Hadoop Using CombineFileInputFormat (1)</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-09-22T14:39:00-07:00" pubdate data-updated="true">Sep 22<span>nd</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Processing small files is an old typical problem in hadoop; On <a href="http://stackoverflow.com/questions/14541759/how-can-i-work-with-large-number-of-small-files-in-hadoop">Stack Overflow</a> it suggested people to use <a href="http://hadoop.apache.org/docs/r1.1.1/api/org/apache/hadoop/mapred/lib/CombineFileInputFormat.html">CombineFileInputFormat</a>,  but I haven’t found a good step-to-step article that teach you how to use it. So, I decided to write one myself.</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-1/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -496,113 +582,6 @@ MathJax.Hub.Config({
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2013/05/20/emacs-and-pdf/">Emacs and PDF</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-05-20T22:07:00-07:00" pubdate data-updated="true">May 20<span>th</span>, 2013</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Emacs has a built-in pdf viewer named <code>doc-view-mode</code>. It require ghostscript to convert the pdf files. On my OSX 10.8 laptop, I use <code>ghostscript 9.07 (2013-02-14)</code> version, installed by</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line">brew install ghostscript
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<h3 id="screen-shot">screen shot</h3>
-
-<p><img src="/images/emacs/emacs-docview.png" alt="Screen shot" /></p>
-
-<h3 id="usage-and-configs">Usage and configs</h3>
-
-<p>Using docview is pretty simple, just use your emacs to open the file and it’s done. I added two keyboard macro to help me navigate the PDF.</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-</pre></td><td class="code"><pre><code class="scm"><span class="line"><span class="c1">;; view docs</span>
-</span><span class="line"><span class="p">(</span><span class="nf">fset</span> <span class="ss">&#39;doc-prev</span> <span class="s">&quot;\C-xo\C-x[\C-xo&quot;</span><span class="p">)</span>
-</span><span class="line"><span class="p">(</span><span class="nf">fset</span> <span class="ss">&#39;doc-next</span> <span class="s">&quot;\C-xo\C-x]\C-xo&quot;</span><span class="p">)</span>
-</span><span class="line"><span class="p">(</span><span class="nf">global-set-key</span> <span class="p">(</span><span class="nf">kbd</span> <span class="s">&quot;M-[&quot;</span><span class="p">)</span> <span class="ss">&#39;doc-prev</span><span class="p">)</span>
-</span><span class="line"><span class="p">(</span><span class="nf">global-set-key</span> <span class="p">(</span><span class="nf">kbd</span> <span class="s">&quot;M-]&quot;</span><span class="p">)</span> <span class="ss">&#39;doc-next</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>The keybindings is only for two windows layout. You can use <code>M-[</code> or <code>M-]</code> to navigate the pages while your cursor is in another window. So that you can write your notes and navigate without leaving your notes! Pretty neat, right?</p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2013/05/20/emacs-w3m/">Emacs W3m</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-05-20T21:18:00-07:00" pubdate data-updated="true">May 20<span>th</span>, 2013</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>This year I switched from vim to emacs. The reason is quite simple, I want to try different things, that’s all. Emacs is a highly configurable editor that you can use it to read emails, chat on irc, read pdf files, or whatever you can imagine. One of the most useful plugin is using <code>emacs-w3m</code> to browse websites.</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2013/05/20/emacs-w3m/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -616,6 +595,14 @@ MathJax.Hub.Config({
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-2/">Process Small Files on Hadoop using CombineFileInputFormat (2)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-1/">Process Small Files on Hadoop using CombineFileInputFormat (1)</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2013/08/29/my-emacs-setting-on-servers/">my emacs setting on servers</a>
@@ -647,14 +634,6 @@ MathJax.Hub.Config({
     
       <li class="post">
         <a href="/blog/2013/05/21/libsvm-on-mac-osx/">LibSVM on Mac OSX</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/05/20/emacs-and-pdf/">Emacs and PDF</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/05/20/emacs-w3m/">Emacs W3m</a>
       </li>
     
   </ul>

@@ -1,0 +1,530 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Process Small Files on Hadoop using CombineFileInputFormat (2) - Carpe diem (Felix's blog)</title>
+  <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
+
+  
+  <meta name="description" content="Followed the previous article, in this post I ran several benchmarks and tuned the performance from 3 hours 34 minutes to 6 minutes 8 seconds! &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://www.idryman.org/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-2/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Carpe diem (Felix's blog)" type="application/atom+xml">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- mathjax config similar to math.stackexchange -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/HTML-CSS"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-23425996-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <!--div id="logo">
+  	<div id="logoLeft">{</div>
+  	<div id="logoText">mob</div>
+  	<div id="logoRight">}</div>
+  	<div class="clear"></div>
+  </div-->
+  <h1><a href="/">Carpe diem (Felix's blog)</a></h1>
+  
+    <h2>I am a happy developer</h2>
+  
+  <div class="clear"></div>
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:www.idryman.org" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about-me">About Me</a></li>
+  <li><a href="http://idryman.tumblr.com/">Drawings</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      
+        <h1 class="entry-title">Process Small Files on Hadoop Using CombineFileInputFormat (2)</h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-09-22T18:41:00-07:00" pubdate data-updated="true">Sep 22<span>nd</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Followed the previous article, in this post I ran several benchmarks and tuned the performance from 3 hours 34 minutes to 6 minutes 8 seconds!</p>
+
+<!--more-->
+
+<h2 id="original-job-without-any-tuning">Original job without any tuning</h2>
+
+<ul>
+  <li><code>job_201308111005_0317</code></li>
+  <li>NumTasks: 9790</li>
+  <li>Reuse JVM: false</li>
+  <li>mean complete time: 9-Sep-2013 10:08:47 (17sec)</li>
+  <li>Finished in: 3hrs, 34mins, 26sec</li>
+</ul>
+
+<p>We had 9790 files to process, and the total size of the files is 53 GB. Note that for every task it still took 17 seconds to process the file.</p>
+
+<h2 id="using-combinefileinputformat-without-setting-the-maxsplitsize">Using CombineFileInputFormat without setting the MaxSplitSize</h2>
+
+<ul>
+  <li><code>job_201308111005_0330</code></li>
+  <li>NumTasks: 1</li>
+  <li>Reuse JVM: false</li>
+</ul>
+
+<p>In this benchmark I didn’t set the <code>MaxSplitSize</code> in <code>CFInputFormat.java</code>, and thus Hadoop merge all the files into one super big task.
+After running this task for 15 minutes, hadoop killed it. Maybe its a timeout issue, I didn’t dig into this.
+The start and the end of the task logs look like this:</p>
+
+<pre><code>13/09/09 16:17:29 INFO mapred.JobClient:  map 0% reduce 0%
+13/09/09 16:32:45 INFO mapred.JobClient:  map 40% reduce 0%
+ 
+13/09/09 16:33:02 INFO mapred.JobClient: Task Id : attempt_201308111005_0330_m_000000_0, Status : FAILED
+java.lang.Throwable: Child Error
+    at org.apache.hadoop.mapred.TaskRunner.run(TaskRunner.java:271)
+    Caused by: java.io.IOException: Task process exit with nonzero status of 255.
+    at org.apache.hadoop.mapred.TaskRunner.run(TaskRunner.java:258)
+</code></pre>
+
+<h2 id="using-combinefileinputformat-with-block-size-64-mb">Using CombineFileInputFormat with block size 64 MB</h2>
+
+<ul>
+  <li><code>job_201308111005_0332</code></li>
+  <li>Reuse JVM = false</li>
+  <li>max split size = 64MB</li>
+  <li>NumTasks: 760</li>
+  <li>mean complete time: 9-Sep-2013 16:55:02 (24sec)</li>
+  <li>Finished in: 23mins, 6sec</li>
+</ul>
+
+<p>After modifying <code>MaxSplitSize</code> the total runtime has reduced to 23 minutes! The total tasks drops from 9790 to 760, about 12 times smaller. The time difference is 9.3 times faster, pretty nice! However, the mean complete time doesn’t scale like other factors. The reason was it’s a big overhead to start JVM over and over again.</p>
+
+<h2 id="using-combinefileinputformat-with-block-size-64mb-and-reuse-jvm">Using CombineFileInputFormat with block size 64MB and reuse JVM</h2>
+
+<p>To reuse the JVM, just set <code>mapred.job.reuse.jvm.tasks</code> to <code>-1</code>. </p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line">  <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">argv</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+</span><span class="line">    <span class="n">Configuration</span> <span class="n">conf</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Configuration</span><span class="o">();</span>
+</span><span class="line">    <span class="n">conf</span><span class="o">.</span><span class="na">setInt</span><span class="o">(</span><span class="s">&quot;mapred.job.reuse.jvm.num.tasks&quot;</span><span class="o">,</span> <span class="o">-</span><span class="mi">1</span><span class="o">);</span>
+</span><span class="line">    <span class="kt">int</span> <span class="n">res</span> <span class="o">=</span> <span class="n">ToolRunner</span><span class="o">.</span><span class="na">run</span><span class="o">(</span><span class="n">conf</span><span class="o">,</span> <span class="k">new</span> <span class="n">HadoopMain</span><span class="o">(),</span> <span class="n">argv</span><span class="o">);</span>
+</span><span class="line">    <span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="n">res</span><span class="o">);</span>
+</span><span class="line">  <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The result is awesome! <strong>6 minutes and 8 seconds</strong>, wow!</p>
+
+<ul>
+  <li><code>job_201308111005_0333</code></li>
+  <li>Reuse JVM = true</li>
+  <li>max split size = 64MB</li>
+  <li>NumTasks: 760</li>
+  <li>mean complete time: 9-Sep-2013 17:30:23 (5sec)</li>
+  <li>Finished in: 6mins, 8sec</li>
+</ul>
+
+<h2 id="use-fileinputformat-and-reuse-jvm">Use FileInputFormat and reuse JVM</h2>
+
+<p>Just curious the performance difference if we only change the JVM parameter:</p>
+
+<ul>
+  <li><code>job_201308111005_0343 </code></li>
+  <li>NumTasks: 9790</li>
+  <li>mean complete time: 10-Sep-2013 17:04:18 (3sec)</li>
+  <li>Reuse JVM = true</li>
+  <li>Finished in: 24mins, 49sec</li>
+</ul>
+
+<h2 id="tuning-performance-over-block-size">Tuning performance over block size</h2>
+
+<p>Let’s jump to the conclusion first: changing the block size doesn’t affect the performance that much, and I found 64 MB is the best size to use. Here are the benchmarks:</p>
+
+<h3 id="mb">512 MB</h3>
+
+<ul>
+  <li><code>job_201308111005_0339</code></li>
+  <li>Reuse JVM = true</li>
+  <li>max split size = 512MB</li>
+  <li>NumTasks: 99</li>
+  <li>mean complete time: 10-Sep-2013 11:55:26 (24sec)</li>
+  <li>Finished in: 7min 13sec</li>
+</ul>
+
+<h3 id="mb-1">128 MB</h3>
+
+<ul>
+  <li><code>job_201308111005_0340</code></li>
+  <li>Reuse JVM = true</li>
+  <li>max split size = 128 MB</li>
+  <li>NumTasks: 341</li>
+  <li>mean complete time: 10-Sep-2013 13:13:20 (9sec)</li>
+  <li>Finished in: 6mins, 41sec</li>
+</ul>
+
+<h1 id="conclusion">Conclusion</h1>
+
+<p>So far the best practice I learned from these benchmarks are:</p>
+
+<ol>
+  <li>Setup the <code>mapred.job.reuse.jvm.num.tasks</code> flag in configuration. This is the easiest tuning to do, and it makes nearly 10 times performance improvement.</li>
+  <li>Write your own <code>CombineFileInputFormat</code> implementation.</li>
+  <li>The block size can be 64 MB or 128 MB, but doesn’t make big difference between the two.</li>
+</ol>
+
+<p>Still, try to model your problems into sequence file or map file in hadoop. HDFS should handle localities with these files automatically.
+What about <code>CFInputFormat</code>? Does it handle locality in HDFS system too?
+I can’t confirm it but I guess sorting the keys based on line offset first then file name also guarantees the locality of assigning data to mapper. When I have time to dig more from HDFS API, I’ll look back to this benchmark and see what can I further tune the program.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-09-22T18:41:00-07:00" pubdate data-updated="true">Sep 22<span>nd</span>, 2013</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/hadoop-/'>Hadoop,</a>, <a class='category' href='/blog/categories/java/'>Java</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-2/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-2/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left articlenav" href="/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-1/" title="Previous Post: Process Small Files on Hadoop using CombineFileInputFormat (1)">&laquo; Process Small Files on Hadoop using CombineFileInputFormat (1)</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-2/">Process Small Files on Hadoop using CombineFileInputFormat (2)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-1/">Process Small Files on Hadoop using CombineFileInputFormat (1)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/29/my-emacs-setting-on-servers/">my emacs setting on servers</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/16/minimal-nodejs-router/">Minimal NodeJS router</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/07/14/writing-java-programs-on-a-remote-server/">Writing java programs on a remote server</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/27/laziness-and-memoization-in-clojure/">Laziness and memoization in Clojure</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/05/31/graphite-on-osx/">Install Graphite on OSX</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/05/29/emacs-loves-ipython-notebook/">Emacs loves iPython Notebook</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/05/25/clojure-bookmarks/">Popular Clojure Projects</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/05/21/libsvm-on-mac-osx/">LibSVM on Mac OSX</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("idryman", 4, true);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/idryman" class="twitter-follow-button" data-show-count="false">Follow @idryman</a>
+  
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - dryman (Felix Ren-Chyan Chern) -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'dryblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.idryman.org/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-2/';
+        var disqus_url = 'http://www.idryman.org/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-2/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+<!--
+hn like button plugin for jekyll/octopress
+Author: dryman (Felix Ren-Chyan Chern)
+
+Inpired from http://hnlike.com/ written by sbashyal
+
+(The MIT License)
+
+Copyright © 2012-2013 Felix Ren-Chyan Chern
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the ‘Software’), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED ‘AS IS’, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+  <script type="text/javascript">
+    (function(){
+      var hn_like = document.createElement('iframe');
+      hn_like.frameborder="no";
+      hn_like.scrolling="no";
+      hn_like.height="28px";
+      hn_like.width="115px";
+      hn_like.src = "http://hnlike.com/upvote.php?link="
+                    + encodeURIComponent(document.location)
+                    + "&title="
+                    + encodeURIComponent("Process Small Files on Hadoop using CombineFileInputFormat (2)");
+      hn_like.innerHTML="iframes not supported by your browser";
+      var twitter = document.getElementsByClassName("twitter-share-button")[0];
+
+      twitter.parentNode.insertBefore(
+        hn_like,
+        twitter
+      );
+    })();
+  </script>
+
+<!-- end of hn like button -->
+
+
+
+
+<script type="text/javascript">
+ $(function() {
+        /* For zebra striping */
+        $("table tr:nth-child(odd)").addClass("odd-row");
+        /* For cell text alignment */
+        $("table td:first-child, table th:first-child").addClass("first");
+        /* For removing the last border */
+        $("table td:last-child, table th:last-child").addClass("last");
+});
+</script>
+
+
+</body>
+</html>

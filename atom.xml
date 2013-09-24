@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2013-08-29T11:43:37-07:00</updated>
+  <updated>2013-09-23T23:07:50-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,585 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Process Small Files on Hadoop using CombineFileInputFormat (2)]]></title>
+    <link href="http://www.idryman.org/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-2/"/>
+    <updated>2013-09-22T18:41:00-07:00</updated>
+    <id>http://www.idryman.org/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-2</id>
+    <content type="html"><![CDATA[<p>Followed the previous article, in this post I ran several benchmarks and tuned the performance from 3 hours 34 minutes to 6 minutes 8 seconds!</p>
+
+<!--more-->
+
+<h2 id="original-job-without-any-tuning">Original job without any tuning</h2>
+
+<ul>
+  <li><code>job_201308111005_0317</code></li>
+  <li>NumTasks: 9790</li>
+  <li>Reuse JVM: false</li>
+  <li>mean complete time: 9-Sep-2013 10:08:47 (17sec)</li>
+  <li>Finished in: 3hrs, 34mins, 26sec</li>
+</ul>
+
+<p>We had 9790 files to process, and the total size of the files is 53 GB. Note that for every task it still took 17 seconds to process the file.</p>
+
+<h2 id="using-combinefileinputformat-without-setting-the-maxsplitsize">Using CombineFileInputFormat without setting the MaxSplitSize</h2>
+
+<ul>
+  <li><code>job_201308111005_0330</code></li>
+  <li>NumTasks: 1</li>
+  <li>Reuse JVM: false</li>
+</ul>
+
+<p>In this benchmark I didn’t set the <code>MaxSplitSize</code> in <code>CFInputFormat.java</code>, and thus Hadoop merge all the files into one super big task.
+After running this task for 15 minutes, hadoop killed it. Maybe its a timeout issue, I didn’t dig into this.
+The start and the end of the task logs look like this:</p>
+
+<pre><code>13/09/09 16:17:29 INFO mapred.JobClient:  map 0% reduce 0%
+13/09/09 16:32:45 INFO mapred.JobClient:  map 40% reduce 0%
+ 
+13/09/09 16:33:02 INFO mapred.JobClient: Task Id : attempt_201308111005_0330_m_000000_0, Status : FAILED
+java.lang.Throwable: Child Error
+    at org.apache.hadoop.mapred.TaskRunner.run(TaskRunner.java:271)
+    Caused by: java.io.IOException: Task process exit with nonzero status of 255.
+    at org.apache.hadoop.mapred.TaskRunner.run(TaskRunner.java:258)
+</code></pre>
+
+<h2 id="using-combinefileinputformat-with-block-size-64-mb">Using CombineFileInputFormat with block size 64 MB</h2>
+
+<ul>
+  <li><code>job_201308111005_0332</code></li>
+  <li>Reuse JVM = false</li>
+  <li>max split size = 64MB</li>
+  <li>NumTasks: 760</li>
+  <li>mean complete time: 9-Sep-2013 16:55:02 (24sec)</li>
+  <li>Finished in: 23mins, 6sec</li>
+</ul>
+
+<p>After modifying <code>MaxSplitSize</code> the total runtime has reduced to 23 minutes! The total tasks drops from 9790 to 760, about 12 times smaller. The time difference is 9.3 times faster, pretty nice! However, the mean complete time doesn’t scale like other factors. The reason was it’s a big overhead to start JVM over and over again.</p>
+
+<h2 id="using-combinefileinputformat-with-block-size-64mb-and-reuse-jvm">Using CombineFileInputFormat with block size 64MB and reuse JVM</h2>
+
+<p>To reuse the JVM, just set <code>mapred.job.reuse.jvm.tasks</code> to <code>-1</code>. </p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line">  <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">argv</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+</span><span class="line">    <span class="n">Configuration</span> <span class="n">conf</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Configuration</span><span class="o">();</span>
+</span><span class="line">    <span class="n">conf</span><span class="o">.</span><span class="na">setInt</span><span class="o">(</span><span class="s">&quot;mapred.job.reuse.jvm.num.tasks&quot;</span><span class="o">,</span> <span class="o">-</span><span class="mi">1</span><span class="o">);</span>
+</span><span class="line">    <span class="kt">int</span> <span class="n">res</span> <span class="o">=</span> <span class="n">ToolRunner</span><span class="o">.</span><span class="na">run</span><span class="o">(</span><span class="n">conf</span><span class="o">,</span> <span class="k">new</span> <span class="n">HadoopMain</span><span class="o">(),</span> <span class="n">argv</span><span class="o">);</span>
+</span><span class="line">    <span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="n">res</span><span class="o">);</span>
+</span><span class="line">  <span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The result is awesome! <strong>6 minutes and 8 seconds</strong>, wow!</p>
+
+<ul>
+  <li><code>job_201308111005_0333</code></li>
+  <li>Reuse JVM = true</li>
+  <li>max split size = 64MB</li>
+  <li>NumTasks: 760</li>
+  <li>mean complete time: 9-Sep-2013 17:30:23 (5sec)</li>
+  <li>Finished in: 6mins, 8sec</li>
+</ul>
+
+<h2 id="use-fileinputformat-and-reuse-jvm">Use FileInputFormat and reuse JVM</h2>
+
+<p>Just curious the performance difference if we only change the JVM parameter:</p>
+
+<ul>
+  <li><code>job_201308111005_0343 </code></li>
+  <li>NumTasks: 9790</li>
+  <li>mean complete time: 10-Sep-2013 17:04:18 (3sec)</li>
+  <li>Reuse JVM = true</li>
+  <li>Finished in: 24mins, 49sec</li>
+</ul>
+
+<h2 id="tuning-performance-over-block-size">Tuning performance over block size</h2>
+
+<p>Let’s jump to the conclusion first: changing the block size doesn’t affect the performance that much, and I found 64 MB is the best size to use. Here are the benchmarks:</p>
+
+<h3 id="mb">512 MB</h3>
+
+<ul>
+  <li><code>job_201308111005_0339</code></li>
+  <li>Reuse JVM = true</li>
+  <li>max split size = 512MB</li>
+  <li>NumTasks: 99</li>
+  <li>mean complete time: 10-Sep-2013 11:55:26 (24sec)</li>
+  <li>Finished in: 7min 13sec</li>
+</ul>
+
+<h3 id="mb-1">128 MB</h3>
+
+<ul>
+  <li><code>job_201308111005_0340</code></li>
+  <li>Reuse JVM = true</li>
+  <li>max split size = 128 MB</li>
+  <li>NumTasks: 341</li>
+  <li>mean complete time: 10-Sep-2013 13:13:20 (9sec)</li>
+  <li>Finished in: 6mins, 41sec</li>
+</ul>
+
+<h1 id="conclusion">Conclusion</h1>
+
+<p>So far the best practice I learned from these benchmarks are:</p>
+
+<ol>
+  <li>Setup the <code>mapred.job.reuse.jvm.num.tasks</code> flag in configuration. This is the easiest tuning to do, and it makes nearly 10 times performance improvement.</li>
+  <li>Write your own <code>CombineFileInputFormat</code> implementation.</li>
+  <li>The block size can be 64 MB or 128 MB, but doesn’t make big difference between the two.</li>
+</ol>
+
+<p>Still, try to model your problems into sequence file or map file in hadoop. HDFS should handle localities with these files automatically.
+What about <code>CFInputFormat</code>? Does it handle locality in HDFS system too?
+I can’t confirm it but I guess sorting the keys based on line offset first then file name also guarantees the locality of assigning data to mapper. When I have time to dig more from HDFS API, I’ll look back to this benchmark and see what can I further tune the program.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Process Small Files on Hadoop using CombineFileInputFormat (1)]]></title>
+    <link href="http://www.idryman.org/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-1/"/>
+    <updated>2013-09-22T14:39:00-07:00</updated>
+    <id>http://www.idryman.org/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-1</id>
+    <content type="html"><![CDATA[<p>Processing small files is an old typical problem in hadoop; On <a href="http://stackoverflow.com/questions/14541759/how-can-i-work-with-large-number-of-small-files-in-hadoop">Stack Overflow</a> it suggested people to use <a href="http://hadoop.apache.org/docs/r1.1.1/api/org/apache/hadoop/mapred/lib/CombineFileInputFormat.html">CombineFileInputFormat</a>,  but I haven’t found a good step-to-step article that teach you how to use it. So, I decided to write one myself.</p>
+
+<!--more-->
+
+<p>From <a href="http://blog.cloudera.com/blog/2009/02/the-small-files-problem/">Cloudera’s blog</a>:</p>
+
+<blockquote>
+  <p>A small file is one which is significantly smaller than the HDFS block size (default 64MB).
+If you’re storing small files, then you probably have lots of them (otherwise you wouldn’t turn to Hadoop),
+and the problem is that HDFS can’t handle lots of files.</p>
+</blockquote>
+
+<p>In my benchmark, just using a custom <code>CombineFileInputFormat</code> can speedup the program from 3 hours to 23 minutes, and after some further tuning, the same task can be run in 6 minutes!</p>
+
+<h2 id="benchmark-setup">Benchmark Setup</h2>
+
+<p>To test the raw performance of different approaches to solve small problems, I setup a map only hadoop job that basically just do grep and perform a small binary search. The binary search part is to generate the reduce side keys that I’ll use in further data processing; it took only a little resource (8MB index) to run, so it does not affect the result of the benchmark.</p>
+
+<p>The data to process is some server log data, 53.1 GB in total. The hadoop clusters consist 6 nodes, using hadoop version 1.1.2. In this benchmark I implemented <code>CombineFileInputFormat</code> to shrink the map jobs; I also tested the difference of reusing JVM or not, and different number of block sizes to combine files.</p>
+
+<h2 id="combinefileinputformat">CombineFileInputFormat</h2>
+
+<p>The code listed here is modified from <a href="https://svn.apache.org/repos/asf/hadoop/common/trunk/hadoop-mapreduce-project/hadoop-mapreduce-examples/src/main/java/org/apache/hadoop/examples/MultiFileWordCount.java">Hadoop example code</a>. To use <code>CombineFileInputFormat</code> you need to implement three classes. The class <code>CombineFileInputFormat</code> is an abstract class with no implementation, so you must create a subclass to support it; we’ll name the subclass <code>CFInputFormat</code>. The subclass will initiate a delegate <code>CFRecordReader</code> that extends <code>RecordReader</code>; this is the code that does the file processing logic. We’ll also need a class for <code>FileLineWritable</code>, which replaces <code>LongWritable</code> normally used as a key to file lines.</p>
+
+<h3 id="cfinputformatjava">CFInputFormat.java</h3>
+
+<p>The <code>CFInputFormat.java</code> doesn’t do much. You implement <code>createRecordReader</code> to pass in the record reader that does the combine file logic, that’s all. Note that you can call <code>setMaxSplitSize</code> in the initializer to control the size of each chunk of files; if you don’t want to split files into half, remember to return <code>false</code> in <code>isSplitable</code> method, which defaults to <code>true</code>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kn">package</span> <span class="n">org</span><span class="o">.</span><span class="na">idryman</span><span class="o">.</span><span class="na">combinefiles</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kn">import</span> <span class="nn">java.io.IOException</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.fs.Path</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.io.Text</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.InputSplit</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.JobContext</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.RecordReader</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.TaskAttemptContext</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.lib.input.CombineFileInputFormat</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.lib.input.CombineFileRecordReader</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.lib.input.CombineFileSplit</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.idryman.combinefiles.CFRecordReader</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.idryman.combinefiles.FileLineWritable</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">CFInputFormat</span> <span class="kd">extends</span> <span class="n">CombineFileInputFormat</span><span class="o">&lt;</span><span class="n">LineOffset</span><span class="o">,</span> <span class="n">Text</span><span class="o">&gt;</span> <span class="o">{</span>
+</span><span class="line">  <span class="kd">public</span> <span class="nf">CFInputFormat</span><span class="o">(){</span>
+</span><span class="line">    <span class="kd">super</span><span class="o">();</span>
+</span><span class="line">    <span class="n">setMaxSplitSize</span><span class="o">(</span><span class="mi">67108864</span><span class="o">);</span> <span class="c1">// 64 MB, default block size on hadoop</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">  <span class="kd">public</span> <span class="n">RecordReader</span><span class="o">&lt;</span><span class="n">FileLineWritable</span><span class="o">,</span> <span class="n">Text</span><span class="o">&gt;</span> <span class="n">createRecordReader</span><span class="o">(</span><span class="n">InputSplit</span> <span class="n">split</span><span class="o">,</span> <span class="n">TaskAttemptContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">{</span>
+</span><span class="line">    <span class="k">return</span> <span class="k">new</span> <span class="n">CombineFileRecordReader</span><span class="o">&lt;</span><span class="n">FileLineWritable</span><span class="o">,</span> <span class="n">Text</span><span class="o">&gt;((</span><span class="n">CombineFileSplit</span><span class="o">)</span><span class="n">split</span><span class="o">,</span> <span class="n">context</span><span class="o">,</span> <span class="n">CFRecordReader</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">  <span class="nd">@Override</span>
+</span><span class="line">  <span class="kd">protected</span> <span class="kt">boolean</span> <span class="nf">isSplitable</span><span class="o">(</span><span class="n">JobContext</span> <span class="n">context</span><span class="o">,</span> <span class="n">Path</span> <span class="n">file</span><span class="o">){</span>
+</span><span class="line">    <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line"><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h3 id="cfrecordreaderjava">CFRecordReader.java</h3>
+
+<p><code>CFRecordReader</code> is a delegate class of <code>CombineFileRecordReader</code>, a built in class that pass each split (typically a whole file in this case) to our class <code>CFRecordReader</code>. When the hadoop job starts, <code>CombineFileRecordReader</code> reads all the file sizes in HDFS that we want it to process, and decides how many splits base on the <code>MaxSplitSize</code> we defined in <code>CFInputFormat</code>. For every split (must be a file, because we set <code>isSplitabe</code> to false), <code>CombineFileRecordReader</code> creates a <code>CFRecrodReader</code> instance via a custom constructor, and pass in <code>CombineFileSplit</code>, context, and index for <code>CFRecordReader</code> to locate the file to process with.</p>
+
+<p>When processing the file, the <code>CFRecordReader</code> creates a <code>FileLineWritable</code> as the key for hadoop mapper class. With each line a <code>FileLineWritable</code> consists the file name and the offset length of that line. The difference between <code>FileLineWritable</code> and the normally used <code>LongWritable</code> in mapper is <code>LongWritable</code> only denote the offset of a line in a file, while <code>FileLineWritable</code> adds the file information into the key.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+<span class="line-number">38</span>
+<span class="line-number">39</span>
+<span class="line-number">40</span>
+<span class="line-number">41</span>
+<span class="line-number">42</span>
+<span class="line-number">43</span>
+<span class="line-number">44</span>
+<span class="line-number">45</span>
+<span class="line-number">46</span>
+<span class="line-number">47</span>
+<span class="line-number">48</span>
+<span class="line-number">49</span>
+<span class="line-number">50</span>
+<span class="line-number">51</span>
+<span class="line-number">52</span>
+<span class="line-number">53</span>
+<span class="line-number">54</span>
+<span class="line-number">55</span>
+<span class="line-number">56</span>
+<span class="line-number">57</span>
+<span class="line-number">58</span>
+<span class="line-number">59</span>
+<span class="line-number">60</span>
+<span class="line-number">61</span>
+<span class="line-number">62</span>
+<span class="line-number">63</span>
+<span class="line-number">64</span>
+<span class="line-number">65</span>
+<span class="line-number">66</span>
+<span class="line-number">67</span>
+<span class="line-number">68</span>
+<span class="line-number">69</span>
+<span class="line-number">70</span>
+<span class="line-number">71</span>
+<span class="line-number">72</span>
+<span class="line-number">73</span>
+<span class="line-number">74</span>
+<span class="line-number">75</span>
+<span class="line-number">76</span>
+<span class="line-number">77</span>
+<span class="line-number">78</span>
+<span class="line-number">79</span>
+<span class="line-number">80</span>
+<span class="line-number">81</span>
+<span class="line-number">82</span>
+<span class="line-number">83</span>
+<span class="line-number">84</span>
+<span class="line-number">85</span>
+<span class="line-number">86</span>
+<span class="line-number">87</span>
+<span class="line-number">88</span>
+<span class="line-number">89</span>
+<span class="line-number">90</span>
+<span class="line-number">91</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kn">package</span> <span class="n">org</span><span class="o">.</span><span class="na">idryman</span><span class="o">.</span><span class="na">combinefiles</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kn">import</span> <span class="nn">java.io.IOException</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.idryman.combinefiles.FileLineWritable</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.fs.FSDataInputStream</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.fs.FileSystem</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.fs.Path</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.io.Text</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.InputSplit</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.RecordReader</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.TaskAttemptContext</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.lib.input.CombineFileSplit</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.util.LineReader</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line">
+</span><span class="line"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">CFRecordReader</span> <span class="kd">extends</span> <span class="n">RecordReader</span><span class="o">&lt;</span><span class="n">FileLineWritable</span><span class="o">,</span> <span class="n">Text</span><span class="o">&gt;{</span>
+</span><span class="line">  <span class="kd">private</span> <span class="kt">long</span> <span class="n">startOffset</span><span class="o">;</span>
+</span><span class="line">  <span class="kd">private</span> <span class="kt">long</span> <span class="n">end</span><span class="o">;</span>
+</span><span class="line">  <span class="kd">private</span> <span class="kt">long</span> <span class="n">pos</span><span class="o">;</span>
+</span><span class="line">  <span class="kd">private</span> <span class="n">FileSystem</span> <span class="n">fs</span><span class="o">;</span>
+</span><span class="line">  <span class="kd">private</span> <span class="n">Path</span> <span class="n">path</span><span class="o">;</span>
+</span><span class="line">  <span class="kd">private</span> <span class="n">FileLineWritable</span> <span class="n">key</span><span class="o">;</span>
+</span><span class="line">  <span class="kd">private</span> <span class="n">Text</span> <span class="n">value</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line">  <span class="kd">private</span> <span class="n">FSDataInputStream</span> <span class="n">fileIn</span><span class="o">;</span>
+</span><span class="line">  <span class="kd">private</span> <span class="n">LineReader</span> <span class="n">reader</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kd">public</span> <span class="nf">CFRecordReader</span><span class="o">(</span><span class="n">CombineFileSplit</span> <span class="n">split</span><span class="o">,</span> <span class="n">TaskAttemptContext</span> <span class="n">context</span><span class="o">,</span> <span class="n">Integer</span> <span class="n">index</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">{</span>
+</span><span class="line">  <span class="k">this</span><span class="o">.</span><span class="na">path</span> <span class="o">=</span> <span class="n">split</span><span class="o">.</span><span class="na">getPath</span><span class="o">(</span><span class="n">index</span><span class="o">);</span>
+</span><span class="line">  <span class="n">fs</span> <span class="o">=</span> <span class="k">this</span><span class="o">.</span><span class="na">path</span><span class="o">.</span><span class="na">getFileSystem</span><span class="o">(</span><span class="n">context</span><span class="o">.</span><span class="na">getConfiguration</span><span class="o">());</span>
+</span><span class="line">  <span class="k">this</span><span class="o">.</span><span class="na">startOffset</span> <span class="o">=</span> <span class="n">split</span><span class="o">.</span><span class="na">getOffset</span><span class="o">(</span><span class="n">index</span><span class="o">);</span>
+</span><span class="line">  <span class="k">this</span><span class="o">.</span><span class="na">end</span> <span class="o">=</span> <span class="n">startOffset</span> <span class="o">+</span> <span class="n">split</span><span class="o">.</span><span class="na">getLength</span><span class="o">(</span><span class="n">index</span><span class="o">);</span>
+</span><span class="line">
+</span><span class="line">  <span class="n">fileIn</span> <span class="o">=</span> <span class="n">fs</span><span class="o">.</span><span class="na">open</span><span class="o">(</span><span class="n">path</span><span class="o">);</span>
+</span><span class="line">  <span class="n">reader</span> <span class="o">=</span> <span class="k">new</span> <span class="n">LineReader</span><span class="o">(</span><span class="n">fileIn</span><span class="o">);</span>
+</span><span class="line">  <span class="k">this</span><span class="o">.</span><span class="na">pos</span> <span class="o">=</span> <span class="n">startOffset</span><span class="o">;</span>
+</span><span class="line"><span class="o">}</span>
+</span><span class="line">
+</span><span class="line"><span class="nd">@Override</span>
+</span><span class="line"><span class="kd">public</span> <span class="kt">void</span> <span class="nf">initialize</span><span class="o">(</span><span class="n">InputSplit</span> <span class="n">arg0</span><span class="o">,</span> <span class="n">TaskAttemptContext</span> <span class="n">arg1</span><span class="o">)</span>
+</span><span class="line">    <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">InterruptedException</span> <span class="o">{</span>
+</span><span class="line">  <span class="c1">// Won&#39;t be called, use custom Constructor</span>
+</span><span class="line">  <span class="c1">// `CFRecordReader(CombineFileSplit split, TaskAttemptContext context, Integer index)`</span>
+</span><span class="line">  <span class="c1">// instead</span>
+</span><span class="line"><span class="o">}</span>
+</span><span class="line">
+</span><span class="line"><span class="nd">@Override</span>
+</span><span class="line"><span class="kd">public</span> <span class="kt">void</span> <span class="nf">close</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{}</span>
+</span><span class="line">
+</span><span class="line"><span class="nd">@Override</span>
+</span><span class="line"><span class="kd">public</span> <span class="kt">float</span> <span class="nf">getProgress</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">{</span>
+</span><span class="line">  <span class="k">if</span> <span class="o">(</span><span class="n">startOffset</span> <span class="o">==</span> <span class="n">end</span><span class="o">)</span> <span class="o">{</span>
+</span><span class="line">    <span class="k">return</span> <span class="mi">0</span><span class="o">;</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">  <span class="k">return</span> <span class="n">Math</span><span class="o">.</span><span class="na">min</span><span class="o">(</span><span class="mf">1.0f</span><span class="o">,</span> <span class="o">(</span><span class="n">pos</span> <span class="o">-</span> <span class="n">startOffset</span><span class="o">)</span> <span class="o">/</span> <span class="o">(</span><span class="kt">float</span><span class="o">)</span> <span class="o">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">startOffset</span><span class="o">));</span>
+</span><span class="line"><span class="o">}</span>
+</span><span class="line">
+</span><span class="line"><span class="nd">@Override</span>
+</span><span class="line"><span class="kd">public</span> <span class="n">FileLineWritable</span> <span class="nf">getCurrentKey</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">InterruptedException</span> <span class="o">{</span>
+</span><span class="line">  <span class="k">return</span> <span class="n">key</span><span class="o">;</span>
+</span><span class="line"><span class="o">}</span>
+</span><span class="line">
+</span><span class="line"><span class="nd">@Override</span>
+</span><span class="line"><span class="kd">public</span> <span class="n">Text</span> <span class="nf">getCurrentValue</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">InterruptedException</span> <span class="o">{</span>
+</span><span class="line">  <span class="k">return</span> <span class="n">value</span><span class="o">;</span>
+</span><span class="line"><span class="o">}</span>
+</span><span class="line">
+</span><span class="line"><span class="nd">@Override</span>
+</span><span class="line"><span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">nextKeyValue</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">{</span>
+</span><span class="line">  <span class="k">if</span> <span class="o">(</span><span class="n">key</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class="line">    <span class="n">key</span> <span class="o">=</span> <span class="k">new</span> <span class="n">FileLineWritable</span><span class="o">();</span>
+</span><span class="line">    <span class="n">key</span><span class="o">.</span><span class="na">fileName</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="na">getName</span><span class="o">();</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">  <span class="n">key</span><span class="o">.</span><span class="na">offset</span> <span class="o">=</span> <span class="n">pos</span><span class="o">;</span>
+</span><span class="line">  <span class="k">if</span> <span class="o">(</span><span class="n">value</span> <span class="o">==</span> <span class="kc">null</span><span class="o">){</span>
+</span><span class="line">    <span class="n">value</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Text</span><span class="o">();</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">  <span class="kt">int</span> <span class="n">newSize</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+</span><span class="line">  <span class="k">if</span> <span class="o">(</span><span class="n">pos</span> <span class="o">&lt;</span> <span class="n">end</span><span class="o">)</span> <span class="o">{</span>
+</span><span class="line">    <span class="n">newSize</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="na">readLine</span><span class="o">(</span><span class="n">value</span><span class="o">);</span>
+</span><span class="line">    <span class="n">pos</span> <span class="o">+=</span> <span class="n">newSize</span><span class="o">;</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">  <span class="k">if</span> <span class="o">(</span><span class="n">newSize</span> <span class="o">==</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+</span><span class="line">    <span class="n">key</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class="line">    <span class="n">value</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class="line">    <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+</span><span class="line">  <span class="o">}</span> <span class="k">else</span><span class="o">{</span>
+</span><span class="line">    <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line"><span class="o">}</span>
+</span><span class="line"><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The reason to use a custom constructor
+is not documented anywhere in hadoop api nor document. You can only find it in <a href="http://grepcode.com/file/repo1.maven.org/maven2/com.ning/metrics.collector/1.2.1/org/apache/hadoop/mapreduce/lib/input/CombineFileRecordReader.java#40">hadoop source code</a>, line 40:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line">   <span class="kd">static</span> <span class="kd">final</span> <span class="n">Class</span> <span class="o">[]</span> <span class="n">constructorSignature</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Class</span> <span class="o">[]</span>
+</span><span class="line">                                          <span class="o">{</span><span class="n">CombineFileSplit</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+</span><span class="line">                                           <span class="n">TaskAttemptContext</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+</span><span class="line">                                           <span class="n">Integer</span><span class="o">.</span><span class="na">class</span><span class="o">};</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h3 id="filelinewritablejava">FileLineWritable.java</h3>
+
+<p>This file is very simple: store the file name and offset, and override the <code>compareTo</code> method to compare the file name first, then compare the offset.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+<span class="line-number">38</span>
+<span class="line-number">39</span>
+<span class="line-number">40</span>
+<span class="line-number">41</span>
+<span class="line-number">42</span>
+<span class="line-number">43</span>
+<span class="line-number">44</span>
+<span class="line-number">45</span>
+<span class="line-number">46</span>
+<span class="line-number">47</span>
+<span class="line-number">48</span>
+<span class="line-number">49</span>
+<span class="line-number">50</span>
+<span class="line-number">51</span>
+<span class="line-number">52</span>
+<span class="line-number">53</span>
+<span class="line-number">54</span>
+<span class="line-number">55</span>
+<span class="line-number">56</span>
+<span class="line-number">57</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kn">package</span> <span class="n">org</span><span class="o">.</span><span class="na">idryman</span><span class="o">.</span><span class="na">combinefiles</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kn">import</span> <span class="nn">java.io.DataInput</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">java.io.DataOutput</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">java.io.IOException</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.io.Text</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.io.WritableComparable</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">FileLineWritable</span> <span class="kd">implements</span> <span class="n">WritableComparable</span><span class="o">&lt;</span><span class="n">FileLineWritable</span><span class="o">&gt;{</span>
+</span><span class="line">  <span class="kd">public</span> <span class="kt">long</span> <span class="n">offset</span><span class="o">;</span>
+</span><span class="line">  <span class="kd">public</span> <span class="n">String</span> <span class="n">fileName</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line">  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">readFields</span><span class="o">(</span><span class="n">DataInput</span> <span class="n">in</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+</span><span class="line">    <span class="k">this</span><span class="o">.</span><span class="na">offset</span> <span class="o">=</span> <span class="n">in</span><span class="o">.</span><span class="na">readLong</span><span class="o">();</span>
+</span><span class="line">    <span class="k">this</span><span class="o">.</span><span class="na">fileName</span> <span class="o">=</span> <span class="n">Text</span><span class="o">.</span><span class="na">readString</span><span class="o">(</span><span class="n">in</span><span class="o">);</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">
+</span><span class="line">  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">write</span><span class="o">(</span><span class="n">DataOutput</span> <span class="n">out</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+</span><span class="line">    <span class="n">out</span><span class="o">.</span><span class="na">writeLong</span><span class="o">(</span><span class="n">offset</span><span class="o">);</span>
+</span><span class="line">    <span class="n">Text</span><span class="o">.</span><span class="na">writeString</span><span class="o">(</span><span class="n">out</span><span class="o">,</span> <span class="n">fileName</span><span class="o">);</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">
+</span><span class="line">  <span class="kd">public</span> <span class="kt">int</span> <span class="nf">compareTo</span><span class="o">(</span><span class="n">FileLineWritable</span> <span class="n">that</span><span class="o">)</span> <span class="o">{</span>
+</span><span class="line">    <span class="kt">int</span> <span class="n">cmp</span> <span class="o">=</span> <span class="k">this</span><span class="o">.</span><span class="na">fileName</span><span class="o">.</span><span class="na">compareTo</span><span class="o">(</span><span class="n">that</span><span class="o">.</span><span class="na">fileName</span><span class="o">);</span>
+</span><span class="line">    <span class="k">if</span> <span class="o">(</span><span class="n">cmp</span> <span class="o">!=</span> <span class="mi">0</span><span class="o">)</span> <span class="k">return</span> <span class="n">cmp</span><span class="o">;</span>
+</span><span class="line">    <span class="k">return</span> <span class="o">(</span><span class="kt">int</span><span class="o">)</span><span class="n">Math</span><span class="o">.</span><span class="na">signum</span><span class="o">((</span><span class="kt">double</span><span class="o">)(</span><span class="k">this</span><span class="o">.</span><span class="na">offset</span> <span class="o">-</span> <span class="n">that</span><span class="o">.</span><span class="na">offset</span><span class="o">));</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">
+</span><span class="line">  <span class="nd">@Override</span>
+</span><span class="line">  <span class="kd">public</span> <span class="kt">int</span> <span class="nf">hashCode</span><span class="o">()</span> <span class="o">{</span>               <span class="c1">// generated hashCode()</span>
+</span><span class="line">    <span class="kd">final</span> <span class="kt">int</span> <span class="n">prime</span> <span class="o">=</span> <span class="mi">31</span><span class="o">;</span>
+</span><span class="line">    <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span>
+</span><span class="line">    <span class="n">result</span> <span class="o">=</span> <span class="n">prime</span> <span class="o">*</span> <span class="n">result</span> <span class="o">+</span> <span class="o">((</span><span class="n">fileName</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="n">fileName</span><span class="o">.</span><span class="na">hashCode</span><span class="o">());</span>
+</span><span class="line">    <span class="n">result</span> <span class="o">=</span> <span class="n">prime</span> <span class="o">*</span> <span class="n">result</span> <span class="o">+</span> <span class="o">(</span><span class="kt">int</span><span class="o">)</span> <span class="o">(</span><span class="n">offset</span> <span class="o">^</span> <span class="o">(</span><span class="n">offset</span> <span class="o">&gt;&gt;&gt;</span> <span class="mi">32</span><span class="o">));</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">result</span><span class="o">;</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">
+</span><span class="line">  <span class="nd">@Override</span>
+</span><span class="line">  <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">equals</span><span class="o">(</span><span class="n">Object</span> <span class="n">obj</span><span class="o">)</span> <span class="o">{</span>  <span class="c1">// generated equals()</span>
+</span><span class="line">    <span class="k">if</span> <span class="o">(</span><span class="k">this</span> <span class="o">==</span> <span class="n">obj</span><span class="o">)</span>
+</span><span class="line">      <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+</span><span class="line">    <span class="k">if</span> <span class="o">(</span><span class="n">obj</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span>
+</span><span class="line">      <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+</span><span class="line">    <span class="k">if</span> <span class="o">(</span><span class="n">getClass</span><span class="o">()</span> <span class="o">!=</span> <span class="n">obj</span><span class="o">.</span><span class="na">getClass</span><span class="o">())</span>
+</span><span class="line">      <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+</span><span class="line">    <span class="n">LineOffset</span> <span class="n">other</span> <span class="o">=</span> <span class="o">(</span><span class="n">LineOffset</span><span class="o">)</span> <span class="n">obj</span><span class="o">;</span>
+</span><span class="line">    <span class="k">if</span> <span class="o">(</span><span class="n">fileName</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class="line">      <span class="k">if</span> <span class="o">(</span><span class="n">other</span><span class="o">.</span><span class="na">fileName</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span>
+</span><span class="line">        <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+</span><span class="line">    <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">(!</span><span class="n">fileName</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">other</span><span class="o">.</span><span class="na">fileName</span><span class="o">))</span>
+</span><span class="line">      <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+</span><span class="line">    <span class="k">if</span> <span class="o">(</span><span class="n">offset</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="na">offset</span><span class="o">)</span>
+</span><span class="line">      <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+</span><span class="line">    <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line"><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="job-setup">job setup</h2>
+
+<p>Finally is the job setup for hadoop cluster to run. We just need to assign the classes to job:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.Job</span><span class="o">;</span>
+</span><span class="line"><span class="c1">// standard hadoop conf</span>
+</span><span class="line"><span class="n">Job</span> <span class="n">job</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Job</span><span class="o">(</span><span class="n">getConf</span><span class="o">());</span>
+</span><span class="line"><span class="n">job</span><span class="o">.</span><span class="na">setInputFormatClass</span><span class="o">(</span><span class="n">CFInputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</span><span class="line"><span class="n">job</span><span class="o">.</span><span class="na">setMapperClass</span><span class="o">(</span><span class="n">MyMapper</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</span><span class="line"><span class="n">job</span><span class="o">.</span><span class="na">setNumReduceTasks</span><span class="o">(</span><span class="mi">0</span><span class="o">);</span> <span class="c1">// map only</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The benchmark result is in the next post.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[my emacs setting on servers]]></title>
@@ -3078,703 +3657,6 @@ descriptor-&gt;layout: 0x0 '(null)'
   <li><a href="http://lldb.llvm.org/python-reference.html">lldb python references</a></li>
   <li><a href="http://www.informit.com/articles/article.aspx?p=1749597&amp;seqNum=12">Big Nerd Ranch: Advanced Mac OSX Programming</a></li>
 </ul>
-
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[C/ObjC block byref internals]]></title>
-    <link href="http://www.idryman.org/blog/2012/09/29/c-objc-block-byref-internals/"/>
-    <updated>2012-09-29T15:21:00-07:00</updated>
-    <id>http://www.idryman.org/blog/2012/09/29/c-objc-block-byref-internals</id>
-    <content type="html"><![CDATA[<p>In the last post, I mentioned that <code>__block</code> variable (here we named it block
-byref) will be retained if multiple blocks referenced it. Here are some sample
-code to show how runtime deals with reference counts.</p>
-
-<!-- more -->
-
-<p>In order to <em>move</em> the <code>__block</code> variable to the heap, the compiler must rewrite
-access to such a variable to be indirect through the structures forwarding
-pointer.  For example:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-</pre></td><td class="code"><pre><code class="c"><span class="line">    <span class="kt">int</span> <span class="n">__block</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>
-</span><span class="line">    <span class="n">i</span> <span class="o">=</span> <span class="mi">11</span><span class="p">;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>would be rewritten to be:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-</pre></td><td class="code"><pre><code class="c"><span class="line">    <span class="k">struct</span> <span class="n">_block_byref_i</span> <span class="p">{</span>
-</span><span class="line">      <span class="kt">void</span> <span class="o">*</span><span class="n">isa</span><span class="p">;</span>
-</span><span class="line">      <span class="k">struct</span> <span class="n">_block_byref_i</span> <span class="o">*</span><span class="n">forwarding</span><span class="p">;</span>
-</span><span class="line">      <span class="kt">int</span> <span class="n">flags</span><span class="p">;</span>   <span class="c1">//refcount;</span>
-</span><span class="line">      <span class="kt">int</span> <span class="n">size</span><span class="p">;</span>
-</span><span class="line">      <span class="kt">int</span> <span class="n">captured_i</span><span class="p">;</span>
-</span><span class="line">    <span class="p">}</span> <span class="n">i</span> <span class="o">=</span> <span class="p">{</span> <span class="nb">NULL</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="k">struct</span> <span class="n">_block_byref_i</span><span class="p">),</span> <span class="mi">10</span> <span class="p">};</span>
-</span><span class="line">
-</span><span class="line">    <span class="n">i</span><span class="p">.</span><span class="n">forwarding</span><span class="o">-&gt;</span><span class="n">captured_i</span> <span class="o">=</span> <span class="mi">11</span><span class="p">;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<h2 id="print-runtime-information">Print runtime information</h2>
-
-<p>As long as we know how block byref is structured, we can access the memory and
-dump it with internal function <code>_Block_byref_dump</code>.</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>more_curious.c </span><a href="https://github.com/dryman/C-ObjC-block-quiz/blob/master/more_curious.c">source</a></figcaption> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-<span class="line-number">16</span>
-<span class="line-number">17</span>
-<span class="line-number">18</span>
-<span class="line-number">19</span>
-<span class="line-number">20</span>
-<span class="line-number">21</span>
-<span class="line-number">22</span>
-<span class="line-number">23</span>
-<span class="line-number">24</span>
-<span class="line-number">25</span>
-<span class="line-number">26</span>
-<span class="line-number">27</span>
-<span class="line-number">28</span>
-<span class="line-number">29</span>
-<span class="line-number">30</span>
-<span class="line-number">31</span>
-<span class="line-number">32</span>
-<span class="line-number">33</span>
-<span class="line-number">34</span>
-<span class="line-number">35</span>
-<span class="line-number">36</span>
-<span class="line-number">37</span>
-<span class="line-number">38</span>
-<span class="line-number">39</span>
-<span class="line-number">40</span>
-<span class="line-number">41</span>
-<span class="line-number">42</span>
-<span class="line-number">43</span>
-<span class="line-number">44</span>
-<span class="line-number">45</span>
-<span class="line-number">46</span>
-<span class="line-number">47</span>
-<span class="line-number">48</span>
-<span class="line-number">49</span>
-<span class="line-number">50</span>
-<span class="line-number">51</span>
-<span class="line-number">52</span>
-<span class="line-number">53</span>
-<span class="line-number">54</span>
-<span class="line-number">55</span>
-<span class="line-number">56</span>
-<span class="line-number">57</span>
-<span class="line-number">58</span>
-<span class="line-number">59</span>
-</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="cm">/*</span>
-</span><span class="line"><span class="cm"> * clang -Wall -fblocks -framework Foundation more_curious.c -o more_curious</span>
-</span><span class="line"><span class="cm"> */</span>
-</span><span class="line"><span class="cp">#include &lt;stdio.h&gt;</span>
-</span><span class="line"><span class="cp">#include &lt;Block.h&gt;</span>
-</span><span class="line">
-</span><span class="line"><span class="k">struct</span> <span class="n">Block_byref</span> <span class="p">{</span>
-</span><span class="line">    <span class="kt">void</span> <span class="o">*</span><span class="n">isa</span><span class="p">;</span>
-</span><span class="line">    <span class="k">struct</span> <span class="n">Block_byref</span> <span class="o">*</span><span class="n">forwarding</span><span class="p">;</span>
-</span><span class="line">    <span class="kt">int</span> <span class="n">flags</span><span class="p">;</span> <span class="cm">/* refcount; */</span>
-</span><span class="line">    <span class="kt">int</span> <span class="n">size</span><span class="p">;</span>
-</span><span class="line">    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">byref_keep</span><span class="p">)(</span><span class="k">struct</span> <span class="n">Block_byref</span> <span class="o">*</span><span class="n">dst</span><span class="p">,</span> <span class="k">struct</span> <span class="n">Block_byref</span> <span class="o">*</span><span class="n">src</span><span class="p">);</span>
-</span><span class="line">    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">byref_destroy</span><span class="p">)(</span><span class="k">struct</span> <span class="n">Block_byref</span> <span class="o">*</span><span class="p">);</span>
-</span><span class="line">    <span class="cm">/* long shared[0]; */</span>
-</span><span class="line"><span class="p">};</span>
-</span><span class="line">
-</span><span class="line"><span class="k">static</span> <span class="kr">__inline</span> <span class="k">struct</span> <span class="n">Block_byref</span><span class="o">*</span> <span class="nf">derefBlockVar</span><span class="p">(</span><span class="kt">char</span><span class="o">*</span> <span class="n">src</span><span class="p">)</span>
-</span><span class="line"><span class="p">{</span>
-</span><span class="line">    <span class="k">return</span> <span class="p">(</span><span class="k">struct</span> <span class="n">Block_byref</span><span class="o">*</span><span class="p">)</span> <span class="p">(</span><span class="n">src</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="k">sizeof</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">));</span>
-</span><span class="line"><span class="p">}</span>
-</span><span class="line">
-</span><span class="line"><span class="k">extern</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">_Block_dump</span><span class="p">(</span><span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">block</span><span class="p">);</span>
-</span><span class="line"><span class="k">extern</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">_Block_byref_dump</span><span class="p">(</span><span class="k">struct</span> <span class="n">Block_byref</span> <span class="o">*</span><span class="n">src</span><span class="p">);</span>
-</span><span class="line">
-</span><span class="line">
-</span><span class="line">
-</span><span class="line"><span class="k">typedef</span> <span class="kt">void</span><span class="p">(</span><span class="o">^</span><span class="n">BoringBlock</span><span class="p">)(</span><span class="kt">void</span><span class="p">);</span>
-</span><span class="line"><span class="kt">void</span> <span class="p">(</span><span class="o">^</span><span class="n">boringBlock</span><span class="p">)(</span><span class="kt">void</span><span class="p">);</span>
-</span><span class="line">
-</span><span class="line"><span class="n">BoringBlock</span> <span class="nf">blockRefCountTest</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
-</span><span class="line"><span class="p">{</span>
-</span><span class="line">    <span class="n">__block</span> <span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-</span><span class="line">
-</span><span class="line">    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Before local block:</span><span class="se">\n</span><span class="s">%s</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">,</span><span class="n">_Block_byref_dump</span><span class="p">(</span><span class="n">derefBlockVar</span><span class="p">((</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">x</span><span class="p">)));</span>
-</span><span class="line">    <span class="n">BoringBlock</span> <span class="n">localBlock</span> <span class="o">=</span> <span class="o">^</span><span class="p">{</span>
-</span><span class="line">        <span class="n">x</span><span class="o">++</span><span class="p">;</span>
-</span><span class="line">        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Execute block:</span><span class="se">\n</span><span class="s">%s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="n">_Block_byref_dump</span><span class="p">(</span><span class="n">derefBlockVar</span><span class="p">((</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">x</span><span class="p">)));</span>
-</span><span class="line">        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;x is %d, &amp;x is %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">x</span><span class="p">);</span>
-</span><span class="line">    <span class="p">};</span>
-</span><span class="line">    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;After local block generated:</span><span class="se">\n</span><span class="s">%s</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">,</span><span class="n">_Block_byref_dump</span><span class="p">(</span><span class="n">derefBlockVar</span><span class="p">((</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">x</span><span class="p">)));</span>
-</span><span class="line">
-</span><span class="line">    <span class="n">boringBlock</span> <span class="o">=</span> <span class="n">Block_copy</span><span class="p">(</span><span class="n">localBlock</span><span class="p">);</span>
-</span><span class="line">    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;After first block copy:</span><span class="se">\n</span><span class="s">%s</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">,</span><span class="n">_Block_byref_dump</span><span class="p">(</span><span class="n">derefBlockVar</span><span class="p">((</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">x</span><span class="p">)));</span>
-</span><span class="line">
-</span><span class="line">    <span class="n">BoringBlock</span> <span class="n">retBlock</span> <span class="o">=</span> <span class="n">Block_copy</span><span class="p">(</span><span class="n">localBlock</span><span class="p">);</span>
-</span><span class="line">    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;After second block copy:</span><span class="se">\n</span><span class="s">%s</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">,</span><span class="n">_Block_byref_dump</span><span class="p">(</span><span class="n">derefBlockVar</span><span class="p">((</span><span class="kt">char</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">x</span><span class="p">)));</span>
-</span><span class="line">    <span class="k">return</span> <span class="n">retBlock</span><span class="p">;</span>
-</span><span class="line"><span class="p">}</span>
-</span><span class="line">
-</span><span class="line"><span class="kt">int</span> <span class="nf">main</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span>
-</span><span class="line"><span class="p">{</span>
-</span><span class="line">    <span class="n">BoringBlock</span> <span class="n">retBlock</span> <span class="o">=</span> <span class="n">blockRefCountTest</span><span class="p">();</span>
-</span><span class="line">    <span class="n">boringBlock</span><span class="p">();</span>
-</span><span class="line">    <span class="n">Block_release</span><span class="p">(</span><span class="n">boringBlock</span><span class="p">);</span>
-</span><span class="line">    <span class="n">retBlock</span><span class="p">();</span>
-</span><span class="line">    <span class="n">Block_release</span><span class="p">(</span><span class="n">retBlock</span><span class="p">);</span>
-</span><span class="line">
-</span><span class="line">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-</span><span class="line"><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>The execution result is</p>
-
-<pre><code>$ ./more_curious 
-Before local block:
-byref data block 0x7fff6e8034f0 contents:
-  forwarding: 0x7fff6e8034f0
-  flags: 0x0
-  size: 32
-
-
-After local block generated:
-byref data block 0x7fff6e8034f0 contents:
-  forwarding: 0x7fff6e8034f0
-  flags: 0x0
-  size: 32
-
-
-After first block copy:
-byref data block 0x7fc191c13f60 contents:
-  forwarding: 0x7fc191c13f60
-  flags: 0x1000004
-  size: 32
-
-
-After second block copy:
-byref data block 0x7fc191c13f60 contents:
-  forwarding: 0x7fc191c13f60
-  flags: 0x1000006
-  size: 32
-
-
-Execute block:
-byref data block 0x7fc191c13f60 contents:
-  forwarding: 0x7fc191c13f60
-  flags: 0x1000004
-  size: 32
-
-x is 2, &amp;x is 0x7fc191c13f78
-Execute block:
-byref data block 0x7fc191c13f60 contents:
-  forwarding: 0x7fc191c13f60
-  flags: 0x1000002
-  size: 32
-
-x is 3, &amp;x is 0x7fc191c13f78
-</code></pre>
-
-<h2 id="what-does-it-mean">What does it mean?</h2>
-
-<p>We can find some interesting things in this log:</p>
-
-<ol>
-  <li>Block byref flags and address doesn’t change until first copy.</li>
-  <li>After copy, the flag becomes <code>0x1000004</code>. There’s a <code>(1 &lt;&lt; 24)</code> flag in the
-front.</li>
-  <li>Block releases does decrease flag number in times of 2.</li>
-</ol>
-
-<p>The <code>(1 &lt;&lt; 24)</code> flag (the number one in <code>0x100xxxxx</code>) means <code>BLOCK_NEEDS_FREE</code>
-in this <code>enum</code>:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>Block_private.h </span><a href="http://opensource.apple.com/source/libclosure/libclosure-38/Block_private.h">source </a></figcaption> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="k">enum</span> <span class="p">{</span>
-</span><span class="line">    <span class="n">BLOCK_REFCOUNT_MASK</span> <span class="o">=</span>     <span class="p">(</span><span class="mh">0xffff</span><span class="p">),</span>
-</span><span class="line">    <span class="n">BLOCK_NEEDS_FREE</span> <span class="o">=</span>        <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">24</span><span class="p">),</span>
-</span><span class="line">    <span class="n">BLOCK_HAS_COPY_DISPOSE</span> <span class="o">=</span>  <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">25</span><span class="p">),</span>
-</span><span class="line">    <span class="n">BLOCK_HAS_CTOR</span> <span class="o">=</span>          <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">26</span><span class="p">),</span> <span class="cm">/* Helpers have C++ code. */</span>
-</span><span class="line">    <span class="n">BLOCK_IS_GC</span> <span class="o">=</span>             <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">27</span><span class="p">),</span>
-</span><span class="line">    <span class="n">BLOCK_IS_GLOBAL</span> <span class="o">=</span>         <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">28</span><span class="p">),</span>
-</span><span class="line">    <span class="n">BLOCK_HAS_DESCRIPTOR</span> <span class="o">=</span>    <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">29</span><span class="p">)</span>
-</span><span class="line"><span class="p">};</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>So, flag changes until first copy makes sense, because block byref doesn’t need
-free until it is copied to heap.</p>
-
-<p>The reference count is actually taken out from flags like so:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-</pre></td><td class="code"><pre><code class="c"><span class="line">    <span class="n">refcount</span> <span class="o">=</span> <span class="n">shared_struct</span><span class="o">-&gt;</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="n">BLOCK_REFCOUNT_MASK</span><span class="p">;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>I didn’t find out why reference count is in times of two. The actual code that
-increase and decrease reference count is this:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>runtime.c </span><a href="http://opensource.apple.com/source/libclosure/libclosure-38/runtime.c">source </a></figcaption> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-<span class="line-number">16</span>
-<span class="line-number">17</span>
-<span class="line-number">18</span>
-<span class="line-number">19</span>
-<span class="line-number">20</span>
-<span class="line-number">21</span>
-<span class="line-number">22</span>
-<span class="line-number">23</span>
-<span class="line-number">24</span>
-<span class="line-number">25</span>
-<span class="line-number">26</span>
-</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="k">static</span> <span class="kt">int</span> <span class="nf">latching_incr_int</span><span class="p">(</span><span class="kt">int</span> <span class="o">*</span><span class="n">where</span><span class="p">)</span> <span class="p">{</span>
-</span><span class="line">    <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
-</span><span class="line">        <span class="kt">int</span> <span class="n">old_value</span> <span class="o">=</span> <span class="o">*</span><span class="p">(</span><span class="k">volatile</span> <span class="kt">int</span> <span class="o">*</span><span class="p">)</span><span class="n">where</span><span class="p">;</span>
-</span><span class="line">        <span class="k">if</span> <span class="p">((</span><span class="n">old_value</span> <span class="o">&amp;</span> <span class="n">BLOCK_REFCOUNT_MASK</span><span class="p">)</span> <span class="o">==</span> <span class="n">BLOCK_REFCOUNT_MASK</span><span class="p">)</span> <span class="p">{</span>
-</span><span class="line">            <span class="k">return</span> <span class="n">BLOCK_REFCOUNT_MASK</span><span class="p">;</span>
-</span><span class="line">        <span class="p">}</span>
-</span><span class="line">        <span class="k">if</span> <span class="p">(</span><span class="n">OSAtomicCompareAndSwapInt</span><span class="p">(</span><span class="n">old_value</span><span class="p">,</span> <span class="n">old_value</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="k">volatile</span> <span class="kt">int</span> <span class="o">*</span><span class="p">)</span><span class="n">where</span><span class="p">))</span> <span class="p">{</span>
-</span><span class="line">            <span class="k">return</span> <span class="n">old_value</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span>
-</span><span class="line">        <span class="p">}</span>
-</span><span class="line">    <span class="p">}</span>
-</span><span class="line"><span class="p">}</span>
-</span><span class="line">
-</span><span class="line"><span class="k">static</span> <span class="kt">int</span> <span class="nf">latching_decr_int</span><span class="p">(</span><span class="kt">int</span> <span class="o">*</span><span class="n">where</span><span class="p">)</span> <span class="p">{</span>
-</span><span class="line">    <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
-</span><span class="line">        <span class="kt">int</span> <span class="n">old_value</span> <span class="o">=</span> <span class="o">*</span><span class="p">(</span><span class="k">volatile</span> <span class="kt">int</span> <span class="o">*</span><span class="p">)</span><span class="n">where</span><span class="p">;</span>
-</span><span class="line">        <span class="k">if</span> <span class="p">((</span><span class="n">old_value</span> <span class="o">&amp;</span> <span class="n">BLOCK_REFCOUNT_MASK</span><span class="p">)</span> <span class="o">==</span> <span class="n">BLOCK_REFCOUNT_MASK</span><span class="p">)</span> <span class="p">{</span>
-</span><span class="line">            <span class="k">return</span> <span class="n">BLOCK_REFCOUNT_MASK</span><span class="p">;</span>
-</span><span class="line">        <span class="p">}</span>
-</span><span class="line">        <span class="k">if</span> <span class="p">((</span><span class="n">old_value</span> <span class="o">&amp;</span> <span class="n">BLOCK_REFCOUNT_MASK</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-</span><span class="line">            <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-</span><span class="line">        <span class="p">}</span>
-</span><span class="line">        <span class="k">if</span> <span class="p">(</span><span class="n">OSAtomicCompareAndSwapInt</span><span class="p">(</span><span class="n">old_value</span><span class="p">,</span> <span class="n">old_value</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="k">volatile</span> <span class="kt">int</span> <span class="o">*</span><span class="p">)</span><span class="n">where</span><span class="p">))</span> <span class="p">{</span>
-</span><span class="line">            <span class="k">return</span> <span class="n">old_value</span><span class="o">-</span><span class="mi">1</span><span class="p">;</span>
-</span><span class="line">        <span class="p">}</span>
-</span><span class="line">    <span class="p">}</span>
-</span><span class="line"><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p><code>OSAtomicCompareAndSwapInt</code> is a function that can change value of a <code>int</code>
-thread and multiprocessor safe.</p>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>Block seems magical at the first seen. With block we no longer have to do the
-<em>function pointer + struct cast + void*</em> tricks. Block automatically captures
-variables for us, and we can use <code>__block</code> storage qualifier to declare mutable
-ones. Behind the scene is really cool hack to make all this happen. However, it
-not quite easy to debug blocks and byrefs. We’d need to write some helper
-functions for <code>gdb</code> or <code>lldb</code>. These will be discussed in my next post.</p>
-
-<h2 id="references">References:</h2>
-
-<ul>
-  <li><a href="http://www.informit.com/articles/article.aspx?p=1749597&amp;seqNum=12">BNR Advanced Mac OSX programming: Blocks Internals</a></li>
-  <li><a href="http://clang.llvm.org/docs/BlockLanguageSpec.txt">Block language spec</a></li>
-  <li><a href="http://clang.llvm.org/docs/Block-ABI-Apple.txt">Block ABI Apple</a></li>
-  <li><a href="http://opensource.apple.com/source/libclosure/libclosure-38/Block_private.h">Block private header</a></li>
-  <li><a href="http://opensource.apple.com/source/libclosure/libclosure-38/runtime.c">Block runtime</a></li>
-  <li><a href="http://developer.apple.com/library/ios/#documentation/System/Conceptual/ManPages_iPhoneOS/man3/OSAtomicCompareAndSwapInt.3.html">Mac OS X Manual Page For OSAtomicCompareAndSwapInt</a></li>
-</ul>
-
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[C/ObjC block quizzes]]></title>
-    <link href="http://www.idryman.org/blog/2012/09/29/c-objc-block-quizzes/"/>
-    <updated>2012-09-29T12:15:00-07:00</updated>
-    <id>http://www.idryman.org/blog/2012/09/29/c-objc-block-quizzes</id>
-    <content type="html"><![CDATA[<p>Apple introduced blocks (anonymous functions or lambdas) as C extensions for its
-parallel programming model <a href="https://developer.apple.com/documentation/Performance/Reference/GCD_libdispatch_Ref/Reference/reference.html">Grand Central Dispatch</a>. Unlike ordinary C
-functions, blocks can capture surrounding variable contexts. The captured
-variables are casts to <code>const</code> by default, and for mutable variables you can mark
-it with <code>__block</code> storage qualifier. However, there is a lot of pitfalls in
-<code>__block</code> variables.  Can you identify all of them?</p>
-
-<!-- more -->
-
-<script language="javascript">
-function toggle(divId) {
-  var div = document.getElementById(divId);
-  var link = document.getElementById(divId+"_a");
-  if (div.style.display == "block") {
-    div.style.display = "none";
-    link.innerHTML = "Show answer";
-  } else {
-    div.style.display = "block";
-    link.innerHTML = "Toggle answer";
-  }
-}
-</script>
-
-<h2 id="testing-environment">Testing environment</h2>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-<span class="line-number">16</span>
-<span class="line-number">17</span>
-<span class="line-number">18</span>
-<span class="line-number">19</span>
-<span class="line-number">20</span>
-<span class="line-number">21</span>
-<span class="line-number">22</span>
-<span class="line-number">23</span>
-</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="cm">/*</span>
-</span><span class="line"><span class="cm"> * clang -Wall -fblocks -framework Foundation quiz.c -o quiz</span>
-</span><span class="line"><span class="cm"> */</span>
-</span><span class="line"><span class="cp">#include &lt;stdio.h&gt;</span>
-</span><span class="line"><span class="cp">#include &lt;Block.h&gt;</span>
-</span><span class="line">
-</span><span class="line">
-</span><span class="line"><span class="k">typedef</span> <span class="kt">void</span> <span class="p">(</span><span class="o">^</span><span class="n">BoringBlock</span><span class="p">)(</span><span class="kt">void</span><span class="p">);</span>
-</span><span class="line"><span class="n">BoringBlock</span> <span class="n">boringBlock</span><span class="p">;</span>
-</span><span class="line">
-</span><span class="line"><span class="kt">void</span> <span class="nf">quiz_1</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{...}</span>
-</span><span class="line"><span class="kt">void</span> <span class="nf">quiz_2</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{...}</span>
-</span><span class="line"><span class="p">...</span>
-</span><span class="line">
-</span><span class="line"><span class="kt">int</span> <span class="n">main</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span>
-</span><span class="line"><span class="p">{</span>
-</span><span class="line">    <span class="n">quiz_1</span><span class="p">()</span>
-</span><span class="line">    <span class="n">boringBlock</span><span class="p">();</span>
-</span><span class="line">    <span class="n">Block_release</span><span class="p">(</span><span class="n">boringBlock</span><span class="p">);</span>
-</span><span class="line">    <span class="p">...</span>
-</span><span class="line">
-</span><span class="line">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-</span><span class="line"><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>The above is compile configuration and the program structure of the quiz.
-You can download and test the code form <a href="https://github.com/dryman/C-ObjC-block-quiz">Github</a>.</p>
-
-<h2 id="quiz-1">Quiz 1</h2>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="kt">void</span> <span class="nf">quiz_1</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span>
-</span><span class="line"><span class="p">{</span>
-</span><span class="line">    <span class="n">__block</span> <span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-</span><span class="line">    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;x address is %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">x</span><span class="p">);</span>
-</span><span class="line">
-</span><span class="line">    <span class="n">BoringBlock</span> <span class="n">localBlock</span> <span class="o">=</span> <span class="o">^</span><span class="p">{</span>
-</span><span class="line">        <span class="n">x</span><span class="o">++</span><span class="p">;</span> <span class="c1">// Dummy use of x</span>
-</span><span class="line">        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;End of quiz 1</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">);</span>
-</span><span class="line">    <span class="p">};</span>
-</span><span class="line">    <span class="n">boringBlock</span> <span class="o">=</span> <span class="n">Block_copy</span><span class="p">(</span><span class="n">localBlock</span><span class="p">);</span>
-</span><span class="line">
-</span><span class="line">    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;after copy, x address is %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">x</span><span class="p">);</span>
-</span><span class="line"><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>What would be printed if we execute <code>quiz_1()</code> then <code>boringBlock()</code>? Would <code>&amp;x</code> be
-printed in same address or different addresses?</p>
-
-<p><a id="quiz_1_a" href="javascript:toggle('quiz_1')">Show answer</a></p>
-
-<div id="quiz_1" style="display: none;">
-    <p> In block implementation spec, captured <code>__block</code> variable
-    <code>x</code> will be moved to heap after we execute <code>Block_copy</code>.
-    On my machine it prints: </p>
-
-<pre><code>x address is 0x7fff613d04f8
-after copy, x address is 0x7fe9a1c13f78
-End of quiz 1
-</code></pre>
-
-    <p> Memory allocation on stack is much faster then heap, so variable and block
-    literal are both allocated on stack by default. It is copied to heap only when
-    necessary. </p>
-</div>
-
-<h2 id="quiz-2">Quiz 2</h2>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="kt">void</span> <span class="nf">quiz_2</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span>
-</span><span class="line"><span class="p">{</span>
-</span><span class="line">    <span class="n">__block</span> <span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-</span><span class="line">
-</span><span class="line">    <span class="n">BoringBlock</span> <span class="n">localBlock</span> <span class="o">=</span> <span class="o">^</span><span class="p">{</span>
-</span><span class="line">        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;x is %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">);</span>
-</span><span class="line">        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;End of quiz 2</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">);</span>
-</span><span class="line">    <span class="p">};</span>
-</span><span class="line">    <span class="n">boringBlock</span> <span class="o">=</span> <span class="n">Block_copy</span><span class="p">(</span><span class="n">localBlock</span><span class="p">);</span>
-</span><span class="line">
-</span><span class="line">    <span class="n">x</span><span class="o">++</span><span class="p">;</span>
-</span><span class="line"><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>Now, if we change the variable <code>x</code> in <code>quiz_2()</code> scope, would captured variable
-<code>x</code> also changes its value?</p>
-
-<p><a id="quiz_2_a" href="javascript:toggle('quiz_2')">Show answer</a></p>
-
-<div id="quiz_2" style="display: none;">
-    <p> Actually it does! Though <code>x</code> is in different memory address,
-    we can just use it as normal <code>int</code> value, and it behaves just as
-    expected.  On my machine it prints:</p>
-
-<pre><code>x is 2
-End of quiz 2
-</code></pre>
-</div>
-
-<h2 id="quiz-3">Quiz 3</h2>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="kt">void</span> <span class="nf">quiz_3</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span>
-</span><span class="line"><span class="p">{</span>
-</span><span class="line">    <span class="n">__block</span> <span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-</span><span class="line">    <span class="n">__block</span> <span class="kt">int</span><span class="o">*</span> <span class="n">ptr</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">x</span><span class="p">;</span>
-</span><span class="line">
-</span><span class="line">    <span class="n">BoringBlock</span> <span class="n">localBlock</span> <span class="o">=</span> <span class="o">^</span><span class="p">{</span>
-</span><span class="line">        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;x is %d, *ptr is %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">ptr</span><span class="p">);</span>
-</span><span class="line">        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;End of quiz 3</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">);</span>
-</span><span class="line">    <span class="p">};</span>
-</span><span class="line">    <span class="n">boringBlock</span> <span class="o">=</span> <span class="n">Block_copy</span><span class="p">(</span><span class="n">localBlock</span><span class="p">);</span>
-</span><span class="line">
-</span><span class="line">    <span class="n">x</span><span class="o">++</span><span class="p">;</span>
-</span><span class="line"><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>Would <code>x</code> and <code>*ptr</code> be the same value?</p>
-
-<p><a id="quiz_3_a" href="javascript:toggle('quiz_3')">Show answer</a></p>
-
-<div id="quiz_3" style="display: none;">
-
-    <p>Well, if you are lucky, it would print</p>
-
-<pre><code>x is 2, *ptr is 1
-End of quiz 3
-</code></pre>
-
-    <p> Though <code>ptr</code> and <code>x</code> are both moved to the heap,
-    <code>ptr</code> still points to the original address of <code>x</code>.
-    Thus, the value in <code>*ptr</code> is garbage.  If there are other
-    functions that use the stack before you use <code>boringBlock()</code>.  It
-    would print:</p>
-
-<pre><code>clean up stack
-x is 2, *ptr is 24
-End of quiz 3
-</code></pre>
-<p><strong>Oops</strong></p>
-</div>
-
-<h2 id="quiz-4">Quiz 4</h2>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="kt">void</span> <span class="nf">quiz_4</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
-</span><span class="line"><span class="p">{</span>
-</span><span class="line">    <span class="n">__block</span> <span class="kt">int</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">};</span>
-</span><span class="line">
-</span><span class="line">    <span class="kt">void</span> <span class="p">(</span><span class="o">^</span><span class="n">localBlock</span><span class="p">)(</span><span class="kt">void</span><span class="p">)</span> <span class="o">=</span> <span class="o">^</span><span class="p">{</span>
-</span><span class="line">        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;x[0] is %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
-</span><span class="line">        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;End of quiz 4</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">);</span>
-</span><span class="line">    <span class="p">}</span>
-</span><span class="line">    <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
-</span><span class="line"><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>What about array?</p>
-
-<p><a id="quiz_4_a" href="javascript:toggle('quiz_4')">Show answer</a></p>
-
-<div id="quiz_4" style="display: none;">
-
-    <p> Actually, complier won&#8217;t let you compile this. C array and
-    <code>struct</code> contains C array are both invalid with
-    <code>__block</code>. </p>
-</div>
-
-<h2 id="quiz-5">Quiz 5</h2>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-<span class="line-number">16</span>
-<span class="line-number">17</span>
-<span class="line-number">18</span>
-</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="n">BoringBlock</span> <span class="nf">quiz_5</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
-</span><span class="line"><span class="p">{</span>
-</span><span class="line">    <span class="n">__block</span> <span class="kt">int</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
-</span><span class="line">
-</span><span class="line">    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;x address is %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">x</span><span class="p">);</span>
-</span><span class="line">
-</span><span class="line">    <span class="n">BoringBlock</span> <span class="n">localBlock</span> <span class="o">=</span> <span class="o">^</span><span class="p">{</span>
-</span><span class="line">        <span class="n">x</span><span class="o">++</span><span class="p">;</span>
-</span><span class="line">        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;x is %d, &amp;x is %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">x</span><span class="p">);</span>
-</span><span class="line">    <span class="p">};</span>
-</span><span class="line">    <span class="n">boringBlock</span> <span class="o">=</span> <span class="n">Block_copy</span><span class="p">(</span><span class="n">localBlock</span><span class="p">);</span>
-</span><span class="line">    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;x address is %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">x</span><span class="p">);</span>
-</span><span class="line">
-</span><span class="line">    <span class="n">BoringBlock</span> <span class="n">retBlock</span> <span class="o">=</span> <span class="n">Block_copy</span><span class="p">(</span><span class="n">localBlock</span><span class="p">);</span>
-</span><span class="line">    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;x address is %p</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">x</span><span class="p">);</span>
-</span><span class="line">
-</span><span class="line">    <span class="k">return</span> <span class="n">retBlock</span><span class="p">;</span>
-</span><span class="line"><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>Block execution:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-</pre></td><td class="code"><pre><code class="c"><span class="line">    <span class="n">BoringBlock</span> <span class="n">retBlock</span> <span class="o">=</span> <span class="n">quiz_5</span><span class="p">();</span>
-</span><span class="line">    <span class="n">boringBlock</span><span class="p">();</span>
-</span><span class="line">    <span class="n">retBlock</span><span class="p">();</span>
-</span><span class="line">    <span class="n">Block_release</span><span class="p">(</span><span class="n">boringBlock</span><span class="p">);</span>
-</span><span class="line">    <span class="n">Block_release</span><span class="p">(</span><span class="n">retBlock</span><span class="p">);</span>
-</span><span class="line">    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;End of quiz 5</span><span class="se">\n\n</span><span class="s">&quot;</span><span class="p">);</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>What if we copied the block twice. Would the address change twice also?</p>
-
-<p><a id="quiz_5_a" href="javascript:toggle('quiz_5')">Show answer</a></p>
-
-<div id="quiz_5" style="display: none;">
-
-<p>The address of <code>x</code> only changes once in first copy:</p>
-
-<pre><code>x address is 0x7fff613d04f8
-x address is 0x7fe9a1c13f78
-x address is 0x7fe9a1c13f78
-x is 2, &amp;x is 0x7fe9a1c13f78
-x is 3, &amp;x is 0x7fe9a1c13f78
-End of quiz 5
-</code></pre>
-
-    <p> So, how does memory management work? Actually, compiler use reference
-    counting on <code>__block</code> variables instead of block literals. For
-    more curious, see my next post.</p>
-</div>
-
-<h2 id="references">References</h2>
-
-<ul>
-  <li><a href="http://www.informit.com/articles/article.aspx?p=1749597&amp;seqNum=12">BNR Advanced Mac OSX programming: Blocks Internals</a></li>
-  <li><a href="http://clang.llvm.org/docs/BlockLanguageSpec.txt">Block language spec</a></li>
-  <li><a href="http://clang.llvm.org/docs/Block-ABI-Apple.txt">Block ABI Apple</a></li>
-</ul>
-
-<h2 id="source-code">Source code:</h2>
-
-<p>You can download source code of this quiz from <a href="https://github.com/dryman/C-ObjC-block-quiz">Github</a>.</p>
 
 ]]></content>
   </entry>

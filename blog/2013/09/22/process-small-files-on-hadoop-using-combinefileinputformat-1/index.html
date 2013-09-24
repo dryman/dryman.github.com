@@ -1,0 +1,833 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Process Small Files on Hadoop using CombineFileInputFormat (1) - Carpe diem (Felix's blog)</title>
+  <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
+
+  
+  <meta name="description" content="Processing small files is an old typical problem in hadoop; On Stack Overflow it suggested people to use CombineFileInputFormat, but I haven’t found &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://www.idryman.org/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-1/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Carpe diem (Felix's blog)" type="application/atom+xml">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- mathjax config similar to math.stackexchange -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/HTML-CSS"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-23425996-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <!--div id="logo">
+  	<div id="logoLeft">{</div>
+  	<div id="logoText">mob</div>
+  	<div id="logoRight">}</div>
+  	<div class="clear"></div>
+  </div-->
+  <h1><a href="/">Carpe diem (Felix's blog)</a></h1>
+  
+    <h2>I am a happy developer</h2>
+  
+  <div class="clear"></div>
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:www.idryman.org" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about-me">About Me</a></li>
+  <li><a href="http://idryman.tumblr.com/">Drawings</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      
+        <h1 class="entry-title">Process Small Files on Hadoop Using CombineFileInputFormat (1)</h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-09-22T14:39:00-07:00" pubdate data-updated="true">Sep 22<span>nd</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Processing small files is an old typical problem in hadoop; On <a href="http://stackoverflow.com/questions/14541759/how-can-i-work-with-large-number-of-small-files-in-hadoop">Stack Overflow</a> it suggested people to use <a href="http://hadoop.apache.org/docs/r1.1.1/api/org/apache/hadoop/mapred/lib/CombineFileInputFormat.html">CombineFileInputFormat</a>,  but I haven’t found a good step-to-step article that teach you how to use it. So, I decided to write one myself.</p>
+
+<!--more-->
+
+<p>From <a href="http://blog.cloudera.com/blog/2009/02/the-small-files-problem/">Cloudera’s blog</a>:</p>
+
+<blockquote>
+  <p>A small file is one which is significantly smaller than the HDFS block size (default 64MB).
+If you’re storing small files, then you probably have lots of them (otherwise you wouldn’t turn to Hadoop),
+and the problem is that HDFS can’t handle lots of files.</p>
+</blockquote>
+
+<p>In my benchmark, just using a custom <code>CombineFileInputFormat</code> can speedup the program from 3 hours to 23 minutes, and after some further tuning, the same task can be run in 6 minutes!</p>
+
+<h2 id="benchmark-setup">Benchmark Setup</h2>
+
+<p>To test the raw performance of different approaches to solve small problems, I setup a map only hadoop job that basically just do grep and perform a small binary search. The binary search part is to generate the reduce side keys that I’ll use in further data processing; it took only a little resource (8MB index) to run, so it does not affect the result of the benchmark.</p>
+
+<p>The data to process is some server log data, 53.1 GB in total. The hadoop clusters consist 6 nodes, using hadoop version 1.1.2. In this benchmark I implemented <code>CombineFileInputFormat</code> to shrink the map jobs; I also tested the difference of reusing JVM or not, and different number of block sizes to combine files.</p>
+
+<h2 id="combinefileinputformat">CombineFileInputFormat</h2>
+
+<p>The code listed here is modified from <a href="https://svn.apache.org/repos/asf/hadoop/common/trunk/hadoop-mapreduce-project/hadoop-mapreduce-examples/src/main/java/org/apache/hadoop/examples/MultiFileWordCount.java">Hadoop example code</a>. To use <code>CombineFileInputFormat</code> you need to implement three classes. The class <code>CombineFileInputFormat</code> is an abstract class with no implementation, so you must create a subclass to support it; we’ll name the subclass <code>CFInputFormat</code>. The subclass will initiate a delegate <code>CFRecordReader</code> that extends <code>RecordReader</code>; this is the code that does the file processing logic. We’ll also need a class for <code>FileLineWritable</code>, which replaces <code>LongWritable</code> normally used as a key to file lines.</p>
+
+<h3 id="cfinputformatjava">CFInputFormat.java</h3>
+
+<p>The <code>CFInputFormat.java</code> doesn’t do much. You implement <code>createRecordReader</code> to pass in the record reader that does the combine file logic, that’s all. Note that you can call <code>setMaxSplitSize</code> in the initializer to control the size of each chunk of files; if you don’t want to split files into half, remember to return <code>false</code> in <code>isSplitable</code> method, which defaults to <code>true</code>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kn">package</span> <span class="n">org</span><span class="o">.</span><span class="na">idryman</span><span class="o">.</span><span class="na">combinefiles</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kn">import</span> <span class="nn">java.io.IOException</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.fs.Path</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.io.Text</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.InputSplit</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.JobContext</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.RecordReader</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.TaskAttemptContext</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.lib.input.CombineFileInputFormat</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.lib.input.CombineFileRecordReader</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.lib.input.CombineFileSplit</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.idryman.combinefiles.CFRecordReader</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.idryman.combinefiles.FileLineWritable</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">CFInputFormat</span> <span class="kd">extends</span> <span class="n">CombineFileInputFormat</span><span class="o">&lt;</span><span class="n">LineOffset</span><span class="o">,</span> <span class="n">Text</span><span class="o">&gt;</span> <span class="o">{</span>
+</span><span class="line">  <span class="kd">public</span> <span class="nf">CFInputFormat</span><span class="o">(){</span>
+</span><span class="line">    <span class="kd">super</span><span class="o">();</span>
+</span><span class="line">    <span class="n">setMaxSplitSize</span><span class="o">(</span><span class="mi">67108864</span><span class="o">);</span> <span class="c1">// 64 MB, default block size on hadoop</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">  <span class="kd">public</span> <span class="n">RecordReader</span><span class="o">&lt;</span><span class="n">FileLineWritable</span><span class="o">,</span> <span class="n">Text</span><span class="o">&gt;</span> <span class="n">createRecordReader</span><span class="o">(</span><span class="n">InputSplit</span> <span class="n">split</span><span class="o">,</span> <span class="n">TaskAttemptContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">{</span>
+</span><span class="line">    <span class="k">return</span> <span class="k">new</span> <span class="n">CombineFileRecordReader</span><span class="o">&lt;</span><span class="n">FileLineWritable</span><span class="o">,</span> <span class="n">Text</span><span class="o">&gt;((</span><span class="n">CombineFileSplit</span><span class="o">)</span><span class="n">split</span><span class="o">,</span> <span class="n">context</span><span class="o">,</span> <span class="n">CFRecordReader</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">  <span class="nd">@Override</span>
+</span><span class="line">  <span class="kd">protected</span> <span class="kt">boolean</span> <span class="nf">isSplitable</span><span class="o">(</span><span class="n">JobContext</span> <span class="n">context</span><span class="o">,</span> <span class="n">Path</span> <span class="n">file</span><span class="o">){</span>
+</span><span class="line">    <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line"><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h3 id="cfrecordreaderjava">CFRecordReader.java</h3>
+
+<p><code>CFRecordReader</code> is a delegate class of <code>CombineFileRecordReader</code>, a built in class that pass each split (typically a whole file in this case) to our class <code>CFRecordReader</code>. When the hadoop job starts, <code>CombineFileRecordReader</code> reads all the file sizes in HDFS that we want it to process, and decides how many splits base on the <code>MaxSplitSize</code> we defined in <code>CFInputFormat</code>. For every split (must be a file, because we set <code>isSplitabe</code> to false), <code>CombineFileRecordReader</code> creates a <code>CFRecrodReader</code> instance via a custom constructor, and pass in <code>CombineFileSplit</code>, context, and index for <code>CFRecordReader</code> to locate the file to process with.</p>
+
+<p>When processing the file, the <code>CFRecordReader</code> creates a <code>FileLineWritable</code> as the key for hadoop mapper class. With each line a <code>FileLineWritable</code> consists the file name and the offset length of that line. The difference between <code>FileLineWritable</code> and the normally used <code>LongWritable</code> in mapper is <code>LongWritable</code> only denote the offset of a line in a file, while <code>FileLineWritable</code> adds the file information into the key.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+<span class="line-number">38</span>
+<span class="line-number">39</span>
+<span class="line-number">40</span>
+<span class="line-number">41</span>
+<span class="line-number">42</span>
+<span class="line-number">43</span>
+<span class="line-number">44</span>
+<span class="line-number">45</span>
+<span class="line-number">46</span>
+<span class="line-number">47</span>
+<span class="line-number">48</span>
+<span class="line-number">49</span>
+<span class="line-number">50</span>
+<span class="line-number">51</span>
+<span class="line-number">52</span>
+<span class="line-number">53</span>
+<span class="line-number">54</span>
+<span class="line-number">55</span>
+<span class="line-number">56</span>
+<span class="line-number">57</span>
+<span class="line-number">58</span>
+<span class="line-number">59</span>
+<span class="line-number">60</span>
+<span class="line-number">61</span>
+<span class="line-number">62</span>
+<span class="line-number">63</span>
+<span class="line-number">64</span>
+<span class="line-number">65</span>
+<span class="line-number">66</span>
+<span class="line-number">67</span>
+<span class="line-number">68</span>
+<span class="line-number">69</span>
+<span class="line-number">70</span>
+<span class="line-number">71</span>
+<span class="line-number">72</span>
+<span class="line-number">73</span>
+<span class="line-number">74</span>
+<span class="line-number">75</span>
+<span class="line-number">76</span>
+<span class="line-number">77</span>
+<span class="line-number">78</span>
+<span class="line-number">79</span>
+<span class="line-number">80</span>
+<span class="line-number">81</span>
+<span class="line-number">82</span>
+<span class="line-number">83</span>
+<span class="line-number">84</span>
+<span class="line-number">85</span>
+<span class="line-number">86</span>
+<span class="line-number">87</span>
+<span class="line-number">88</span>
+<span class="line-number">89</span>
+<span class="line-number">90</span>
+<span class="line-number">91</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kn">package</span> <span class="n">org</span><span class="o">.</span><span class="na">idryman</span><span class="o">.</span><span class="na">combinefiles</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kn">import</span> <span class="nn">java.io.IOException</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.idryman.combinefiles.FileLineWritable</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.fs.FSDataInputStream</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.fs.FileSystem</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.fs.Path</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.io.Text</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.InputSplit</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.RecordReader</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.TaskAttemptContext</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.lib.input.CombineFileSplit</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.util.LineReader</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line">
+</span><span class="line"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">CFRecordReader</span> <span class="kd">extends</span> <span class="n">RecordReader</span><span class="o">&lt;</span><span class="n">FileLineWritable</span><span class="o">,</span> <span class="n">Text</span><span class="o">&gt;{</span>
+</span><span class="line">  <span class="kd">private</span> <span class="kt">long</span> <span class="n">startOffset</span><span class="o">;</span>
+</span><span class="line">  <span class="kd">private</span> <span class="kt">long</span> <span class="n">end</span><span class="o">;</span>
+</span><span class="line">  <span class="kd">private</span> <span class="kt">long</span> <span class="n">pos</span><span class="o">;</span>
+</span><span class="line">  <span class="kd">private</span> <span class="n">FileSystem</span> <span class="n">fs</span><span class="o">;</span>
+</span><span class="line">  <span class="kd">private</span> <span class="n">Path</span> <span class="n">path</span><span class="o">;</span>
+</span><span class="line">  <span class="kd">private</span> <span class="n">FileLineWritable</span> <span class="n">key</span><span class="o">;</span>
+</span><span class="line">  <span class="kd">private</span> <span class="n">Text</span> <span class="n">value</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line">  <span class="kd">private</span> <span class="n">FSDataInputStream</span> <span class="n">fileIn</span><span class="o">;</span>
+</span><span class="line">  <span class="kd">private</span> <span class="n">LineReader</span> <span class="n">reader</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kd">public</span> <span class="nf">CFRecordReader</span><span class="o">(</span><span class="n">CombineFileSplit</span> <span class="n">split</span><span class="o">,</span> <span class="n">TaskAttemptContext</span> <span class="n">context</span><span class="o">,</span> <span class="n">Integer</span> <span class="n">index</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">{</span>
+</span><span class="line">  <span class="k">this</span><span class="o">.</span><span class="na">path</span> <span class="o">=</span> <span class="n">split</span><span class="o">.</span><span class="na">getPath</span><span class="o">(</span><span class="n">index</span><span class="o">);</span>
+</span><span class="line">  <span class="n">fs</span> <span class="o">=</span> <span class="k">this</span><span class="o">.</span><span class="na">path</span><span class="o">.</span><span class="na">getFileSystem</span><span class="o">(</span><span class="n">context</span><span class="o">.</span><span class="na">getConfiguration</span><span class="o">());</span>
+</span><span class="line">  <span class="k">this</span><span class="o">.</span><span class="na">startOffset</span> <span class="o">=</span> <span class="n">split</span><span class="o">.</span><span class="na">getOffset</span><span class="o">(</span><span class="n">index</span><span class="o">);</span>
+</span><span class="line">  <span class="k">this</span><span class="o">.</span><span class="na">end</span> <span class="o">=</span> <span class="n">startOffset</span> <span class="o">+</span> <span class="n">split</span><span class="o">.</span><span class="na">getLength</span><span class="o">(</span><span class="n">index</span><span class="o">);</span>
+</span><span class="line">
+</span><span class="line">  <span class="n">fileIn</span> <span class="o">=</span> <span class="n">fs</span><span class="o">.</span><span class="na">open</span><span class="o">(</span><span class="n">path</span><span class="o">);</span>
+</span><span class="line">  <span class="n">reader</span> <span class="o">=</span> <span class="k">new</span> <span class="n">LineReader</span><span class="o">(</span><span class="n">fileIn</span><span class="o">);</span>
+</span><span class="line">  <span class="k">this</span><span class="o">.</span><span class="na">pos</span> <span class="o">=</span> <span class="n">startOffset</span><span class="o">;</span>
+</span><span class="line"><span class="o">}</span>
+</span><span class="line">
+</span><span class="line"><span class="nd">@Override</span>
+</span><span class="line"><span class="kd">public</span> <span class="kt">void</span> <span class="nf">initialize</span><span class="o">(</span><span class="n">InputSplit</span> <span class="n">arg0</span><span class="o">,</span> <span class="n">TaskAttemptContext</span> <span class="n">arg1</span><span class="o">)</span>
+</span><span class="line">    <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">InterruptedException</span> <span class="o">{</span>
+</span><span class="line">  <span class="c1">// Won&#39;t be called, use custom Constructor</span>
+</span><span class="line">  <span class="c1">// `CFRecordReader(CombineFileSplit split, TaskAttemptContext context, Integer index)`</span>
+</span><span class="line">  <span class="c1">// instead</span>
+</span><span class="line"><span class="o">}</span>
+</span><span class="line">
+</span><span class="line"><span class="nd">@Override</span>
+</span><span class="line"><span class="kd">public</span> <span class="kt">void</span> <span class="nf">close</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{}</span>
+</span><span class="line">
+</span><span class="line"><span class="nd">@Override</span>
+</span><span class="line"><span class="kd">public</span> <span class="kt">float</span> <span class="nf">getProgress</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">{</span>
+</span><span class="line">  <span class="k">if</span> <span class="o">(</span><span class="n">startOffset</span> <span class="o">==</span> <span class="n">end</span><span class="o">)</span> <span class="o">{</span>
+</span><span class="line">    <span class="k">return</span> <span class="mi">0</span><span class="o">;</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">  <span class="k">return</span> <span class="n">Math</span><span class="o">.</span><span class="na">min</span><span class="o">(</span><span class="mf">1.0f</span><span class="o">,</span> <span class="o">(</span><span class="n">pos</span> <span class="o">-</span> <span class="n">startOffset</span><span class="o">)</span> <span class="o">/</span> <span class="o">(</span><span class="kt">float</span><span class="o">)</span> <span class="o">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">startOffset</span><span class="o">));</span>
+</span><span class="line"><span class="o">}</span>
+</span><span class="line">
+</span><span class="line"><span class="nd">@Override</span>
+</span><span class="line"><span class="kd">public</span> <span class="n">FileLineWritable</span> <span class="nf">getCurrentKey</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">InterruptedException</span> <span class="o">{</span>
+</span><span class="line">  <span class="k">return</span> <span class="n">key</span><span class="o">;</span>
+</span><span class="line"><span class="o">}</span>
+</span><span class="line">
+</span><span class="line"><span class="nd">@Override</span>
+</span><span class="line"><span class="kd">public</span> <span class="n">Text</span> <span class="nf">getCurrentValue</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">InterruptedException</span> <span class="o">{</span>
+</span><span class="line">  <span class="k">return</span> <span class="n">value</span><span class="o">;</span>
+</span><span class="line"><span class="o">}</span>
+</span><span class="line">
+</span><span class="line"><span class="nd">@Override</span>
+</span><span class="line"><span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">nextKeyValue</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">{</span>
+</span><span class="line">  <span class="k">if</span> <span class="o">(</span><span class="n">key</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class="line">    <span class="n">key</span> <span class="o">=</span> <span class="k">new</span> <span class="n">FileLineWritable</span><span class="o">();</span>
+</span><span class="line">    <span class="n">key</span><span class="o">.</span><span class="na">fileName</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="na">getName</span><span class="o">();</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">  <span class="n">key</span><span class="o">.</span><span class="na">offset</span> <span class="o">=</span> <span class="n">pos</span><span class="o">;</span>
+</span><span class="line">  <span class="k">if</span> <span class="o">(</span><span class="n">value</span> <span class="o">==</span> <span class="kc">null</span><span class="o">){</span>
+</span><span class="line">    <span class="n">value</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Text</span><span class="o">();</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">  <span class="kt">int</span> <span class="n">newSize</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+</span><span class="line">  <span class="k">if</span> <span class="o">(</span><span class="n">pos</span> <span class="o">&lt;</span> <span class="n">end</span><span class="o">)</span> <span class="o">{</span>
+</span><span class="line">    <span class="n">newSize</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="na">readLine</span><span class="o">(</span><span class="n">value</span><span class="o">);</span>
+</span><span class="line">    <span class="n">pos</span> <span class="o">+=</span> <span class="n">newSize</span><span class="o">;</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">  <span class="k">if</span> <span class="o">(</span><span class="n">newSize</span> <span class="o">==</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+</span><span class="line">    <span class="n">key</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class="line">    <span class="n">value</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class="line">    <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+</span><span class="line">  <span class="o">}</span> <span class="k">else</span><span class="o">{</span>
+</span><span class="line">    <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line"><span class="o">}</span>
+</span><span class="line"><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The reason to use a custom constructor
+is not documented anywhere in hadoop api nor document. You can only find it in <a href="http://grepcode.com/file/repo1.maven.org/maven2/com.ning/metrics.collector/1.2.1/org/apache/hadoop/mapreduce/lib/input/CombineFileRecordReader.java#40">hadoop source code</a>, line 40:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line">   <span class="kd">static</span> <span class="kd">final</span> <span class="n">Class</span> <span class="o">[]</span> <span class="n">constructorSignature</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Class</span> <span class="o">[]</span>
+</span><span class="line">                                          <span class="o">{</span><span class="n">CombineFileSplit</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+</span><span class="line">                                           <span class="n">TaskAttemptContext</span><span class="o">.</span><span class="na">class</span><span class="o">,</span>
+</span><span class="line">                                           <span class="n">Integer</span><span class="o">.</span><span class="na">class</span><span class="o">};</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h3 id="filelinewritablejava">FileLineWritable.java</h3>
+
+<p>This file is very simple: store the file name and offset, and override the <code>compareTo</code> method to compare the file name first, then compare the offset.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+<span class="line-number">38</span>
+<span class="line-number">39</span>
+<span class="line-number">40</span>
+<span class="line-number">41</span>
+<span class="line-number">42</span>
+<span class="line-number">43</span>
+<span class="line-number">44</span>
+<span class="line-number">45</span>
+<span class="line-number">46</span>
+<span class="line-number">47</span>
+<span class="line-number">48</span>
+<span class="line-number">49</span>
+<span class="line-number">50</span>
+<span class="line-number">51</span>
+<span class="line-number">52</span>
+<span class="line-number">53</span>
+<span class="line-number">54</span>
+<span class="line-number">55</span>
+<span class="line-number">56</span>
+<span class="line-number">57</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kn">package</span> <span class="n">org</span><span class="o">.</span><span class="na">idryman</span><span class="o">.</span><span class="na">combinefiles</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kn">import</span> <span class="nn">java.io.DataInput</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">java.io.DataOutput</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">java.io.IOException</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.io.Text</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.io.WritableComparable</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">FileLineWritable</span> <span class="kd">implements</span> <span class="n">WritableComparable</span><span class="o">&lt;</span><span class="n">FileLineWritable</span><span class="o">&gt;{</span>
+</span><span class="line">  <span class="kd">public</span> <span class="kt">long</span> <span class="n">offset</span><span class="o">;</span>
+</span><span class="line">  <span class="kd">public</span> <span class="n">String</span> <span class="n">fileName</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line">  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">readFields</span><span class="o">(</span><span class="n">DataInput</span> <span class="n">in</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+</span><span class="line">    <span class="k">this</span><span class="o">.</span><span class="na">offset</span> <span class="o">=</span> <span class="n">in</span><span class="o">.</span><span class="na">readLong</span><span class="o">();</span>
+</span><span class="line">    <span class="k">this</span><span class="o">.</span><span class="na">fileName</span> <span class="o">=</span> <span class="n">Text</span><span class="o">.</span><span class="na">readString</span><span class="o">(</span><span class="n">in</span><span class="o">);</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">
+</span><span class="line">  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">write</span><span class="o">(</span><span class="n">DataOutput</span> <span class="n">out</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+</span><span class="line">    <span class="n">out</span><span class="o">.</span><span class="na">writeLong</span><span class="o">(</span><span class="n">offset</span><span class="o">);</span>
+</span><span class="line">    <span class="n">Text</span><span class="o">.</span><span class="na">writeString</span><span class="o">(</span><span class="n">out</span><span class="o">,</span> <span class="n">fileName</span><span class="o">);</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">
+</span><span class="line">  <span class="kd">public</span> <span class="kt">int</span> <span class="nf">compareTo</span><span class="o">(</span><span class="n">FileLineWritable</span> <span class="n">that</span><span class="o">)</span> <span class="o">{</span>
+</span><span class="line">    <span class="kt">int</span> <span class="n">cmp</span> <span class="o">=</span> <span class="k">this</span><span class="o">.</span><span class="na">fileName</span><span class="o">.</span><span class="na">compareTo</span><span class="o">(</span><span class="n">that</span><span class="o">.</span><span class="na">fileName</span><span class="o">);</span>
+</span><span class="line">    <span class="k">if</span> <span class="o">(</span><span class="n">cmp</span> <span class="o">!=</span> <span class="mi">0</span><span class="o">)</span> <span class="k">return</span> <span class="n">cmp</span><span class="o">;</span>
+</span><span class="line">    <span class="k">return</span> <span class="o">(</span><span class="kt">int</span><span class="o">)</span><span class="n">Math</span><span class="o">.</span><span class="na">signum</span><span class="o">((</span><span class="kt">double</span><span class="o">)(</span><span class="k">this</span><span class="o">.</span><span class="na">offset</span> <span class="o">-</span> <span class="n">that</span><span class="o">.</span><span class="na">offset</span><span class="o">));</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">
+</span><span class="line">  <span class="nd">@Override</span>
+</span><span class="line">  <span class="kd">public</span> <span class="kt">int</span> <span class="nf">hashCode</span><span class="o">()</span> <span class="o">{</span>               <span class="c1">// generated hashCode()</span>
+</span><span class="line">    <span class="kd">final</span> <span class="kt">int</span> <span class="n">prime</span> <span class="o">=</span> <span class="mi">31</span><span class="o">;</span>
+</span><span class="line">    <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="mi">1</span><span class="o">;</span>
+</span><span class="line">    <span class="n">result</span> <span class="o">=</span> <span class="n">prime</span> <span class="o">*</span> <span class="n">result</span> <span class="o">+</span> <span class="o">((</span><span class="n">fileName</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">?</span> <span class="mi">0</span> <span class="o">:</span> <span class="n">fileName</span><span class="o">.</span><span class="na">hashCode</span><span class="o">());</span>
+</span><span class="line">    <span class="n">result</span> <span class="o">=</span> <span class="n">prime</span> <span class="o">*</span> <span class="n">result</span> <span class="o">+</span> <span class="o">(</span><span class="kt">int</span><span class="o">)</span> <span class="o">(</span><span class="n">offset</span> <span class="o">^</span> <span class="o">(</span><span class="n">offset</span> <span class="o">&gt;&gt;&gt;</span> <span class="mi">32</span><span class="o">));</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">result</span><span class="o">;</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">
+</span><span class="line">  <span class="nd">@Override</span>
+</span><span class="line">  <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">equals</span><span class="o">(</span><span class="n">Object</span> <span class="n">obj</span><span class="o">)</span> <span class="o">{</span>  <span class="c1">// generated equals()</span>
+</span><span class="line">    <span class="k">if</span> <span class="o">(</span><span class="k">this</span> <span class="o">==</span> <span class="n">obj</span><span class="o">)</span>
+</span><span class="line">      <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+</span><span class="line">    <span class="k">if</span> <span class="o">(</span><span class="n">obj</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span>
+</span><span class="line">      <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+</span><span class="line">    <span class="k">if</span> <span class="o">(</span><span class="n">getClass</span><span class="o">()</span> <span class="o">!=</span> <span class="n">obj</span><span class="o">.</span><span class="na">getClass</span><span class="o">())</span>
+</span><span class="line">      <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+</span><span class="line">    <span class="n">LineOffset</span> <span class="n">other</span> <span class="o">=</span> <span class="o">(</span><span class="n">LineOffset</span><span class="o">)</span> <span class="n">obj</span><span class="o">;</span>
+</span><span class="line">    <span class="k">if</span> <span class="o">(</span><span class="n">fileName</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class="line">      <span class="k">if</span> <span class="o">(</span><span class="n">other</span><span class="o">.</span><span class="na">fileName</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span>
+</span><span class="line">        <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+</span><span class="line">    <span class="o">}</span> <span class="k">else</span> <span class="k">if</span> <span class="o">(!</span><span class="n">fileName</span><span class="o">.</span><span class="na">equals</span><span class="o">(</span><span class="n">other</span><span class="o">.</span><span class="na">fileName</span><span class="o">))</span>
+</span><span class="line">      <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+</span><span class="line">    <span class="k">if</span> <span class="o">(</span><span class="n">offset</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="na">offset</span><span class="o">)</span>
+</span><span class="line">      <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+</span><span class="line">    <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line"><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="job-setup">job setup</h2>
+
+<p>Finally is the job setup for hadoop cluster to run. We just need to assign the classes to job:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.Job</span><span class="o">;</span>
+</span><span class="line"><span class="c1">// standard hadoop conf</span>
+</span><span class="line"><span class="n">Job</span> <span class="n">job</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Job</span><span class="o">(</span><span class="n">getConf</span><span class="o">());</span>
+</span><span class="line"><span class="n">job</span><span class="o">.</span><span class="na">setInputFormatClass</span><span class="o">(</span><span class="n">CFInputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</span><span class="line"><span class="n">job</span><span class="o">.</span><span class="na">setMapperClass</span><span class="o">(</span><span class="n">MyMapper</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</span><span class="line"><span class="n">job</span><span class="o">.</span><span class="na">setNumReduceTasks</span><span class="o">(</span><span class="mi">0</span><span class="o">);</span> <span class="c1">// map only</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The benchmark result is in the next post.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-09-22T14:39:00-07:00" pubdate data-updated="true">Sep 22<span>nd</span>, 2013</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/hadoop-/'>Hadoop,</a>, <a class='category' href='/blog/categories/java/'>Java</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-1/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-1/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left articlenav" href="/blog/2013/08/29/my-emacs-setting-on-servers/" title="Previous Post: my emacs setting on servers">&laquo; my emacs setting on servers</a>
+      
+      
+        <a class="basic-alignment right articlenav" href="/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-2/" title="Next Post: Process Small Files on Hadoop using CombineFileInputFormat (2)">Process Small Files on Hadoop using CombineFileInputFormat (2) &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-2/">Process Small Files on Hadoop using CombineFileInputFormat (2)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-1/">Process Small Files on Hadoop using CombineFileInputFormat (1)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/29/my-emacs-setting-on-servers/">my emacs setting on servers</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/16/minimal-nodejs-router/">Minimal NodeJS router</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/07/14/writing-java-programs-on-a-remote-server/">Writing java programs on a remote server</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/06/27/laziness-and-memoization-in-clojure/">Laziness and memoization in Clojure</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/05/31/graphite-on-osx/">Install Graphite on OSX</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/05/29/emacs-loves-ipython-notebook/">Emacs loves iPython Notebook</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/05/25/clojure-bookmarks/">Popular Clojure Projects</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/05/21/libsvm-on-mac-osx/">LibSVM on Mac OSX</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("idryman", 4, true);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/idryman" class="twitter-follow-button" data-show-count="false">Follow @idryman</a>
+  
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 - dryman (Felix Ren-Chyan Chern) -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'dryblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.idryman.org/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-1/';
+        var disqus_url = 'http://www.idryman.org/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-1/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+<!--
+hn like button plugin for jekyll/octopress
+Author: dryman (Felix Ren-Chyan Chern)
+
+Inpired from http://hnlike.com/ written by sbashyal
+
+(The MIT License)
+
+Copyright © 2012-2013 Felix Ren-Chyan Chern
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the ‘Software’), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED ‘AS IS’, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+  <script type="text/javascript">
+    (function(){
+      var hn_like = document.createElement('iframe');
+      hn_like.frameborder="no";
+      hn_like.scrolling="no";
+      hn_like.height="28px";
+      hn_like.width="115px";
+      hn_like.src = "http://hnlike.com/upvote.php?link="
+                    + encodeURIComponent(document.location)
+                    + "&title="
+                    + encodeURIComponent("Process Small Files on Hadoop using CombineFileInputFormat (1)");
+      hn_like.innerHTML="iframes not supported by your browser";
+      var twitter = document.getElementsByClassName("twitter-share-button")[0];
+
+      twitter.parentNode.insertBefore(
+        hn_like,
+        twitter
+      );
+    })();
+  </script>
+
+<!-- end of hn like button -->
+
+
+
+
+<script type="text/javascript">
+ $(function() {
+        /* For zebra striping */
+        $("table tr:nth-child(odd)").addClass("odd-row");
+        /* For cell text alignment */
+        $("table td:first-child, table th:first-child").addClass("first");
+        /* For removing the last border */
+        $("table td:last-child, table th:last-child").addClass("last");
+});
+</script>
+
+
+</body>
+</html>
