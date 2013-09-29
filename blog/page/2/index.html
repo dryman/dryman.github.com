@@ -9,7 +9,12 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="Emacs has a built-in pdf viewer named doc-view-mode. It require ghostscript to convert the pdf files. On my OSX 10.8 laptop, I use ghostscript 9.07 ( &hellip;">
+  <meta name="description" content="Here are the basic steps to install libSVM on Mac OSX. 1
+2
+3
+brew install gnuplot
+brew install qt4
+brew install libsvm Installing libsvm itself in &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -102,6 +107,90 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2013/05/21/libsvm-on-mac-osx/">LibSVM on Mac OSX</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-21T11:51:00-07:00" pubdate data-updated="true">May 21<span>st</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Here are the basic steps to install libSVM on Mac OSX.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">brew install gnuplot
+</span><span class="line">brew install qt4
+</span><span class="line">brew install libsvm
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Installing <code>libsvm</code> itself in system path is easy, however hombrew does not include demo-data, python/java integration, or other goodies. The finally installation in homebrew only consists these files:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">libsvm
+</span><span class="line">libsvm/3.17
+</span><span class="line">libsvm/3.17/bin
+</span><span class="line">libsvm/3.17/bin/svm-predict
+</span><span class="line">libsvm/3.17/bin/svm-scale
+</span><span class="line">libsvm/3.17/bin/svm-train
+</span><span class="line">libsvm/3.17/COPYRIGHT
+</span><span class="line">libsvm/3.17/include
+</span><span class="line">libsvm/3.17/include/svm.h
+</span><span class="line">libsvm/3.17/INSTALL_RECEIPT.json
+</span><span class="line">libsvm/3.17/lib
+</span><span class="line">libsvm/3.17/lib/libsvm.2.dylib
+</span><span class="line">libsvm/3.17/lib/libsvm.dylib
+</span><span class="line">libsvm/3.17/README
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+<p>In this post, I’ll show you how to modify some Makefiles and create mac specific binaries.</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2013/05/21/libsvm-on-mac-osx/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -611,53 +700,6 @@ write it in correct way.</p>
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/09/30/c-objc-block-and-debugger/">C/ObjC Block and Debugger</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-09-30T14:32:00-07:00" pubdate data-updated="true">Sep 30<span>th</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>In the last post, we discussed block byref internal structures and showed the
-sample code of how to <code>printf</code> it. However, we don’t want to write that much
-helper functions every time! Thanks for
-<a href="http://www.informit.com/articles/article.aspx?p=1749597&amp;seqNum=12">Big Nerd Ranch: Advanced Mac OSX Programming</a>, we can now load
-<code>gdb</code>/<code>lldb</code> plugins and no need to do that anymore! ;D</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/09/30/c-objc-block-and-debugger/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/3/">&larr; Older</a>
@@ -673,6 +715,10 @@ helper functions every time! Thanks for
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/09/28/java-fast-io-using-java-nio-api/">Java fast IO using java.nio API</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-2/">Process Small Files on Hadoop using CombineFileInputFormat (2)</a>
@@ -708,10 +754,6 @@ helper functions every time! Thanks for
     
       <li class="post">
         <a href="/blog/2013/05/25/clojure-bookmarks/">Popular Clojure Projects</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/05/21/libsvm-on-mac-osx/">LibSVM on Mac OSX</a>
       </li>
     
   </ul>

@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2013-09-23T23:07:50-07:00</updated>
+  <updated>2013-09-28T19:18:29-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,178 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Java fast IO using java.nio API]]></title>
+    <link href="http://www.idryman.org/blog/2013/09/28/java-fast-io-using-java-nio-api/"/>
+    <updated>2013-09-28T17:18:00-07:00</updated>
+    <id>http://www.idryman.org/blog/2013/09/28/java-fast-io-using-java-nio-api</id>
+    <content type="html"><![CDATA[<p>For modern computing, IO is always a big bottleneck to solve. I recently encounter a problem is to read a 355MB index file to memory, and do a run-time lookup base the index. This process will be repeated by thousands of Hadoop job instances, so a fast IO is a must. By using the <code>java.nio</code> API I sped the process from 194.054 seconds to 0.16 sec! Here’s how I did it.</p>
+
+<!--more-->
+
+<h2 id="the-data-to-process">The Data to Process</h2>
+
+<p>This performance tuning practice is very specific to the data I’m working on, so it’s better to explain the context. We have a long ip list (26 millions in total) that we want to put in the memory. The ip is in text form, and we’ll transform it into signed integer and put it into a java array. (We use signed integer because java doesn’t support unsigned primitive types…) The transformation is pretty straight forward:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kd">public</span> <span class="kd">static</span> <span class="kt">int</span> <span class="nf">ip2integer</span> <span class="o">(</span><span class="n">String</span> <span class="n">ip_str</span><span class="o">){</span>
+</span><span class="line">  <span class="n">String</span> <span class="o">[]</span> <span class="n">numStrs</span> <span class="o">=</span> <span class="n">ip_str</span><span class="o">.</span><span class="na">split</span><span class="o">(</span><span class="s">&quot;\\.&quot;</span><span class="o">);</span>
+</span><span class="line">  <span class="kt">long</span> <span class="n">num</span><span class="o">;</span>
+</span><span class="line">  <span class="k">if</span> <span class="o">(</span><span class="n">numStrs</span><span class="o">.</span><span class="na">length</span> <span class="o">==</span> <span class="mi">4</span><span class="o">){</span>
+</span><span class="line">    <span class="n">num</span> <span class="o">=</span>
+</span><span class="line">        <span class="n">Long</span><span class="o">.</span><span class="na">parseLong</span><span class="o">(</span><span class="n">numStrs</span><span class="o">[</span><span class="mi">0</span><span class="o">])</span> <span class="o">*</span> <span class="mi">256</span> <span class="o">*</span> <span class="mi">256</span> <span class="o">*</span> <span class="mi">256</span>
+</span><span class="line">        <span class="o">+</span> <span class="n">Long</span><span class="o">.</span><span class="na">parseLong</span><span class="o">(</span><span class="n">numStrs</span><span class="o">[</span><span class="mi">1</span><span class="o">])</span> <span class="o">*</span> <span class="mi">256</span> <span class="o">*</span> <span class="mi">256</span>
+</span><span class="line">        <span class="o">+</span> <span class="n">Long</span><span class="o">.</span><span class="na">parseLong</span><span class="o">(</span><span class="n">numStrs</span><span class="o">[</span><span class="mi">2</span><span class="o">])</span> <span class="o">*</span> <span class="mi">256</span>
+</span><span class="line">        <span class="o">+</span> <span class="n">Long</span><span class="o">.</span><span class="na">parseLong</span><span class="o">(</span><span class="n">numStrs</span><span class="o">[</span><span class="mi">3</span><span class="o">]);</span>
+</span><span class="line">    <span class="n">num</span> <span class="o">+=</span> <span class="n">Integer</span><span class="o">.</span><span class="na">MIN_VALUE</span><span class="o">;</span>
+</span><span class="line">    <span class="k">return</span> <span class="o">(</span><span class="kt">int</span><span class="o">)</span><span class="n">num</span><span class="o">;</span>
+</span><span class="line">  <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+</span><span class="line">    <span class="n">System</span><span class="o">.</span><span class="na">err</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;IP is wrong: &quot;</span><span class="o">+</span> <span class="n">ip_str</span><span class="o">);</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">Integer</span><span class="o">.</span><span class="na">MIN_VALUE</span><span class="o">;</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line"><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>However, reading ip in text form line by line is really slow.</p>
+
+<h2 id="strategy-1-line-by-line-text-processing">Strategy 1: Line-by-line text processing</h2>
+
+<p>This approach is straight forward. Just a standard readline program in java.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kd">private</span> <span class="kt">int</span><span class="o">[]</span> <span class="n">ipArray</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">int</span><span class="o">[</span><span class="mi">26123456</span><span class="o">];</span>
+</span><span class="line"><span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">readIPAsText</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">{</span>
+</span><span class="line">  <span class="n">BufferedReader</span> <span class="n">br</span> <span class="o">=</span> <span class="k">new</span> <span class="n">BufferedReader</span><span class="o">(</span><span class="k">new</span> <span class="n">FileReader</span><span class="o">(</span><span class="s">&quot;ip.tsv&quot;</span><span class="o">));</span>
+</span><span class="line">  <span class="n">DataOutputStream</span> <span class="n">ds</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DataOutputStream</span><span class="o">(</span><span class="n">fos</span><span class="o">);</span>
+</span><span class="line">  <span class="n">String</span> <span class="n">line</span><span class="o">;</span>
+</span><span class="line">  <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line">  <span class="k">while</span> <span class="o">((</span><span class="n">line</span> <span class="o">=</span> <span class="n">br</span><span class="o">.</span><span class="na">readLine</span><span class="o">())</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+</span><span class="line">    <span class="kt">int</span> <span class="n">ip_num</span> <span class="o">=</span> <span class="n">ip2integer</span><span class="o">(</span><span class="n">line</span><span class="o">);</span>
+</span><span class="line">    <span class="n">ipArray</span><span class="o">[</span><span class="n">i</span><span class="o">++]</span> <span class="o">=</span> <span class="n">ip_num</span><span class="o">;</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">  <span class="n">br</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+</span><span class="line"><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The result time was <code>194.054</code> seconds.</p>
+
+<h2 id="strategy-2-encode-ip-in-binary-format">Strategy 2: Encode ip in binary format</h2>
+
+<p>The file size of the <code>ip.tsv</code> is 355MB, which is inefficient to store or to read. Since I’m only reading it to an array, why not store it as a big chunk of binary array, and read it back while I need it? This can be done by <a href="http://docs.oracle.com/javase/7/docs/api/java/io/DataInputStream.html">DataInputStream</a> and <a href="http://docs.oracle.com/javase/7/docs/api/java/io/DataOutputStream.html">DataOutputStream</a>. After shrinking the file, the file size became 102MB.</p>
+
+<p>Here’s the code to read ip in binary format:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">readIPAsDataStream</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">{</span>
+</span><span class="line">  <span class="n">FileInputStream</span> <span class="n">fis</span> <span class="o">=</span> <span class="k">new</span> <span class="n">FileInputStream</span><span class="o">(</span><span class="k">new</span> <span class="n">File</span><span class="o">(</span><span class="s">&quot;ip.bin&quot;</span><span class="o">));</span>
+</span><span class="line">  <span class="n">DataInputStream</span> <span class="n">dis</span> <span class="o">=</span> <span class="k">new</span> <span class="n">DataInputStream</span><span class="o">(</span><span class="n">fis</span><span class="o">);</span>
+</span><span class="line">  <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+</span><span class="line">  <span class="k">try</span> <span class="o">{</span>
+</span><span class="line">    <span class="k">while</span><span class="o">(</span><span class="kc">true</span><span class="o">){</span>
+</span><span class="line">      <span class="n">ipArr</span><span class="o">[</span><span class="n">i</span><span class="o">++]</span> <span class="o">=</span> <span class="n">dis</span><span class="o">.</span><span class="na">readInt</span><span class="o">();</span>
+</span><span class="line">    <span class="o">}</span>
+</span><span class="line">  <span class="o">}</span><span class="k">catch</span> <span class="o">(</span><span class="n">EOFException</span> <span class="n">e</span><span class="o">){</span>
+</span><span class="line">    <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;EOF&quot;</span><span class="o">);</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">  <span class="k">finally</span> <span class="o">{</span>
+</span><span class="line">    <span class="n">fis</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line"><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The resulting time was <code>72</code> seconds. Much slower than I expected.</p>
+
+<h2 id="strategy-3-read-the-file-using-javanio-api">Strategy 3: Read the file using java.nio API</h2>
+
+<p>The <code>java.nio</code> is a new IO API that maps to low level system calls. With these system calls we can perform libc operations like <code>fseek</code>, <code>rewind</code>, <code>ftell</code>, <code>fread</code>, and bulk copy from disk to memory. For the C API you can view it from <a href="http://www.gnu.org/software/libc/manual/html_node/Low_002dLevel-I_002fO.html">GNU C library reference</a>.</p>
+
+<p>The terminology in C and Java is a little bit different. In C, you control the file IO by <a href="http://www.gnu.org/software/libc/manual/html_node/Opening-and-Closing-Files.html#Opening-and-Closing-Files">file descriptors</a>; while in <code>java.nio</code> you use a <a href="http://docs.oracle.com/javase/7/docs/api/java/nio/channels/FileChannel.html">FileChannel</a> for reading, writing, or manipulate the position in the file. Another difference is you can bulk copy directly using the <code>fread</code> call, but in Java you need an additional <code>ByteBuffer</code> layer to map the data. To understand how it work, it’s better to read it from code:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">readIPFromNIO</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">{</span>
+</span><span class="line">  <span class="n">FileInputStream</span> <span class="n">fis</span> <span class="o">=</span> <span class="k">new</span> <span class="n">FileInputStream</span><span class="o">(</span><span class="k">new</span> <span class="n">File</span><span class="o">(</span><span class="s">&quot;ip.bin&quot;</span><span class="o">));</span>
+</span><span class="line">  <span class="n">FileChannel</span> <span class="n">channel</span> <span class="o">=</span> <span class="n">fis</span><span class="o">.</span><span class="na">getChannel</span><span class="o">();</span>
+</span><span class="line">  <span class="n">ByteBuffer</span> <span class="n">bb</span> <span class="o">=</span> <span class="n">ByteBuffer</span><span class="o">.</span><span class="na">allocateDirect</span><span class="o">(</span><span class="mi">64</span><span class="o">*</span><span class="mi">1024</span><span class="o">);</span>
+</span><span class="line">  <span class="n">bb</span><span class="o">.</span><span class="na">clear</span><span class="o">();</span>
+</span><span class="line">  <span class="n">ipArr</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">int</span> <span class="o">[(</span><span class="kt">int</span><span class="o">)</span><span class="n">channel</span><span class="o">.</span><span class="na">size</span><span class="o">()/</span><span class="mi">4</span><span class="o">];</span>
+</span><span class="line">  <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">&quot;File size: &quot;</span><span class="o">+</span><span class="n">channel</span><span class="o">.</span><span class="na">size</span><span class="o">()/</span><span class="mi">4</span><span class="o">);</span>
+</span><span class="line">  <span class="kt">long</span> <span class="n">len</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+</span><span class="line">  <span class="kt">int</span> <span class="n">offset</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+</span><span class="line">  <span class="k">while</span> <span class="o">((</span><span class="n">len</span> <span class="o">=</span> <span class="n">channel</span><span class="o">.</span><span class="na">read</span><span class="o">(</span><span class="n">bb</span><span class="o">))!=</span> <span class="o">-</span><span class="mi">1</span><span class="o">){</span>
+</span><span class="line">    <span class="n">bb</span><span class="o">.</span><span class="na">flip</span><span class="o">();</span>
+</span><span class="line">    <span class="c1">//System.out.println(&quot;Offset: &quot;+offset+&quot;\tlen: &quot;+len+&quot;\tremaining:&quot;+bb.hasRemaining());</span>
+</span><span class="line">    <span class="n">bb</span><span class="o">.</span><span class="na">asIntBuffer</span><span class="o">().</span><span class="na">get</span><span class="o">(</span><span class="n">ipArr</span><span class="o">,</span><span class="n">offset</span><span class="o">,(</span><span class="kt">int</span><span class="o">)</span><span class="n">len</span><span class="o">/</span><span class="mi">4</span><span class="o">);</span>
+</span><span class="line">    <span class="n">offset</span> <span class="o">+=</span> <span class="o">(</span><span class="kt">int</span><span class="o">)</span><span class="n">len</span><span class="o">/</span><span class="mi">4</span><span class="o">;</span>
+</span><span class="line">    <span class="n">bb</span><span class="o">.</span><span class="na">clear</span><span class="o">();</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line"><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The code should be quite self-documented. The only thing to note is the byte-buffer’s <code>flip()</code> method. This call convert the buffer from writing data to buffer from disk to reading mode, so that we can read the data to int array via method <code>get()</code>. Another thing worth to mention is java use big-endian to read and write data by default. You can use <code>ByteBuffer.order(ByteOrder.LITTLE_ENDIAN)</code> to set the endian if you need it. For more about <code>ByteBuffer</code> here’s a <a href="http://mindprod.com/jgloss/bytebuffer.html">good blog post</a> that explains it in detail.</p>
+
+<p>With this implementation, the result performance is <code>0.16</code> sec! Glory to the <code>java.nio</code>!</p>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Process Small Files on Hadoop using CombineFileInputFormat (2)]]></title>
@@ -3496,166 +3668,6 @@ take a look at Big Nerd Ranch’s
   <li><a href="http://clang.llvm.org/docs/BlockLanguageSpec.txt">Block language spec</a></li>
   <li><a href="http://clang.llvm.org/docs/AutomaticReferenceCounting.html">Clang ARC spec</a></li>
   <li><a href="http://developer.apple.com/library/mac/#releasenotes/ObjectiveC/RN-TransitioningToARC/Introduction/Introduction.html">Transitioning to ARC Release Notes</a></li>
-</ul>
-
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[C/ObjC block and debugger]]></title>
-    <link href="http://www.idryman.org/blog/2012/09/30/c-objc-block-and-debugger/"/>
-    <updated>2012-09-30T14:32:00-07:00</updated>
-    <id>http://www.idryman.org/blog/2012/09/30/c-objc-block-and-debugger</id>
-    <content type="html"><![CDATA[<p>In the last post, we discussed block byref internal structures and showed the
-sample code of how to <code>printf</code> it. However, we don’t want to write that much
-helper functions every time! Thanks for
-<a href="http://www.informit.com/articles/article.aspx?p=1749597&amp;seqNum=12">Big Nerd Ranch: Advanced Mac OSX Programming</a>, we can now load
-<code>gdb</code>/<code>lldb</code> plugins and no need to do that anymore! ;D</p>
-
-<!-- more -->
-
-<h2 id="gdb">GDB</h2>
-
-<p>Add these line into your <code>~.gdbinit</code> file. It was originally created by Big Nerd
-Ranch Inc.
-I renamed the functions from <code>dump-block-literal</code> and <code>dump-block-byref</code> to
-<code>pblock</code> and <code>pbyref</code>.</p>
-
-<pre><code>define pblock
-    printf "%s", (const char*)_Block_dump($arg0)
-end
-
-document pblock
-    Dumps runtime information about the supplied block reference
-    Argument is the name or address of a block literal
-end
-
-define pbyref
-    printf "%s", (const char*)_Block_byref_dump((char*)&amp;$arg0 - 2*sizeof(int) - 2*sizeof(void*))
-end
-
-document pbyref
-    Dumps runtime information about the supplied __block variable
-    Argument is a pointer to the variable embeded in a block byref structure
-end
-</code></pre>
-
-<p>To use it, you just simply type <code>pbyref</code> and <code>pblock</code> followed by a variable in <code>gdb</code>.</p>
-
-<pre><code>(gdb) pbyref x
-byref data block 0x7fff5fbff480 contents:
-  forwarding: 0x7fff5fbff480
-  flags: 0x0
-  size: 32
-
-(gdb) pblock localBlock
-^0x7fff5fbff450 (new layout) =
-isa: stack Block
-flags: HASSIGNATURE HASHELP
-refcount+deallocating: 0
-invoke: 0x100001430
-descriptor: 0x100002070
-descriptor-&gt;reserved: 0
-descriptor-&gt;size: 40
-descriptor-&gt;copy helper: 0x100001470
-descriptor-&gt;dispose helper: 0x1000014b0
-descriptor-&gt;signature: 0x100001c29 'v8@?0'
-descriptor-&gt;layout: 0x0 '(null)'
-</code></pre>
-
-<h2 id="lldb">LLDB</h2>
-
-<p>I made a <code>lldb</code> version this weekend. You can find it on <a href="https://github.com/dryman/lldb-block-helper">Github</a>.
-I tried to use <code>command alias</code> or <code>command regex</code> at first, but it just won’t
-work. So I just write a python plugin for lldb and load it in <code>.lldbinit</code>. The
-code is quite trivial:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>blockHelper.py</span><a href="https://github.com/dryman/lldb-block-helper/blob/master/blockHelper.py">source </a></figcaption> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-<span class="line-number">16</span>
-<span class="line-number">17</span>
-<span class="line-number">18</span>
-<span class="line-number">19</span>
-</pre></td><td class="code"><pre><code class="py"><span class="line"><span class="c">#!/usr/bin/env python</span>
-</span><span class="line">
-</span><span class="line"><span class="kn">import</span> <span class="nn">lldb</span>
-</span><span class="line"><span class="kn">import</span> <span class="nn">commands</span>
-</span><span class="line">
-</span><span class="line"><span class="k">def</span> <span class="nf">pbyref</span><span class="p">(</span><span class="n">debugger</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">internal_dict</span><span class="p">):</span>
-</span><span class="line">    <span class="n">cmd</span> <span class="o">=</span> <span class="s">&quot;expr (void)printf(</span><span class="se">\&quot;</span><span class="si">%s</span><span class="se">\&quot;</span><span class="s">,(const char*)_Block_byref_dump((char*)&amp;&quot;</span> <span class="o">+</span> \
-</span><span class="line">    <span class="n">command</span> <span class="o">+</span> <span class="s">&quot;- 2*sizeof(int) - 2*sizeof(void *)));&quot;</span>
-</span><span class="line">    <span class="n">lldb</span><span class="o">.</span><span class="n">debugger</span><span class="o">.</span><span class="n">HandleCommand</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
-</span><span class="line">
-</span><span class="line"><span class="k">def</span> <span class="nf">pblock</span><span class="p">(</span><span class="n">debugger</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="n">internal_dict</span><span class="p">):</span>
-</span><span class="line">    <span class="n">cmd</span> <span class="o">=</span> <span class="s">&quot;expr (void)printf(</span><span class="se">\&quot;</span><span class="si">%s</span><span class="se">\&quot;</span><span class="s">,(const char*)_Block_dump(&quot;</span> <span class="o">+</span> <span class="n">command</span> <span class="o">+</span> <span class="s">&quot;));&quot;</span>
-</span><span class="line">    <span class="n">lldb</span><span class="o">.</span><span class="n">debugger</span><span class="o">.</span><span class="n">HandleCommand</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
-</span><span class="line">
-</span><span class="line"><span class="k">def</span> <span class="nf">__lldb_init_module</span><span class="p">(</span><span class="n">debugger</span><span class="p">,</span> <span class="n">internal_dict</span><span class="p">):</span>
-</span><span class="line">    <span class="n">debugger</span><span class="o">.</span><span class="n">HandleCommand</span><span class="p">(</span><span class="s">&#39;command script add -f blockHelper.pbyref pbyref&#39;</span><span class="p">)</span>
-</span><span class="line">    <span class="n">debugger</span><span class="o">.</span><span class="n">HandleCommand</span><span class="p">(</span><span class="s">&#39;command script add -f blockHelper.pblock pblock&#39;</span><span class="p">)</span>
-</span><span class="line">    <span class="k">print</span> <span class="s">&#39;The &quot;pbyref&quot; command has been installed and is ready of use.&#39;</span>
-</span><span class="line">    <span class="k">print</span> <span class="s">&#39;The &quot;pblock&quot; command has been installed and is ready of use.&#39;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<h3 id="install">INSTALL</h3>
-
-<ul>
-  <li>Download this git repostory to your home directory as <code>.lldb</code>.</li>
-</ul>
-
-<pre><code>git clone https://github.com/dryman/lldb-block-helper.git ~/.lldb
-</code></pre>
-
-<ul>
-  <li>add this line into your <code>~/.lldbinit</code>.</li>
-</ul>
-
-<pre><code>command script import ~/.lldb/blockHelper.py 
-</code></pre>
-
-<h3 id="usage">USAGE</h3>
-
-<pre><code>(lldb) pbyref x
-&lt;no result&gt;
-byref data block 0x100713f90 contents:
-  forwarding: 0x100713f90
-  flags: 0x1000004
-  size: 32
-
-(lldb) pblock localBlock
-&lt;no result&gt;
-^0x7fff5fbff480 (new layout) =
-isa: stack Block
-flags: HASSIGNATURE HASHELP
-refcount+deallocating: 0
-invoke: 0x100001430
-descriptor: 0x100002070
-descriptor-&gt;reserved: 0
-descriptor-&gt;size: 40
-descriptor-&gt;copy helper: 0x100001470
-descriptor-&gt;dispose helper: 0x1000014b0
-descriptor-&gt;signature: 0x100001c29 'v8@?0'
-descriptor-&gt;layout: 0x0 '(null)'
-</code></pre>
-
-<h2 id="references">References</h2>
-
-<ul>
-  <li><a href="http://lldb.llvm.org/python-reference.html">lldb python references</a></li>
-  <li><a href="http://www.informit.com/articles/article.aspx?p=1749597&amp;seqNum=12">Big Nerd Ranch: Advanced Mac OSX Programming</a></li>
 </ul>
 
 ]]></content>

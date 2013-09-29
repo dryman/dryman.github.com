@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Java | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/java/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2013-09-23T23:07:50-07:00</updated>
+  <updated>2013-09-28T19:18:29-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,121 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Java fast IO using java.nio API]]></title>
+    <link href="http://www.idryman.org/blog/2013/09/28/java-fast-io-using-java-nio-api/"/>
+    <updated>2013-09-28T17:18:00-07:00</updated>
+    <id>http://www.idryman.org/blog/2013/09/28/java-fast-io-using-java-nio-api</id>
+    <content type="html"><![CDATA[<p>For modern computing, IO is always a big bottleneck to solve. I recently encounter a problem is to read a 355MB index file to memory, and do a run-time lookup base the index. This process will be repeated by thousands of Hadoop job instances, so a fast IO is a must. By using the <code>java.nio</code> API I sped the process from 194.054 seconds to 0.16 sec! Here’s how I did it.</p>
+
+<!--more-->
+
+<h2 id="the-data-to-process">The Data to Process</h2>
+
+<p>This performance tuning practice is very specific to the data I’m working on, so it’s better to explain the context. We have a long ip list (26 millions in total) that we want to put in the memory. The ip is in text form, and we’ll transform it into signed integer and put it into a java array. (We use signed integer because java doesn’t support unsigned primitive types…) The transformation is pretty straight forward:</p>
+
+<p><code>java
+public static int ip2integer (String ip_str){
+  String [] numStrs = ip_str.split("\\.");
+  long num;
+  if (numStrs.length == 4){
+    num =
+        Long.parseLong(numStrs[0]) * 256 * 256 * 256
+        + Long.parseLong(numStrs[1]) * 256 * 256
+        + Long.parseLong(numStrs[2]) * 256
+        + Long.parseLong(numStrs[3]);
+    num += Integer.MIN_VALUE;
+    return (int)num;
+  } else {
+    System.err.println("IP is wrong: "+ ip_str);
+    return Integer.MIN_VALUE;
+  }
+}
+</code></p>
+
+<p>However, reading ip in text form line by line is really slow.</p>
+
+<h2 id="strategy-1-line-by-line-text-processing">Strategy 1: Line-by-line text processing</h2>
+
+<p>This approach is straight forward. Just a standard readline program in java.</p>
+
+<p>```java
+private int[] ipArray = new int[26123456];
+public static void readIPAsText() throws IOException{
+  BufferedReader br = new BufferedReader(new FileReader(“ip.tsv”));
+  DataOutputStream ds = new DataOutputStream(fos);
+  String line;
+  int i = 0;</p>
+
+<p>while ((line = br.readLine()) != null) {
+    int ip_num = ip2integer(line);
+    ipArray[i++] = ip_num;
+  }
+  br.close();
+}
+```</p>
+
+<p>The result time was <code>194.054</code> seconds.</p>
+
+<h2 id="strategy-2-encode-ip-in-binary-format">Strategy 2: Encode ip in binary format</h2>
+
+<p>The file size of the <code>ip.tsv</code> is 355MB, which is inefficient to store or to read. Since I’m only reading it to an array, why not store it as a big chunk of binary array, and read it back while I need it? This can be done by <a href="http://docs.oracle.com/javase/7/docs/api/java/io/DataInputStream.html">DataInputStream</a> and <a href="http://docs.oracle.com/javase/7/docs/api/java/io/DataOutputStream.html">DataOutputStream</a>. After shrinking the file, the file size became 102MB.</p>
+
+<p>Here’s the code to read ip in binary format:</p>
+
+<p><code>java
+public static void readIPAsDataStream() throws IOException{
+  FileInputStream fis = new FileInputStream(new File("ip.bin"));
+  DataInputStream dis = new DataInputStream(fis);
+  int i = 0;
+  try {
+    while(true){
+      ipArr[i++] = dis.readInt();
+    }
+  }catch (EOFException e){
+    System.out.println("EOF");
+  }
+  finally {
+    fis.close();
+  }
+}
+</code></p>
+
+<p>The resulting time was <code>72</code> seconds. Much slower than I expected.</p>
+
+<h2 id="strategy-3-read-the-file-using-javanio-api">Strategy 3: Read the file using java.nio API</h2>
+
+<p>The <code>java.nio</code> is a new IO API that maps to low level system calls. With these system calls we can perform libc operations like <code>fseek</code>, <code>rewind</code>, <code>ftell</code>, <code>fread</code>, and bulk copy from disk to memory. For the C API you can view it from <a href="http://www.gnu.org/software/libc/manual/html_node/Low_002dLevel-I_002fO.html">GNU C library reference</a>.</p>
+
+<p>The terminology in C and Java is a little bit different. In C, you control the file IO by <a href="http://www.gnu.org/software/libc/manual/html_node/Opening-and-Closing-Files.html#Opening-and-Closing-Files">file descriptors</a>; while in <code>java.nio</code> you use a <a href="http://docs.oracle.com/javase/7/docs/api/java/nio/channels/FileChannel.html">FileChannel</a> for reading, writing, or manipulate the position in the file. Another difference is you can bulk copy directly using the <code>fread</code> call, but in Java you need an additional <code>ByteBuffer</code> layer to map the data. To understand how it work, it’s better to read it from code:</p>
+
+<p><code>java
+public static void readIPFromNIO() throws IOException{
+  FileInputStream fis = new FileInputStream(new File("ip.bin"));
+  FileChannel channel = fis.getChannel();
+  ByteBuffer bb = ByteBuffer.allocateDirect(64*1024);
+  bb.clear();
+  ipArr = new int [(int)channel.size()/4];
+  System.out.println("File size: "+channel.size()/4);
+  long len = 0;
+  int offset = 0;
+  while ((len = channel.read(bb))!= -1){
+    bb.flip();
+    //System.out.println("Offset: "+offset+"\tlen: "+len+"\tremaining:"+bb.hasRemaining());
+    bb.asIntBuffer().get(ipArr,offset,(int)len/4);
+    offset += (int)len/4;
+    bb.clear();
+  }
+}
+</code></p>
+
+<p>The code should be quite self-documented. The only thing to note is the byte-buffer’s <code>flip()</code> method. This call convert the buffer from writing data to buffer from disk to reading mode, so that we can read the data to int array via method <code>get()</code>. Another thing worth to mention is java use big-endian to read and write data by default. You can use <code>ByteBuffer.order(ByteOrder.LITTLE_ENDIAN)</code> to set the endian if you need it. For more about <code>ByteBuffer</code> here’s a <a href="http://mindprod.com/jgloss/bytebuffer.html">good blog post</a> that explains it in detail.</p>
+
+<p>With this implementation, the result performance is <code>0.16</code> sec! Glory to the <code>java.nio</code>!</p>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Process Small Files on Hadoop using CombineFileInputFormat (2)]]></title>
