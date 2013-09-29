@@ -102,7 +102,7 @@
     </url>
     <url>
         <loc>http://www.idryman.org/blog/2012/09/30/c-objc-block-and-debugger/</loc>
-        <lastmod>2012-10-01T00:02:26-07:00</lastmod>
+        <lastmod>2013-09-28T19:39:26-07:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/2012/10/29/type-qualifiers/</loc>
@@ -164,7 +164,7 @@
         <loc>
             http://www.idryman.org/blog/2013/07/14/writing-java-programs-on-a-remote-server/
         </loc>
-        <lastmod>2013-07-18T11:11:23-07:00</lastmod>
+        <lastmod>2013-09-28T19:39:04-07:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/2013/08/16/minimal-nodejs-router/</loc>
@@ -178,13 +178,13 @@
         <loc>
             http://www.idryman.org/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-1/
         </loc>
-        <lastmod>2013-09-22T18:33:58-07:00</lastmod>
+        <lastmod>2013-09-28T19:37:34-07:00</lastmod>
     </url>
     <url>
         <loc>
             http://www.idryman.org/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-2/
         </loc>
-        <lastmod>2013-09-23T23:06:26-07:00</lastmod>
+        <lastmod>2013-09-28T19:38:23-07:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/2013/09/28/java-fast-io-using-java-nio-api/</loc>
@@ -196,7 +196,7 @@
     </url>
     <url>
         <loc>http://www.idryman.org/blog/archives/</loc>
-        <lastmod>2013-09-28T19:09:08-07:00</lastmod>
+        <lastmod>2013-09-28T19:39:26-07:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/double-pendulum/</loc>
@@ -212,6 +212,6 @@
     </url>
     <url>
         <loc>http://www.idryman.org/</loc>
-        <lastmod>2013-09-28T19:09:08-07:00</lastmod>
+        <lastmod>2013-09-28T19:39:26-07:00</lastmod>
     </url>
 </urlset>
