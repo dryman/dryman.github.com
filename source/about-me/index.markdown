@@ -7,13 +7,19 @@ sharing: true
 footer: true
 ---
 
-My first programming experience was in an EE C++ data structure course in 2009.
-Since then, I taught myself more on programming, involved open source
-communities, became an IT in lab, and had done many personal projects
-(documented on my [blog](http://www.idryman.org))
-as well as academic projects. 
-Now I found myself best suited in iOS programming and am looking to find a job
-in this area.
+I'm a software engineer currently living and working in Pasadena. I have a
+wide programming interests and skills over F2E, Hadoop, iOS programming, and
+numerical computation. 
+
+
+# Open source projects
+
+## Clojure projects
+
+* [Grunf][] A http monitoring tool with embedded programming interface in the configuration file.
+
+[Grunf]: https://github.com/SupplyFrame/grunf
+
 
 ## iOS projects
 * [FCAnimationFactory](https://github.com/dryman/FCAnimationFactory)
@@ -23,7 +29,7 @@ in this area.
 * [Pendulum+](http://itunes.apple.com/au/app/pendulum+/id558261535?mt=8&ign-mpt=uo\%3D2)
   A chaotic double pendulum physics simulation with great use of Core Animation.
   It has good peroformance, low battery usage, and runs smoothly on all iOS
-  platforms.
+  platforms. The code is open sourced on github: [Pendulum][]
   Technical details for Core Animation is on
   [SpeakerDeck](https://speakerdeck.com/u/dryman/p/mastering-core-animation)
 
@@ -43,6 +49,9 @@ in this area.
   Apple. I implemented a GCD version of Conjugate Gradient algorithm from
   [NAS Parallel Benchmark](http://www.nas.nasa.gov/publications/npb.html)
   and compare to OpenMP version offered by NASA. The GCD results are great.
+
+[Pendulum]: https://github.com/dryman/Pendulum-
+
 
 ## Other projects
 * [File::Monitor::Lite](http://search.cpan.org/~dryman/File-Monitor-Lite-0.652002/lib/File/Monitor/Lite.pm)
