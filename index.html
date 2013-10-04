@@ -9,7 +9,7 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="For modern computing, IO is always a big bottleneck to solve. I recently encounter a problem is to read a 355MB index file to memory, and do a run- &hellip;">
+  <meta name="description" content="I thought this problem is already been solved, but it’s not: consider a string like \xe6\x84\x8f\xe6\xb3\x95\xe5\x8d\x8a\xe5\xaf\xbc hello world, how &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -102,6 +102,49 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2013/10/03/convert-uf8-literals-in-java/">Convert Uf8 Literals in Java</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-10-03T20:37:00-07:00" pubdate data-updated="true">Oct 3<span>rd</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I thought this problem is already been solved, but it’s not: consider a string like <code>\xe6\x84\x8f\xe6\xb3\x95\xe5\x8d\x8a\xe5\xaf\xbc hello world</code>, how can you transform it to an utf8 encoded string <code>意法半导 hello world</code>? Note that the string you get is encoded in ascii encoding, not utf8; the original utf8 is transfered into hex literals. I thought that I can use whatever library I found on the first result returned by google, but actually there’s no trivial solution out there on the web.</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2013/10/03/convert-uf8-literals-in-java/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -498,49 +541,6 @@ MathJax.Hub.Config({
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2013/05/25/clojure-bookmarks/">Popular Clojure Projects</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-05-25T08:40:00-07:00" pubdate data-updated="true">May 25<span>th</span>, 2013</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>When I want to learn a new programming language, the best way is always learn from the best projects in that ecosystem. I grabbed several popular repositories that has high ratings on Github.</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2013/05/25/clojure-bookmarks/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -554,6 +554,10 @@ MathJax.Hub.Config({
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2013/10/03/convert-uf8-literals-in-java/">Convert uf8 literals in Java</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2013/09/28/java-fast-io-using-java-nio-api/">Java fast IO using java.nio API</a>
@@ -589,10 +593,6 @@ MathJax.Hub.Config({
     
       <li class="post">
         <a href="/blog/2013/05/29/emacs-loves-ipython-notebook/">Emacs loves iPython Notebook</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/05/25/clojure-bookmarks/">Popular Clojure Projects</a>
       </li>
     
   </ul>

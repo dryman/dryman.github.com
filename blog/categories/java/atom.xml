@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Java | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/java/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2013-09-28T19:41:25-07:00</updated>
+  <updated>2013-10-03T21:15:36-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,41 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Convert uf8 literals in Java]]></title>
+    <link href="http://www.idryman.org/blog/2013/10/03/convert-uf8-literals-in-java/"/>
+    <updated>2013-10-03T20:37:00-07:00</updated>
+    <id>http://www.idryman.org/blog/2013/10/03/convert-uf8-literals-in-java</id>
+    <content type="html"><![CDATA[<p>I thought this problem is already been solved, but it’s not: consider a string like <code>\xe6\x84\x8f\xe6\xb3\x95\xe5\x8d\x8a\xe5\xaf\xbc hello world</code>, how can you transform it to an utf8 encoded string <code>意法半导 hello world</code>? Note that the string you get is encoded in ascii encoding, not utf8; the original utf8 is transfered into hex literals. I thought that I can use whatever library I found on the first result returned by google, but actually there’s no trivial solution out there on the web.</p>
+
+<!--more-->
+
+<h2 id="icu4j">ICU4J</h2>
+
+<p>The only library that you can use for handling utf8 on java platform, is <a href="http://icu-project.org/apiref/icu4j/">ICU4J</a>. THE Unicode processing library devloped by IBM. If you know any other library that can process the literal string, please tell me, I’ll be really appreciated.</p>
+
+<p>With <a href="http://icu-project.org/apiref/icu4j/">ICU4J</a> you can use <code>com.ibm.icu.impl.Utility.unescape(String s)</code> to convert the literal string to utf8 string. However, java string internally doesn’t use utf8 encoding, instead it uses UTF-16 (Big Endian) to present unicode characters. To fully convert the string from utf8 literal to java unicode representation, you need to decode it with <strong>ISO-8859-1</strong> then read the bytes back to string using encoding <strong>UTF-8</strong>.</p>
+
+<p>```java
+import com.ibm.icu.impl.Utility;</p>
+
+<p>String utf_literals = “\xe6\x84\x8f\xe6\xb3\x95\xe5\x8d\x8a\xe5\xaf\xbc hello world”;</p>
+
+<p>String utf8_str = Utility.unescape(utf_literals);
+byte[] b = utf8_str.getBytes(“ISO-8859-1”);
+String java_utf_str = new String(b, “UTF-8”);</p>
+
+<p>System.out.println(java_utf_str);
+// ==&gt;  意法半导 hello world
+```</p>
+
+<p>One more thing. In order to print the utf string in Eclipse, you have to set the encoding of the output to utf8, else you’ll see a bunch of question marks.</p>
+
+<p>I’m quite surprised that no one ever write a post of how do you solved this task. I know the solution is short yet not that trivial, but it still took me several hours to dig in and out on different libraries and solutions on the web to reach the final answer. Hope this post can save your time if you encountered the same problem!</p>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Java fast IO using java.nio API]]></title>

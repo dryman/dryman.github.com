@@ -5,11 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Category: Hadoop - Carpe diem (Felix's blog)</title>
+  <title>Convert uf8 literals in Java - Carpe diem (Felix's blog)</title>
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="Category: Hadoop">
+  <meta name="description" content="I thought this problem is already been solved, but it’s not: consider a string like \xe6\x84\x8f\xe6\xb3\x95\xe5\x8d\x8a\xe5\xaf\xbc hello world, how &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.idryman.orgblog/categories/hadoop/">
+  <link rel="canonical" href="http://www.idryman.org/blog/2013/10/03/convert-uf8-literals-in-java/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -101,50 +101,132 @@ MathJax.Hub.Config({
   <div id="main">
     <div id="content">
       <div>
-<article role="article">
+<article class="hentry" role="article">
   
   <header>
-    <h1 class="entry-title">Category: Hadoop</h1>
+    
+      
+        <h1 class="entry-title">Convert Uf8 Literals in Java</h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-10-03T20:37:00-07:00" pubdate data-updated="true">Oct 3<span>rd</span>, 2013</time>
+        
+      </p>
     
   </header>
-  
-  <div id="blog-archives" class="category">
 
 
+<div class="entry-content"><p>I thought this problem is already been solved, but it’s not: consider a string like <code>\xe6\x84\x8f\xe6\xb3\x95\xe5\x8d\x8a\xe5\xaf\xbc hello world</code>, how can you transform it to an utf8 encoded string <code>意法半导 hello world</code>? Note that the string you get is encoded in ascii encoding, not utf8; the original utf8 is transfered into hex literals. I thought that I can use whatever library I found on the first result returned by google, but actually there’s no trivial solution out there on the web.</p>
 
-  
-  <h2>2013</h2>
+<!--more-->
 
-<article>
-  
-<h1><a href="/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-2/">Process Small Files on Hadoop using CombineFileInputFormat (2)</a></h1>
-<time datetime="2013-09-22T18:41:00-07:00" pubdate><span class='month'>Sep</span> <span class='day'>22</span> <span class='year'>2013</span></time>
+<h2 id="icu4j">ICU4J</h2>
 
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/hadoop/'>Hadoop</a>, <a class='category' href='/blog/categories/java/'>Java</a></span>
-</footer>
+<p>The only library that you can use for handling utf8 on java platform, is <a href="http://icu-project.org/apiref/icu4j/">ICU4J</a>. THE Unicode processing library devloped by IBM. If you know any other library that can process the literal string, please tell me, I’ll be really appreciated.</p>
 
+<p>With <a href="http://icu-project.org/apiref/icu4j/">ICU4J</a> you can use <code>com.ibm.icu.impl.Utility.unescape(String s)</code> to convert the literal string to utf8 string. However, java string internally doesn’t use utf8 encoding, instead it uses UTF-16 (Big Endian) to present unicode characters. To fully convert the string from utf8 literal to java unicode representation, you need to decode it with <strong>ISO-8859-1</strong> then read the bytes back to string using encoding <strong>UTF-8</strong>.</p>
 
-</article>
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kn">import</span> <span class="nn">com.ibm.icu.impl.Utility</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="n">String</span> <span class="n">utf_literals</span> <span class="o">=</span> <span class="s">&quot;\\xe6\\x84\\x8f\\xe6\\xb3\\x95\\xe5\\x8d\\x8a\\xe5\\xaf\\xbc hello world&quot;</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="n">String</span> <span class="n">utf8_str</span> <span class="o">=</span> <span class="n">Utility</span><span class="o">.</span><span class="na">unescape</span><span class="o">(</span><span class="n">utf_literals</span><span class="o">);</span>
+</span><span class="line"><span class="kt">byte</span><span class="o">[]</span> <span class="n">b</span> <span class="o">=</span> <span class="n">utf8_str</span><span class="o">.</span><span class="na">getBytes</span><span class="o">(</span><span class="s">&quot;ISO-8859-1&quot;</span><span class="o">);</span>
+</span><span class="line"><span class="n">String</span> <span class="n">java_utf_str</span> <span class="o">=</span> <span class="k">new</span> <span class="n">String</span><span class="o">(</span><span class="n">b</span><span class="o">,</span> <span class="s">&quot;UTF-8&quot;</span><span class="o">);</span>
+</span><span class="line">
+</span><span class="line"><span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">java_utf_str</span><span class="o">);</span>
+</span><span class="line"><span class="c1">// ==&gt;  意法半导 hello world</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
 
+<p>One more thing. In order to print the utf string in Eclipse, you have to set the encoding of the output to utf8, else you’ll see a bunch of question marks.</p>
 
-
-<article>
-  
-<h1><a href="/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-1/">Process Small Files on Hadoop using CombineFileInputFormat (1)</a></h1>
-<time datetime="2013-09-22T14:39:00-07:00" pubdate><span class='month'>Sep</span> <span class='day'>22</span> <span class='year'>2013</span></time>
-
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/hadoop/'>Hadoop</a>, <a class='category' href='/blog/categories/java/'>Java</a></span>
-</footer>
-
-
-</article>
+<p>I’m quite surprised that no one ever write a post of how do you solved this task. I know the solution is short yet not that trivial, but it still took me several hours to dig in and out on different libraries and solutions on the web to reach the final answer. Hope this post can save your time if you encountered the same problem!</p>
 
 </div>
 
+
+  <footer>
+    <p class="meta">
+      
   
+
+<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-10-03T20:37:00-07:00" pubdate data-updated="true">Oct 3<span>rd</span>, 2013</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/java/'>Java</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2013/10/03/convert-uf8-literals-in-java/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2013/10/03/convert-uf8-literals-in-java/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left articlenav" href="/blog/2013/09/28/java-fast-io-using-java-nio-api/" title="Previous Post: Java fast IO using java.nio API">&laquo; Java fast IO using java.nio API</a>
+      
+      
+    </p>
+  </footer>
 </article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
 
 </div>
 
@@ -236,7 +318,10 @@ MathJax.Hub.Config({
       var disqus_shortname = 'dryblog';
       
         
-        var disqus_script = 'count.js';
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.idryman.org/blog/2013/10/03/convert-uf8-literals-in-java/';
+        var disqus_url = 'http://www.idryman.org/blog/2013/10/03/convert-uf8-literals-in-java/';
+        var disqus_script = 'embed.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
@@ -318,7 +403,7 @@ SOFTWARE.
       hn_like.src = "http://hnlike.com/upvote.php?link="
                     + encodeURIComponent(document.location)
                     + "&title="
-                    + encodeURIComponent("Category: Hadoop");
+                    + encodeURIComponent("Convert uf8 literals in Java");
       hn_like.innerHTML="iframes not supported by your browser";
       var twitter = document.getElementsByClassName("twitter-share-button")[0];
 
