@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2013-10-03T21:15:36-07:00</updated>
+  <updated>2013-12-16T17:01:09-08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -14,7 +14,7 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Convert uf8 literals in Java]]></title>
+    <title type="html"><![CDATA[Convert utf8 literals in Java]]></title>
     <link href="http://www.idryman.org/blog/2013/10/03/convert-uf8-literals-in-java/"/>
     <updated>2013-10-03T20:37:00-07:00</updated>
     <id>http://www.idryman.org/blog/2013/10/03/convert-uf8-literals-in-java</id>
@@ -448,7 +448,7 @@ and the problem is that HDFS can’t handle lots of files.</p>
 </span><span class="line"><span class="kn">import</span> <span class="nn">org.idryman.combinefiles.CFRecordReader</span><span class="o">;</span>
 </span><span class="line"><span class="kn">import</span> <span class="nn">org.idryman.combinefiles.FileLineWritable</span><span class="o">;</span>
 </span><span class="line">
-</span><span class="line"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">CFInputFormat</span> <span class="kd">extends</span> <span class="n">CombineFileInputFormat</span><span class="o">&lt;</span><span class="n">LineOffset</span><span class="o">,</span> <span class="n">Text</span><span class="o">&gt;</span> <span class="o">{</span>
+</span><span class="line"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">CFInputFormat</span> <span class="kd">extends</span> <span class="n">CombineFileInputFormat</span><span class="o">&lt;</span><span class="n">CFInputFormat</span><span class="o">,</span> <span class="n">Text</span><span class="o">&gt;</span> <span class="o">{</span>
 </span><span class="line">  <span class="kd">public</span> <span class="nf">CFInputFormat</span><span class="o">(){</span>
 </span><span class="line">    <span class="kd">super</span><span class="o">();</span>
 </span><span class="line">    <span class="n">setMaxSplitSize</span><span class="o">(</span><span class="mi">67108864</span><span class="o">);</span> <span class="c1">// 64 MB, default block size on hadoop</span>
@@ -773,7 +773,7 @@ is not documented anywhere in hadoop api nor document. You can only find it in <
 </span><span class="line">      <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
 </span><span class="line">    <span class="k">if</span> <span class="o">(</span><span class="n">getClass</span><span class="o">()</span> <span class="o">!=</span> <span class="n">obj</span><span class="o">.</span><span class="na">getClass</span><span class="o">())</span>
 </span><span class="line">      <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
-</span><span class="line">    <span class="n">LineOffset</span> <span class="n">other</span> <span class="o">=</span> <span class="o">(</span><span class="n">LineOffset</span><span class="o">)</span> <span class="n">obj</span><span class="o">;</span>
+</span><span class="line">    <span class="n">CFInputFormat</span> <span class="n">other</span> <span class="o">=</span> <span class="o">(</span><span class="n">CFInputFormat</span><span class="o">)</span> <span class="n">obj</span><span class="o">;</span>
 </span><span class="line">    <span class="k">if</span> <span class="o">(</span><span class="n">fileName</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
 </span><span class="line">      <span class="k">if</span> <span class="o">(</span><span class="n">other</span><span class="o">.</span><span class="na">fileName</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span>
 </span><span class="line">        <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
