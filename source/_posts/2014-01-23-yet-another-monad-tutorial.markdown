@@ -326,3 +326,20 @@ I found it helps me to understand it better, and I hope it helps you out as well
 Once understand what the Monad type is, you can easily use all sort of Haskell libraries on the fly. In the Haskell world, Monad is THE design pattern that used for almost every important libraries. Functional programming introduced a different way to convolute the logic and data, and it's elegant and powerful. I hope you can enjoy it!
 
 Any comment is welcome. ;)
+
+References
+---------
+
+* [Monads in small bites][]
+
+* [IO inside - HaskellWiki][]
+
+* [Learn You a Haskell for Great good][]
+
+* [Eval Monad][]
+
+* [Parsec parser combinator library][]
+
+* [Write Yourself a Scheme in 48 hours][scheme48]
+
+[Monads in small bites]: http://www.leonardoborges.com/writings/2012/12/08/monads-in-small-bites-part-iv-monads/
