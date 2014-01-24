@@ -9,9 +9,8 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="Type qualifiers are heavily used in C and Objective C. In C99 there are three
-type qualifiers: const, restrict, and volatile. In objective C,
-Apple &hellip;">
+  <meta name="description" content="Objective-C is a super set of C language. The entire language is a preprocessor
+skin added to C language and a powerful runtime system. With this &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -104,6 +103,57 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2012/10/30/dance-with-objective-c-dynamic-types/">Dance With Objective-C Dynamic Types</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-10-30T13:58:00-07:00" pubdate data-updated="true">Oct 30<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Objective-C is a super set of C language. The entire language is a preprocessor
+skin added to C language and a powerful runtime system. With this runtime system,
+one can have full featured object oriented programming interface, functional
+programming environment, and magical dynamic typing system. </p>
+
+<p>In this post, I’ll go through common tasks you can do with Objective-C typing
+system, including querying normal <code>NSObject</code> types, packing static type with
+<code>NSValue</code>, testing core foundation references, and validating if a pointer is a
+valid object pointer.</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2012/10/30/dance-with-objective-c-dynamic-types/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -553,65 +603,6 @@ works.</em></p>
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/06/18/handle-touch-events-in-uiwebview/">Handle Touch Events in UIWebView</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-06-18T17:53:00-07:00" pubdate data-updated="true">Jun 18<span>th</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>This is an annoying problem that related to my recent project. The goal is
-simple: </p>
-
-<blockquote>
-  <p>handle <strong>single touch event</strong> in <code>UIWebView</code> and let it handle other touch
-events as defaults.</p>
-</blockquote>
-
-<p>However this is really hard to achive…</p>
-
-<h3 id="edit-620">Edit: 6/20</h3>
-
-<p>I found this post:<a href="http://mithin.in/2009/08/26/detecting-taps-and-events-on-uiwebview-the-right-way/">DETECTING TAPS AND EVENTS ON UIWEBVIEW – THE RIGHT
-WAY</a>.
-He handles touch event via <code>- (void) sendEvent:(UIEvent*) event</code> instead of
-UIGesutreRecognizer. His approach is more general and less hacky than mine. Have
-a look at it also!</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/06/18/handle-touch-events-in-uiwebview/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/4/">&larr; Older</a>
@@ -627,6 +618,10 @@ a look at it also!</p>
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/01/23/yet-another-monad-tutorial/">Yet Another Monad Tutorial in 15 Minutes</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2013/10/03/convert-uf8-literals-in-java/">Convert utf8 literals in Java</a>
@@ -664,10 +659,6 @@ a look at it also!</p>
         <a href="/blog/2013/05/31/graphite-on-osx/">Install Graphite on OSX</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2013/05/29/emacs-loves-ipython-notebook/">Emacs loves iPython Notebook</a>
-      </li>
-    
   </ul>
 </section>
 
@@ -698,7 +689,7 @@ a look at it also!</p>
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2013 - dryman (Felix Ren-Chyan Chern) -
+  Copyright &copy; 2014 - dryman (Felix Ren-Chyan Chern) -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
 </p>
 
