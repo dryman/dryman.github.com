@@ -131,9 +131,9 @@ Cool, now the nested if-else logic is replaced! What do we learn from this?
 2. User can use the defined data type `Just a` or `Nothing` to **lift** the information (correct or error) to upper Monad.
 
 A programming language's type system deeply colors the way we think and write code in that language.
-In the object-oriented kingdom, we use objects to encapsulate error messages, throw it out to try-catch block.
+In the object-oriented kingdom, we use objects to encapsulate error messages,
+and then code the program to throw the exception upwards and hopefully the try-catch block will capture it and handle the error gracefully.
 In contrast, you can use a type to build the try-catch block, and also encapsulate error or success state!
-
 
 
 ## Application 2: accumulate states
