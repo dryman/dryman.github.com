@@ -3,7 +3,7 @@ layout: post
 title: "Process Small Files on Hadoop using CombineFileInputFormat (2)"
 date: 2013-09-22 18:41
 comments: true
-categories: Hadoop, Java
+categories: Hadoop Java
 ---
 
 Followed the previous article, in this post I ran several benchmarks and tuned the performance from 3 hours 34 minutes to 6 minutes 8 seconds!

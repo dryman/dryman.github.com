@@ -3,7 +3,7 @@ layout: post
 title: "Process Small Files on Hadoop using CombineFileInputFormat (1)"
 date: 2013-09-22 14:39
 comments: true
-categories: Hadoop, Java
+categories: Hadoop Java
 ---
 
 Processing small files is an old typical problem in hadoop; On [Stack Overflow][stack overflow] it suggested people to use [CombineFileInputFormat][],  but I haven't found a good step-to-step article that teach you how to use it. So, I decided to write one myself.
@@ -58,7 +58,7 @@ import org.apache.hadoop.mapreduce.lib.input.CombineFileSplit;
 import org.idryman.combinefiles.CFRecordReader;
 import org.idryman.combinefiles.FileLineWritable;
 
-public class CFInputFormat extends CombineFileInputFormat<LineOffset, Text> {
+public class CFInputFormat extends CombineFileInputFormat<CFInputFormat, Text> {
   public CFInputFormat(){
     super();
     setMaxSplitSize(67108864); // 64 MB, default block size on hadoop
@@ -240,7 +240,7 @@ public class FileLineWritable implements WritableComparable<FileLineWritable>{
       return false;
     if (getClass() != obj.getClass())
       return false;
-    LineOffset other = (LineOffset) obj;
+    CFInputFormat other = (CFInputFormat) obj;
     if (fileName == null) {
       if (other.fileName != null)
         return false;

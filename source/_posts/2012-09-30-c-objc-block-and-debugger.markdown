@@ -3,7 +3,7 @@ layout: post
 title: "C/ObjC block and debugger"
 date: 2012-09-30 14:32
 comments: true
-categories: Cocoa, block
+categories: Cocoa block
 ---
 
 In the last post, we discussed block byref internal structures and showed the

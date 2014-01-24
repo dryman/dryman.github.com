@@ -3,7 +3,7 @@ layout: post
 title: "Writing java programs on a remote server"
 date: 2013-07-14 16:52
 comments: true
-categories: java, vim
+categories: java vim
 ---
 
 Recently I started to work on hadoop and big data processing, but I was frustrated on eclipse and the development environment. We run hadoop on a remote cluster, but develop map-reduce programs on laptop. The development cycle was pretty slow because we need to upload the jar for every release. Another thing is Eclipse is too inefficient for a Vim and Emacs hacker like me. Thankfully I'm not the only one who think this way; Eric Van Dewoestine developed [Eclim][] which can let you work on java programs on headless eclipse and vim/emacs! Here comes the installation steps:
