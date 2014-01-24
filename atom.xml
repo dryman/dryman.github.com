@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2014-01-23T16:43:17-08:00</updated>
+  <updated>2014-01-24T15:31:42-08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -18,21 +18,21 @@
     <link href="http://www.idryman.org/blog/2014/01/23/yet-another-monad-tutorial/"/>
     <updated>2014-01-23T19:21:00-08:00</updated>
     <id>http://www.idryman.org/blog/2014/01/23/yet-another-monad-tutorial</id>
-    <content type="html"><![CDATA[<p>Functional programming has become popular these days, but unlike object-oriented languages, each FP language is so different from each other. Some of these use strict evaluation while others use lazily evaluated models; tons of new concurrent models were introduced; further more, states are handled differently too.</p>
+    <content type="html"><![CDATA[<p>Functional programming has become popular these days, but unlike object-oriented languages, each FP language is so different from the other. Some of these use strict evaluation while others use lazily evaluated models; tons of new concurrent models were introduced; further more, states are handled differently too.</p>
 
-<p>Haskell, for example, does not have states, but uses its powerful type system to construct the stateful program flow normally used in other languages. As you might guess, Monad is one of the type that does the trick. Defining a Monad type is pretty much like you would do to define a class in an OO language. However, Monad can do much more than a class. It’s a type that can be used for exception handling, constructing parallel program workflow or even a parser generator!</p>
+<p>Haskell, for example, does not have states, but uses its powerful type system to construct the stateful program flow normally used in other languages. As you might guess, Monad is one of the type that does the trick. Defining a Monad type is pretty much like defining a class in an object oriented language. However, Monad can do much more than a class. It’s a type that can be used for exception handling, constructing parallel program workflow or even a parser generator!</p>
 
-<p>By learning Monad, You’ll know a different perspective of how to program, and rethink the composition of data logic, beyond the object-oriented programming kingdom.</p>
+<p>By learning Monad, You’ll know a different perspective of how to program, and rethink the composition of data logic beyond the object-oriented programming kingdom.</p>
 
 <!--more-->
 
 <h2 id="what-is-a-type">What is a type</h2>
 
-<p>Before we jump into Monad itself, let’s quickly go through the type systems. What is a type? We usually think of type as a static thing like <code>int</code> or <code>float</code>, but actually, type is more dynamic; <strong>types are the rules associated with the data, not the actual data itself</strong>.</p>
+<p>Before we jump into Monad itself, let’s quickly go through the type systems. What is a type? We usually think of type as a static thing like <code>int</code> or <code>float</code>, but actually, type is more dynamic; <strong>types are the rules associated with the data, not the actual data itself</strong>. It is important to remember this point.</p>
 
-<p>For example, an <code>int</code> is treated as <code>int</code> only when you use <code>addl</code> CPU instruction to present <code>+</code> operation on 64 bit machine. On the other hand, <code>float</code> uses <code>addss</code> instruction for <code>+</code> and <code>%xmm</code> registers for computations. It’s the <em>rules</em>, or the <em>generated instructions</em>, that define the type.</p>
+<p>For example, an <code>int</code> is treated as <code>int</code> only when you use <code>addl</code> CPU instruction to present <code>+</code> operation on a 64 bit machine. On the other hand, <code>float</code> uses <code>addss</code> the instruction for <code>+</code> and <code>%xmm</code> registers for computations. It’s the <em>rules</em>, or the <em>generated instructions</em>, that define the type.</p>
 
-<p>The whole concept of Object-Oriented Programming is to let you to use classes/interfaces to define types, the rules (methods) that interacts with the actual data. For more advanced needs, people use templates(c++) or generics(java) to define more abstracted rules that are more reusable. And Monad, is pretty much like that generic class.</p>
+<p>The whole concept of Object-Oriented Programming is to let you use classes/interfaces to define types, the rules (methods) that interacts with the actual data. For more advanced needs people use templates(c++) or generics(java) to define more abstracted rules that are more reusable. Monad, is pretty much like that generic class.</p>
 
 <p>Now we understand what a type is; it’s just a set of rules, or methods in Object-Oriented terms. A Monad, is just yet another type, and the definition of this type is defined by four rules:</p>
 
@@ -43,11 +43,11 @@
   <li><code>fail</code></li>
 </ol>
 
-<p>By going through these four rules and looking at the examples below, you’ll understand what is a Monad and why is it so powerful!</p>
+<p>By going through these four rules and looking at the examples below, you’ll understand what a Monad is and why is it so awesome and powerful!</p>
 
 <h2 id="monad-lesson-1-the-bind-operator-">Monad lesson 1: the bind operator <code>(&gt;&gt;=)</code></h2>
 
-<p>The definition of Monad bind operator is a function type signature. A type signature is like an abstract method defined in abstract class:</p>
+<p>The Monad bind operator is a function type signature. A type signature is like an abstract method defined in an abstract class:</p>
 
 <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
@@ -66,7 +66,7 @@
     <p>A Monad that contains type <code>a</code> as the first input</p>
   </li>
   <li>
-    <p>A function <code>(a -&gt; m b)</code> as the second input. <code>(a -&gt; m b)</code> is a first order function that takes <code>a</code> as input, and returns Monad <code>m b</code>. You can think this as a delegate design pattern in Object-Oriented world, except you don’t need to pass in a whole object, but only a function itself is sufficient.</p>
+    <p>A function <code>(a -&gt; m b)</code> as the second input. <code>(a -&gt; m b)</code> is a first order function that takes <code>a</code> as input, and returns Monad <code>m b</code>. You can think of this as a delegate design pattern in Object-Oriented world, except you don’t need to pass in a whole object, but only a function itself is sufficient.</p>
   </li>
   <li>
     <p>The implementation will return Monad <code>m b</code> as a result.</p>
@@ -75,13 +75,13 @@
 
 <p><img width="50%" style="margin-left:25%;" src="http://www.idryman.org/images/monad/monad-structure.png" /></p>
 
-<p>Why is this definition powerful? Well, one benefit is that you can wrap common logic in Monad and safe your time.</p>
+<p>Why is this definition powerful? Well, one benefit is that you can wrap common logic in Monad and save yourself time.</p>
 
 <hr />
 
 <h2 id="application-1-exception-handling">Application 1: exception handling</h2>
 
-<p>Exception handling is always a pain ass. Lets demonstrate how to use a Monad to reduce the code size and un-nest if-else blocks.</p>
+<p>Exception handling is always a pain in the ass. Lets demonstrate how to use a Monad to reduce the code size and un-nest if-else blocks.</p>
 
 <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
@@ -114,7 +114,7 @@
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
 <!-- need to fix this part -->
-<p>There’s nothing wrong with nested if-else blocks. The logic is straightforward and easy to understand. To un-nest the if-else statements, there are several ways to do it. You can either use a <code>goto</code> statement and pass the control to a barrier label, or use try-catch block in C++ or similar language that supports it. Or, here comes the Maybe Monad for the rescue!</p>
+<p>There’s nothing wrong with nested if-else blocks. The logic is straightforward and easy to understand. To un-nest the if-else statements, there are several ways to do it. You can either use a <code>goto</code> statement and pass the control to a barrier label, or use try-catch block in C++ or a similar language that supports it. Or, here comes the Maybe Monad for the rescue!</p>
 
 <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
@@ -135,7 +135,7 @@
   <li>If the first input is <code>Nothing</code>, just return <code>Nothing</code></li>
 </ol>
 
-<p>When you combine several Maybe Monad handling functions together, if one of the upstream function went wrong by returning <code>Nothing</code>, all the downstream function won’t be executed.</p>
+<p>When you combine several Maybe Monad handling functions together, if one of the upstream function went wrong by returning <code>Nothing</code>, all the downstream function(s) won’t be executed.</p>
 
 <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
@@ -176,7 +176,7 @@
 
 <ol>
   <li>
-    <p>Error handling if-else logic is encapsulated from user.</p>
+    <p>Error handling if-else logic is encapsulated from the user.</p>
   </li>
   <li>
     <p>User can use the defined data type <code>Just a</code> or <code>Nothing</code> to <strong>lift</strong> the information (correct or error) to upper Monad.</p>
@@ -184,14 +184,15 @@
 </ol>
 
 <p>A programming language’s type system deeply colors the way we think and write code in that language.
-In object-oriented kindom, we use objects to encapsulate error messages, throw it out to try-catch block.
+In the object-oriented kingdom, we use objects to encapsulate error messages,
+and then code the program to throw the exception upwards and hopefully the try-catch block will capture it and handle the error gracefully.
 In contrast, you can use a type to build the try-catch block, and also encapsulate error or success state!</p>
 
 <h2 id="application-2-accumulate-states">Application 2: accumulate states</h2>
 
-<p>So far, we’ve seen that Monad can help us to wrap common (usually nested) logic into a type.
-User can <strong>lift</strong> the data to the upward Monad, and Monad do the if-else logic for you.
-Nevertheless, Monad can do more for you! <code>Maybe</code> Monad only pass the data to the next
+<p>So far, we’ve seen that Monad can help us wrap common (usually nested) logic into a type.
+User can <strong>lift</strong> the data to the upward Monad, and Monad will do the if-else logic for you.
+Nevertheless, Monad can do more for you! <code>Maybe</code> Monad only passes the data to the next
 user defined function, and here we introduce the <code>Writer</code> Monad, which will accumulate the
 data you lift to it.</p>
 
@@ -207,10 +208,10 @@ data you lift to it.</p>
 </span><span class="line">    <span class="p">(</span><span class="kt">Writer</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">v</span><span class="p">))</span> <span class="o">&gt;&gt;=</span> <span class="n">f</span> <span class="ow">=</span> <span class="kr">let</span> <span class="p">(</span><span class="kt">Writer</span> <span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">v&#39;</span><span class="p">))</span> <span class="ow">=</span> <span class="n">f</span> <span class="n">x</span> <span class="kr">in</span> <span class="kt">Writer</span> <span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">v</span> <span class="p">`</span><span class="n">mappend</span><span class="p">`</span> <span class="n">v&#39;</span><span class="p">)</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
-<p>Don’t be scared! Writer Monad use <code>Monoid</code> to concat the data you lift to it.
-<code>Monoid</code> defines <code>mempty</code> and <code>mappend</code> functions. <code>mappend</code>, as it name suggests, append
+<p>Don’t be scared! Writer Monad uses <code>Monoid</code> to concat the data you lift to it.
+<code>Monoid</code> defines <code>mempty</code> and <code>mappend</code> functions. <code>mappend</code>, as it’s name suggests, appends
 the data you passed to it; and <code>mempty</code> is just an empty element.
-<code>mappend</code> and <code>mempty</code> are just an abstract way to merge data together.</p>
+<code>mappend</code> and <code>mempty</code> are just abstract ways to merge data together.</p>
 
 <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
@@ -226,12 +227,12 @@ the data you passed to it; and <code>mempty</code> is just an empty element.
 </span><span class="line"><span class="s">&quot;hello &quot;</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
-<p>The Writer Monad’s definition just simply takes the return value of user defined function <code>f</code>, extract
-the value <code>v'</code> out of it, and use <code>mappend</code> to append the old <code>v</code> and new <code>v'</code>.</p>
+<p>The Writer Monad’s definition simply takes the return value of user defined function <code>f</code>, extracts
+the value <code>v'</code> out of it, and uses <code>mappend</code> to append the old <code>v</code> and new <code>v'</code>.</p>
 
 <h4 id="writer-monad-in-action">Writer Monad, in action</h4>
 
-<p>Let me take a modified example from <a href="http://learnyouahaskell.com/for-a-few-monads-more">Learn You a Haskell for Great good</a>. To log the process of deriving greatest common divisor, we can do this:</p>
+<p>Let me take a modified example from <a href="http://learnyouahaskell.com/for-a-few-monads-more">Learn You a Haskell for Great good</a>. To log the process of deriving the greatest common divisor, we can do this:</p>
 
 <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
@@ -255,7 +256,7 @@ the value <code>v'</code> out of it, and use <code>mappend</code> to append the 
 </span><span class="line">        <span class="n">return</span> <span class="p">[</span><span class="n">b</span><span class="p">,</span> <span class="p">(</span><span class="n">a</span> <span class="p">`</span><span class="n">mod</span><span class="p">`</span> <span class="n">b</span><span class="p">)]</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
-<p>The Writer Monad don’t have a constructor like Maybe Monad does, so you need to use <code>tell</code> and <code>return</code> to build the Writer Monad and return it back. To show the result of the writer log, you’ll also need function <code>runWriter</code>.</p>
+<p>The Writer Monad does not have a constructor like Maybe Monad does, so you need to use <code>tell</code> and <code>return</code> to build the Writer Monad and return it back. To show the result of the writer log, you’ll also need function <code>runWriter</code>.</p>
 
 <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
@@ -275,7 +276,7 @@ the value <code>v'</code> out of it, and use <code>mappend</code> to append the 
 
 <h2 id="monad-lesson-2-the-then-operator-">Monad Lesson 2: the then operator <code>&gt;&gt;</code></h2>
 
-<p>So, now we learned you can put different logic in a Monad to operate states. All the state passing is done by bind operator <code>&gt;&gt;=</code>, which wraps the data and pass to the downstream handler. However, Sometimes, we don’t care the wrapped value, but just want to pass the state downstream. For example, performing side effects.</p>
+<p>So, now we learned you can put different logic into a Monad to operate states. All the state passing is done by the bind operator <code>&gt;&gt;=</code>, which wraps the data and passes it to the downstream handler. However, Sometimes, we don’t care about the wrapped value and just want to pass the state downstream. For example, performing side effects.</p>
 
 <p>The definition of <em>then</em> operator <code>&gt;&gt;</code> looks like this:</p>
 
@@ -289,7 +290,7 @@ the value <code>v'</code> out of it, and use <code>mappend</code> to append the 
 
 <p>Unlike <em>bind</em> operator <code>&gt;&gt;=</code> which unwraps the value passed between user defined functions, <em>then</em> operator ignores the wrapped value (it uses <code>_</code> as variable) and only captures the states <code>x</code> and <code>y</code>.</p>
 
-<p>What is the use case of this? Recall that Haskell is a purely functional language that doesn’t has states or variables; However, the Monad system can encapsulate hidden states, so the solution is put a hidden <code>#realworld#</code> variable in <code>IO Monad</code> that record the standard input-output status, and also the file seek position, etc.</p>
+<p>What is the use case of this? Recall that Haskell is a purely a functional language that doesn’t have states or variables; However, the Monad system can encapsulate hidden states, so the solution is to put a hidden <code>#realworld#</code> variable in <code>IO Monad</code> that records the standard input-output status, and also the file seek position, etc.</p>
 
 <h2 id="application-3-io-monad">Application 3: IO Monad</h2>
 
@@ -318,7 +319,7 @@ The usage is trivial:</p>
 
 <h3 id="do-notation">do notation</h3>
 
-<p>For convenience, Haskell provides us <strong>do notation</strong> to simplify the writing of <em>bind</em> and <em>then</em>, so instead of writing</p>
+<p>For convenience, Haskell provides us <strong>do notation</strong> to simplify the writing of <em>bind</em> and <em>then</em>, so instead of writing:</p>
 
 <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
@@ -332,7 +333,7 @@ The usage is trivial:</p>
 </span><span class="line">       <span class="o">&gt;&gt;=</span> <span class="nf">\</span><span class="n">b</span> <span class="ow">-&gt;</span> <span class="n">print</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">)</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
-<p>you can write</p>
+<p>you can write:</p>
 
 <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
@@ -382,11 +383,11 @@ The usage is trivial:</p>
 </span><span class="line">  <span class="n">fail</span> <span class="ow">::</span> <span class="kt">String</span> <span class="ow">-&gt;</span> <span class="n">m</span> <span class="n">a</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
-<p><code>fail</code> can take an additional string to report the failure message. With <em>bind</em>, <em>then</em>, <em>return</em>, and <em>fali</em> functions, now we know the whole definition of the Monad type!</p>
+<p><code>fail</code> can take an additional string to report the failure message. With <em>bind</em>, <em>then</em>, <em>return</em>, and <em>fali</em> functions, we then know the whole definition of the Monad type!</p>
 
 <h2 id="monad-lesson-4-beyond-states">Monad Lesson 4: Beyond states</h2>
 
-<p>So far, we introduced <code>Maybe</code>, <code>Writer</code>, and <code>IO ()</code> Monads which use states heavily, but Monad can do more than abstracting states. Remember, the core of Monad type is to wrap around logic. One of the applications it can do is defining work flow. Here comes the <a href="http://chimera.labs.oreilly.com/books/1230000000929/ch02.html#fig_rpar_rpar">Eval Monad</a> for the rescue; let’s take a look on the example in the online book:</p>
+<p>So far, we introduced <code>Maybe</code>, <code>Writer</code>, and <code>IO ()</code> Monads which use states heavily, but Monad can do more than abstract states. Remember, the core of Monad type is to wrap around logic. One of the applications it can do is define work flow. Here comes the <a href="http://chimera.labs.oreilly.com/books/1230000000929/ch02.html#fig_rpar_rpar">Eval Monad</a> to the rescue; let’s take a look on the example in the online book:</p>
 
 <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
@@ -398,18 +399,18 @@ The usage is trivial:</p>
 </span><span class="line">   <span class="n">return</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">)</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
-<p>Once you wrap the function <code>f</code> in <code>Eval</code> Monad, it generates the logic to evaluate the code in parallel. You can further use the combination of <code>rpar</code> and <code>rseq</code> function defined by <code>Eval</code>, to construct the dependencies of each individual jobs. Check the link for more details!</p>
+<p>Once you wrap the function <code>f</code> in <code>Eval</code> Monad, it generates the logic to evaluate the code in parallel. You can further use the combination of the <code>rpar</code> and <code>rseq</code> functions defined by <code>Eval</code>, to construct the dependencies of each individual job. Check the link for more details!</p>
 
 <p>Another nontrivial example of Monad is <a href="http://www.haskell.org/haskellwiki/Parsec">Parsec parser combinator library</a>. In this case, the wrapped logic is used for generating a parser from smaller components. Read <a href="http://en.wikibooks.org/wiki/Write_Yourself_a_Scheme_in_48_Hours">Write Yourself a Scheme in 48 hours</a> to explore this decent Monad!</p>
 
 <h2 id="conclusion">Conclusion</h2>
 
-<p>I started to learn Haskell a while ago, but I found explaining what a Monad type is in a easy way is extremely difficult. The final approach I choose is breaking it down to four functions and explore them by examples. 
-I found it helps me to understand it better, and I hope it helps you out as well.</p>
+<p>I started to learn Haskell a while ago, but I found explaining what a Monad type is in a easy way was extremely difficult. The final approach I choose was to break it down into four functions and explore them through examples. 
+I found this helped me understand it better, and I hope it helps you out as well!</p>
 
-<p>Once understand what the Monad type is, you can easily use all sort of Haskell libraries on the fly. In the Haskell world, Monad is THE design pattern that used for almost every important libraries. Functional programming introduced a different way to convolute the logic and data, and it’s elegant and powerful. I hope you can enjoy it!</p>
+<p>Once you understand what the Monad type is, you can easily use for all sorts of Haskell libraries on the fly. In the Haskell world, Monad is THE design pattern that is used for almost every important library. Functional programming introduced a different way to convolute the logic and data. It’s also elegant and powerful. I hope you enjoyed reading this post!</p>
 
-<p>Any comment is welcome. ;)</p>
+<p>Any comments are welcome. ;)</p>
 
 <h2 id="references">References</h2>
 
