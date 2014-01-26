@@ -178,7 +178,7 @@
         <loc>
             http://www.idryman.org/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-1/
         </loc>
-        <lastmod>2014-01-25T16:49:10-08:00</lastmod>
+        <lastmod>2014-01-25T20:19:41-08:00</lastmod>
     </url>
     <url>
         <loc>
@@ -204,7 +204,7 @@
     </url>
     <url>
         <loc>http://www.idryman.org/blog/archives/</loc>
-        <lastmod>2014-01-25T16:49:10-08:00</lastmod>
+        <lastmod>2014-01-25T20:19:41-08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/double-pendulum/</loc>
@@ -220,6 +220,6 @@
     </url>
     <url>
         <loc>http://www.idryman.org/</loc>
-        <lastmod>2014-01-25T16:49:10-08:00</lastmod>
+        <lastmod>2014-01-25T20:19:41-08:00</lastmod>
     </url>
 </urlset>

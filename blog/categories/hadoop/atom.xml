@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Hadoop | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/hadoop/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2014-01-25T17:11:10-08:00</updated>
+  <updated>2014-01-25T20:19:57-08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -400,6 +400,13 @@ job.setNumReduceTasks(0); // map only
 </code></p>
 
 <p>The benchmark result is in the next post.</p>
+
+<h2 id="download">Download</h2>
+
+<p>The whole project can be downloaded from 
+<a href="https://github.com/dryman/Hadoop-CombineFileInputFormat">Hadoop CombineFileInputFormat</a>.</p>
+
+<p>Enjoy!</p>
 ]]></content>
   </entry>
   
