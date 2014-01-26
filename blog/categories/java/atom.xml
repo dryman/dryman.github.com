@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Java | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/java/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2014-01-24T15:31:42-08:00</updated>
+  <updated>2014-01-25T17:11:10-08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -348,7 +348,7 @@ import org.apache.hadoop.mapreduce.lib.input.CombineFileSplit;</p>
 <p>import org.idryman.combinefiles.CFRecordReader;
 import org.idryman.combinefiles.FileLineWritable;</p>
 
-<p>public class CFInputFormat extends CombineFileInputFormat&lt;CFInputFormat, Text&gt; {
+<p>public class CFInputFormat extends CombineFileInputFormat&lt;FileLineWritable, Text&gt; {
   public CFInputFormat(){
     super();
     setMaxSplitSize(67108864); // 64 MB, default block size on hadoop
@@ -523,7 +523,7 @@ import org.apache.hadoop.io.WritableComparable;</p>
       return false;
     if (getClass() != obj.getClass())
       return false;
-    CFInputFormat other = (CFInputFormat) obj;
+    FileLineWritable other = (CFFileLineWritableInputFormat) obj;
     if (fileName == null) {
       if (other.fileName != null)
         return false;

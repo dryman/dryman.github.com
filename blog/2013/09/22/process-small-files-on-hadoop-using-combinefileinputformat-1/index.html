@@ -205,7 +205,7 @@ and the problem is that HDFS can’t handle lots of files.</p>
 </span><span class="line"><span class="kn">import</span> <span class="nn">org.idryman.combinefiles.CFRecordReader</span><span class="o">;</span>
 </span><span class="line"><span class="kn">import</span> <span class="nn">org.idryman.combinefiles.FileLineWritable</span><span class="o">;</span>
 </span><span class="line">
-</span><span class="line"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">CFInputFormat</span> <span class="kd">extends</span> <span class="n">CombineFileInputFormat</span><span class="o">&lt;</span><span class="n">CFInputFormat</span><span class="o">,</span> <span class="n">Text</span><span class="o">&gt;</span> <span class="o">{</span>
+</span><span class="line"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">CFInputFormat</span> <span class="kd">extends</span> <span class="n">CombineFileInputFormat</span><span class="o">&lt;</span><span class="n">FileLineWritable</span><span class="o">,</span> <span class="n">Text</span><span class="o">&gt;</span> <span class="o">{</span>
 </span><span class="line">  <span class="kd">public</span> <span class="nf">CFInputFormat</span><span class="o">(){</span>
 </span><span class="line">    <span class="kd">super</span><span class="o">();</span>
 </span><span class="line">    <span class="n">setMaxSplitSize</span><span class="o">(</span><span class="mi">67108864</span><span class="o">);</span> <span class="c1">// 64 MB, default block size on hadoop</span>
@@ -530,7 +530,7 @@ is not documented anywhere in hadoop api nor document. You can only find it in <
 </span><span class="line">      <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
 </span><span class="line">    <span class="k">if</span> <span class="o">(</span><span class="n">getClass</span><span class="o">()</span> <span class="o">!=</span> <span class="n">obj</span><span class="o">.</span><span class="na">getClass</span><span class="o">())</span>
 </span><span class="line">      <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
-</span><span class="line">    <span class="n">CFInputFormat</span> <span class="n">other</span> <span class="o">=</span> <span class="o">(</span><span class="n">CFInputFormat</span><span class="o">)</span> <span class="n">obj</span><span class="o">;</span>
+</span><span class="line">    <span class="n">FileLineWritable</span> <span class="n">other</span> <span class="o">=</span> <span class="o">(</span><span class="n">CFFileLineWritableInputFormat</span><span class="o">)</span> <span class="n">obj</span><span class="o">;</span>
 </span><span class="line">    <span class="k">if</span> <span class="o">(</span><span class="n">fileName</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
 </span><span class="line">      <span class="k">if</span> <span class="o">(</span><span class="n">other</span><span class="o">.</span><span class="na">fileName</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span>
 </span><span class="line">        <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
