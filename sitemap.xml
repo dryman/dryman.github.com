@@ -199,12 +199,18 @@
         <lastmod>2014-01-24T15:28:15-08:00</lastmod>
     </url>
     <url>
+        <loc>
+            http://www.idryman.org/blog/2014/01/26/capture-directory-context-in-hadoop-mapper/
+        </loc>
+        <lastmod>2014-01-26T15:57:49-08:00</lastmod>
+    </url>
+    <url>
         <loc>http://www.idryman.org/about-me/</loc>
         <lastmod>2013-09-28T16:51:04-07:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/archives/</loc>
-        <lastmod>2014-01-25T20:22:58-08:00</lastmod>
+        <lastmod>2014-01-26T15:57:49-08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/double-pendulum/</loc>
@@ -220,6 +226,6 @@
     </url>
     <url>
         <loc>http://www.idryman.org/</loc>
-        <lastmod>2014-01-25T20:22:58-08:00</lastmod>
+        <lastmod>2014-01-26T15:57:49-08:00</lastmod>
     </url>
 </urlset>

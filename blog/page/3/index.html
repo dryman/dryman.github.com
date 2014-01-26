@@ -9,8 +9,8 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="Objective-C is a super set of C language. The entire language is a preprocessor
-skin added to C language and a powerful runtime system. With this &hellip;">
+  <meta name="description" content="Almost every programmer has learned about C, and a lot of them use it for their
+career. It is certainly one of the most popular programming languages &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -103,6 +103,75 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2012/11/21/integer-promotion/">Deep C: Integer Promotion</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-11-21T14:15:00-08:00" pubdate data-updated="true">Nov 21<span>st</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Almost every programmer has learned about C, and a lot of them use it for their
+career. It is certainly one of the most popular programming languages on
+<a href="http://www.tiobe.com/index.php/content/paperinfo/tpci/index.html">TIOBE</a> (first place in November 2012). Yet, C can be really tricky and
+behave unexpectedly sometimes. One of those dodgy side of C is <strong>integer
+promotion</strong>. See the following example that illustrate the issue:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="cp">#include &lt;stdio.h&gt;</span>
+</span><span class="line">
+</span><span class="line"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span><span class="line"><span class="p">{</span>
+</span><span class="line">    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">a</span> <span class="o">=</span> <span class="mh">0xff</span><span class="p">;</span>
+</span><span class="line">    <span class="kt">char</span> <span class="n">b</span> <span class="o">=</span> <span class="mh">0xff</span><span class="p">;</span>
+</span><span class="line">    <span class="kt">int</span> <span class="n">c</span> <span class="o">=</span> <span class="n">a</span><span class="o">==</span><span class="n">b</span><span class="p">;</span> <span class="c1">// true, or false?</span>
+</span><span class="line">    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;C: %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="n">c</span><span class="p">);</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>You might think the output is <code>1</code>, yet the answer is <code>0</code>. Oops.</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2012/11/21/integer-promotion/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -552,57 +621,6 @@ notify some iPhone registered for the notifications.</p>
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/08/05/grand-central-dispatch-vs-openmp/">Grand Central Dispatch vs OpenMP</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-08-05T12:41:00-07:00" pubdate data-updated="true">Aug 5<span>th</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>In 2009 Apple released a new task parallelism technology called 
-<a href="http://developer.apple.com/library/ios/#documentation/Performance/Reference/GCD_libdispatch_Ref/Reference/reference.html">Grand Central Dispatch (GCD)</a>. Apple worked hard on tuning GCD; stated that only 15
-instructions are required to queue up a work unit in GCD, while creating a
-traditional thread could easily require several hundred instructions.<br />
-The main advantage of GCD is that programmer/user does not required to choose
-how many thread for application that optimize the most. It can save a lot of
-time for programmers because getting the most power out of CPUs requires a lot
-of measurement. With GCD, let the operating system decide it for you, <em>it just
-works.</em></p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/08/05/grand-central-dispatch-vs-openmp/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/4/">&larr; Older</a>
@@ -618,6 +636,10 @@ works.</em></p>
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/01/26/capture-directory-context-in-hadoop-mapper/">Capture directory context in Hadoop Mapper</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2014/01/23/yet-another-monad-tutorial/">Yet Another Monad Tutorial in 15 Minutes</a>
@@ -653,10 +675,6 @@ works.</em></p>
     
       <li class="post">
         <a href="/blog/2013/06/27/laziness-and-memoization-in-clojure/">Laziness and memoization in Clojure</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/05/31/graphite-on-osx/">Install Graphite on OSX</a>
       </li>
     
   </ul>

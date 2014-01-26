@@ -9,7 +9,7 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="Functional programming has become popular these days, but unlike object-oriented languages, each FP language is so different from the other. Some of &hellip;">
+  <meta name="description" content="I have been using hadoop for data processing and datawarehousing for a while. One of the problem we encountered was map-reduce framework abstracts &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -102,6 +102,49 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2014/01/26/capture-directory-context-in-hadoop-mapper/">Capture Directory Context in Hadoop Mapper</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-01-26T15:12:00-08:00" pubdate data-updated="true">Jan 26<span>th</span>, 2014</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>I have been using hadoop for data processing and datawarehousing for a while. One of the problem we encountered was map-reduce framework abstracts the input from files to lines, and thus it’s really difficult to apply logic based on different file or directories. Things got worse when we need to aggregate data across various versions of input sources. After digging in Hadoop source code, here is my solution.</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/01/26/capture-directory-context-in-hadoop-mapper/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -502,51 +545,6 @@ MathJax.Hub.Config({
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2013/05/31/graphite-on-osx/">Install Graphite on OSX</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-05-31T16:59:00-07:00" pubdate data-updated="true">May 31<span>st</span>, 2013</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Installing graphite on OSX is a <em>pain</em>. This post is a quick note that I would never want to go through again. If you are looking this post, I’d suggest you to install graphite on linux.</p>
-
-<p>Most installation steps are from this <a href="https://gist.github.com/oyiptong/2430817">gist</a>.</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2013/05/31/graphite-on-osx/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -560,6 +558,10 @@ MathJax.Hub.Config({
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/01/26/capture-directory-context-in-hadoop-mapper/">Capture directory context in Hadoop Mapper</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2014/01/23/yet-another-monad-tutorial/">Yet Another Monad Tutorial in 15 Minutes</a>
@@ -595,10 +597,6 @@ MathJax.Hub.Config({
     
       <li class="post">
         <a href="/blog/2013/06/27/laziness-and-memoization-in-clojure/">Laziness and memoization in Clojure</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/05/31/graphite-on-osx/">Install Graphite on OSX</a>
       </li>
     
   </ul>
