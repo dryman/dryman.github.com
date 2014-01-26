@@ -58,7 +58,7 @@ import org.apache.hadoop.mapreduce.lib.input.CombineFileSplit;
 import org.idryman.combinefiles.CFRecordReader;
 import org.idryman.combinefiles.FileLineWritable;
 
-public class CFInputFormat extends CombineFileInputFormat<CFInputFormat, Text> {
+public class CFInputFormat extends CombineFileInputFormat<FileLineWritable, Text> {
   public CFInputFormat(){
     super();
     setMaxSplitSize(67108864); // 64 MB, default block size on hadoop
@@ -240,7 +240,7 @@ public class FileLineWritable implements WritableComparable<FileLineWritable>{
       return false;
     if (getClass() != obj.getClass())
       return false;
-    CFInputFormat other = (CFInputFormat) obj;
+    FileLineWritable other = (CFFileLineWritableInputFormat) obj;
     if (fileName == null) {
       if (other.fileName != null)
         return false;
