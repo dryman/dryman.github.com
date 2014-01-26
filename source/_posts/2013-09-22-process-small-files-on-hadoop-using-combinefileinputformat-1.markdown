@@ -261,9 +261,19 @@ Finally is the job setup for hadoop cluster to run. We just need to assign the c
 import org.apache.hadoop.mapreduce.Job;
 // standard hadoop conf
 Job job = new Job(getConf());
+FileInputFormat.addInputPath(job, new Path(args[0]));
 job.setInputFormatClass(CFInputFormat.class);
 job.setMapperClass(MyMapper.class);
 job.setNumReduceTasks(0); // map only
+FileOutputFormat.setOutputPath(job, new Path(args[1]));
+job.submit();
 ```
 
 The benchmark result is in the next post.
+
+## Download
+
+The whole project can be downloaded from 
+[Hadoop CombineFileInputFormat](https://github.com/dryman/Hadoop-CombineFileInputFormat).
+
+Enjoy!
