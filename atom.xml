@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2014-01-25T20:19:57-08:00</updated>
+  <updated>2014-01-25T20:23:04-08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -1221,12 +1221,18 @@ is not documented anywhere in hadoop api nor document. You can only find it in <
 <span class="line-number">4</span>
 <span class="line-number">5</span>
 <span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
 </pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.Job</span><span class="o">;</span>
 </span><span class="line"><span class="c1">// standard hadoop conf</span>
 </span><span class="line"><span class="n">Job</span> <span class="n">job</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Job</span><span class="o">(</span><span class="n">getConf</span><span class="o">());</span>
+</span><span class="line"><span class="n">FileInputFormat</span><span class="o">.</span><span class="na">addInputPath</span><span class="o">(</span><span class="n">job</span><span class="o">,</span> <span class="k">new</span> <span class="n">Path</span><span class="o">(</span><span class="n">args</span><span class="o">[</span><span class="mi">0</span><span class="o">]));</span>
 </span><span class="line"><span class="n">job</span><span class="o">.</span><span class="na">setInputFormatClass</span><span class="o">(</span><span class="n">CFInputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
 </span><span class="line"><span class="n">job</span><span class="o">.</span><span class="na">setMapperClass</span><span class="o">(</span><span class="n">MyMapper</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
 </span><span class="line"><span class="n">job</span><span class="o">.</span><span class="na">setNumReduceTasks</span><span class="o">(</span><span class="mi">0</span><span class="o">);</span> <span class="c1">// map only</span>
+</span><span class="line"><span class="n">FileOutputFormat</span><span class="o">.</span><span class="na">setOutputPath</span><span class="o">(</span><span class="n">job</span><span class="o">,</span> <span class="k">new</span> <span class="n">Path</span><span class="o">(</span><span class="n">args</span><span class="o">[</span><span class="mi">1</span><span class="o">]));</span>
+</span><span class="line"><span class="n">job</span><span class="o">.</span><span class="na">submit</span><span class="o">();</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
 <p>The benchmark result is in the next post.</p>

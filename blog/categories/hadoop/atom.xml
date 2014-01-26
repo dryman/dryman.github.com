@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Hadoop | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/hadoop/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2014-01-25T20:19:57-08:00</updated>
+  <updated>2014-01-25T20:23:04-08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -394,9 +394,12 @@ import org.apache.hadoop.io.WritableComparable;</p>
 import org.apache.hadoop.mapreduce.Job;
 // standard hadoop conf
 Job job = new Job(getConf());
+FileInputFormat.addInputPath(job, new Path(args[0]));
 job.setInputFormatClass(CFInputFormat.class);
 job.setMapperClass(MyMapper.class);
 job.setNumReduceTasks(0); // map only
+FileOutputFormat.setOutputPath(job, new Path(args[1]));
+job.submit();
 </code></p>
 
 <p>The benchmark result is in the next post.</p>
