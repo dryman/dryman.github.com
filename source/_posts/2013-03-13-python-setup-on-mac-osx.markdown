@@ -19,7 +19,7 @@ Not only the python development but all kinds of programming tasks on OSX requir
 Next, install OSX most popular package manager [homebrew](http://mxcl.github.com/homebrew/). Just copy and paste this command in the terminal.
 
 ```bash
-ruby -e "$(curl -fsSL https://raw.github.com/mxcl/homebrew/go)"
+ruby -e "$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"
 ```
 
 If it shows an error about user permission, do the following
