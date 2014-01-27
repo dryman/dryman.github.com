@@ -4,7 +4,7 @@
   <title><![CDATA[Category: python | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/python/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2014-01-26T16:02:01-08:00</updated>
+  <updated>2014-01-27T15:08:14-08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -31,7 +31,7 @@
 <p>Next, install OSX most popular package manager <a href="http://mxcl.github.com/homebrew/">homebrew</a>. Just copy and paste this command in the terminal.</p>
 
 <p><code>bash
-ruby -e "$(curl -fsSL https://raw.github.com/mxcl/homebrew/go)"
+ruby -e "$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"
 </code></p>
 
 <p>If it shows an error about user permission, do the following</p>
