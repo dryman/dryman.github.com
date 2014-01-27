@@ -16,7 +16,7 @@ Meets InputSplit in Mapper
 Here is the first solution, it's a bit ugly but works. In Hadoop `Mapper` class, you can override the `setup` method to initiate mapper with corresponding context. The context contains `inputSplit`, which can be cast to `FileInputSplit`, and contains the file and directory information in it. This is how I did it:
 
 ```java
-protected final void setup(Context context) throws IOException{
+protected void setup(Context context) throws IOException{
   FileSplit fileSplit;
   InputSplit is = context.getInputSplit();
   FileSystem fs = FileSystem.get(context.getConfiguration());
