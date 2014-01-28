@@ -3,7 +3,7 @@ layout: post
 title: "Capture directory context in Hadoop Mapper"
 date: 2014-01-26 15:12
 comments: true
-categories: 
+categories: Hadoop
 ---
 
 I have been using hadoop for data processing and datawarehousing for a while. One of the problem we encountered was map-reduce framework abstracts the input from files to lines, and thus it's really difficult to apply logic based on different file or directories. Things got worse when we need to aggregate data across various versions of input sources. After digging in Hadoop source code, here is my solution.
