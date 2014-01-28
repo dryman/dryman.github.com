@@ -9,8 +9,24 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="I’m a newbie to Lisp programing language. Lisp is one of the most oldest
-programming language that is still being used today. People have a lot of &hellip;">
+  <meta name="description" content="Single rotate Using the kid utility, we can make rotate single to be simpler too: 1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+;; x y
+;; / \ / \
+;; y c =&gt; &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -103,6 +119,86 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2012/03/31/persistent-red-black-tree-in-lisp-2/">Persistent Red Black Tree in Lisp (2)</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-03-31T09:22:00-07:00" pubdate data-updated="true">Mar 31<span>st</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h3 id="single-rotate">Single rotate</h3>
+
+<p>Using the <code>kid</code> utility, we can make rotate single to be simpler too:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+</pre></td><td class="code"><pre><code class="cl"><span class="line"><span class="c1">;;       x              y</span>
+</span><span class="line"><span class="c1">;;     /   \          /   \</span>
+</span><span class="line"><span class="c1">;;    y     c   =&gt;   a     x       </span>
+</span><span class="line"><span class="c1">;;  /   \                 / \</span>
+</span><span class="line"><span class="c1">;; a     b               b   c</span>
+</span><span class="line"><span class="c1">;;</span>
+</span><span class="line"><span class="p">(</span><span class="nb">defun</span> <span class="nv">rotate-s</span> <span class="p">(</span><span class="nv">root</span> <span class="nv">dir</span><span class="p">)</span>
+</span><span class="line">  <span class="p">(</span><span class="k">let</span> <span class="p">((</span><span class="nv">x</span> <span class="p">(</span><span class="nb">cadr</span> <span class="nv">root</span><span class="p">))</span>
+</span><span class="line">        <span class="p">(</span><span class="nv">y</span> <span class="p">(</span><span class="nb">cadr</span> <span class="p">(</span><span class="nv">kid</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">))))</span>
+</span><span class="line">        <span class="p">(</span><span class="nv">a</span> <span class="p">(</span><span class="nv">kid</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">)</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">)))</span>
+</span><span class="line">        <span class="p">(</span><span class="nv">b</span> <span class="p">(</span><span class="nv">kid</span> <span class="p">(</span><span class="nb">not</span> <span class="nv">dir</span><span class="p">)</span> <span class="nv">dir</span><span class="p">))</span>
+</span><span class="line">        <span class="p">(</span><span class="nv">c</span> <span class="p">(</span><span class="nv">kid</span> <span class="nv">dir</span><span class="p">)))</span>
+</span><span class="line">    <span class="p">(</span><span class="k">if</span> <span class="nv">dir</span>
+</span><span class="line">        <span class="p">(</span><span class="nb">list</span> <span class="nv">a</span> <span class="nv">y</span> <span class="p">(</span><span class="nb">list</span> <span class="nv">b</span> <span class="nv">x</span> <span class="nv">c</span><span class="p">))</span>
+</span><span class="line">        <span class="p">(</span><span class="nb">list</span> <span class="p">(</span><span class="nb">list</span> <span class="nv">c</span> <span class="nv">x</span> <span class="nv">b</span><span class="p">)</span> <span class="nv">y</span> <span class="nv">a</span><span class="p">))))</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Observe that the two return form is nested reversed. Why not write a macro that
+generate this form? Then we only need to write the right case!</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2012/03/31/persistent-red-black-tree-in-lisp-2/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -602,6 +698,10 @@ Then you can translate this</p>
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/01/27/capture-path-info-in-hadoop-inputformat-class/">Capture path info in hadoop InputFormat class</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/01/26/capture-directory-context-in-hadoop-mapper/">Capture directory context in Hadoop Mapper</a>
       </li>
     
@@ -635,10 +735,6 @@ Then you can translate this</p>
     
       <li class="post">
         <a href="/blog/2013/07/14/writing-java-programs-on-a-remote-server/">Writing java programs on a remote server</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/06/27/laziness-and-memoization-in-clojure/">Laziness and memoization in Clojure</a>
       </li>
     
   </ul>

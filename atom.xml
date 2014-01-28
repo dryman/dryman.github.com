@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2014-01-27T15:08:14-08:00</updated>
+  <updated>2014-01-27T16:30:25-08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,384 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Capture path info in hadoop InputFormat class]]></title>
+    <link href="http://www.idryman.org/blog/2014/01/27/capture-path-info-in-hadoop-inputformat-class/"/>
+    <updated>2014-01-27T15:11:00-08:00</updated>
+    <id>http://www.idryman.org/blog/2014/01/27/capture-path-info-in-hadoop-inputformat-class</id>
+    <content type="html"><![CDATA[<p>On the last post I presented how to use Mapper context object to obtain Path information. This is a nice way to hack for ad-hoc jobs; however, it’s not really reusable and abstract. In this post, I’ll show you how to subclass <code>Text</code>, <code>TextInputFormat</code>, and <code>LineRecordReader</code> and create reusable components across all of your hadoop tasks.</p>
+
+<!--more-->
+
+<h2 id="input-workflow">Input WorkFlow</h2>
+
+<p>Before we go through all the classes, let me show you how hadoop read the files in.</p>
+
+<ol>
+  <li>
+    <p>By default, hadoop uses <code>TextInputFormat</code>, which inherits <code>FileInputFormat</code>, to process the input files.</p>
+  </li>
+  <li>
+    <p><code>TextInputFormat</code> allocates <code>LineRecordReader</code> and passed it to <code>Task</code> runtime.</p>
+  </li>
+  <li>
+    <p><code>Task</code> first initiates <code>LineRecordReader</code>, then wrap the <code>LineRecordReader</code> into <code>Context</code> object.</p>
+  </li>
+  <li>
+    <p>In <code>Mapper</code> <code>run</code> methods, it calls the method <code>nextKeyValue()</code> in <code>Context</code>, and reads the <code>LongWritable key</code> from <code>context.getCurrentKey()</code> and <code>Text value</code> from <code>context.getCurrentValue()</code>. Those methods delegates to <code>LineRecordReader</code>’s methods <code>nextKeyValue()</code>, <code>getCurrentKey()</code>, and <code>getCurrentValue()</code>.</p>
+  </li>
+  <li>
+    <p>Finally, <code>Mapper</code> passes the key-value pair to <code>map</code> method that we usually overrides.</p>
+  </li>
+</ol>
+
+<p>In order to put the path information into this workflow, we can extend the <code>Text</code> class and put the path information into it. To make this work, we need to create three new classes: <code>TextWithPath</code>, <code>TWPInputFormat</code>, and <code>TWPRecordReader</code>.</p>
+
+<h2 id="textwithpathjava">TextWithPath.java</h2>
+
+<p>Here is our content wrapper – <code>TextWithPath</code>. It doesn’t do much; there’s a new constructor which accepts <code>Path</code>, and there’s a getter method to get <code>Path</code>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kn">package</span> <span class="n">org</span><span class="o">.</span><span class="na">idryman</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.fs.Path</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.io.Text</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">TextWithPath</span> <span class="kd">extends</span> <span class="n">Text</span> <span class="o">{</span>
+</span><span class="line">  <span class="kd">private</span> <span class="n">Path</span> <span class="n">path</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line">  <span class="kd">public</span> <span class="nf">TextWithPath</span><span class="o">(</span><span class="n">Path</span> <span class="n">path</span><span class="o">){</span>
+</span><span class="line">    <span class="kd">super</span><span class="o">();</span>
+</span><span class="line">    <span class="k">this</span><span class="o">.</span><span class="na">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">;</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">
+</span><span class="line">  <span class="kd">public</span> <span class="n">Path</span> <span class="nf">getPath</span><span class="o">(){</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">path</span><span class="o">;</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line"><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="twpinputformatjava">TWPInputFormat.java</h2>
+
+<p>The new <code>TWPInputFormat</code> is almost identical to <code>TextInputFormat</code>, except it uses <code>TextWithPath</code> instead of <code>Text</code>, and the <code>createRecordReader</code> method returns <code>TWPRecordReader</code> instead of <code>LineRecordReader</code>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kn">package</span> <span class="n">org</span><span class="o">.</span><span class="na">idryman</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kn">import</span> <span class="nn">java.io.IOException</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.fs.Path</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.io.LongWritable</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.io.compress.CompressionCodec</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.io.compress.CompressionCodecFactory</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.io.compress.SplittableCompressionCodec</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.InputSplit</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.JobContext</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.RecordReader</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.TaskAttemptContext</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.lib.input.FileInputFormat</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">TWPInputFormat</span> <span class="kd">extends</span> <span class="n">FileInputFormat</span> <span class="o">&lt;</span><span class="n">LongWritable</span><span class="o">,</span> <span class="n">TextWithPath</span><span class="o">&gt;{</span>
+</span><span class="line">  <span class="nd">@Override</span>
+</span><span class="line">  <span class="kd">public</span> <span class="n">RecordReader</span> <span class="nf">createRecordReader</span><span class="o">(</span><span class="n">InputSplit</span> <span class="n">split</span><span class="o">,</span>
+</span><span class="line">      <span class="n">TaskAttemptContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">InterruptedException</span> <span class="o">{</span>
+</span><span class="line">    <span class="n">String</span> <span class="n">delimiter</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getConfiguration</span><span class="o">().</span><span class="na">get</span><span class="o">(</span>
+</span><span class="line">        <span class="s">&quot;textinputformat.record.delimiter&quot;</span><span class="o">);</span>
+</span><span class="line">    <span class="kt">byte</span><span class="o">[]</span> <span class="n">recordDelimiterBytes</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class="line">    <span class="k">if</span> <span class="o">(</span><span class="kc">null</span> <span class="o">!=</span> <span class="n">delimiter</span><span class="o">)</span>
+</span><span class="line">      <span class="n">recordDelimiterBytes</span> <span class="o">=</span> <span class="n">delimiter</span><span class="o">.</span><span class="na">getBytes</span><span class="o">();</span>
+</span><span class="line">    <span class="k">return</span> <span class="k">new</span> <span class="nf">TWPRecordReader</span><span class="o">(</span><span class="n">recordDelimiterBytes</span><span class="o">);</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">
+</span><span class="line">  <span class="nd">@Override</span>
+</span><span class="line">  <span class="kd">protected</span> <span class="kt">boolean</span> <span class="nf">isSplitable</span><span class="o">(</span><span class="n">JobContext</span> <span class="n">context</span><span class="o">,</span> <span class="n">Path</span> <span class="n">file</span><span class="o">)</span> <span class="o">{</span>
+</span><span class="line">    <span class="n">CompressionCodec</span> <span class="n">codec</span> <span class="o">=</span>
+</span><span class="line">      <span class="k">new</span> <span class="nf">CompressionCodecFactory</span><span class="o">(</span><span class="n">context</span><span class="o">.</span><span class="na">getConfiguration</span><span class="o">()).</span><span class="na">getCodec</span><span class="o">(</span><span class="n">file</span><span class="o">);</span>
+</span><span class="line">    <span class="k">if</span> <span class="o">(</span><span class="kc">null</span> <span class="o">==</span> <span class="n">codec</span><span class="o">)</span> <span class="o">{</span>
+</span><span class="line">      <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+</span><span class="line">    <span class="o">}</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">codec</span> <span class="k">instanceof</span> <span class="n">SplittableCompressionCodec</span><span class="o">;</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line"><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="twprecordreaderjava">TWPRecordReader.java</h2>
+
+<p>Finally, in the <code>TWPRecordReader</code>, this is where I put my logic in. In the <code>initialize</code> method, you can get the <code>FileSplit</code> and get the <code>Path</code> object out of it. Next, let’s override <code>nextKeyValue</code>, and updates the <code>value</code> on every call. Lastly, remember to override <code>getCurrentValue()</code>, else it will only return parent’s value (Text), not the value with <code>TextWithPath</code> class.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+<span class="line-number">38</span>
+<span class="line-number">39</span>
+<span class="line-number">40</span>
+<span class="line-number">41</span>
+<span class="line-number">42</span>
+<span class="line-number">43</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kn">package</span> <span class="n">org</span><span class="o">.</span><span class="na">idryman</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kn">import</span> <span class="nn">java.io.IOException</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.fs.Path</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.InputSplit</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.TaskAttemptContext</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.lib.input.FileSplit</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.lib.input.LineRecordReader</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">TWPRecordReader</span> <span class="kd">extends</span> <span class="n">LineRecordReader</span><span class="o">{</span>
+</span><span class="line">  <span class="kd">private</span> <span class="n">TextWithPath</span> <span class="n">value</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class="line">  <span class="kd">private</span> <span class="n">Path</span> <span class="n">path</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line">  <span class="kd">public</span> <span class="nf">TWPRecordReader</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">recordDelimiterBytes</span><span class="o">)</span> <span class="o">{</span>
+</span><span class="line">    <span class="kd">super</span><span class="o">(</span><span class="n">recordDelimiterBytes</span><span class="o">);</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">
+</span><span class="line">  <span class="nd">@Override</span>
+</span><span class="line">  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">initialize</span><span class="o">(</span><span class="n">InputSplit</span> <span class="n">genericSplit</span><span class="o">,</span> <span class="n">TaskAttemptContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">{</span>
+</span><span class="line">    <span class="kd">super</span><span class="o">.</span><span class="na">initialize</span><span class="o">(</span><span class="n">genericSplit</span><span class="o">,</span> <span class="n">context</span><span class="o">);</span>
+</span><span class="line">    <span class="n">FileSplit</span> <span class="n">split</span> <span class="o">=</span> <span class="o">(</span><span class="n">FileSplit</span><span class="o">)</span> <span class="n">genericSplit</span><span class="o">;</span>
+</span><span class="line">    <span class="n">path</span> <span class="o">=</span> <span class="n">split</span><span class="o">.</span><span class="na">getPath</span><span class="o">();</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">
+</span><span class="line">  <span class="nd">@Override</span>
+</span><span class="line">  <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">nextKeyValue</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+</span><span class="line">    <span class="k">if</span> <span class="o">(</span><span class="kd">super</span><span class="o">.</span><span class="na">nextKeyValue</span><span class="o">()){</span>
+</span><span class="line">      <span class="k">if</span> <span class="o">(</span><span class="n">value</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span>
+</span><span class="line">        <span class="n">value</span> <span class="o">=</span> <span class="k">new</span> <span class="n">TextWithPath</span><span class="o">(</span><span class="n">path</span><span class="o">);</span>
+</span><span class="line">      <span class="n">value</span><span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="kd">super</span><span class="o">.</span><span class="na">getCurrentValue</span><span class="o">());</span>
+</span><span class="line">      <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+</span><span class="line">    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+</span><span class="line">      <span class="n">value</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class="line">      <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+</span><span class="line">    <span class="o">}</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">
+</span><span class="line">  <span class="nd">@Override</span>
+</span><span class="line">  <span class="kd">public</span> <span class="n">TextWithPath</span> <span class="nf">getCurrentValue</span><span class="o">(){</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">value</span><span class="o">;</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line"><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="demo">Demo</h2>
+
+<p>Here is a demo code to test the output. In addition to normal map reduce tasks, we set the input format class to <code>TWPInpuFormat</code>; on the Mapper side, we expect the input is <code>TextWithPath</code>, not <code>Text</code>. The whole program can be downloaded from this github repo. <a href="https://github.com/dryman/Hadoop-TextWithPath">Hadoop TextWithPath</a></p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+<span class="line-number">38</span>
+<span class="line-number">39</span>
+<span class="line-number">40</span>
+<span class="line-number">41</span>
+<span class="line-number">42</span>
+<span class="line-number">43</span>
+<span class="line-number">44</span>
+<span class="line-number">45</span>
+<span class="line-number">46</span>
+<span class="line-number">47</span>
+<span class="line-number">48</span>
+<span class="line-number">49</span>
+<span class="line-number">50</span>
+<span class="line-number">51</span>
+<span class="line-number">52</span>
+<span class="line-number">53</span>
+<span class="line-number">54</span>
+<span class="line-number">55</span>
+<span class="line-number">56</span>
+<span class="line-number">57</span>
+<span class="line-number">58</span>
+<span class="line-number">59</span>
+<span class="line-number">60</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kn">package</span> <span class="n">org</span><span class="o">.</span><span class="na">idryman</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kn">import</span> <span class="nn">java.io.IOException</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.conf.Configuration</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.conf.Configured</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.fs.Path</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.io.IntWritable</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.io.LongWritable</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.io.NullWritable</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.io.Text</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.Job</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.Mapper</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.lib.output.FileOutputFormat</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.lib.reduce.IntSumReducer</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.util.Tool</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.util.ToolRunner</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">DemoRun</span> <span class="kd">extends</span> <span class="n">Configured</span> <span class="kd">implements</span> <span class="n">Tool</span> <span class="o">{</span>
+</span><span class="line">
+</span><span class="line">  <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+</span><span class="line">    <span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="n">ToolRunner</span><span class="o">.</span><span class="na">run</span><span class="o">(</span><span class="k">new</span> <span class="n">Configuration</span><span class="o">(),</span> <span class="k">new</span> <span class="n">DemoRun</span><span class="o">(),</span> <span class="n">args</span><span class="o">));</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">
+</span><span class="line">  <span class="nd">@Override</span>
+</span><span class="line">  <span class="kd">public</span> <span class="kt">int</span> <span class="nf">run</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+</span><span class="line">    <span class="n">Configuration</span> <span class="n">conf</span> <span class="o">=</span> <span class="n">getConf</span><span class="o">();</span>
+</span><span class="line">    <span class="n">Job</span> <span class="n">job</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Job</span><span class="o">(</span><span class="n">conf</span><span class="o">);</span>
+</span><span class="line">    <span class="n">job</span><span class="o">.</span><span class="na">setJobName</span><span class="o">(</span><span class="s">&quot;test TextWithPath Input&quot;</span><span class="o">);</span>
+</span><span class="line">    <span class="n">job</span><span class="o">.</span><span class="na">setJarByClass</span><span class="o">(</span><span class="n">DemoRun</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</span><span class="line">
+</span><span class="line">    <span class="n">TWPInputFormat</span><span class="o">.</span><span class="na">addInputPath</span><span class="o">(</span><span class="n">job</span><span class="o">,</span> <span class="k">new</span> <span class="n">Path</span><span class="o">(</span><span class="n">args</span><span class="o">[</span><span class="mi">0</span><span class="o">]));</span>
+</span><span class="line">    <span class="n">job</span><span class="o">.</span><span class="na">setInputFormatClass</span><span class="o">(</span><span class="n">TWPInputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</span><span class="line">    <span class="n">job</span><span class="o">.</span><span class="na">setMapperClass</span><span class="o">(</span><span class="n">TestMapper</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</span><span class="line">    <span class="n">job</span><span class="o">.</span><span class="na">setMapOutputKeyClass</span><span class="o">(</span><span class="n">Text</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</span><span class="line">    <span class="n">job</span><span class="o">.</span><span class="na">setMapOutputValueClass</span><span class="o">(</span><span class="n">NullWritable</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</span><span class="line">    <span class="n">job</span><span class="o">.</span><span class="na">setReducerClass</span><span class="o">(</span><span class="n">IntSumReducer</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</span><span class="line">    <span class="n">job</span><span class="o">.</span><span class="na">setNumReduceTasks</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
+</span><span class="line">    <span class="n">FileOutputFormat</span><span class="o">.</span><span class="na">setOutputPath</span><span class="o">(</span><span class="n">job</span><span class="o">,</span> <span class="k">new</span> <span class="n">Path</span><span class="o">(</span><span class="n">args</span><span class="o">[</span><span class="mi">1</span><span class="o">]));</span>
+</span><span class="line">
+</span><span class="line">    <span class="n">job</span><span class="o">.</span><span class="na">submit</span><span class="o">();</span>
+</span><span class="line">    <span class="n">job</span><span class="o">.</span><span class="na">waitForCompletion</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+</span><span class="line">    <span class="k">return</span> <span class="mi">0</span><span class="o">;</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">
+</span><span class="line">  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">TestMapper</span> <span class="kd">extends</span> <span class="n">Mapper</span><span class="o">&lt;</span><span class="n">LongWritable</span><span class="o">,</span> <span class="n">TextWithPath</span><span class="o">,</span> <span class="n">Text</span><span class="o">,</span> <span class="n">IntWritable</span><span class="o">&gt;{</span>
+</span><span class="line">
+</span><span class="line">    <span class="cm">/**</span>
+</span><span class="line"><span class="cm">     * Only override `run` instead of `map` method; because we just want to see one output</span>
+</span><span class="line"><span class="cm">     * per mapper, instead of printing every line.</span>
+</span><span class="line"><span class="cm">     */</span>
+</span><span class="line">    <span class="nd">@Override</span>
+</span><span class="line">    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">(</span><span class="n">Context</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">InterruptedException</span><span class="o">{</span>
+</span><span class="line">      <span class="n">context</span><span class="o">.</span><span class="na">nextKeyValue</span><span class="o">();</span>
+</span><span class="line">      <span class="n">TextWithPath</span> <span class="n">twp</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getCurrentValue</span><span class="o">();</span>
+</span><span class="line">      <span class="n">context</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="k">new</span> <span class="n">Text</span><span class="o">(</span><span class="n">twp</span><span class="o">.</span><span class="na">getPath</span><span class="o">().</span><span class="na">toString</span><span class="o">()),</span> <span class="k">new</span> <span class="n">IntWritable</span><span class="o">(</span><span class="mi">1</span><span class="o">));</span>
+</span><span class="line">    <span class="o">}</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">
+</span><span class="line"><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="one-more-thing">One more thing</h2>
+
+<p>I wrote another hadoop utility that reads a header file from HDFS input source, and passes a <code>FieldWritable</code> object to <code>Mapper</code> class instead of <code>Text</code>. The <code>FieldWritable</code> implements <code>Map</code> interface and can obtain TSV fields by it’s header key. The project is on <a href="https://github.com/dryman/hadoop-fieldformat">github</a> but still highly experimental. Once the API and implementation is stable, I’ll write another post to introduce it. Enjoy!</p>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Capture directory context in Hadoop Mapper]]></title>
@@ -2965,448 +3343,6 @@ unambiguous type specifications like <code>int8_t</code>, <code>int32_t</code> s
   <li><a href="http://www.idryman.org/blog/2012/11/21/integer-promotion/">C Integer Promotion</a></li>
 </ul>
 
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Objective-C ARC common pitfalls and best practices]]></title>
-    <link href="http://www.idryman.org/blog/2012/11/22/arc-best-practices-and-pitfalls/"/>
-    <updated>2012-11-22T09:28:00-08:00</updated>
-    <id>http://www.idryman.org/blog/2012/11/22/arc-best-practices-and-pitfalls</id>
-    <content type="html"><![CDATA[<p>Objective-C is a really cool programming language that is designed for Mac OSX and
-iOS software development. TIOBE has announced November Haedline: <a href="http://www.tiobe.com/index.php/content/paperinfo/tpci/index.html">Objective-C on
-its way to become “language of the year” again</a>. It is popular not only because
-the platform, but also its great performance on mobile devices. Objective-C
-featured in its manually memory management instead of garbage collection. Yet,
-its not that <em>manual</em> in modern Objective-C. Apple introduced Automatic
-Reference Counting, ARC, that inserts memory management code for you on compile
-time. In most cases of Objective-C development, it JUST WORKS. However, it
-is often confusing when you mix ARC code with Core Foundation objects (low level
-C references on apple’s platform). Today, I’ll talk about pitfalls and concepts
-of ARC especially when gluing CF objects with <strong>toll-free bridging</strong>.</p>
-
-<!-- more -->
-
-<h2 id="daily-arc">Daily ARC</h2>
-
-<p>I’ll first make a quick go through of ARC in two major uses: Objective-C
-properties and ARC type qualifiers. Then we’ll cut deep into memory management
-of Core Foundation Framework.</p>
-
-<h3 id="arc-and-objective-c-properties">ARC and Objective-C properties</h3>
-
-<script language="javascript">
-function toggleContent(){
-    var link = document.getElementById("expand_link");
-    var content = document.getElementById("expand_content");
-    if (content.style.display == 'block') {
-        content.style.display = 'none';
-        link.innerHTML = "Expand my highlight of ARC best pracitices by @amattn";
-    } else {
-        content.style.display = 'block';
-        link.innerHTML = "Toggle highlight";
-    }
-}
-</script>
-
-<p>It is really hard to write a new article about ARC without <a href="https://twitter.com/amattn">@amattn</a>’s
-collection of <a href="http://amattn.com/2011/12/07/arc_best_practices.html">ARC Best Practices</a>. You can find the complete
-best practices there, and below <a href="javascirpt:toggleContent()">link</a>
-is my highlight of his article <sup id="fnref:foot"><a href="#fn:foot" rel="footnote">1</a></sup>:</p>
-
-<p><a id="expand_link" href="javascript:toggleContent()"> Expand my highlight of ARC best pracitices by @amattn</a> </p>
-
-<blockquote style="display: none;" id="expand_content" cite="http://amattn.com/2011/12/07/arc_best_practices.html">
-
-  <ul>
-    <li>object instance variables which needs to be retained should use <code>strong</code>.</li>
-  </ul>
-
-  <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">strong</span><span class="p">)</span> <span class="kt">id</span> <span class="n">childObject</span><span class="p">;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-  <ul>
-    <li>To break reference cycle, use <code>weak</code> <sup id="fnref:foot2"><a href="#fn:foot2" rel="footnote">2</a></sup>.</li>
-  </ul>
-
-  <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">weak</span><span class="p">)</span> <span class="kt">id</span> <span class="n">delegate</span><span class="p">;</span>
-</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">weak</span><span class="p">)</span> <span class="n">NSTimer</span> <span class="n">timer</span><span class="p">;</span> <span class="c1">// NSTimer retains target</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-  <ul>
-    <li>use <code>assign</code> for scalar properties</li>
-  </ul>
-
-  <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">assign</span><span class="p">)</span> <span class="n">CGFloat</span> <span class="n">width</span><span class="p">;</span>
-</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">assign</span><span class="p">)</span> <span class="n">CGFloat</span> <span class="n">height</span><span class="p">;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-  <ul>
-    <li>use <code>copy</code> for immutable containers, strings and block. Avoid using mutable
-containers in properties (<code>NSMutableArray</code>, for example.) If you use mutable
-containers, use <code>strong</code>.</li>
-  </ul>
-
-  <div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">copy</span><span class="p">)</span> <span class="n">NSString</span><span class="o">*</span> <span class="n">name</span><span class="p">;</span>
-</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">copy</span><span class="p">)</span> <span class="n">NSArray</span><span class="o">*</span> <span class="n">components</span><span class="p">;</span>
-</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">copy</span><span class="p">)</span> <span class="p">(</span><span class="kt">void</span> <span class="p">(</span><span class="o">^</span><span class="p">)(</span><span class="kt">void</span><span class="p">))</span> <span class="n">job</span><span class="p">;</span>
-</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">strong</span><span class="p">)</span> <span class="n">NSMutableArray</span><span class="o">*</span> <span class="n">badPatterns</span><span class="p">;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-  <ul>
-    <li>In dealloc
-      <ul>
-        <li>remove observers</li>
-        <li>unregister notifications</li>
-      </ul>
-    </li>
-    <li>IBOutlets should generally be <code>weak</code> except File’s Owner to top-level objects in
-a nib file. If you set it to <code>strong</code>, you should set it to <code>nil</code> in
-<code>-(void)viewDidUnload</code>.</li>
-  </ul>
-
-  <footer><cite><a href="http://amattn.com/2011/12/07/arc_best_practices.html"> ARC Best Practices</a></cite></footer>
-</blockquote>
-
-<h3 id="arc-specific-type-qualifiers">ARC specific type qualifiers</h3>
-
-<p>About type qualifier rules, you can see my <a href="http://www.idryman.org/blog/2012/10/29/type-qualifiers/">previous post</a>. There
-are four ARC specific type qualifiers introduced by Apple:</p>
-
-<ol>
-  <li><code>__strong</code> is the default. An object remains <strong>alive</strong> as long as there is a strong
-  pointer to it.</li>
-  <li><code>__weak</code> specifies a reference that does not keep the referenced object alive. A
-  weak reference is set to <code>nil</code> when there are no strong references to the object.</li>
-  <li><code>__unsafe_unretained</code> specifies a reference that does not keep the referenced
-  object alive and is not set to <code>nil</code> when there are no strong references to the
-  object. If the object it references is deallocated, the pointer is left
-  dangling.</li>
-  <li><code>__autoreleasing</code> is used to denote arguments that are passed by reference <code>(id *)</code>
-  and are autoreleased on return.</li>
-</ol>
-
-<p>Beware that ARC type qualifiers are used for POINTER TYPE. That is, you must put
-the qualifier at the right hand side of the star. </p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="n">MyClass</span> <span class="o">*</span> <span class="n">__weak</span> <span class="n">w_self</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span>    <span class="c1">// correct</span>
-</span><span class="line"><span class="n">MyClass</span> <span class="n">__weak</span> <span class="o">*</span> <span class="n">w_self</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span>    <span class="c1">// wrong! May cause serious bugs!</span>
-</span><span class="line"><span class="n">__weak</span> <span class="n">MyClass</span> <span class="o">*</span> <span class="n">w_self</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span>    <span class="c1">// wrong!</span>
-</span><span class="line">
-</span><span class="line"><span class="n">__weak</span> <span class="n">typeof</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="n">w_self</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span>
-</span><span class="line"><span class="c1">// correct, will expand to (See gcc manual of typeof)</span>
-</span><span class="line"><span class="c1">// __weak (MyClass *) w_self = self;</span>
-</span><span class="line">
-</span><span class="line"><span class="n">typeof</span><span class="p">(</span><span class="n">self</span><span class="p">)</span> <span class="n">__weak</span> <span class="n">w_self</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span> <span class="c1">// correct, its safer</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>You might wonder that there is so many wrong format on the internet. But
-[Apple officially] said so:</p>
-
-<blockquote>
-  <p>You should decorate variables correctly. When using qualifiers in an object
-variable declaration, the correct format is:
-<code>ClassName * qualifier variableName;</code></p>
-</blockquote>
-
-<h2 id="arc-and-toll-free-bridging">ARC and toll-free bridging</h2>
-
-<p>The biggest problem of ARC occurs when you mix it with Core Foundation
-references. The rules of thumb are</p>
-
-<ul>
-  <li>When you transfer an Objective-C object to a CF reference, you
-retain it.</li>
-  <li>When you transfer a CF reference to an Objective-C object, you
-release it.</li>
-  <li>It is dangerous if you didn’t change ownership of objects. Sometimes Clang
-corrects it for you, sometimes don’t.</li>
-  <li>There is no autorelease in Core Foundation, and you must follow the Core
-Foundation memory management naming convention:
-    <ul>
-      <li>Those object returned from function with <code>Create</code> or <code>Copy</code>, you <strong>own</strong> the
-object, thus you must release it.</li>
-      <li>If the function name contains the word <code>Get</code>, you do not own the object. Do
-not release it.</li>
-    </ul>
-  </li>
-</ul>
-
-<p>There are two ways to retain a CF object: a type casting like syntax
-<code>(__bridge_retained)</code> or C function <code>CFBridgingRetain</code>.  Though clang show up
-diagnostics to use the former syntax, I prefer to use the latter one because it
-is easier to read for me. </p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="n">CFArrayRef</span> <span class="n">arr</span> <span class="o">=</span> <span class="n">CFBridgingRetain</span><span class="p">(</span> <span class="err">@</span><span class="p">[</span><span class="s">@&quot;abc&quot;</span><span class="p">,</span> <span class="s">@&quot;def&quot;</span><span class="p">,</span> <span class="err">@</span><span class="mf">3.14</span><span class="p">]</span> <span class="p">);</span>
-</span><span class="line"><span class="c1">// or CFArrayRef arr = (__bridge_retained CFArrayRef)@[...];</span>
-</span><span class="line"><span class="c1">// do stuffs..</span>
-</span><span class="line"><span class="n">CFRelease</span><span class="p">(</span><span class="n">arr</span><span class="p">);</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>When you get an object from Core Foundation with name containing <code>Create</code> or
-<code>Copy</code>, use <code>(__bridge_transfer)</code> or <code>CFBridgingRelease</code>.</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">logFirstNameOfPerson:</span><span class="p">(</span><span class="n">ABRecordRef</span><span class="p">)</span><span class="nv">person</span> <span class="p">{</span>
-</span><span class="line">
-</span><span class="line">    <span class="n">NSString</span> <span class="o">*</span><span class="n">name</span> <span class="o">=</span> <span class="p">(</span><span class="n">NSString</span> <span class="o">*</span><span class="p">)</span><span class="n">CFBridgingRelease</span><span class="p">(</span><span class="n">ABRecordCopyValue</span><span class="p">(</span><span class="n">person</span><span class="p">,</span> <span class="n">kABPersonFirstNameProperty</span><span class="p">));</span>
-</span><span class="line">    <span class="n">NSLog</span><span class="p">(</span><span class="s">@&quot;Person&#39;s first name: %@&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">);</span>
-</span><span class="line"><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<h2 id="pitfalls-in-toll-free-bridging">Pitfalls in toll-free bridging</h2>
-
-<p>When you see a code like this:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="n">CGColorRef</span><span class="p">)</span><span class="nf">foo</span> <span class="p">{</span>
-</span><span class="line">    <span class="n">UIColor</span><span class="o">*</span> <span class="n">color</span> <span class="o">=</span> <span class="p">[</span><span class="n">UIColor</span> <span class="n">redColor</span><span class="p">];</span>
-</span><span class="line">    <span class="k">return</span> <span class="p">[</span><span class="n">color</span> <span class="n">CGColor</span><span class="p">];</span>
-</span><span class="line"><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>Beware! It might crash at any time. Since we do not hold the reference of
-UIColor, it would be released right after you create it! The CGColor it owns
-would be released as well and thus cause a crash. There are three ways to fix
-it:</p>
-
-<ul>
-  <li>Use <code>__autorelease</code> type qualifier. UIColor would be released at the end of
-current run loop. It can fix the crash. I believe <a href="https://twitter.com/amattn">@amattn</a> is the first
-one who discovered this solution.</li>
-</ul>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="n">CGColorRef</span><span class="p">)</span><span class="nf">getFooColor</span> <span class="p">{</span>
-</span><span class="line">    <span class="n">UIColor</span><span class="o">*</span> <span class="n">__autoreleasing</span> <span class="n">color</span> <span class="o">=</span> <span class="p">[</span><span class="n">UIColor</span> <span class="n">redColor</span><span class="p">];</span>
-</span><span class="line">    <span class="k">return</span> <span class="p">[</span><span class="n">color</span> <span class="n">CGColor</span><span class="p">];</span>
-</span><span class="line"><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<ul>
-  <li>Use Core Foundation naming convention and change the owner ship to the
- receiver.</li>
-</ul>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="n">CGColorRef</span><span class="p">)</span><span class="nf">fooColorCopy</span> <span class="p">{</span>
-</span><span class="line">    <span class="n">UIColor</span><span class="o">*</span> <span class="n">color</span> <span class="o">=</span> <span class="p">[</span><span class="n">UIColor</span> <span class="n">redColor</span><span class="p">];</span>
-</span><span class="line">    <span class="n">CGColorRef</span> <span class="n">c</span> <span class="o">=</span> <span class="n">CFRetain</span><span class="p">([</span><span class="n">color</span> <span class="n">CGColor</span><span class="p">]);</span>
-</span><span class="line">    <span class="k">return</span> <span class="n">c</span><span class="p">;</span>
-</span><span class="line"><span class="p">}</span>
-</span><span class="line">
-</span><span class="line">
-</span><span class="line"><span class="n">CGColorRef</span> <span class="n">c</span> <span class="o">=</span> <span class="p">[</span><span class="n">obj</span> <span class="n">fooColorCopy</span><span class="p">];</span>
-</span><span class="line"><span class="c1">// do stuffs</span>
-</span><span class="line"><span class="n">CFRelease</span><span class="p">(</span><span class="n">c</span><span class="p">);</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<ul>
-  <li>Owns the CF object by self. If self is dealloced, the reference would still
-cause a crash.</li>
-</ul>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="n">CGColorRef</span><span class="p">)</span><span class="nf">getFooColor</span> <span class="p">{</span>
-</span><span class="line">    <span class="n">CGColorRef</span> <span class="n">c</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">myColor</span><span class="p">.</span><span class="n">CGColor</span><span class="p">;</span>
-</span><span class="line">    <span class="k">return</span> <span class="n">c</span><span class="p">;</span>
-</span><span class="line"><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<h2 id="pitfalls-in-block-and-arc">Pitfalls in block and ARC</h2>
-
-<p>When you use a ivar in self owned block, it will implicitly contain self in your
-block and thus cause a retain cycle:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">@interface</span> <span class="nc">MyClass</span> <span class="p">{</span>
-</span><span class="line">    <span class="kt">id</span> <span class="n">child</span><span class="p">;</span>
-</span><span class="line"><span class="p">}</span>
-</span><span class="line"><span class="k">@property</span> <span class="p">(</span><span class="n">nonatomic</span><span class="p">,</span> <span class="n">strong</span><span class="p">)</span> <span class="p">(</span><span class="kt">void</span><span class="p">(</span><span class="o">^</span><span class="p">)(</span><span class="kt">void</span><span class="p">))</span> <span class="n">job</span><span class="p">;</span>
-</span><span class="line"><span class="k">@end</span>
-</span><span class="line">
-</span><span class="line"><span class="k">@implementation</span> <span class="nc">MyClass</span>
-</span><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">foo</span> <span class="p">{</span>
-</span><span class="line">    <span class="n">self</span><span class="p">.</span><span class="n">job</span> <span class="o">=</span> <span class="o">^</span><span class="p">{</span>
-</span><span class="line">        <span class="p">[</span><span class="n">child</span> <span class="n">work</span><span class="p">];</span>
-</span><span class="line">        <span class="c1">// will expand to [self-&gt;child work]</span>
-</span><span class="line">    <span class="p">};</span>
-</span><span class="line"><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>The only way to implement this safely is to use weak reference of self, and
-setup a strong reference to weak self only in the scope of this block. The
-reason we need to use a strong reference in scope is weak reference can be zero
-out at any time. We must claim we own the object when we are using it.</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">foo</span> <span class="p">{</span>
-</span><span class="line">    <span class="n">MyClass</span><span class="o">*</span> <span class="n">__weak</span> <span class="n">w_self</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span>
-</span><span class="line">    <span class="n">self</span><span class="p">.</span><span class="n">block</span> <span class="o">=</span> <span class="o">^</span><span class="p">{</span>
-</span><span class="line">        <span class="n">MyClass</span><span class="o">*</span> <span class="n">s_self</span> <span class="o">=</span> <span class="n">w_self</span><span class="p">;</span> <span class="c1">// self retained, but only in this scope!</span>
-</span><span class="line">        <span class="k">if</span> <span class="p">(</span><span class="n">s_self</span><span class="p">)</span> <span class="p">{</span>
-</span><span class="line">            <span class="p">[</span><span class="n">s_self</span><span class="o">-&gt;</span><span class="n">child</span> <span class="n">work</span><span class="p">];</span>
-</span><span class="line">            <span class="c1">// do other stuffs</span>
-</span><span class="line">        <span class="p">}</span>
-</span><span class="line">    <span class="p">};</span>
-</span><span class="line"><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<h2 id="pitfalls-in-nserror">Pitfalls in NSError</h2>
-
-<p>If you are implementing methods that take NSError, be sure to use the correct
-format of type qualifier!</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">doStuffWithError:</span><span class="p">(</span><span class="n">NSError</span><span class="o">*</span> <span class="n">__autoreleasing</span> <span class="o">*</span><span class="p">)</span><span class="nv">error</span><span class="p">;</span> <span class="c1">// correct</span>
-</span><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">doStuffWithError:</span><span class="p">(</span><span class="n">__autoreleasing</span> <span class="n">NSError</span> <span class="o">**</span><span class="p">)</span><span class="nv">error</span><span class="p">;</span> <span class="c1">// wrong!</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>Actually, when you craete a NSError object, it is always best to declare it is
-an autoreleasing object:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="n">NSError</span><span class="o">*</span> <span class="n">__autoreleasing</span> <span class="n">error</span> <span class="o">=</span> <span class="nb">nil</span><span class="p">;</span> <span class="c1">// correct</span>
-</span><span class="line"><span class="n">__autoreleasing</span> <span class="n">NSError</span><span class="o">*</span> <span class="n">error</span> <span class="o">=</span> <span class="nb">nil</span><span class="p">;</span> <span class="c1">// wrong</span>
-</span><span class="line"><span class="n">NSError</span><span class="o">*</span> <span class="n">error</span> <span class="o">=</span> <span class="nb">nil</span><span class="p">;</span> <span class="c1">// Will be corrected by clang</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<h2 id="summary">Summary</h2>
-
-<p>ARC is handy, but not easy. When you facing complex memory ownership model,
-wrting some testing code to know how retain count being managed is still a
-recommanded pactice.  The below snippet is how I test retain count when mixing
-CF object, block, and objective-c object:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-<span class="line-number">16</span>
-<span class="line-number">17</span>
-<span class="line-number">18</span>
-<span class="line-number">19</span>
-<span class="line-number">20</span>
-<span class="line-number">21</span>
-</pre></td><td class="code"><pre><code class="obj-c"><span class="line"><span class="k">-</span> <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="nf">testCGColorRetainCount1</span>
-</span><span class="line"><span class="p">{</span>
-</span><span class="line">    <span class="n">CGColorRef</span> <span class="n">s_ref</span><span class="p">;</span>
-</span><span class="line">    <span class="err">@</span><span class="n">autoreleasepool</span> <span class="p">{</span>
-</span><span class="line">        <span class="n">UIColor</span> <span class="o">*</span> <span class="n">__autoreleasing</span> <span class="n">shadowColor</span> <span class="o">=</span> <span class="p">[</span><span class="n">UIColor</span> <span class="nl">colorWithRed:</span><span class="mf">0.12</span> <span class="nl">green:</span><span class="mf">0.12</span> <span class="nl">blue:</span><span class="mf">0.12</span> <span class="nl">alpha:</span><span class="mf">1.0</span><span class="p">];</span>
-</span><span class="line">        <span class="n">s_ref</span> <span class="o">=</span> <span class="n">shadowColor</span><span class="p">.</span><span class="n">CGColor</span><span class="p">;</span>
-</span><span class="line">        <span class="n">CFRetain</span><span class="p">(</span><span class="n">s_ref</span><span class="p">);</span>
-</span><span class="line">    <span class="p">}</span>
-</span><span class="line">    <span class="n">STAssertEquals</span><span class="p">(</span><span class="n">CFGetRetainCount</span><span class="p">(</span><span class="n">s_ref</span><span class="p">),</span> <span class="mi">1L</span><span class="p">,</span> <span class="s">@&quot;retain count owned by us&quot;</span><span class="p">);</span>
-</span><span class="line">
-</span><span class="line">    <span class="n">CGColorRef</span><span class="p">(</span><span class="o">^</span><span class="n">strangeBlock</span><span class="p">)(</span><span class="kt">void</span><span class="p">)</span> <span class="o">=</span> <span class="o">^</span><span class="p">{</span>
-</span><span class="line">        <span class="k">return</span> <span class="n">CGColorCreateCopy</span><span class="p">(</span><span class="n">s_ref</span><span class="p">);</span>
-</span><span class="line">    <span class="p">};</span>
-</span><span class="line">
-</span><span class="line">    <span class="n">CGColorRef</span> <span class="n">myCopy</span> <span class="o">=</span> <span class="n">strangeBlock</span><span class="p">();</span>
-</span><span class="line">    <span class="n">STAssertEquals</span><span class="p">(</span><span class="n">CFGetRetainCount</span><span class="p">(</span><span class="n">s_ref</span><span class="p">),</span> <span class="mi">2L</span><span class="p">,</span> <span class="s">@&quot;retain count owned by block and us&quot;</span><span class="p">);</span>
-</span><span class="line">    <span class="n">CFRelease</span><span class="p">(</span><span class="n">s_ref</span><span class="p">);</span>
-</span><span class="line">    <span class="n">STAssertEquals</span><span class="p">(</span><span class="n">CFGetRetainCount</span><span class="p">(</span><span class="n">s_ref</span><span class="p">),</span> <span class="mi">1L</span><span class="p">,</span> <span class="s">@&quot;retain count owned by block&quot;</span><span class="p">);</span>
-</span><span class="line">    <span class="n">STAssertEquals</span><span class="p">(</span><span class="n">CFGetRetainCount</span><span class="p">(</span><span class="n">myCopy</span><span class="p">),</span> <span class="mi">1L</span><span class="p">,</span> <span class="s">@&quot;retain count owned by us&quot;</span><span class="p">);</span>
-</span><span class="line">    <span class="n">CFRelease</span><span class="p">(</span><span class="n">myCopy</span><span class="p">);</span>
-</span><span class="line"><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>Hope these helps! Comments and sharing are welcome!</p>
-
-<div class="footnotes">
-  <ol>
-    <li id="fn:foot">
-      <p>I didn’t reference back to @amattn’s ARC best practices when I first
-post this article.  I am really sorry that I didn’t do it and I really
-appreciate his pioneer work. I couldn’t write this article without his awesome
-collection of how to write good ARC code.<a href="#fnref:foot" rel="reference">&#8617;</a></p>
-    </li>
-    <li id="fn:foot2">
-      <p>Thanks to Tinghui’s comment that <code>NSTimer</code> should not be invalidated in
-dealloc. <code>NSTimer</code> retains its target, so one should  use weak references if
-the timer is a member of target’s property, else just leave it is fine.<a href="#fnref:foot2" rel="reference">&#8617;</a></p>
-    </li>
-  </ol>
-</div>
 ]]></content>
   </entry>
   

@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Hadoop | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/hadoop/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2014-01-27T15:08:14-08:00</updated>
+  <updated>2014-01-27T16:30:25-08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,302 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Capture path info in hadoop InputFormat class]]></title>
+    <link href="http://www.idryman.org/blog/2014/01/27/capture-path-info-in-hadoop-inputformat-class/"/>
+    <updated>2014-01-27T15:11:00-08:00</updated>
+    <id>http://www.idryman.org/blog/2014/01/27/capture-path-info-in-hadoop-inputformat-class</id>
+    <content type="html"><![CDATA[<p>On the last post I presented how to use Mapper context object to obtain Path information. This is a nice way to hack for ad-hoc jobs; however, it’s not really reusable and abstract. In this post, I’ll show you how to subclass <code>Text</code>, <code>TextInputFormat</code>, and <code>LineRecordReader</code> and create reusable components across all of your hadoop tasks.</p>
+
+<!--more-->
+
+<h2 id="input-workflow">Input WorkFlow</h2>
+
+<p>Before we go through all the classes, let me show you how hadoop read the files in.</p>
+
+<ol>
+  <li>
+    <p>By default, hadoop uses <code>TextInputFormat</code>, which inherits <code>FileInputFormat</code>, to process the input files.</p>
+  </li>
+  <li>
+    <p><code>TextInputFormat</code> allocates <code>LineRecordReader</code> and passed it to <code>Task</code> runtime.</p>
+  </li>
+  <li>
+    <p><code>Task</code> first initiates <code>LineRecordReader</code>, then wrap the <code>LineRecordReader</code> into <code>Context</code> object.</p>
+  </li>
+  <li>
+    <p>In <code>Mapper</code> <code>run</code> methods, it calls the method <code>nextKeyValue()</code> in <code>Context</code>, and reads the <code>LongWritable key</code> from <code>context.getCurrentKey()</code> and <code>Text value</code> from <code>context.getCurrentValue()</code>. Those methods delegates to <code>LineRecordReader</code>’s methods <code>nextKeyValue()</code>, <code>getCurrentKey()</code>, and <code>getCurrentValue()</code>.</p>
+  </li>
+  <li>
+    <p>Finally, <code>Mapper</code> passes the key-value pair to <code>map</code> method that we usually overrides.</p>
+  </li>
+</ol>
+
+<p>In order to put the path information into this workflow, we can extend the <code>Text</code> class and put the path information into it. To make this work, we need to create three new classes: <code>TextWithPath</code>, <code>TWPInputFormat</code>, and <code>TWPRecordReader</code>.</p>
+
+<h2 id="textwithpathjava">TextWithPath.java</h2>
+
+<p>Here is our content wrapper – <code>TextWithPath</code>. It doesn’t do much; there’s a new constructor which accepts <code>Path</code>, and there’s a getter method to get <code>Path</code>.</p>
+
+<p>```java
+package org.idryman;</p>
+
+<p>import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.Text;</p>
+
+<p>public class TextWithPath extends Text {
+  private Path path;</p>
+
+<p>public TextWithPath(Path path){
+    super();
+    this.path = path;
+  }</p>
+
+<p>public Path getPath(){
+    return path;
+  }
+}
+```</p>
+
+<h2 id="twpinputformatjava">TWPInputFormat.java</h2>
+
+<p>The new <code>TWPInputFormat</code> is almost identical to <code>TextInputFormat</code>, except it uses <code>TextWithPath</code> instead of <code>Text</code>, and the <code>createRecordReader</code> method returns <code>TWPRecordReader</code> instead of <code>LineRecordReader</code>.</p>
+
+<p>```java
+package org.idryman;</p>
+
+<p>import java.io.IOException;</p>
+
+<p>import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.compress.CompressionCodec;
+import org.apache.hadoop.io.compress.CompressionCodecFactory;
+import org.apache.hadoop.io.compress.SplittableCompressionCodec;
+import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.RecordReader;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;</p>
+
+<p>public class TWPInputFormat extends FileInputFormat &lt;LongWritable, TextWithPath&gt;{
+  @Override
+  public RecordReader createRecordReader(InputSplit split,
+      TaskAttemptContext context) throws IOException, InterruptedException {
+    String delimiter = context.getConfiguration().get(
+        “textinputformat.record.delimiter”);
+    byte[] recordDelimiterBytes = null;
+    if (null != delimiter)
+      recordDelimiterBytes = delimiter.getBytes();
+    return new TWPRecordReader(recordDelimiterBytes);
+  }</p>
+
+<p>@Override
+  protected boolean isSplitable(JobContext context, Path file) {
+    CompressionCodec codec = 
+      new CompressionCodecFactory(context.getConfiguration()).getCodec(file);
+    if (null == codec) {
+      return true;
+    }
+    return codec instanceof SplittableCompressionCodec;
+  }
+}</p>
+
+<p>```</p>
+
+<h2 id="twprecordreaderjava">TWPRecordReader.java</h2>
+
+<p>Finally, in the <code>TWPRecordReader</code>, this is where I put my logic in. In the <code>initialize</code> method, you can get the <code>FileSplit</code> and get the <code>Path</code> object out of it. Next, let’s override <code>nextKeyValue</code>, and updates the <code>value</code> on every call. Lastly, remember to override <code>getCurrentValue()</code>, else it will only return parent’s value (Text), not the value with <code>TextWithPath</code> class.</p>
+
+<p>```java
+package org.idryman;</p>
+
+<p>import java.io.IOException;</p>
+
+<p>import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapreduce.InputSplit;
+import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.lib.input.FileSplit;
+import org.apache.hadoop.mapreduce.lib.input.LineRecordReader;</p>
+
+<p>public class TWPRecordReader extends LineRecordReader{
+  private TextWithPath value = null;
+  private Path path = null;</p>
+
+<p>public TWPRecordReader(byte[] recordDelimiterBytes) {
+    super(recordDelimiterBytes);
+  }</p>
+
+<p>@Override
+  public void initialize(InputSplit genericSplit, TaskAttemptContext context) throws IOException{
+    super.initialize(genericSplit, context);
+    FileSplit split = (FileSplit) genericSplit;
+    path = split.getPath();
+  }</p>
+
+<p>@Override
+  public boolean nextKeyValue() throws IOException {
+    if (super.nextKeyValue()){
+      if (value == null)
+        value = new TextWithPath(path);
+      value.set(super.getCurrentValue());
+      return true;
+    } else {
+      value = null;
+      return false;
+    }
+  }</p>
+
+<p>@Override
+  public TextWithPath getCurrentValue(){
+    return value;
+  }
+}
+```</p>
+
+<h2 id="demo">Demo</h2>
+
+<p>Here is a demo code to test the output. In addition to normal map reduce tasks, we set the input format class to <code>TWPInpuFormat</code>; on the Mapper side, we expect the input is <code>TextWithPath</code>, not <code>Text</code>. The whole program can be downloaded from this github repo. <a href="https://github.com/dryman/Hadoop-TextWithPath">Hadoop TextWithPath</a></p>
+
+<p>```java
+package org.idryman;</p>
+
+<p>import java.io.IOException;</p>
+
+<p>import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.mapreduce.lib.reduce.IntSumReducer;
+import org.apache.hadoop.util.Tool;
+import org.apache.hadoop.util.ToolRunner;</p>
+
+<p>public class DemoRun extends Configured implements Tool {</p>
+
+<p>public static void main(String[] args) throws Exception {
+    System.exit(ToolRunner.run(new Configuration(), new DemoRun(), args));
+  }</p>
+
+<p>@Override
+  public int run(String[] args) throws Exception {
+    Configuration conf = getConf();
+    Job job = new Job(conf);
+    job.setJobName(“test TextWithPath Input”);
+    job.setJarByClass(DemoRun.class);</p>
+
+<pre><code>TWPInputFormat.addInputPath(job, new Path(args[0]));
+job.setInputFormatClass(TWPInputFormat.class);
+job.setMapperClass(TestMapper.class);
+job.setMapOutputKeyClass(Text.class);
+job.setMapOutputValueClass(NullWritable.class);
+job.setReducerClass(IntSumReducer.class);
+job.setNumReduceTasks(1);
+FileOutputFormat.setOutputPath(job, new Path(args[1]));
+
+job.submit();
+job.waitForCompletion(true);
+return 0;   }
+</code></pre>
+
+<p>public static class TestMapper extends Mapper&lt;LongWritable, TextWithPath, Text, IntWritable&gt;{</p>
+
+<pre><code>/**
+ * Only override `run` instead of `map` method; because we just want to see one output
+ * per mapper, instead of printing every line.
+ */
+@Override
+public void run(Context context) throws IOException, InterruptedException{
+  context.nextKeyValue();
+  TextWithPath twp = context.getCurrentValue();
+  context.write(new Text(twp.getPath().toString()), new IntWritable(1));
+}   }
+</code></pre>
+
+<p>}
+```</p>
+
+<h2 id="one-more-thing">One more thing</h2>
+
+<p>I wrote another hadoop utility that reads a header file from HDFS input source, and passes a <code>FieldWritable</code> object to <code>Mapper</code> class instead of <code>Text</code>. The <code>FieldWritable</code> implements <code>Map</code> interface and can obtain TSV fields by it’s header key. The project is on <a href="https://github.com/dryman/hadoop-fieldformat">github</a> but still highly experimental. Once the API and implementation is stable, I’ll write another post to introduce it. Enjoy!</p>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Capture directory context in Hadoop Mapper]]></title>
+    <link href="http://www.idryman.org/blog/2014/01/26/capture-directory-context-in-hadoop-mapper/"/>
+    <updated>2014-01-26T15:12:00-08:00</updated>
+    <id>http://www.idryman.org/blog/2014/01/26/capture-directory-context-in-hadoop-mapper</id>
+    <content type="html"><![CDATA[<p>I have been using hadoop for data processing and datawarehousing for a while. One of the problem we encountered was map-reduce framework abstracts the input from files to lines, and thus it’s really difficult to apply logic based on different file or directories. Things got worse when we need to aggregate data across various versions of input sources. After digging in Hadoop source code, here is my solution.</p>
+
+<!--more-->
+
+<h2 id="meets-inputsplit-in-mapper">Meets InputSplit in Mapper</h2>
+
+<p>Here is the first solution, it’s a bit ugly but works. In Hadoop <code>Mapper</code> class, you can override the <code>setup</code> method to initiate mapper with corresponding context. The context contains <code>inputSplit</code>, which can be cast to <code>FileInputSplit</code>, and contains the file and directory information in it. This is how I did it:</p>
+
+<p><code>java
+protected void setup(Context context) throws IOException{
+  FileSplit fileSplit;
+  InputSplit is = context.getInputSplit();
+  FileSystem fs = FileSystem.get(context.getConfiguration());
+  fileSplit = (FileSplit) is;
+  Path filePath = fileSplit.getPath();
+}
+</code></p>
+
+<p>If the input directory looks like this:</p>
+
+<p><code>
+/input/part-r-00000
+       part-r-00001
+       part-r-00002
+       part-r-00003
+</code></p>
+
+<p>And the path argument you passed to <code>FileInputFormat</code> is <code>/input</code>. The resulting paths in the snippet would be one of these:</p>
+
+<p><code>
+/input/part-r-00000
+/input/part-r-00001
+/input/part-r-00002
+/input/part-r-00003
+</code></p>
+
+<p>Each Mapper would get different <strong>file</strong> path instead of getting the directory <code>/input</code>. If you want to handle the logic better, you can do this:</p>
+
+<p><code>java
+Path finalPath;
+if (fs.isFile(filePath)){
+  finalPath = new Path(filePath.getParrent());
+} else {
+  finalPath = filePath;
+}
+</code></p>
+
+<h2 id="taggedinputsplit">TaggedInputSplit</h2>
+
+<p>This works for most of the time; however, if you set the input to be <code>/input/*/part*</code>. The <code>InputSplit</code> would be an internal type called <code>TaggedInputSplit</code> instead of <code>FileInputSplit</code>. Although <code>TaggedInputSplit</code> has a method called <code>getInputSplit</code> to get the wrapped class, it is a private class and you can only use java reflection to hack it.</p>
+
+<p><code>
+InputSplit is = context.getInputSplit();
+Method method = is.getMethod("getInputSplit");
+method.setAccessible(true);
+fileSplit = (FileSplit) method.invoke(is);
+Path filePath = fileSplit.getPath();
+</code></p>
+
+<h2 id="more-general-solutions">More general solutions</h2>
+
+<p>The solutions above is working on production environment. However, it is a bit too hacky and not general enough. On the next post, I’ll show you how to implement <code>InputFomrat</code>, <code>RecordReader</code>, and <code>Writable</code> classes to solve this problem with lower level APIs.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Process Small Files on Hadoop using CombineFileInputFormat (2)]]></title>

@@ -9,7 +9,7 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="I have been using hadoop for data processing and datawarehousing for a while. One of the problem we encountered was map-reduce framework abstracts &hellip;">
+  <meta name="description" content="On the last post I presented how to use Mapper context object to obtain Path information. This is a nice way to hack for ad-hoc jobs; however, it’s &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -102,6 +102,49 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2014/01/27/capture-path-info-in-hadoop-inputformat-class/">Capture Path Info in Hadoop InputFormat Class</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-01-27T15:11:00-08:00" pubdate data-updated="true">Jan 27<span>th</span>, 2014</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>On the last post I presented how to use Mapper context object to obtain Path information. This is a nice way to hack for ad-hoc jobs; however, it’s not really reusable and abstract. In this post, I’ll show you how to subclass <code>Text</code>, <code>TextInputFormat</code>, and <code>LineRecordReader</code> and create reusable components across all of your hadoop tasks.</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/01/27/capture-path-info-in-hadoop-inputformat-class/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -496,55 +539,6 @@ MathJax.Hub.Config({
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2013/06/27/laziness-and-memoization-in-clojure/">Laziness and Memoization in Clojure</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-06-27T20:01:00-07:00" pubdate data-updated="true">Jun 27<span>th</span>, 2013</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>I’m now having a job at supplyframe Inc., and luckily I can use Clojure for work! Clojure is a young language created by Rich Hickey on 2007. It uses Lisp syntax, immutable data structures by default, and supports both strict and lazy evaluations. As Christ Okasaki suggested:</p>
-
-<blockquote>
-  <p>Strict evaluation is useful in implementing worst-case data structures and lazy evaluation is useful in implementing amortized data structures.</p>
-</blockquote>
-
-<p>It’s really cheap to define lazy or strict data structures in Clojure that has low amortized cost even in a persistent manner. Let’s dig into the source code and see how does Clojure implement it.</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2013/06/27/laziness-and-memoization-in-clojure/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -558,6 +552,10 @@ MathJax.Hub.Config({
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/01/27/capture-path-info-in-hadoop-inputformat-class/">Capture path info in hadoop InputFormat class</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2014/01/26/capture-directory-context-in-hadoop-mapper/">Capture directory context in Hadoop Mapper</a>
@@ -593,10 +591,6 @@ MathJax.Hub.Config({
     
       <li class="post">
         <a href="/blog/2013/07/14/writing-java-programs-on-a-remote-server/">Writing java programs on a remote server</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/06/27/laziness-and-memoization-in-clojure/">Laziness and memoization in Clojure</a>
       </li>
     
   </ul>

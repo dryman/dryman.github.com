@@ -1,0 +1,769 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Capture path info in hadoop InputFormat class - Carpe diem (Felix's blog)</title>
+  <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
+
+  
+  <meta name="description" content="On the last post I presented how to use Mapper context object to obtain Path information. This is a nice way to hack for ad-hoc jobs; however, it’s &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://www.idryman.org/blog/2014/01/27/capture-path-info-in-hadoop-inputformat-class/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Carpe diem (Felix's blog)" type="application/atom+xml">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- mathjax config similar to math.stackexchange -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/HTML-CSS"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-23425996-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <!--div id="logo">
+  	<div id="logoLeft">{</div>
+  	<div id="logoText">mob</div>
+  	<div id="logoRight">}</div>
+  	<div class="clear"></div>
+  </div-->
+  <h1><a href="/">Carpe diem (Felix's blog)</a></h1>
+  
+    <h2>I am a happy developer</h2>
+  
+  <div class="clear"></div>
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:www.idryman.org" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about-me">About Me</a></li>
+  <li><a href="http://idryman.tumblr.com/">Drawings</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      
+        <h1 class="entry-title">Capture Path Info in Hadoop InputFormat Class</h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-01-27T15:11:00-08:00" pubdate data-updated="true">Jan 27<span>th</span>, 2014</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>On the last post I presented how to use Mapper context object to obtain Path information. This is a nice way to hack for ad-hoc jobs; however, it’s not really reusable and abstract. In this post, I’ll show you how to subclass <code>Text</code>, <code>TextInputFormat</code>, and <code>LineRecordReader</code> and create reusable components across all of your hadoop tasks.</p>
+
+<!--more-->
+
+<h2 id="input-workflow">Input WorkFlow</h2>
+
+<p>Before we go through all the classes, let me show you how hadoop read the files in.</p>
+
+<ol>
+  <li>
+    <p>By default, hadoop uses <code>TextInputFormat</code>, which inherits <code>FileInputFormat</code>, to process the input files.</p>
+  </li>
+  <li>
+    <p><code>TextInputFormat</code> allocates <code>LineRecordReader</code> and passed it to <code>Task</code> runtime.</p>
+  </li>
+  <li>
+    <p><code>Task</code> first initiates <code>LineRecordReader</code>, then wrap the <code>LineRecordReader</code> into <code>Context</code> object.</p>
+  </li>
+  <li>
+    <p>In <code>Mapper</code> <code>run</code> methods, it calls the method <code>nextKeyValue()</code> in <code>Context</code>, and reads the <code>LongWritable key</code> from <code>context.getCurrentKey()</code> and <code>Text value</code> from <code>context.getCurrentValue()</code>. Those methods delegates to <code>LineRecordReader</code>’s methods <code>nextKeyValue()</code>, <code>getCurrentKey()</code>, and <code>getCurrentValue()</code>.</p>
+  </li>
+  <li>
+    <p>Finally, <code>Mapper</code> passes the key-value pair to <code>map</code> method that we usually overrides.</p>
+  </li>
+</ol>
+
+<p>In order to put the path information into this workflow, we can extend the <code>Text</code> class and put the path information into it. To make this work, we need to create three new classes: <code>TextWithPath</code>, <code>TWPInputFormat</code>, and <code>TWPRecordReader</code>.</p>
+
+<h2 id="textwithpathjava">TextWithPath.java</h2>
+
+<p>Here is our content wrapper – <code>TextWithPath</code>. It doesn’t do much; there’s a new constructor which accepts <code>Path</code>, and there’s a getter method to get <code>Path</code>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kn">package</span> <span class="n">org</span><span class="o">.</span><span class="na">idryman</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.fs.Path</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.io.Text</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">TextWithPath</span> <span class="kd">extends</span> <span class="n">Text</span> <span class="o">{</span>
+</span><span class="line">  <span class="kd">private</span> <span class="n">Path</span> <span class="n">path</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line">  <span class="kd">public</span> <span class="nf">TextWithPath</span><span class="o">(</span><span class="n">Path</span> <span class="n">path</span><span class="o">){</span>
+</span><span class="line">    <span class="kd">super</span><span class="o">();</span>
+</span><span class="line">    <span class="k">this</span><span class="o">.</span><span class="na">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">;</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">
+</span><span class="line">  <span class="kd">public</span> <span class="n">Path</span> <span class="nf">getPath</span><span class="o">(){</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">path</span><span class="o">;</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line"><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="twpinputformatjava">TWPInputFormat.java</h2>
+
+<p>The new <code>TWPInputFormat</code> is almost identical to <code>TextInputFormat</code>, except it uses <code>TextWithPath</code> instead of <code>Text</code>, and the <code>createRecordReader</code> method returns <code>TWPRecordReader</code> instead of <code>LineRecordReader</code>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kn">package</span> <span class="n">org</span><span class="o">.</span><span class="na">idryman</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kn">import</span> <span class="nn">java.io.IOException</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.fs.Path</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.io.LongWritable</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.io.compress.CompressionCodec</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.io.compress.CompressionCodecFactory</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.io.compress.SplittableCompressionCodec</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.InputSplit</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.JobContext</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.RecordReader</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.TaskAttemptContext</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.lib.input.FileInputFormat</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">TWPInputFormat</span> <span class="kd">extends</span> <span class="n">FileInputFormat</span> <span class="o">&lt;</span><span class="n">LongWritable</span><span class="o">,</span> <span class="n">TextWithPath</span><span class="o">&gt;{</span>
+</span><span class="line">  <span class="nd">@Override</span>
+</span><span class="line">  <span class="kd">public</span> <span class="n">RecordReader</span> <span class="nf">createRecordReader</span><span class="o">(</span><span class="n">InputSplit</span> <span class="n">split</span><span class="o">,</span>
+</span><span class="line">      <span class="n">TaskAttemptContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">InterruptedException</span> <span class="o">{</span>
+</span><span class="line">    <span class="n">String</span> <span class="n">delimiter</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getConfiguration</span><span class="o">().</span><span class="na">get</span><span class="o">(</span>
+</span><span class="line">        <span class="s">&quot;textinputformat.record.delimiter&quot;</span><span class="o">);</span>
+</span><span class="line">    <span class="kt">byte</span><span class="o">[]</span> <span class="n">recordDelimiterBytes</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class="line">    <span class="k">if</span> <span class="o">(</span><span class="kc">null</span> <span class="o">!=</span> <span class="n">delimiter</span><span class="o">)</span>
+</span><span class="line">      <span class="n">recordDelimiterBytes</span> <span class="o">=</span> <span class="n">delimiter</span><span class="o">.</span><span class="na">getBytes</span><span class="o">();</span>
+</span><span class="line">    <span class="k">return</span> <span class="k">new</span> <span class="nf">TWPRecordReader</span><span class="o">(</span><span class="n">recordDelimiterBytes</span><span class="o">);</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">
+</span><span class="line">  <span class="nd">@Override</span>
+</span><span class="line">  <span class="kd">protected</span> <span class="kt">boolean</span> <span class="nf">isSplitable</span><span class="o">(</span><span class="n">JobContext</span> <span class="n">context</span><span class="o">,</span> <span class="n">Path</span> <span class="n">file</span><span class="o">)</span> <span class="o">{</span>
+</span><span class="line">    <span class="n">CompressionCodec</span> <span class="n">codec</span> <span class="o">=</span>
+</span><span class="line">      <span class="k">new</span> <span class="nf">CompressionCodecFactory</span><span class="o">(</span><span class="n">context</span><span class="o">.</span><span class="na">getConfiguration</span><span class="o">()).</span><span class="na">getCodec</span><span class="o">(</span><span class="n">file</span><span class="o">);</span>
+</span><span class="line">    <span class="k">if</span> <span class="o">(</span><span class="kc">null</span> <span class="o">==</span> <span class="n">codec</span><span class="o">)</span> <span class="o">{</span>
+</span><span class="line">      <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+</span><span class="line">    <span class="o">}</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">codec</span> <span class="k">instanceof</span> <span class="n">SplittableCompressionCodec</span><span class="o">;</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line"><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="twprecordreaderjava">TWPRecordReader.java</h2>
+
+<p>Finally, in the <code>TWPRecordReader</code>, this is where I put my logic in. In the <code>initialize</code> method, you can get the <code>FileSplit</code> and get the <code>Path</code> object out of it. Next, let’s override <code>nextKeyValue</code>, and updates the <code>value</code> on every call. Lastly, remember to override <code>getCurrentValue()</code>, else it will only return parent’s value (Text), not the value with <code>TextWithPath</code> class.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+<span class="line-number">38</span>
+<span class="line-number">39</span>
+<span class="line-number">40</span>
+<span class="line-number">41</span>
+<span class="line-number">42</span>
+<span class="line-number">43</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kn">package</span> <span class="n">org</span><span class="o">.</span><span class="na">idryman</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kn">import</span> <span class="nn">java.io.IOException</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.fs.Path</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.InputSplit</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.TaskAttemptContext</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.lib.input.FileSplit</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.lib.input.LineRecordReader</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">TWPRecordReader</span> <span class="kd">extends</span> <span class="n">LineRecordReader</span><span class="o">{</span>
+</span><span class="line">  <span class="kd">private</span> <span class="n">TextWithPath</span> <span class="n">value</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class="line">  <span class="kd">private</span> <span class="n">Path</span> <span class="n">path</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line">  <span class="kd">public</span> <span class="nf">TWPRecordReader</span><span class="o">(</span><span class="kt">byte</span><span class="o">[]</span> <span class="n">recordDelimiterBytes</span><span class="o">)</span> <span class="o">{</span>
+</span><span class="line">    <span class="kd">super</span><span class="o">(</span><span class="n">recordDelimiterBytes</span><span class="o">);</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">
+</span><span class="line">  <span class="nd">@Override</span>
+</span><span class="line">  <span class="kd">public</span> <span class="kt">void</span> <span class="nf">initialize</span><span class="o">(</span><span class="n">InputSplit</span> <span class="n">genericSplit</span><span class="o">,</span> <span class="n">TaskAttemptContext</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">{</span>
+</span><span class="line">    <span class="kd">super</span><span class="o">.</span><span class="na">initialize</span><span class="o">(</span><span class="n">genericSplit</span><span class="o">,</span> <span class="n">context</span><span class="o">);</span>
+</span><span class="line">    <span class="n">FileSplit</span> <span class="n">split</span> <span class="o">=</span> <span class="o">(</span><span class="n">FileSplit</span><span class="o">)</span> <span class="n">genericSplit</span><span class="o">;</span>
+</span><span class="line">    <span class="n">path</span> <span class="o">=</span> <span class="n">split</span><span class="o">.</span><span class="na">getPath</span><span class="o">();</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">
+</span><span class="line">  <span class="nd">@Override</span>
+</span><span class="line">  <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">nextKeyValue</span><span class="o">()</span> <span class="kd">throws</span> <span class="n">IOException</span> <span class="o">{</span>
+</span><span class="line">    <span class="k">if</span> <span class="o">(</span><span class="kd">super</span><span class="o">.</span><span class="na">nextKeyValue</span><span class="o">()){</span>
+</span><span class="line">      <span class="k">if</span> <span class="o">(</span><span class="n">value</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span>
+</span><span class="line">        <span class="n">value</span> <span class="o">=</span> <span class="k">new</span> <span class="n">TextWithPath</span><span class="o">(</span><span class="n">path</span><span class="o">);</span>
+</span><span class="line">      <span class="n">value</span><span class="o">.</span><span class="na">set</span><span class="o">(</span><span class="kd">super</span><span class="o">.</span><span class="na">getCurrentValue</span><span class="o">());</span>
+</span><span class="line">      <span class="k">return</span> <span class="kc">true</span><span class="o">;</span>
+</span><span class="line">    <span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
+</span><span class="line">      <span class="n">value</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+</span><span class="line">      <span class="k">return</span> <span class="kc">false</span><span class="o">;</span>
+</span><span class="line">    <span class="o">}</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">
+</span><span class="line">  <span class="nd">@Override</span>
+</span><span class="line">  <span class="kd">public</span> <span class="n">TextWithPath</span> <span class="nf">getCurrentValue</span><span class="o">(){</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">value</span><span class="o">;</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line"><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="demo">Demo</h2>
+
+<p>Here is a demo code to test the output. In addition to normal map reduce tasks, we set the input format class to <code>TWPInpuFormat</code>; on the Mapper side, we expect the input is <code>TextWithPath</code>, not <code>Text</code>. The whole program can be downloaded from this github repo. <a href="https://github.com/dryman/Hadoop-TextWithPath">Hadoop TextWithPath</a></p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+<span class="line-number">38</span>
+<span class="line-number">39</span>
+<span class="line-number">40</span>
+<span class="line-number">41</span>
+<span class="line-number">42</span>
+<span class="line-number">43</span>
+<span class="line-number">44</span>
+<span class="line-number">45</span>
+<span class="line-number">46</span>
+<span class="line-number">47</span>
+<span class="line-number">48</span>
+<span class="line-number">49</span>
+<span class="line-number">50</span>
+<span class="line-number">51</span>
+<span class="line-number">52</span>
+<span class="line-number">53</span>
+<span class="line-number">54</span>
+<span class="line-number">55</span>
+<span class="line-number">56</span>
+<span class="line-number">57</span>
+<span class="line-number">58</span>
+<span class="line-number">59</span>
+<span class="line-number">60</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kn">package</span> <span class="n">org</span><span class="o">.</span><span class="na">idryman</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kn">import</span> <span class="nn">java.io.IOException</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.conf.Configuration</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.conf.Configured</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.fs.Path</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.io.IntWritable</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.io.LongWritable</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.io.NullWritable</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.io.Text</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.Job</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.Mapper</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.lib.output.FileOutputFormat</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.mapreduce.lib.reduce.IntSumReducer</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.util.Tool</span><span class="o">;</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">org.apache.hadoop.util.ToolRunner</span><span class="o">;</span>
+</span><span class="line">
+</span><span class="line"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">DemoRun</span> <span class="kd">extends</span> <span class="n">Configured</span> <span class="kd">implements</span> <span class="n">Tool</span> <span class="o">{</span>
+</span><span class="line">
+</span><span class="line">  <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+</span><span class="line">    <span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="n">ToolRunner</span><span class="o">.</span><span class="na">run</span><span class="o">(</span><span class="k">new</span> <span class="n">Configuration</span><span class="o">(),</span> <span class="k">new</span> <span class="n">DemoRun</span><span class="o">(),</span> <span class="n">args</span><span class="o">));</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">
+</span><span class="line">  <span class="nd">@Override</span>
+</span><span class="line">  <span class="kd">public</span> <span class="kt">int</span> <span class="nf">run</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+</span><span class="line">    <span class="n">Configuration</span> <span class="n">conf</span> <span class="o">=</span> <span class="n">getConf</span><span class="o">();</span>
+</span><span class="line">    <span class="n">Job</span> <span class="n">job</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Job</span><span class="o">(</span><span class="n">conf</span><span class="o">);</span>
+</span><span class="line">    <span class="n">job</span><span class="o">.</span><span class="na">setJobName</span><span class="o">(</span><span class="s">&quot;test TextWithPath Input&quot;</span><span class="o">);</span>
+</span><span class="line">    <span class="n">job</span><span class="o">.</span><span class="na">setJarByClass</span><span class="o">(</span><span class="n">DemoRun</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</span><span class="line">
+</span><span class="line">    <span class="n">TWPInputFormat</span><span class="o">.</span><span class="na">addInputPath</span><span class="o">(</span><span class="n">job</span><span class="o">,</span> <span class="k">new</span> <span class="n">Path</span><span class="o">(</span><span class="n">args</span><span class="o">[</span><span class="mi">0</span><span class="o">]));</span>
+</span><span class="line">    <span class="n">job</span><span class="o">.</span><span class="na">setInputFormatClass</span><span class="o">(</span><span class="n">TWPInputFormat</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</span><span class="line">    <span class="n">job</span><span class="o">.</span><span class="na">setMapperClass</span><span class="o">(</span><span class="n">TestMapper</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</span><span class="line">    <span class="n">job</span><span class="o">.</span><span class="na">setMapOutputKeyClass</span><span class="o">(</span><span class="n">Text</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</span><span class="line">    <span class="n">job</span><span class="o">.</span><span class="na">setMapOutputValueClass</span><span class="o">(</span><span class="n">NullWritable</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</span><span class="line">    <span class="n">job</span><span class="o">.</span><span class="na">setReducerClass</span><span class="o">(</span><span class="n">IntSumReducer</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</span><span class="line">    <span class="n">job</span><span class="o">.</span><span class="na">setNumReduceTasks</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
+</span><span class="line">    <span class="n">FileOutputFormat</span><span class="o">.</span><span class="na">setOutputPath</span><span class="o">(</span><span class="n">job</span><span class="o">,</span> <span class="k">new</span> <span class="n">Path</span><span class="o">(</span><span class="n">args</span><span class="o">[</span><span class="mi">1</span><span class="o">]));</span>
+</span><span class="line">
+</span><span class="line">    <span class="n">job</span><span class="o">.</span><span class="na">submit</span><span class="o">();</span>
+</span><span class="line">    <span class="n">job</span><span class="o">.</span><span class="na">waitForCompletion</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+</span><span class="line">    <span class="k">return</span> <span class="mi">0</span><span class="o">;</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">
+</span><span class="line">  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">TestMapper</span> <span class="kd">extends</span> <span class="n">Mapper</span><span class="o">&lt;</span><span class="n">LongWritable</span><span class="o">,</span> <span class="n">TextWithPath</span><span class="o">,</span> <span class="n">Text</span><span class="o">,</span> <span class="n">IntWritable</span><span class="o">&gt;{</span>
+</span><span class="line">
+</span><span class="line">    <span class="cm">/**</span>
+</span><span class="line"><span class="cm">     * Only override `run` instead of `map` method; because we just want to see one output</span>
+</span><span class="line"><span class="cm">     * per mapper, instead of printing every line.</span>
+</span><span class="line"><span class="cm">     */</span>
+</span><span class="line">    <span class="nd">@Override</span>
+</span><span class="line">    <span class="kd">public</span> <span class="kt">void</span> <span class="nf">run</span><span class="o">(</span><span class="n">Context</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">InterruptedException</span><span class="o">{</span>
+</span><span class="line">      <span class="n">context</span><span class="o">.</span><span class="na">nextKeyValue</span><span class="o">();</span>
+</span><span class="line">      <span class="n">TextWithPath</span> <span class="n">twp</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="na">getCurrentValue</span><span class="o">();</span>
+</span><span class="line">      <span class="n">context</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="k">new</span> <span class="n">Text</span><span class="o">(</span><span class="n">twp</span><span class="o">.</span><span class="na">getPath</span><span class="o">().</span><span class="na">toString</span><span class="o">()),</span> <span class="k">new</span> <span class="n">IntWritable</span><span class="o">(</span><span class="mi">1</span><span class="o">));</span>
+</span><span class="line">    <span class="o">}</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">
+</span><span class="line"><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="one-more-thing">One more thing</h2>
+
+<p>I wrote another hadoop utility that reads a header file from HDFS input source, and passes a <code>FieldWritable</code> object to <code>Mapper</code> class instead of <code>Text</code>. The <code>FieldWritable</code> implements <code>Map</code> interface and can obtain TSV fields by it’s header key. The project is on <a href="https://github.com/dryman/hadoop-fieldformat">github</a> but still highly experimental. Once the API and implementation is stable, I’ll write another post to introduce it. Enjoy!</p>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-01-27T15:11:00-08:00" pubdate data-updated="true">Jan 27<span>th</span>, 2014</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/hadoop/'>Hadoop</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2014/01/27/capture-path-info-in-hadoop-inputformat-class/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2014/01/27/capture-path-info-in-hadoop-inputformat-class/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left articlenav" href="/blog/2014/01/26/capture-directory-context-in-hadoop-mapper/" title="Previous Post: Capture directory context in Hadoop Mapper">&laquo; Capture directory context in Hadoop Mapper</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/01/27/capture-path-info-in-hadoop-inputformat-class/">Capture path info in hadoop InputFormat class</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/26/capture-directory-context-in-hadoop-mapper/">Capture directory context in Hadoop Mapper</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/23/yet-another-monad-tutorial/">Yet Another Monad Tutorial in 15 Minutes</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/03/convert-uf8-literals-in-java/">Convert utf8 literals in Java</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/09/28/java-fast-io-using-java-nio-api/">Java fast IO using java.nio API</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-2/">Process Small Files on Hadoop using CombineFileInputFormat (2)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-1/">Process Small Files on Hadoop using CombineFileInputFormat (1)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/29/my-emacs-setting-on-servers/">my emacs setting on servers</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/08/16/minimal-nodejs-router/">Minimal NodeJS router</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/07/14/writing-java-programs-on-a-remote-server/">Writing java programs on a remote server</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("idryman", 4, true);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/idryman" class="twitter-follow-button" data-show-count="false">Follow @idryman</a>
+  
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - dryman (Felix Ren-Chyan Chern) -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'dryblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.idryman.org/blog/2014/01/27/capture-path-info-in-hadoop-inputformat-class/';
+        var disqus_url = 'http://www.idryman.org/blog/2014/01/27/capture-path-info-in-hadoop-inputformat-class/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+<!--
+hn like button plugin for jekyll/octopress
+Author: dryman (Felix Ren-Chyan Chern)
+
+Inpired from http://hnlike.com/ written by sbashyal
+
+(The MIT License)
+
+Copyright © 2012-2013 Felix Ren-Chyan Chern
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the ‘Software’), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED ‘AS IS’, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+  <script type="text/javascript">
+    (function(){
+      var hn_like = document.createElement('iframe');
+      hn_like.frameborder="no";
+      hn_like.scrolling="no";
+      hn_like.height="28px";
+      hn_like.width="115px";
+      hn_like.src = "http://hnlike.com/upvote.php?link="
+                    + encodeURIComponent(document.location)
+                    + "&title="
+                    + encodeURIComponent("Capture path info in hadoop InputFormat class");
+      hn_like.innerHTML="iframes not supported by your browser";
+      var twitter = document.getElementsByClassName("twitter-share-button")[0];
+
+      twitter.parentNode.insertBefore(
+        hn_like,
+        twitter
+      );
+    })();
+  </script>
+
+<!-- end of hn like button -->
+
+
+
+
+<script type="text/javascript">
+ $(function() {
+        /* For zebra striping */
+        $("table tr:nth-child(odd)").addClass("odd-row");
+        /* For cell text alignment */
+        $("table td:first-child, table th:first-child").addClass("first");
+        /* For removing the last border */
+        $("table td:last-child, table th:last-child").addClass("last");
+});
+</script>
+
+
+</body>
+</html>
