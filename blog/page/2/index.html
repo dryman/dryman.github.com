@@ -9,7 +9,7 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="I’m now having a job at supplyframe Inc., and luckily I can use Clojure for work! Clojure is a young language created by Rich Hickey on 2007. It uses &hellip;">
+  <meta name="description" content="Recently I started to work on hadoop and big data processing, but I was frustrated on eclipse and the development environment. We run hadoop on a &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -102,6 +102,49 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2013/07/14/writing-java-programs-on-a-remote-server/">Writing Java Programs on a Remote Server</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-07-14T16:52:00-07:00" pubdate data-updated="true">Jul 14<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Recently I started to work on hadoop and big data processing, but I was frustrated on eclipse and the development environment. We run hadoop on a remote cluster, but develop map-reduce programs on laptop. The development cycle was pretty slow because we need to upload the jar for every release. Another thing is Eclipse is too inefficient for a Vim and Emacs hacker like me. Thankfully I’m not the only one who think this way; Eric Van Dewoestine developed <a href="http://eclim.org/">Eclim</a> which can let you work on java programs on headless eclipse and vim/emacs! Here comes the installation steps:</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2013/07/14/writing-java-programs-on-a-remote-server/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -560,91 +603,6 @@ MathJax.Hub.Config({
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/12/03/the-design-of-c-integer-types/">Deep C: Understanding the Design of C Integer Types</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-12-03T15:32:00-08:00" pubdate data-updated="true">Dec 3<span>rd</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>C is a popular language designed for cross platform development. However, when
-you dig deeper and deeper, you might get confused for the ambiguity of C
-integer types. Take <code>char</code> for example, number of bits can be 8, 9, or more; the
-minimum of a signed char is not strictly defined as -128 but <em>-127 or less</em>.</p>
-
-<div class="table">
-
-  <table>
-    <thead>
-      <tr>
-        <th style="text-align: center">name</th>
-        <th style="text-align: center">express</th>
-        <th style="text-align: center">value</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td style="text-align: center"><code>CHAR_BIT</code></td>
-        <td style="text-align: center">Number of bits for a char object (byte)</td>
-        <td style="text-align: center">8 or greater</td>
-      </tr>
-      <tr>
-        <td style="text-align: center"><code>SCHAR_MIN</code></td>
-        <td style="text-align: center">Minimum value for an object of type signed char</td>
-        <td style="text-align: center">-127 or less</td>
-      </tr>
-      <tr>
-        <td style="text-align: center"><code>SCHAR_MAX</code></td>
-        <td style="text-align: center">Maximum value for an object of type signed char</td>
-        <td style="text-align: center">127 or more</td>
-      </tr>
-      <tr>
-        <td style="text-align: center"><code>UChar_MAX</code></td>
-        <td style="text-align: center">Maximum value for an object of type unsigned char</td>
-        <td style="text-align: center">255 or more</td>
-      </tr>
-    </tbody>
-  </table>
-
-</div>
-
-<p>Why does C is designed like so? In this article I’ll discuss the design and the
-sprits of C.</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/12/03/the-design-of-c-integer-types/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/3/">&larr; Older</a>
@@ -660,6 +618,10 @@ sprits of C.</p>
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/02/26/setting-up-jasper-server-on-linux/">Setting up Jasper Server on Linux</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2014/01/27/capture-path-info-in-hadoop-inputformat-class/">Capture path info in hadoop InputFormat class</a>
@@ -695,10 +657,6 @@ sprits of C.</p>
     
       <li class="post">
         <a href="/blog/2013/08/16/minimal-nodejs-router/">Minimal NodeJS router</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/07/14/writing-java-programs-on-a-remote-server/">Writing java programs on a remote server</a>
       </li>
     
   </ul>

@@ -9,24 +9,8 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="Single rotate Using the kid utility, we can make rotate single to be simpler too: 1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
-15
-;; x y
-;; / \ / \
-;; y c =&gt; &hellip;">
+  <meta name="description" content="Red black tree algorithms There are two good articles that have good explanation on red-black tree
+algorithms. For your references: Julienne Walker’s &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -119,6 +103,67 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2012/03/31/persistent-red-black-tree-in-lisp-3/">Persistent Red Black Tree in Lisp (3)</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-03-31T16:33:00-07:00" pubdate data-updated="true">Mar 31<span>st</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="red-black-tree-algorithms">Red black tree algorithms</h2>
+
+<p>There are two good articles that have good explanation on red-black tree
+algorithms. For your references:</p>
+
+<ol>
+  <li><a href="http://eternallyconfuzzled.com/tuts/datastructures/jsw_tut_rbtree.aspx">Julienne Walker’s red black tree tutorial</a></li>
+  <li><a href="http://www.mew.org/~kazu/proj/red-black-tree/">Kazu Yamamoto’s purely functional left-leaning red black trees</a></li>
+</ol>
+
+<p>Julienne wrote a beautiful review article that show us not only the algorithm of
+red black tree, but <em>how it is designed like so</em>. He also implemented an elegant
+C program that can balance the tree in bottom-up or top-down ways. My previous
+function <code>(kid root dir dir)</code> was inspired from his implementation.</p>
+
+<p>Kazu reorganized several red black tree insertion algorithms, including Chris
+Okasaki’s purely functional way. He also introduced a left-leaning insertion
+algorithm that reduces one pattern matching compare to Okasaki’s one. The
+programs are elegantly written in Haskell.</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2012/03/31/persistent-red-black-tree-in-lisp-3/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -698,6 +743,10 @@ Then you can translate this</p>
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2014/02/26/setting-up-jasper-server-on-linux/">Setting up Jasper Server on Linux</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2014/01/27/capture-path-info-in-hadoop-inputformat-class/">Capture path info in hadoop InputFormat class</a>
       </li>
     
@@ -731,10 +780,6 @@ Then you can translate this</p>
     
       <li class="post">
         <a href="/blog/2013/08/16/minimal-nodejs-router/">Minimal NodeJS router</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/07/14/writing-java-programs-on-a-remote-server/">Writing java programs on a remote server</a>
       </li>
     
   </ul>
