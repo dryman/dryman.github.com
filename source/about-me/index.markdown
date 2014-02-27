@@ -7,12 +7,27 @@ sharing: true
 footer: true
 ---
 
-I'm a software engineer currently living and working in Pasadena. I have a
-wide programming interests and skills over F2E, Hadoop, iOS programming, and
-numerical computation. 
+I'm a self-taught programmer and am familiar with many different kinds of
+programming languages for different tasks. For text processing I use Perl, and
+I'm also one of the CPAN authors. For highly concurrent server I experienced
+with NodeJS development. On iOS engineering, I wrote native Objective-C and
+published some useful Core Animation libraries.
+
+Now I'm working in SupplyFrame as a Hadoop engineer. We use low-level
+map-reduce API and constructed several libraries based on lower-level IO
+functions to improve the functionalities of hadoop.
 
 
 # Open source projects
+
+## Hadoop projects
+
+* [Hadoop FieldFormat][fieldformat] Structured input, output, and writable classes for map-reduce
+
+* [Hadoop CombineFileInputFormat][cfif] Example implementation of hadoop CombineFileInputFormat (used in production).
+
+[fieldformat]: https://github.com/dryman/hadoop-fieldformat/tree/master
+[cfif]: https://github.com/dryman/Hadoop-CombineFileInputFormat
 
 ## Clojure projects
 
