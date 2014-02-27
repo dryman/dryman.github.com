@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Jasper | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/jasper/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2014-02-26T15:59:15-08:00</updated>
+  <updated>2014-02-27T10:55:53-08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -103,6 +103,9 @@ $ sudo ./jasperreports-server-cp-5.5.0-linux-x64-installer.run
   </li>
   <li>
     <p>It asks you the Tomcat server port. Just use the default <code>8080</code>.</p>
+  </li>
+  <li>
+    <p>It asks you postgres binary location. Use <code>/usr/lib/postgresql/9.1/bin</code>.</p>
   </li>
   <li>
     <p>It asks you host and port for postgres server. Use the default <code>127.0.0.1</code> and <code>5432</code>.</p>
