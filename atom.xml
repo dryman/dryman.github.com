@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2014-02-27T10:55:53-08:00</updated>
+  <updated>2014-03-06T09:29:09-08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,211 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Hadoop performance tuning best practices]]></title>
+    <link href="http://www.idryman.org/blog/2014/03/05/hadoop-performance-tuning-best-practices/"/>
+    <updated>2014-03-05T11:17:00-08:00</updated>
+    <id>http://www.idryman.org/blog/2014/03/05/hadoop-performance-tuning-best-practices</id>
+    <content type="html"><![CDATA[<p>I have been working on Hadoop in production for a while. Here are some of the performance tuning tips I learned from work. Many of my tasks had performance improved over 50% in general. Those guide lines work perfectly in my work place; hope it can help you as well.</p>
+
+<!--more-->
+
+<h2 id="tuning-hadoop-run-time-parameters">Tuning Hadoop run-time parameters</h2>
+
+<p>Hadoop provides a set of options on cpu, memory, disk, and network for performance tuning. Most hadoop tasks are not cpu bounded, what we usually look into is to optimize usage of memory and disk spills.</p>
+
+<h3 id="memory-tuning">Memory tuning</h3>
+
+<p>The general rule for memory tuning is: use as much memory as you can, but don’t trigger swapping. The parameter you can set for task memory is <code>mapred.child.java.opts</code>. You can put it in your configuration file.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="xml"><span class="line"><span class="nt">&lt;property&gt;</span>
+</span><span class="line">    <span class="nt">&lt;name&gt;</span>mapred.child.java.opts<span class="nt">&lt;/name&gt;</span>
+</span><span class="line">    <span class="nt">&lt;value&gt;</span>-Xms1024M -Xmx2048M<span class="nt">&lt;/value&gt;</span>
+</span><span class="line"><span class="nt">&lt;/property&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>You can tune the best parameters for memory by monitoring memory usage on server using Ganglia, Cloudera manager, or Nagios. Cloudera has a slide focused on memory usage tuning, the link is <a href="http://www.slideshare.net/Hadoop_Summit/optimizing-mapreduce-job-performance">here</a></p>
+
+<h3 id="minimize-the-map-disk-spill">Minimize the map disk spill</h3>
+
+<p>Disk IO is usually the performance bottleneck. There are a lot of parameters you can tune for minimizing spilling. What I use the most are:</p>
+
+<ul>
+  <li>compress mapper output</li>
+  <li>Use 70% of heap memory for spill buffer in mapper</li>
+</ul>
+
+<p>In your configuration file, you can write:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+</pre></td><td class="code"><pre><code class="xml"><span class="line"><span class="nt">&lt;property&gt;</span>
+</span><span class="line">    <span class="nt">&lt;name&gt;</span>mapred.compress.map.output<span class="nt">&lt;/name&gt;</span>
+</span><span class="line">    <span class="nt">&lt;value&gt;</span>true<span class="nt">&lt;/value&gt;</span>
+</span><span class="line"><span class="nt">&lt;/property&gt;</span>
+</span><span class="line"><span class="nt">&lt;property&gt;</span>
+</span><span class="line">    <span class="nt">&lt;name&gt;</span>mapred.map.output.compression.codec<span class="nt">&lt;/name&gt;</span>
+</span><span class="line">    <span class="nt">&lt;value&gt;</span>com.hadoop.compression.lzo.LzoCodec<span class="nt">&lt;/value&gt;</span>
+</span><span class="line"><span class="nt">&lt;/property&gt;</span>
+</span><span class="line"><span class="nt">&lt;property&gt;</span>
+</span><span class="line">    <span class="nt">&lt;name&gt;</span>io.sort.mb<span class="nt">&lt;/name&gt;</span>
+</span><span class="line">    <span class="nt">&lt;value&gt;</span>800<span class="nt">&lt;/value&gt;</span>
+</span><span class="line"><span class="nt">&lt;/property&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Although you can further tune reducer buffer, mapper sort record percent, and various of stuff, I found the best thing to do is reduce the mapper output size. Most of the time, the performance is fast enough after I refactor the mapper to output as little data as possible. For more information, check the same <a href="http://www.slideshare.net/Hadoop_Summit/optimizing-mapreduce-job-performance">cloudera’s performance tuning guide</a>.</p>
+
+<h3 id="tuning-mapper-tasks">Tuning mapper tasks</h3>
+
+<p>Unlike reducer tasks which you can specify the number of reducer, the number of mapper tasks is set implicitly. The tuning goal for the mapper is control the amount of mapper and the size of each job. When dealing with large files, hadoop split the file in to smaller chunk so that mapper can run it in parallel. However, the initializing new mapper job usually takes few seconds, this is also a overhead that we want to minimize. These are the things you can do:</p>
+
+<ul>
+  <li>
+    <p>Reuse jvm task</p>
+  </li>
+  <li>
+    <p>If the average mapper running time is shorter than one minute, you can increase the <code>mapred.min.split.size</code>, so that less mappers are allocated in slot and thus reduces the mapper initializing overhead.</p>
+  </li>
+  <li>
+    <p>Use Combine file input format for bunch of smaller files. I had an implementation that also use <code>mapred.min.split.size</code> to implicitly control the mapper size. You can find the <a href="https://github.com/dryman/Hadoop-CombineFileInputFormat">project on github</a>. The explanation of the project can be found on <a href="http://www.idryman.org/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-1/">my blog</a>.</p>
+  </li>
+</ul>
+
+<p>The configuration file would look like this:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+</pre></td><td class="code"><pre><code class="xml"><span class="line"><span class="nt">&lt;property&gt;</span>
+</span><span class="line">    <span class="nt">&lt;name&gt;</span>mapred.job.reuse.jvm.num.tasks<span class="nt">&lt;/name&gt;</span>
+</span><span class="line">    <span class="nt">&lt;value&gt;</span>-1<span class="nt">&lt;/value&gt;</span>
+</span><span class="line"><span class="nt">&lt;/property&gt;</span>
+</span><span class="line"><span class="nt">&lt;property&gt;</span>
+</span><span class="line">    <span class="nt">&lt;name&gt;</span>mapred.max.split.size<span class="nt">&lt;/name&gt;</span>
+</span><span class="line">    <span class="nt">&lt;value&gt;</span>268435456<span class="nt">&lt;/value&gt;</span>
+</span><span class="line"><span class="nt">&lt;/property&gt;</span>
+</span><span class="line"><span class="nt">&lt;property&gt;</span>
+</span><span class="line">    <span class="nt">&lt;name&gt;</span>mapred.min.split.size<span class="nt">&lt;/name&gt;</span>
+</span><span class="line">    <span class="nt">&lt;value&gt;</span>134217728<span class="nt">&lt;/value&gt;</span>
+</span><span class="line"><span class="nt">&lt;/property&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h3 id="use-configuration-file-and-command-line-arguments-to-set-parameters">Use configuration file and command line arguments to set parameters</h3>
+
+<p>When I first started on hadoop, I setup those parameters in java program, but it is so hard-coded and inflexible. Thankfully, hadoop provides <code>Tool</code> interface and <code>ToolRunner</code> class to parse those parameters for you. Here’s a sample program:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kd">public</span> <span class="kd">class</span> <span class="nc">ExampleJob</span> <span class="kd">extends</span> <span class="n">Configured</span> <span class="kd">implements</span> <span class="n">Tool</span><span class="o">{</span>
+</span><span class="line">
+</span><span class="line">  <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span> <span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span><span class="o">{</span>
+</span><span class="line">    <span class="n">System</span><span class="o">.</span><span class="na">exit</span><span class="o">(</span><span class="n">ToolRunner</span><span class="o">.</span><span class="na">run</span><span class="o">(</span><span class="k">new</span> <span class="n">ExampleJob</span><span class="o">(),</span> <span class="n">args</span><span class="o">));</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line">
+</span><span class="line">  <span class="kd">public</span> <span class="kt">int</span> <span class="nf">run</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">Exception</span> <span class="o">{</span>
+</span><span class="line">    <span class="n">Configuration</span> <span class="n">conf</span> <span class="o">=</span> <span class="n">getConf</span><span class="o">();</span>
+</span><span class="line">    <span class="n">Job</span> <span class="n">job</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Job</span><span class="o">(</span><span class="n">conf</span><span class="o">);</span>
+</span><span class="line">    <span class="c1">// configure the rest of the job</span>
+</span><span class="line">  <span class="o">}</span>
+</span><span class="line"><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>If your main class implements the interface, your program can take the config file as input:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">hadoop jar ExampleJob-0.0.1.jar ExampleJob -conf my-conf.xml arg0 arg1
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>You can even pass extra parameters through command line like this:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">hadoop jar ExampleJob-0.0.1.jar ExampleJob -Dmapred.reduce.tasks<span class="o">=</span>20 arg0 arg1
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Setting configuration as run-time arguments make you easier to test different parameters without recompile the program.</p>
+
+<h2 id="tuning-application-specific-performance">Tuning application-specific performance</h2>
+
+<p>Beyond general hadoop parameter setup, you can optimize your map-reduce program using some small tricks. Here are the tricks that I used the most.</p>
+
+<h3 id="minimize-your-mapper-output">Minimize your mapper output</h3>
+
+<p>Recall that mapper spill size is a serious performance bottleneck. The size of mapper output is sensitive to disk IO, network IO, and memory sensitive on shuffle phase. Minimizing the mapper output can improve the general performance a lot.</p>
+
+<p>To do this, you can try the following</p>
+
+<ol>
+  <li>
+    <p>Filter out records on mapper side, not on reducer side.</p>
+  </li>
+  <li>
+    <p>Use minimal data to form your map output key and map output value.</p>
+  </li>
+  <li>
+    <p>Extends <code>BinaryComparable</code> interface or use Text for your map output key</p>
+  </li>
+  <li>
+    <p>Set mapper output to be compressed</p>
+  </li>
+</ol>
+
+<p>Above all the optimization tips, I found this make the biggest change to many of my tasks, unless I can’t find a smaller key to reduce the mapper output. </p>
+
+<h3 id="balancing-reducers-loading">Balancing reducer’s loading</h3>
+
+<p>Another common performance issue that you might encounter is unbalanced reducer tasks: one or several reducer takes most of the output from mapper and ran extremely long compare to other reducers.</p>
+
+<p>To solve this, you can either</p>
+
+<ol>
+  <li>
+    <p>Implement a better hash function in <code>Partitioner</code> class.</p>
+  </li>
+  <li>
+    <p>If you know what keys are causing the issue, you can write a preprocess job to separate keys using MultipleOutputs. Then use another map-reduce job to process the special keys that cause the problem.</p>
+  </li>
+</ol>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>It’s fun to write raw map-reduce jobs because it gives you more precise control over performance tuning. If you already experienced hive or pig, I encourage you to try how to optimize the same job using raw map-reduce. You can find a lot of performance gain and more space to tune the performance. For more curious, you can also check the <a href="http://www.slideshare.net/ydn/hadoop-summit-2010-tuning-hadoop-to-deliver-performance-to-your-application">Yahoo’s tuning hadoop performance guides</a>.</p>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Setting up Jasper Server on Linux]]></title>
@@ -3089,170 +3294,6 @@ NODE&gt;
   <li><a href="http://emacsrocks.com/e11.html">Emacs Rocks discussions</a></li>
 </ul>
 
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Setting up Python on OSX Mountain Lion (updated at May 21, 2013)]]></title>
-    <link href="http://www.idryman.org/blog/2013/03/13/python-setup-on-mac-osx/"/>
-    <updated>2013-03-13T08:47:00-07:00</updated>
-    <id>http://www.idryman.org/blog/2013/03/13/python-setup-on-mac-osx</id>
-    <content type="html"><![CDATA[<p>Setting up programming environment is frustrating for newcomers. Although it is much easier than it was before, it’s still worth it to take note.</p>
-
-<!--more-->
-
-<h2 id="apple-developer-tools">1. Apple developer tools</h2>
-
-<p>Not only the python development but all kinds of programming tasks on OSX require Apple developer tools. The instruction is easy; you download XCode from Mac AppStore, then you download <em>Command Line Tools</em> in the Downloads menu from the XCode Preference panel.</p>
-
-<h2 id="homebrew">2. Homebrew</h2>
-
-<p>Next, install OSX most popular package manager <a href="http://mxcl.github.com/homebrew/">homebrew</a>. Just copy and paste this command in the terminal.</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line">ruby -e <span class="s2">&quot;$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)&quot;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>If it shows an error about user permission, do the following</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="nb">cd</span> /usr/local
-</span><span class="line">sudo chown -R USER_NAME <span class="nb">local</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>and setup environment variables in <code>~/.bash_profile</code> (if the file does not exist, create one)</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="nb">export </span><span class="nv">PATH</span><span class="o">=</span><span class="s2">&quot;~/bin:/usr/local/share/python:/usr/local/bin:$PATH&quot;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>Now you can install the followings with <em>homebrew</em>.</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="nb">source</span> ~/.bash_profile
-</span><span class="line">brew install python --with-brewed-openssl
-</span><span class="line">brew install gfortran
-</span><span class="line">brew install freetype
-</span><span class="line">brew install zmq
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>Years before Mountain Lion, I used to install fortran via <a href="http://hpc.sourceforge.net">High Performance Computing for Mac OSX</a>, but it doesn’t work well with homebrew. Now it’s best to install everything with <em>homebrew</em>.</p>
-
-<h2 id="python-virtualenv">3. Python Virtualenv</h2>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-<span class="line-number">16</span>
-<span class="line-number">17</span>
-<span class="line-number">18</span>
-<span class="line-number">19</span>
-<span class="line-number">20</span>
-<span class="line-number">21</span>
-<span class="line-number">22</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line">pip install virtualenv
-</span><span class="line">mkdir ~/.virtualenvs ~/.pip
-</span><span class="line"><span class="nb">export </span><span class="nv">VIRTUALENV_DISTRIBUTE</span><span class="o">=</span><span class="nb">true</span>
-</span><span class="line"><span class="nb">export </span><span class="nv">PIP_VIRTUALENV_BASE</span><span class="o">=</span><span class="nv">$HOME</span>/.virtualenvs
-</span><span class="line"><span class="nb">export </span><span class="nv">PIP_REQUIRE_VIRTUALENV</span><span class="o">=</span><span class="nb">true</span>
-</span><span class="line"><span class="nb">export </span><span class="nv">PIP_DOWNLOAD_CACHE</span><span class="o">=</span><span class="nv">$HOME</span>/.pip/cache
-</span><span class="line">
-</span><span class="line">cat <span class="s">&lt;&lt;END &gt;&gt; ~/.bash_profile</span>
-</span><span class="line"><span class="s"># virtualenv should use Distribute instead of legacy setuptools</span>
-</span><span class="line"><span class="s">export VIRTUALENV_DISTRIBUTE=true</span>
-</span><span class="line"><span class="s"># Centralized location for new virtual environments</span>
-</span><span class="line"><span class="s">export PIP_VIRTUALENV_BASE=$HOME/.virtualenvs</span>
-</span><span class="line"><span class="s"># pip should only run if there is a virtualenv currently activated</span>
-</span><span class="line"><span class="s">export PIP_REQUIRE_VIRTUALENV=true</span>
-</span><span class="line"><span class="s"># cache pip-installed packages to avoid re-downloading</span>
-</span><span class="line"><span class="s">export PIP_DOWNLOAD_CACHE=$HOME/.pip/cache</span>
-</span><span class="line"><span class="s">END</span>
-</span><span class="line">
-</span><span class="line"><span class="nb">cd</span> ~/.virtualenvs
-</span><span class="line">virtualenv data-scientists
-</span><span class="line"><span class="nb">source </span>data-scientists/bin/activate
-</span><span class="line"><span class="nb">echo</span> <span class="s2">&quot;source $HOME/.virtualenvs/data-scientists/bin/activate&quot;</span> &gt;&gt; ~/.bash_profile
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>Now, if you type <code>which pip</code> it should print <code>/Users/YOUR_HOME/.virtualenvs/data-scientists/bin/pip</code>.</p>
-
-<p>Install scipy, numpy, ipython, and matplot.</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line">pip install numpy
-</span><span class="line">pip install scipy
-</span><span class="line">pip install ipython
-</span><span class="line">pip install matplotlib
-</span><span class="line">pip install pandas
-</span><span class="line">pip install tornado
-</span><span class="line">pip install pyzmq
-</span><span class="line">pip install ipython
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>Finally, install opencv</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line">brew tap homebrew/science
-</span><span class="line">brew install opencv
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>If you want a additional nice GUI application for ipython, you can download it from <a href="https://github.com/liyanage/ipython-notebook#readme">IPython Notebook</a>.</p>
-
-<p><img src="http://www.idryman.org/images/ipython_notebook.png" alt="ipython notebook" /></p>
-
-<h2 id="trouble-shooting">Trouble shooting</h2>
-
-<p>Sometimes homebrew has trouble with fetching the source code. If you found it is stuck on downloading the files, do the following</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line">brew install -v opencv
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>It will show the URL of the file it is going to download. Stop the command with ctrl-c, paste the URL to your browser and download it. After the download is complete, move the file to <code>/Library/Cache/Homebrew</code>.</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line">mv OpenCV-2.4.4a.tar.bz2 /Library/Caches/Homebrew/
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>Continue the installation by</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line">brew install opencv
-</span><span class="line">cmake -DCMAKE_INSTALL_PREFIX:PATH<span class="o">=</span>/usr . <span class="o">&amp;&amp;</span> make all install
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<h2 id="reference">Reference</h2>
-<ol>
-  <li><a href="http://hackercodex.com/guide/python-virtualenv-on-mac-osx-mountain-lion-10.8/">Python and Virtualenv on Mac OSX Mountain Lion 10.8 - Hacker Codex</a></li>
-  <li><a href="http://www.calvinx.com/2012/11/02/virtualenv-with-numpy-scipy/">Virtualenv with numpy and scipy on Mac OSX - Calvin’s</a></li>
-  <li><a href="https://pypi.python.org/pypi/virtualenv">Virtualenv 1.9.1 : Python Package Index</a></li>
-</ol>
 ]]></content>
   </entry>
   
