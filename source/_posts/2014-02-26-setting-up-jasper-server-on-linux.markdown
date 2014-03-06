@@ -88,6 +88,8 @@ You'll go through several steps:
 
 6. It asks you the Tomcat server port. Just use the default `8080`.
 
+7. It asks you postgres binary location. Use `/usr/lib/postgresql/9.1/bin`.
+
 7. It asks you host and port for postgres server. Use the default `127.0.0.1` and `5432`.
 
 8. It asks you the postgres password. Type it in.
