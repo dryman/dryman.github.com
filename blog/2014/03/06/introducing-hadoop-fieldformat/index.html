@@ -5,11 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Category: vim - Carpe diem (Felix's blog)</title>
+  <title>Introducing Hadoop-FieldFormat - Carpe diem (Felix's blog)</title>
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="Category: vim">
+  <meta name="description" content="Hadoop FieldFormat is the new library I released that is flexible and robust for reading and setting schema information in Hadoop map-reduce program &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.idryman.orgblog/categories/vim/">
+  <link rel="canonical" href="http://www.idryman.org/blog/2014/03/06/introducing-hadoop-fieldformat/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -102,36 +102,143 @@ MathJax.Hub.Config({
   <div id="main">
     <div id="content">
       <div>
-<article role="article">
+<article class="hentry" role="article">
   
   <header>
-    <h1 class="entry-title">Category: Vim</h1>
+    
+      
+        <h1 class="entry-title">Introducing Hadoop-FieldFormat</h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-03-06T14:25:00-08:00" pubdate data-updated="true">Mar 6<span>th</span>, 2014</time>
+        
+      </p>
     
   </header>
-  
-  <div id="blog-archives" class="category">
 
 
+<div class="entry-content"><p><a href="https://github.com/dryman/hadoop-fieldformat">Hadoop FieldFormat</a> is the new library I released that is flexible and robust for reading and setting schema information in Hadoop map-reduce program. We use this library to record the meta information for the data, and improve the semantic when building large map-reduce pipe-lined tasks. The project is quite stable now and we already used it in our production system. Any suggestion is welcome!</p>
 
-  
-  <h2>2013</h2>
+<!--more-->
 
-<article>
-  
-<h1><a href="/blog/2013/07/14/writing-java-programs-on-a-remote-server/">Writing java programs on a remote server</a></h1>
-<time datetime="2013-07-14T16:52:00-07:00" pubdate><span class='month'>Jul</span> <span class='day'>14</span> <span class='year'>2013</span></time>
+<h2 id="the-problem">The problem</h2>
 
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/java/'>java</a>, <a class='category' href='/blog/categories/vim/'>vim</a></span>
-</footer>
+<p>The map-reduce architecture is really good at aggregating large dataset and ad-hoc perform computation; however, when the number dataset increases, it becomes difficult to manage the meta data of those dataset. The biggest issue is data by default is semi-structured; there’s no schema or header information to tell you the semantic of the data. When working in raw map-reduce, this is typical code that I write:</p>
 
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kt">void</span> <span class="nf">map</span> <span class="o">(</span><span class="n">LongWritable</span> <span class="n">keyIn</span><span class="o">,</span> <span class="n">Text</span> <span class="n">valIn</span><span class="o">,</span> <span class="n">Context</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">InterruptedException</span><span class="o">{</span>
+</span><span class="line">    <span class="n">String</span> <span class="o">[]</span> <span class="n">fields</span> <span class="o">=</span> <span class="n">valIn</span><span class="o">.</span><span class="na">toString</span><span class="o">().</span><span class="na">split</span><span class="o">(</span><span class="s">&quot;\\t&quot;</span><span class="o">);</span>
+</span><span class="line">    <span class="n">String</span> <span class="n">ip</span> <span class="o">=</span> <span class="n">fields</span><span class="o">[</span><span class="mi">0</span><span class="o">];</span>
+</span><span class="line">    <span class="n">String</span> <span class="n">cookie</span> <span class="o">=</span> <span class="n">fields</span><span class="o">[</span><span class="mi">1</span><span class="o">];</span>
+</span><span class="line">    <span class="n">String</span> <span class="n">ua</span> <span class="o">=</span> <span class="n">fields</span><span class="o">[</span><span class="mi">5</span><span class="o">];</span>
+</span><span class="line">    <span class="o">...</span>
+</span><span class="line"><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
 
-</article>
+<p>There’s no semantic associated with the data, so you can only hard code the semantic and hope the fields order will stay the same forever. If the upstream process inserted a new field to this dataset, your program may still run, but produce wrong result that might be difficult to catch by downstream program.</p>
 
+<p>The same issue happens in <a href="https://pig.apache.org">Pig</a> and <a href="http://www.cascading.org">cascading</a> too. Pig, for example:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="n">tomcat</span> <span class="o">=</span> <span class="n">LOAD</span> <span class="err">&#39;</span><span class="n">catalina</span><span class="o">.</span><span class="na">out</span><span class="err">&#39;</span> <span class="n">USING</span> <span class="n">PigStorage</span><span class="o">(</span><span class="sc">&#39;\t&#39;</span><span class="o">)</span> <span class="n">AS</span> <span class="o">(</span><span class="n">ip</span><span class="o">,</span> <span class="n">cookie</span><span class="o">,</span> <span class="n">query</span><span class="o">,</span> <span class="n">url</span><span class="o">,</span> <span class="n">time</span><span class="o">,</span> <span class="n">ua</span><span class="o">);</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>If the input format changed, you’ll need to be very careful to make sure all the downstream process are corrected. Moreover, if you want to run map-reduce across different versions of dataset, you may not be able to run it because the order of the fields is different!</p>
+
+<h3 id="hive-and-hcatalog">Hive and HCatalog</h3>
+
+<p>Goal: lightweight semantic attached to the data</p>
+
+<h2 id="eat-our-own-dog-food----introducing-hadoop-fieldformat">Eat our own dog food – introducing Hadoop FieldFormat!</h2>
+
+<p>You may be surprised by how simple the solution is. First, answer this:
+Where does hadoop store the meta data for map-reduce jobs? <code>_logs</code>.</p>
+
+<p>What hadoop FieldFormat does is reading and writing header.tsv. Also, provides
+a convenient API in java to access the data field using the java Map interface.</p>
 </div>
 
+
+  <footer>
+    <p class="meta">
+      
   
+
+<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-03-06T14:25:00-08:00" pubdate data-updated="true">Mar 6<span>th</span>, 2014</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/hadoop/'>Hadoop</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2014/03/06/introducing-hadoop-fieldformat/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2014/03/06/introducing-hadoop-fieldformat/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left articlenav" href="/blog/2014/03/05/hadoop-performance-tuning-best-practices/" title="Previous Post: Hadoop performance tuning best practices">&laquo; Hadoop performance tuning best practices</a>
+      
+      
+        <a class="basic-alignment right articlenav" href="/blog/2014/11/29/integer-promotion-part-2/" title="Next Post: Integer Promotion Part 2">Integer Promotion Part 2 &raquo;</a>
+      
+    </p>
+  </footer>
 </article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
 
 </div>
 
@@ -223,7 +330,10 @@ MathJax.Hub.Config({
       var disqus_shortname = 'dryblog';
       
         
-        var disqus_script = 'count.js';
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.idryman.org/blog/2014/03/06/introducing-hadoop-fieldformat/';
+        var disqus_url = 'http://www.idryman.org/blog/2014/03/06/introducing-hadoop-fieldformat/';
+        var disqus_script = 'embed.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
@@ -305,7 +415,7 @@ SOFTWARE.
       hn_like.src = "http://hnlike.com/upvote.php?link="
                     + encodeURIComponent(document.location)
                     + "&title="
-                    + encodeURIComponent("Category: vim");
+                    + encodeURIComponent("Introducing Hadoop-FieldFormat");
       hn_like.innerHTML="iframes not supported by your browser";
       var twitter = document.getElementsByClassName("twitter-share-button")[0];
 

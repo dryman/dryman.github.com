@@ -9,8 +9,8 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="I start from a single view application with MKMapView. Remeber to link
-MapKit.framework in project setting. This is just a prototyping app, so &hellip;">
+  <meta name="description" content="Apple introduced blocks (anonymous functions or lambdas) as C extensions for its
+parallel programming model Grand Central Dispatch. Unlike ordinary C &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -104,6 +104,104 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2012/09/29/c-objc-block-quizzes/">C/ObjC Block Quizzes</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-09-29T12:15:00-07:00" pubdate data-updated="true">Sep 29<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Apple introduced blocks (anonymous functions or lambdas) as C extensions for its
+parallel programming model <a href="https://developer.apple.com/documentation/Performance/Reference/GCD_libdispatch_Ref/Reference/reference.html">Grand Central Dispatch</a>. Unlike ordinary C
+functions, blocks can capture surrounding variable contexts. The captured
+variables are casts to <code>const</code> by default, and for mutable variables you can mark
+it with <code>__block</code> storage qualifier. However, there is a lot of pitfalls in
+<code>__block</code> variables.  Can you identify all of them?</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2012/09/29/c-objc-block-quizzes/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2012/09/21/c-slash-objc-c-block-syntax-explained/">C/ObjC Block Syntax Explained</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-09-21T20:33:00-07:00" pubdate data-updated="true">Sep 21<span>st</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Block is heavily used in objective-c  APIs. If you want to
+write concurrent and responsive interface, you will need blocks and grand
+central dispatch. Blocks also bring many goods form functional programming to cocoa.
+It is just awesome.</p>
+
+<p>However, when I first learn blocks I found the syntax confuses me a lot. 
+This is why I wrote this article. Hope this article can help people who have the
+same problem as I did.</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2012/09/21/c-slash-objc-c-block-syntax-explained/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -519,131 +617,6 @@ verification tool for distributed software system – <a href="http://spinroot.c
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/04/05/jekyll-octopress-hacker-news-plugin/">Jekyll/Octopress Hacker News Plugin</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-04-05T14:49:00-07:00" pubdate data-updated="true">Apr 5<span>th</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h3 id="inspiration">Inspiration</h3>
-
-<p>I found out that some cool blogs have a cute <em>hacker news like button</em> on each of its
-posts. </p>
-
-<p><img src="/images/hn_like.png" /></p>
-
-<p>The service is <a href="http://hnlike.com/">HN Like Button</a>, created by <a href="http://hacksandthoughts.posterous.com/">shashyal</a>.
-To use it you can use the generator like so:</p>
-
-<p><img src="/images/gen_hn_like.png" /></p>
-
-<p>However, we don’t want to do that every time, right? So I decided to write a
-small Jekyll plugin to generate the button automatically. Hope you can enjoy it!</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/04/05/jekyll-octopress-hacker-news-plugin/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/04/04/jekyll-graphviz-plugin/">Jekyll/Octopress Graphviz Plugin</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-04-04T17:37:00-07:00" pubdate data-updated="true">Apr 4<span>th</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>I created a graphviz plugin for Octopress/Jekyll today. For example:</p>
-
-<pre><code>{% graphviz %}
-digraph G {
-  compound=true;
-  subgraph cluster0 {
-  a -&gt; b;
-  a -&gt; c;
-  b -&gt; d;
-  c -&gt; d;
-  }
-  subgraph cluster1 {
-  e -&gt; g;
-  e -&gt; f;
-  }
-  b -&gt; f [lhead=cluster1];
-  d -&gt; e;
-  c -&gt; g [ltail=cluster0, lhead=cluster1];
-  c -&gt; e [ltail=cluster0];
-  d -&gt; h;
-}
-{% endgraphviz %}
-</code></pre>
-
-<p>will produce:</p>
-
-<p><img src="/images/graphviz/g-3feb8846aa4bb9767add244df8bed05a.svg" /></p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/04/04/jekyll-graphviz-plugin/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/5/">&larr; Older</a>
@@ -659,6 +632,14 @@ digraph G {
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/11/29/integer-promotion-part-2/">Integer Promotion Part 2</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/03/06/introducing-hadoop-fieldformat/">Introducing Hadoop-FieldFormat</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2014/03/05/hadoop-performance-tuning-best-practices/">Hadoop performance tuning best practices</a>
@@ -690,14 +671,6 @@ digraph G {
     
       <li class="post">
         <a href="/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-2/">Process Small Files on Hadoop using CombineFileInputFormat (2)</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-1/">Process Small Files on Hadoop using CombineFileInputFormat (1)</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/08/29/my-emacs-setting-on-servers/">my emacs setting on servers</a>
       </li>
     
   </ul>

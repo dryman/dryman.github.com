@@ -9,7 +9,7 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="I have been working on Hadoop in production for a while. Here are some of the performance tuning tips I learned from work. Many of my tasks had &hellip;">
+  <meta name="description" content="It’s been a while since I wrote my last article. I recently read an old book Expert C Programming and found there are many C langauge details that I &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -103,6 +103,92 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2014/11/29/integer-promotion-part-2/">Integer Promotion Part 2</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-11-29T18:34:00-08:00" pubdate data-updated="true">Nov 29<span>th</span>, 2014</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>It’s been a while since I wrote my last article. I recently read an old book <a href="http://www.amazon.com/Expert-Programming-Peter-van-Linden/dp/0131774298">Expert C Programming</a> and found there are many C langauge details that I never think about. Review and rethink what C integer promotion rules meant to C is one of the interesting topic that I want to share with you.</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/11/29/integer-promotion-part-2/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2014/03/06/introducing-hadoop-fieldformat/">Introducing Hadoop-FieldFormat</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-03-06T14:25:00-08:00" pubdate data-updated="true">Mar 6<span>th</span>, 2014</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p><a href="https://github.com/dryman/hadoop-fieldformat">Hadoop FieldFormat</a> is the new library I released that is flexible and robust for reading and setting schema information in Hadoop map-reduce program. We use this library to record the meta information for the data, and improve the semantic when building large map-reduce pipe-lined tasks. The project is quite stable now and we already used it in our production system. Any suggestion is welcome!</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/03/06/introducing-hadoop-fieldformat/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -452,92 +538,6 @@ MathJax.Hub.Config({
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-1/">Process Small Files on Hadoop Using CombineFileInputFormat (1)</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-09-22T14:39:00-07:00" pubdate data-updated="true">Sep 22<span>nd</span>, 2013</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Processing small files is an old typical problem in hadoop; On <a href="http://stackoverflow.com/questions/14541759/how-can-i-work-with-large-number-of-small-files-in-hadoop">Stack Overflow</a> it suggested people to use <a href="http://hadoop.apache.org/docs/r1.1.1/api/org/apache/hadoop/mapred/lib/CombineFileInputFormat.html">CombineFileInputFormat</a>,  but I haven’t found a good step-to-step article that teach you how to use it. So, I decided to write one myself.</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-1/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2013/08/29/my-emacs-setting-on-servers/">My Emacs Setting on Servers</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-08-29T10:28:00-07:00" pubdate data-updated="true">Aug 29<span>th</span>, 2013</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>My desktop emacs config is complecated, however I need a minimal config for emacs installed on ubuntu servers. This is my note of how to configure emacs on servers that works for me.</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2013/08/29/my-emacs-setting-on-servers/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/2/">&larr; Older</a>
@@ -551,6 +551,14 @@ MathJax.Hub.Config({
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/11/29/integer-promotion-part-2/">Integer Promotion Part 2</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/03/06/introducing-hadoop-fieldformat/">Introducing Hadoop-FieldFormat</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2014/03/05/hadoop-performance-tuning-best-practices/">Hadoop performance tuning best practices</a>
@@ -582,14 +590,6 @@ MathJax.Hub.Config({
     
       <li class="post">
         <a href="/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-2/">Process Small Files on Hadoop using CombineFileInputFormat (2)</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-1/">Process Small Files on Hadoop using CombineFileInputFormat (1)</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/08/29/my-emacs-setting-on-servers/">my emacs setting on servers</a>
       </li>
     
   </ul>

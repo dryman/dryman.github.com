@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Hadoop | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/hadoop/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2014-03-06T09:29:09-08:00</updated>
+  <updated>2014-11-29T22:00:09-08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,53 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Introducing Hadoop-FieldFormat]]></title>
+    <link href="http://www.idryman.org/blog/2014/03/06/introducing-hadoop-fieldformat/"/>
+    <updated>2014-03-06T14:25:00-08:00</updated>
+    <id>http://www.idryman.org/blog/2014/03/06/introducing-hadoop-fieldformat</id>
+    <content type="html"><![CDATA[<p><a href="https://github.com/dryman/hadoop-fieldformat">Hadoop FieldFormat</a> is the new library I released that is flexible and robust for reading and setting schema information in Hadoop map-reduce program. We use this library to record the meta information for the data, and improve the semantic when building large map-reduce pipe-lined tasks. The project is quite stable now and we already used it in our production system. Any suggestion is welcome!</p>
+
+<!--more-->
+
+<h2 id="the-problem">The problem</h2>
+
+<p>The map-reduce architecture is really good at aggregating large dataset and ad-hoc perform computation; however, when the number dataset increases, it becomes difficult to manage the meta data of those dataset. The biggest issue is data by default is semi-structured; there’s no schema or header information to tell you the semantic of the data. When working in raw map-reduce, this is typical code that I write:</p>
+
+<p><code>java
+void map (LongWritable keyIn, Text valIn, Context context) throws IOException, InterruptedException{
+    String [] fields = valIn.toString().split("\\t");
+    String ip = fields[0];
+    String cookie = fields[1];
+    String ua = fields[5];
+    ...
+}
+</code></p>
+
+<p>There’s no semantic associated with the data, so you can only hard code the semantic and hope the fields order will stay the same forever. If the upstream process inserted a new field to this dataset, your program may still run, but produce wrong result that might be difficult to catch by downstream program.</p>
+
+<p>The same issue happens in <a href="https://pig.apache.org">Pig</a> and <a href="http://www.cascading.org">cascading</a> too. Pig, for example:</p>
+
+<p><code>
+tomcat = LOAD 'catalina.out' USING PigStorage('\t') AS (ip, cookie, query, url, time, ua);
+</code></p>
+
+<p>If the input format changed, you’ll need to be very careful to make sure all the downstream process are corrected. Moreover, if you want to run map-reduce across different versions of dataset, you may not be able to run it because the order of the fields is different!</p>
+
+<h3 id="hive-and-hcatalog">Hive and HCatalog</h3>
+
+<p>Goal: lightweight semantic attached to the data</p>
+
+<h2 id="eat-our-own-dog-food----introducing-hadoop-fieldformat">Eat our own dog food – introducing Hadoop FieldFormat!</h2>
+
+<p>You may be surprised by how simple the solution is. First, answer this:
+Where does hadoop store the meta data for map-reduce jobs? <code>_logs</code>.</p>
+
+<p>What hadoop FieldFormat does is reading and writing header.tsv. Also, provides
+a convenient API in java to access the data field using the java Map interface.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Hadoop performance tuning best practices]]></title>
@@ -609,272 +656,6 @@ java.lang.Throwable: Child Error
 <p>Still, try to model your problems into sequence file or map file in hadoop. HDFS should handle localities with these files automatically.
 What about <code>CFInputFormat</code>? Does it handle locality in HDFS system too?
 I can’t confirm it but I guess sorting the keys based on line offset first then file name also guarantees the locality of assigning data to mapper. When I have time to dig more from HDFS API, I’ll look back to this benchmark and see what can I further tune the program.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Process Small Files on Hadoop using CombineFileInputFormat (1)]]></title>
-    <link href="http://www.idryman.org/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-1/"/>
-    <updated>2013-09-22T14:39:00-07:00</updated>
-    <id>http://www.idryman.org/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-1</id>
-    <content type="html"><![CDATA[<p>Processing small files is an old typical problem in hadoop; On <a href="http://stackoverflow.com/questions/14541759/how-can-i-work-with-large-number-of-small-files-in-hadoop">Stack Overflow</a> it suggested people to use <a href="http://hadoop.apache.org/docs/r1.1.1/api/org/apache/hadoop/mapred/lib/CombineFileInputFormat.html">CombineFileInputFormat</a>,  but I haven’t found a good step-to-step article that teach you how to use it. So, I decided to write one myself.</p>
-
-<!--more-->
-
-<p>From <a href="http://blog.cloudera.com/blog/2009/02/the-small-files-problem/">Cloudera’s blog</a>:</p>
-
-<blockquote>
-  <p>A small file is one which is significantly smaller than the HDFS block size (default 64MB).
-If you’re storing small files, then you probably have lots of them (otherwise you wouldn’t turn to Hadoop),
-and the problem is that HDFS can’t handle lots of files.</p>
-</blockquote>
-
-<p>In my benchmark, just using a custom <code>CombineFileInputFormat</code> can speedup the program from 3 hours to 23 minutes, and after some further tuning, the same task can be run in 6 minutes!</p>
-
-<h2 id="benchmark-setup">Benchmark Setup</h2>
-
-<p>To test the raw performance of different approaches to solve small problems, I setup a map only hadoop job that basically just do grep and perform a small binary search. The binary search part is to generate the reduce side keys that I’ll use in further data processing; it took only a little resource (8MB index) to run, so it does not affect the result of the benchmark.</p>
-
-<p>The data to process is some server log data, 53.1 GB in total. The hadoop clusters consist 6 nodes, using hadoop version 1.1.2. In this benchmark I implemented <code>CombineFileInputFormat</code> to shrink the map jobs; I also tested the difference of reusing JVM or not, and different number of block sizes to combine files.</p>
-
-<h2 id="combinefileinputformat">CombineFileInputFormat</h2>
-
-<p>The code listed here is modified from <a href="https://svn.apache.org/repos/asf/hadoop/common/trunk/hadoop-mapreduce-project/hadoop-mapreduce-examples/src/main/java/org/apache/hadoop/examples/MultiFileWordCount.java">Hadoop example code</a>. To use <code>CombineFileInputFormat</code> you need to implement three classes. The class <code>CombineFileInputFormat</code> is an abstract class with no implementation, so you must create a subclass to support it; we’ll name the subclass <code>CFInputFormat</code>. The subclass will initiate a delegate <code>CFRecordReader</code> that extends <code>RecordReader</code>; this is the code that does the file processing logic. We’ll also need a class for <code>FileLineWritable</code>, which replaces <code>LongWritable</code> normally used as a key to file lines.</p>
-
-<h3 id="cfinputformatjava">CFInputFormat.java</h3>
-
-<p>The <code>CFInputFormat.java</code> doesn’t do much. You implement <code>createRecordReader</code> to pass in the record reader that does the combine file logic, that’s all. Note that you can call <code>setMaxSplitSize</code> in the initializer to control the size of each chunk of files; if you don’t want to split files into half, remember to return <code>false</code> in <code>isSplitable</code> method, which defaults to <code>true</code>.</p>
-
-<p>```java
-package org.idryman.combinefiles;</p>
-
-<p>import java.io.IOException;</p>
-
-<p>import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.JobContext;
-import org.apache.hadoop.mapreduce.RecordReader;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.lib.input.CombineFileInputFormat;
-import org.apache.hadoop.mapreduce.lib.input.CombineFileRecordReader;
-import org.apache.hadoop.mapreduce.lib.input.CombineFileSplit;</p>
-
-<p>import org.idryman.combinefiles.CFRecordReader;
-import org.idryman.combinefiles.FileLineWritable;</p>
-
-<p>public class CFInputFormat extends CombineFileInputFormat&lt;FileLineWritable, Text&gt; {
-  public CFInputFormat(){
-    super();
-    setMaxSplitSize(67108864); // 64 MB, default block size on hadoop
-  }
-  public RecordReader&lt;FileLineWritable, Text&gt; createRecordReader(InputSplit split, TaskAttemptContext context) throws IOException{
-    return new CombineFileRecordReader&lt;FileLineWritable, Text&gt;((CombineFileSplit)split, context, CFRecordReader.class);
-  }
-  @Override
-  protected boolean isSplitable(JobContext context, Path file){
-    return false;
-  }
-}
-```</p>
-
-<h3 id="cfrecordreaderjava">CFRecordReader.java</h3>
-
-<p><code>CFRecordReader</code> is a delegate class of <code>CombineFileRecordReader</code>, a built in class that pass each split (typically a whole file in this case) to our class <code>CFRecordReader</code>. When the hadoop job starts, <code>CombineFileRecordReader</code> reads all the file sizes in HDFS that we want it to process, and decides how many splits base on the <code>MaxSplitSize</code> we defined in <code>CFInputFormat</code>. For every split (must be a file, because we set <code>isSplitabe</code> to false), <code>CombineFileRecordReader</code> creates a <code>CFRecrodReader</code> instance via a custom constructor, and pass in <code>CombineFileSplit</code>, context, and index for <code>CFRecordReader</code> to locate the file to process with.</p>
-
-<p>When processing the file, the <code>CFRecordReader</code> creates a <code>FileLineWritable</code> as the key for hadoop mapper class. With each line a <code>FileLineWritable</code> consists the file name and the offset length of that line. The difference between <code>FileLineWritable</code> and the normally used <code>LongWritable</code> in mapper is <code>LongWritable</code> only denote the offset of a line in a file, while <code>FileLineWritable</code> adds the file information into the key.</p>
-
-<p>```java
-package org.idryman.combinefiles;</p>
-
-<p>import java.io.IOException;
-import org.idryman.combinefiles.FileLineWritable;
-import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.RecordReader;
-import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.lib.input.CombineFileSplit;
-import org.apache.hadoop.util.LineReader;</p>
-
-<p>public class CFRecordReader extends RecordReader&lt;FileLineWritable, Text&gt;{
-  private long startOffset;
-  private long end;
-  private long pos;
-  private FileSystem fs;
-  private Path path;
-  private FileLineWritable key;
-  private Text value;</p>
-
-<p>private FSDataInputStream fileIn;
-  private LineReader reader;</p>
-
-<p>public CFRecordReader(CombineFileSplit split, TaskAttemptContext context, Integer index) throws IOException{
-  this.path = split.getPath(index);
-  fs = this.path.getFileSystem(context.getConfiguration());
-  this.startOffset = split.getOffset(index);
-  this.end = startOffset + split.getLength(index);</p>
-
-<p>fileIn = fs.open(path);
-  reader = new LineReader(fileIn);
-  this.pos = startOffset;
-}</p>
-
-<p>@Override
-public void initialize(InputSplit arg0, TaskAttemptContext arg1)
-    throws IOException, InterruptedException {
-  // Won’t be called, use custom Constructor
-  // <code>CFRecordReader(CombineFileSplit split, TaskAttemptContext context, Integer index)</code>
-  // instead
-}</p>
-
-<p>@Override
-public void close() throws IOException {}</p>
-
-<p>@Override
-public float getProgress() throws IOException{
-  if (startOffset == end) {
-    return 0;
-  }
-  return Math.min(1.0f, (pos - startOffset) / (float) (end - startOffset));
-}</p>
-
-<p>@Override
-public FileLineWritable getCurrentKey() throws IOException, InterruptedException {
-  return key;
-}</p>
-
-<p>@Override
-public Text getCurrentValue() throws IOException, InterruptedException {
-  return value;
-}</p>
-
-<p>@Override
-public boolean nextKeyValue() throws IOException{
-  if (key == null) {
-    key = new FileLineWritable();
-    key.fileName = path.getName();
-  }
-  key.offset = pos;
-  if (value == null){
-    value = new Text();
-  }
-  int newSize = 0;
-  if (pos &lt; end) {
-    newSize = reader.readLine(value);
-    pos += newSize;
-  }
-  if (newSize == 0) {
-    key = null;
-    value = null;
-    return false;
-  } else{
-    return true;
-  }
-}
-}
-```</p>
-
-<p>The reason to use a custom constructor
-is not documented anywhere in hadoop api nor document. You can only find it in <a href="http://grepcode.com/file/repo1.maven.org/maven2/com.ning/metrics.collector/1.2.1/org/apache/hadoop/mapreduce/lib/input/CombineFileRecordReader.java#40">hadoop source code</a>, line 40:</p>
-
-<p><code>java
-   static final Class [] constructorSignature = new Class []
-                                          {CombineFileSplit.class,
-                                           TaskAttemptContext.class,
-                                           Integer.class};
-</code></p>
-
-<h3 id="filelinewritablejava">FileLineWritable.java</h3>
-
-<p>This file is very simple: store the file name and offset, and override the <code>compareTo</code> method to compare the file name first, then compare the offset.</p>
-
-<p>```java
-package org.idryman.combinefiles;</p>
-
-<p>import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;</p>
-
-<p>import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.WritableComparable;</p>
-
-<p>public class FileLineWritable implements WritableComparable<filelinewritable>{
-  public long offset;
-  public String fileName;</filelinewritable></p>
-
-<p>public void readFields(DataInput in) throws IOException {
-    this.offset = in.readLong();
-    this.fileName = Text.readString(in);
-  }</p>
-
-<p>public void write(DataOutput out) throws IOException {
-    out.writeLong(offset);
-    Text.writeString(out, fileName);
-  }</p>
-
-<p>public int compareTo(FileLineWritable that) {
-    int cmp = this.fileName.compareTo(that.fileName);
-    if (cmp != 0) return cmp;
-    return (int)Math.signum((double)(this.offset - that.offset));
-  }</p>
-
-<p>@Override
-  public int hashCode() {               // generated hashCode()
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + ((fileName == null) ? 0 : fileName.hashCode());
-    result = prime * result + (int) (offset ^ (offset »&gt; 32));
-    return result;
-  }</p>
-
-<p>@Override
-  public boolean equals(Object obj) {  // generated equals()
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
-      return false;
-    FileLineWritable other = (CFFileLineWritableInputFormat) obj;
-    if (fileName == null) {
-      if (other.fileName != null)
-        return false;
-    } else if (!fileName.equals(other.fileName))
-      return false;
-    if (offset != other.offset)
-      return false;
-    return true;
-  }
-}
-```</p>
-
-<h2 id="job-setup">job setup</h2>
-
-<p>Finally is the job setup for hadoop cluster to run. We just need to assign the classes to job:</p>
-
-<p><code>java
-import org.apache.hadoop.mapreduce.Job;
-// standard hadoop conf
-Job job = new Job(getConf());
-FileInputFormat.addInputPath(job, new Path(args[0]));
-job.setInputFormatClass(CFInputFormat.class);
-job.setMapperClass(MyMapper.class);
-job.setNumReduceTasks(0); // map only
-FileOutputFormat.setOutputPath(job, new Path(args[1]));
-job.submit();
-</code></p>
-
-<p>The benchmark result is in the next post.</p>
-
-<h2 id="download">Download</h2>
-
-<p>The whole project can be downloaded from 
-<a href="https://github.com/dryman/Hadoop-CombineFileInputFormat">Hadoop CombineFileInputFormat</a>.</p>
-
-<p>Enjoy!</p>
 ]]></content>
   </entry>
   

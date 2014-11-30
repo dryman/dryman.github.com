@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2014-03-06T09:29:09-08:00</updated>
+  <updated>2014-11-29T22:00:09-08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,166 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Integer Promotion Part 2]]></title>
+    <link href="http://www.idryman.org/blog/2014/11/29/integer-promotion-part-2/"/>
+    <updated>2014-11-29T18:34:00-08:00</updated>
+    <id>http://www.idryman.org/blog/2014/11/29/integer-promotion-part-2</id>
+    <content type="html"><![CDATA[<p>It’s been a while since I wrote my last article. I recently read an old book <a href="http://www.amazon.com/Expert-Programming-Peter-van-Linden/dp/0131774298">Expert C Programming</a> and found there are many C langauge details that I never think about. Review and rethink what C integer promotion rules meant to C is one of the interesting topic that I want to share with you.</p>
+
+<!--more-->
+
+<h2 id="what-is-type-systems">What is type systems?</h2>
+
+<p>Type is the methods that interpret and process your data.
+Sounds familiar to OOP? Definiing a class <strong>IS</strong> defining a method.
+In C, expressions on different data type produces different
+instructions. What instruction to generate? Depends on the data
+type. (int is different than float, for example).</p>
+
+<p>A chunk of data in memory or register can mean anything
+on a CPU. The type system defines how operators works on different types.
+Given the example below:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="kt">int</span><span class="o">*</span> <span class="n">p</span> <span class="o">=</span> <span class="mh">0x00007ffffffffcc0</span><span class="p">;</span>
+</span><span class="line"><span class="kt">int</span>  <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</span><span class="line"><span class="kt">int</span><span class="o">*</span> <span class="n">q</span> <span class="o">=</span> <span class="n">p</span> <span class="o">+</span> <span class="n">i</span><span class="p">;</span> <span class="c1">// =&gt; 0x00007fffffffffcc4 because the type &quot;pointer to int&quot;</span>
+</span><span class="line">                <span class="c1">// defines the multiplier of the offset is 4</span>
+</span><span class="line">
+</span><span class="line"><span class="kt">int</span><span class="o">*</span> <span class="n">r</span> <span class="o">=</span> <span class="n">p</span> <span class="o">+</span> <span class="n">q</span><span class="p">;</span> <span class="c1">// Invalid in C type system.</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>When adding an integer to a pointer, the compiler knows the offset multiplier
+by the type of the pointer points to. If <code>p</code> where defined as <code>char* p</code>, then
+the multiplier would be 1. Also, the <code>+</code> operator only make sense to add an
+offset to a pointer, therefore adding two pointer together is invalid in C
+syntax.</p>
+
+<h2 id="review-c-integer-promotion-rules">Review C integer promotion rules</h2>
+
+<p>I wrote an article about C integer promotion 2 years ago: <a href="http://www.idryman.org/blog/2012/11/21/integer-promotion/">Deep C: Integer Promotion</a>. The standard integer promotion rules in C99 is listed below.</p>
+
+<blockquote>
+  <p>If an int can represent all values of the original type, the value is converted
+to an int; otherwise, it is converted to an unsigned int. These are called the
+integer promotions. All other types are unchanged by the integer promotions.</p>
+</blockquote>
+
+<p>This is called <em>value preserving</em>. On machine level, the arithmetic works best on
+a whole register (or 32 bit register). Remember that C’s philosophy is to make
+your program runs as fast as possible, so it loads your small data chunk into
+the whole register, then do the calculation.</p>
+
+<p>However, things worked differently on K&amp;R C. It’s was defined as <em>unsigned
+preserving</em>. When mixing a signed and unsigned integer, the result is unsigned
+type. Below is the example copied from <strong>Expert C Programming</strong> book.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="k">if</span> <span class="p">(</span> <span class="o">-</span><span class="mi">1</span> <span class="o">&lt;</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">char</span><span class="p">)</span> <span class="mi">1</span> <span class="p">)</span> <span class="p">{</span>
+</span><span class="line">  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;C dialect after ANSI C, including C89, C99, and after</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+</span><span class="line"><span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span><span class="line">  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Pre ANSI C (K&amp;R) dialect. -1 is treated as unsigned value 0xFFFFFFFF and thus greater than 1 ! </span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="mixing-unsigned-and-signed-integer-in-modern-c">Mixing unsigned and signed integer in modern C</h2>
+
+<p>Although most of the time C will preserve the value of the type for you,
+you can still get surprising result. When the signed integer can’t hold
+the unsigned value, everything is converted to unsigned integer.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line">  <span class="k">if</span> <span class="p">(</span> <span class="o">-</span><span class="mi">1</span> <span class="o">&lt;</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+</span><span class="line">    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;-1 is less than 4</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+</span><span class="line">  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span><span class="line">    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;-1 is treated as 0xffffffff. Because sizeof returns size_t which is an unsigned int</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+</span><span class="line">  <span class="p">}</span>
+</span><span class="line">  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>This program will print <strong>-1 is treated as 0xffffffff. Because sizeof returns size_t which is an unsigned int\n</strong></p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Always be careful when you mix unsigned and signed integer in expressions.
+When possible, type cast it to signed int. C is designed to make program fast,
+but not safe for beginners. Additional checks would create a lot of overhead
+in the runtime, so the developer need to know the system and language well
+to avoid shooting at their own foot. Another possible reason may be that 
+the original C developers were all operating system writers and compiler 
+writers. Therefore, the mappings between Assembly and C langauge is
+straight forward to them.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Introducing Hadoop-FieldFormat]]></title>
+    <link href="http://www.idryman.org/blog/2014/03/06/introducing-hadoop-fieldformat/"/>
+    <updated>2014-03-06T14:25:00-08:00</updated>
+    <id>http://www.idryman.org/blog/2014/03/06/introducing-hadoop-fieldformat</id>
+    <content type="html"><![CDATA[<p><a href="https://github.com/dryman/hadoop-fieldformat">Hadoop FieldFormat</a> is the new library I released that is flexible and robust for reading and setting schema information in Hadoop map-reduce program. We use this library to record the meta information for the data, and improve the semantic when building large map-reduce pipe-lined tasks. The project is quite stable now and we already used it in our production system. Any suggestion is welcome!</p>
+
+<!--more-->
+
+<h2 id="the-problem">The problem</h2>
+
+<p>The map-reduce architecture is really good at aggregating large dataset and ad-hoc perform computation; however, when the number dataset increases, it becomes difficult to manage the meta data of those dataset. The biggest issue is data by default is semi-structured; there’s no schema or header information to tell you the semantic of the data. When working in raw map-reduce, this is typical code that I write:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kt">void</span> <span class="nf">map</span> <span class="o">(</span><span class="n">LongWritable</span> <span class="n">keyIn</span><span class="o">,</span> <span class="n">Text</span> <span class="n">valIn</span><span class="o">,</span> <span class="n">Context</span> <span class="n">context</span><span class="o">)</span> <span class="kd">throws</span> <span class="n">IOException</span><span class="o">,</span> <span class="n">InterruptedException</span><span class="o">{</span>
+</span><span class="line">    <span class="n">String</span> <span class="o">[]</span> <span class="n">fields</span> <span class="o">=</span> <span class="n">valIn</span><span class="o">.</span><span class="na">toString</span><span class="o">().</span><span class="na">split</span><span class="o">(</span><span class="s">&quot;\\t&quot;</span><span class="o">);</span>
+</span><span class="line">    <span class="n">String</span> <span class="n">ip</span> <span class="o">=</span> <span class="n">fields</span><span class="o">[</span><span class="mi">0</span><span class="o">];</span>
+</span><span class="line">    <span class="n">String</span> <span class="n">cookie</span> <span class="o">=</span> <span class="n">fields</span><span class="o">[</span><span class="mi">1</span><span class="o">];</span>
+</span><span class="line">    <span class="n">String</span> <span class="n">ua</span> <span class="o">=</span> <span class="n">fields</span><span class="o">[</span><span class="mi">5</span><span class="o">];</span>
+</span><span class="line">    <span class="o">...</span>
+</span><span class="line"><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>There’s no semantic associated with the data, so you can only hard code the semantic and hope the fields order will stay the same forever. If the upstream process inserted a new field to this dataset, your program may still run, but produce wrong result that might be difficult to catch by downstream program.</p>
+
+<p>The same issue happens in <a href="https://pig.apache.org">Pig</a> and <a href="http://www.cascading.org">cascading</a> too. Pig, for example:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="n">tomcat</span> <span class="o">=</span> <span class="n">LOAD</span> <span class="err">&#39;</span><span class="n">catalina</span><span class="o">.</span><span class="na">out</span><span class="err">&#39;</span> <span class="n">USING</span> <span class="n">PigStorage</span><span class="o">(</span><span class="sc">&#39;\t&#39;</span><span class="o">)</span> <span class="n">AS</span> <span class="o">(</span><span class="n">ip</span><span class="o">,</span> <span class="n">cookie</span><span class="o">,</span> <span class="n">query</span><span class="o">,</span> <span class="n">url</span><span class="o">,</span> <span class="n">time</span><span class="o">,</span> <span class="n">ua</span><span class="o">);</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>If the input format changed, you’ll need to be very careful to make sure all the downstream process are corrected. Moreover, if you want to run map-reduce across different versions of dataset, you may not be able to run it because the order of the fields is different!</p>
+
+<h3 id="hive-and-hcatalog">Hive and HCatalog</h3>
+
+<p>Goal: lightweight semantic attached to the data</p>
+
+<h2 id="eat-our-own-dog-food----introducing-hadoop-fieldformat">Eat our own dog food – introducing Hadoop FieldFormat!</h2>
+
+<p>You may be surprised by how simple the solution is. First, answer this:
+Where does hadoop store the meta data for map-reduce jobs? <code>_logs</code>.</p>
+
+<p>What hadoop FieldFormat does is reading and writing header.tsv. Also, provides
+a convenient API in java to access the data field using the java Map interface.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Hadoop performance tuning best practices]]></title>
@@ -3061,239 +3221,6 @@ is not documented anywhere in hadoop api nor document. You can only find it in <
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
 <p>The keybindings is only for two windows layout. You can use <code>M-[</code> or <code>M-]</code> to navigate the pages while your cursor is in another window. So that you can write your notes and navigate without leaving your notes! Pretty neat, right?</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Emacs W3m]]></title>
-    <link href="http://www.idryman.org/blog/2013/05/20/emacs-w3m/"/>
-    <updated>2013-05-20T21:18:00-07:00</updated>
-    <id>http://www.idryman.org/blog/2013/05/20/emacs-w3m</id>
-    <content type="html"><![CDATA[<p>This year I switched from vim to emacs. The reason is quite simple, I want to try different things, that’s all. Emacs is a highly configurable editor that you can use it to read emails, chat on irc, read pdf files, or whatever you can imagine. One of the most useful plugin is using <code>emacs-w3m</code> to browse websites.</p>
-
-<!--more-->
-
-<h3 id="install">Install</h3>
-
-<p>Emacs-w3m is an old package, luckily the latest package still functions well :D</p>
-
-<p>This installation guide is mac specific, but you can replace the first command to other platform-specific package installer. I use Mac OSX 10.8, and the latest homebrew until May 15, 2013. In your shell, type in the following:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line">brew install w3m
-</span><span class="line">mkdir -p ~/.emacs.d/vendor
-</span><span class="line"><span class="nb">cd</span> ~/.emacs.d/vendor
-</span><span class="line">cvs -d :pserver:anonymous@cvs.namazu.org:/storage/cvsroot login
-</span><span class="line">cvs -d :pserver:anonymous@cvs.namazu.org:/storage/cvsroot co emacs-w3m
-</span><span class="line">
-</span><span class="line"><span class="nb">cd </span>emacs-w3m
-</span><span class="line">autoconf
-</span><span class="line">make
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>Then, in your <code>.emacs</code>,</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-</pre></td><td class="code"><pre><code class="scm"><span class="line"><span class="p">(</span><span class="nf">add-to-list</span> <span class="ss">&#39;load-path</span> <span class="s">&quot;~/.emacs.d/vendor/emacs-w3m/&quot;</span><span class="p">)</span>
-</span><span class="line"><span class="p">(</span><span class="nf">require</span> <span class="ss">&#39;w3m-load</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>That’s all you need. :)</p>
-
-<p><img src="http://www.idryman.org/images/emacs/emacs-w3m.png" alt="emacs-w3m" /></p>
-
-<h3 id="other-settings">Other settings</h3>
-
-<p>If you want to open url links in w3m from org files, you can use the following setting, reference to <a href="http://www.emacswiki.org/emacs/BrowseUrl#toc26">emacs wiki post</a>.</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-</pre></td><td class="code"><pre><code class="scm"><span class="line"><span class="p">(</span><span class="nf">defadvice</span> <span class="nv">org-open-at-point</span> <span class="p">(</span><span class="nf">around</span> <span class="nv">org-open-at-point-choose-browser</span> <span class="nv">activate</span><span class="p">)</span>
-</span><span class="line">  <span class="p">(</span><span class="k">let </span><span class="p">((</span><span class="nf">browse-url-browser-function</span>
-</span><span class="line">         <span class="p">(</span><span class="k">cond </span><span class="p">((</span><span class="nf">equal</span> <span class="p">(</span><span class="nf">ad-get-arg</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
-</span><span class="line">                <span class="ss">&#39;browse-url-generic</span><span class="p">)</span>
-</span><span class="line">               <span class="p">((</span><span class="nf">equal</span> <span class="p">(</span><span class="nf">ad-get-arg</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&#39;</span><span class="p">(</span><span class="mi">16</span><span class="p">))</span>
-</span><span class="line">                <span class="ss">&#39;choose-browser</span><span class="p">)</span>
-</span><span class="line">               <span class="p">(</span><span class="nf">t</span>
-</span><span class="line">                <span class="p">(</span><span class="k">lambda </span><span class="p">(</span><span class="nf">url</span> <span class="nv">&amp;optional</span> <span class="nv">new</span><span class="p">)</span>
-</span><span class="line">                  <span class="p">(</span><span class="nf">w3m-browse-url</span> <span class="nv">url</span> <span class="nv">t</span><span class="p">)))</span>
-</span><span class="line">               <span class="p">)))</span>
-</span><span class="line">    <span class="nv">ad-do-it</span><span class="p">))</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>If you want more from <code>emacs-w3m</code>, check out <a href="http://www.emacswiki.org/emacs/emacs-w3m">EmacsWiki: emacs-w3m</a>.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Installing swank.js]]></title>
-    <link href="http://www.idryman.org/blog/2013/03/23/installing-swank-dot-js/"/>
-    <updated>2013-03-23T08:05:00-07:00</updated>
-    <id>http://www.idryman.org/blog/2013/03/23/installing-swank-dot-js</id>
-    <content type="html"><![CDATA[<p>People say that emacs is the most extendable editor in the world; however, I didn’t really understand how powerful it is until one of it extension <strong>Swank.js</strong> blowed my mind. Take a look at this awesome screen cast produced by <a href="http://emacsrocks.com">emacs rocks</a>.</p>
-
-<iframe width="560" height="315" src="http://www.youtube.com/embed/qwtVtcQQfqc" frameborder="0" allowfullscreen=""></iframe>
-
-<!--more-->
-
-<p>Awesome, is it? However, installing <code>swank.js</code> is really nontrivial. As a result, I want to share my note on setting up <code>swank.js</code> on my machine.</p>
-
-<h2 id="system-information">System information</h2>
-
-<ul>
-  <li>Mac OSX 10.8</li>
-  <li>Emacs 24.3</li>
-  <li>package manager: <a href="http://mxcl.github.com/homebrew/">homebrew</a></li>
-  <li>C compiler: Apple LLVM version 4.2 (clang-425.0.27) (based on LLVM 3.2svn) Target: x86_64-apple-darwin12.3.0</li>
-</ul>
-
-<p>My Emacs is installed via <a href="http://mxcl.github.com/homebrew/">homebrew</a>.</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-</pre></td><td class="code"><pre><code class="sh"><span class="line">brew install emacs --cocoa
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<h2 id="installation-steps">Installation steps</h2>
-
-<h3 id="section">1.</h3>
-<p>Setting up emacs ecosystem. In <code>~/.emacs</code> or <code>~/.emacs.d/init.el</code>:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-</pre></td><td class="code"><pre><code class="scm"><span class="line"><span class="p">(</span><span class="nf">require</span> <span class="ss">&#39;package</span><span class="p">)</span>
-</span><span class="line"><span class="p">(</span><span class="nf">add-to-list</span> <span class="ss">&#39;package-archives</span>
-</span><span class="line">  <span class="o">&#39;</span><span class="p">(</span><span class="s">&quot;marmalade&quot;</span> <span class="o">.</span> <span class="s">&quot;http://marmalade-repo.org/packages/&quot;</span><span class="p">))</span>
-</span><span class="line"><span class="p">(</span><span class="nf">add-to-list</span> <span class="ss">&#39;package-archives</span>
-</span><span class="line"><span class="o">&#39;</span><span class="p">(</span><span class="s">&quot;melpa&quot;</span> <span class="o">.</span> <span class="s">&quot;http://melpa.milkbox.net/packages/&quot;</span><span class="p">)</span> <span class="nv">t</span><span class="p">)</span>
-</span><span class="line"><span class="p">(</span><span class="nf">package-initialize</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>Remember to evaluate the buffer <code>M-x eval-buffer</code>.</p>
-
-<h3 id="section-1">2.</h3>
-<p><code>node.js</code>, <code>npm</code>, and <code>swank-js</code> server.</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-</pre></td><td class="code"><pre><code class="sh"><span class="line">brew install npm
-</span><span class="line"><span class="nb">export </span><span class="nv">PATH</span><span class="o">=</span><span class="s2">&quot;/usr/local/share/npm/bin:$PATH&quot;</span>    <span class="c"># put this in .bash_profile</span>
-</span><span class="line">npm install -g swank-js
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<h3 id="section-2">3.</h3>
-<p>Setting up <code>slime</code> (lisp-emacs protocol)</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-</pre></td><td class="code"><pre><code class="sh"><span class="line">brew install sbcl
-</span><span class="line"><span class="nb">cd</span> ~/.emacs.d/
-</span><span class="line">git clone https://github.com/antifuchs/slime.git
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>In <code>.emacs</code>:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-</pre></td><td class="code"><pre><code class="scm"><span class="line"><span class="p">(</span><span class="nf">add-to-list</span> <span class="ss">&#39;load-path</span> <span class="s">&quot;~/.emacs.d/slime&quot;</span><span class="p">)</span>
-</span><span class="line"><span class="p">(</span><span class="nf">setq</span> <span class="nv">inferior-lisp-program</span> <span class="s">&quot;/usr/local/bin/sbcl&quot;</span><span class="p">)</span>
-</span><span class="line"><span class="p">(</span><span class="nf">require</span> <span class="ss">&#39;slime</span><span class="p">)</span>
-</span><span class="line"><span class="p">(</span><span class="nf">slime-setup</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<h3 id="section-3">4.</h3>
-<p>Install <code>swank.js</code> dependencies in emacs:</p>
-
-<pre><code>M-x package-install exec-path-from-shell
-M-x package-install js2-mode
-M-x package-install slime
-M-x package-install slime-js
-M-x package-isntall js2-refactor
-M-x package-install ac-slime
-</code></pre>
-
-<h3 id="section-4">5.</h3>
-<p>Useful configurations written by <a href="https://github.com/magnars">Magnar Sveen</a> (author of <a href="http://emacsrocks.com">emacs rocks</a>.</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nb">cd</span> ~/.emacs.d/
-</span><span class="line">curl -LO https://raw.github.com/magnars/.emacs.d/master/setup-slime-js.el
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<h3 id="section-5">6.</h3>
-<p>Final configurations in <code>.emacs</code></p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-</pre></td><td class="code"><pre><code class="scm"><span class="line"><span class="c1">;; swank-js settings</span>
-</span><span class="line"><span class="p">(</span><span class="nf">autoload</span> <span class="ss">&#39;js2-mode</span> <span class="s">&quot;js2-mode&quot;</span> <span class="nv">nil</span> <span class="nv">t</span><span class="p">)</span>
-</span><span class="line"><span class="p">(</span><span class="nf">add-to-list</span> <span class="ss">&#39;auto-mode-alist</span> <span class="o">&#39;</span><span class="p">(</span><span class="s">&quot;\\.js$&quot;</span> <span class="o">.</span> <span class="nv">js2-mode</span><span class="p">))</span>
-</span><span class="line"><span class="p">(</span><span class="nf">global-set-key</span> <span class="err">[</span><span class="nv">f5</span><span class="err">]</span> <span class="ss">&#39;slime-js-reload</span><span class="p">)</span>
-</span><span class="line"><span class="p">(</span><span class="nf">add-hook</span> <span class="ss">&#39;js2-mode-hook</span>
-</span><span class="line">          <span class="p">(</span><span class="k">lambda </span><span class="p">()</span>
-</span><span class="line">            <span class="p">(</span><span class="nf">slime-js-minor-mode</span> <span class="mi">1</span><span class="p">)))</span>
-</span><span class="line"><span class="p">(</span><span class="nf">load-file</span> <span class="s">&quot;~/.emacs.d/setup-slime-js.el&quot;</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<h2 id="usage">Usage</h2>
-
-<p>First, you need a real server running at port 3000. You can do that either using <code>python -m SimpleHTTPServer 3000</code> or other server programs like Ruby on Rails. You can change the default port setting by overwritten the variable <code>slime-js-target-url</code> in your <code>.emacs</code>.</p>
-
-<p>Next, use the command <code>M-x slime-js-jack-in-browser</code> in emacs. It should open up Chrome in your workspace. However, my Chrome browser didn’t work well with <code>swank-js</code>; an alternative solution is to open <code>localhost:8009</code> in safari. It worked for me anyway. Now, you should see that emacs shows a prompt like this:</p>
-
-<pre><code>; SLIME 2013-03-12
-Remote attached: (browser) Safari6.0
- 
-NODE&gt; 
-</code></pre>
-
-<p>Type in <code>alert("hello world!")</code> and press enter. You should see your browser pop up an alert window with <strong>hello world</strong>, and that’s it! You’ve successfully installed <code>swank.js</code>!!</p>
-
-<p><img src="http://www.idryman.org/images/emacs/swank-js-screenshot-50.png" alt="Swank JS Screenshot" /></p>
-
-<p>Wow, it’s really complicated. I can’t remember it unless I write it down.</p>
-
-<h2 id="references">References</h2>
-
-<ul>
-  <li><a href="https://github.com/swank-js/swank-js">Swank JS</a></li>
-  <li><a href="https://github.com/antifuchs/slime">Slime github mirror</a></li>
-  <li><a href="https://github.com/magnars/.emacs.d/blob/master/setup-slime-js.el">Setup slime js</a></li>
-  <li><a href="http://emacsrocks.com/e11.html">Emacs Rocks discussions</a></li>
-</ul>
-
 ]]></content>
   </entry>
   

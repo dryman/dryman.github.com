@@ -5,11 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>double pendulum - Carpe diem (Felix's blog)</title>
+  <title>Integer Promotion Part 2 - Carpe diem (Felix's blog)</title>
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="Double Pendulum Sep 2nd, 2012 under construction. Will be online soon Sep 2nd, 2012 Tweet Comments Please enable JavaScript to view the comments &hellip;">
+  <meta name="description" content="It’s been a while since I wrote my last article. I recently read an old book Expert C Programming and found there are many C langauge details that I &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.idryman.org/double-pendulum/">
+  <link rel="canonical" href="http://www.idryman.org/blog/2014/11/29/integer-promotion-part-2/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -102,32 +102,17 @@ MathJax.Hub.Config({
   <div id="main">
     <div id="content">
       <div>
-<article role="article">
+<article class="hentry" role="article">
   
   <header>
-    <h1 class="entry-title">Double Pendulum</h1>
-    <p class="meta">
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-09-02T15:46:00-07:00" pubdate data-updated="true">Sep 2<span>nd</span>, 2012</time></p>
-  </header>
-  
-  <p>under construction. Will be online soon</p>
-
-  
-    <footer>
+    
+      
+        <h1 class="entry-title">Integer Promotion Part 2</h1>
+      
+    
+    
       <p class="meta">
         
-        
 
 
 
@@ -139,13 +124,149 @@ MathJax.Hub.Config({
   
 
 
-<time datetime="2012-09-02T15:46:00-07:00" pubdate data-updated="true">Sep 2<span>nd</span>, 2012</time>
+<time datetime="2014-11-29T18:34:00-08:00" pubdate data-updated="true">Nov 29<span>th</span>, 2014</time>
         
       </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>It’s been a while since I wrote my last article. I recently read an old book <a href="http://www.amazon.com/Expert-Programming-Peter-van-Linden/dp/0131774298">Expert C Programming</a> and found there are many C langauge details that I never think about. Review and rethink what C integer promotion rules meant to C is one of the interesting topic that I want to share with you.</p>
+
+<!--more-->
+
+<h2 id="what-is-type-systems">What is type systems?</h2>
+
+<p>Type is the methods that interpret and process your data.
+Sounds familiar to OOP? Definiing a class <strong>IS</strong> defining a method.
+In C, expressions on different data type produces different
+instructions. What instruction to generate? Depends on the data
+type. (int is different than float, for example).</p>
+
+<p>A chunk of data in memory or register can mean anything
+on a CPU. The type system defines how operators works on different types.
+Given the example below:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="kt">int</span><span class="o">*</span> <span class="n">p</span> <span class="o">=</span> <span class="mh">0x00007ffffffffcc0</span><span class="p">;</span>
+</span><span class="line"><span class="kt">int</span>  <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</span><span class="line"><span class="kt">int</span><span class="o">*</span> <span class="n">q</span> <span class="o">=</span> <span class="n">p</span> <span class="o">+</span> <span class="n">i</span><span class="p">;</span> <span class="c1">// =&gt; 0x00007fffffffffcc4 because the type &quot;pointer to int&quot;</span>
+</span><span class="line">                <span class="c1">// defines the multiplier of the offset is 4</span>
+</span><span class="line">
+</span><span class="line"><span class="kt">int</span><span class="o">*</span> <span class="n">r</span> <span class="o">=</span> <span class="n">p</span> <span class="o">+</span> <span class="n">q</span><span class="p">;</span> <span class="c1">// Invalid in C type system.</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>When adding an integer to a pointer, the compiler knows the offset multiplier
+by the type of the pointer points to. If <code>p</code> where defined as <code>char* p</code>, then
+the multiplier would be 1. Also, the <code>+</code> operator only make sense to add an
+offset to a pointer, therefore adding two pointer together is invalid in C
+syntax.</p>
+
+<h2 id="review-c-integer-promotion-rules">Review C integer promotion rules</h2>
+
+<p>I wrote an article about C integer promotion 2 years ago: <a href="http://www.idryman.org/blog/2012/11/21/integer-promotion/">Deep C: Integer Promotion</a>. The standard integer promotion rules in C99 is listed below.</p>
+
+<blockquote>
+  <p>If an int can represent all values of the original type, the value is converted
+to an int; otherwise, it is converted to an unsigned int. These are called the
+integer promotions. All other types are unchanged by the integer promotions.</p>
+</blockquote>
+
+<p>This is called <em>value preserving</em>. On machine level, the arithmetic works best on
+a whole register (or 32 bit register). Remember that C’s philosophy is to make
+your program runs as fast as possible, so it loads your small data chunk into
+the whole register, then do the calculation.</p>
+
+<p>However, things worked differently on K&amp;R C. It’s was defined as <em>unsigned
+preserving</em>. When mixing a signed and unsigned integer, the result is unsigned
+type. Below is the example copied from <strong>Expert C Programming</strong> book.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="k">if</span> <span class="p">(</span> <span class="o">-</span><span class="mi">1</span> <span class="o">&lt;</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">char</span><span class="p">)</span> <span class="mi">1</span> <span class="p">)</span> <span class="p">{</span>
+</span><span class="line">  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;C dialect after ANSI C, including C89, C99, and after</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+</span><span class="line"><span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span><span class="line">  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Pre ANSI C (K&amp;R) dialect. -1 is treated as unsigned value 0xFFFFFFFF and thus greater than 1 ! </span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="mixing-unsigned-and-signed-integer-in-modern-c">Mixing unsigned and signed integer in modern C</h2>
+
+<p>Although most of the time C will preserve the value of the type for you,
+you can still get surprising result. When the signed integer can’t hold
+the unsigned value, everything is converted to unsigned integer.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line">  <span class="k">if</span> <span class="p">(</span> <span class="o">-</span><span class="mi">1</span> <span class="o">&lt;</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+</span><span class="line">    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;-1 is less than 4</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+</span><span class="line">  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span><span class="line">    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;-1 is treated as 0xffffffff. Because sizeof returns size_t which is an unsigned int</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+</span><span class="line">  <span class="p">}</span>
+</span><span class="line">  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>This program will print <strong>-1 is treated as 0xffffffff. Because sizeof returns size_t which is an unsigned int\n</strong></p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Always be careful when you mix unsigned and signed integer in expressions.
+When possible, type cast it to signed int. C is designed to make program fast,
+but not safe for beginners. Additional checks would create a lot of overhead
+in the runtime, so the developer need to know the system and language well
+to avoid shooting at their own foot. Another possible reason may be that 
+the original C developers were all operating system writers and compiler 
+writers. Therefore, the mappings between Assembly and C langauge is
+straight forward to them.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
       
-        <div class="sharing">
   
-  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/double-pendulum/index.html" data-via="idryman" data-counturl="http://www.idryman.org/double-pendulum/index.html" >Tweet</a>
+
+<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-11-29T18:34:00-08:00" pubdate data-updated="true">Nov 29<span>th</span>, 2014</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/c/'>C</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2014/11/29/integer-promotion-part-2/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2014/11/29/integer-promotion-part-2/" >Tweet</a>
   
   
   <div class="g-plusone" data-size="medium"></div>
@@ -155,9 +276,14 @@ MathJax.Hub.Config({
   
 </div>
 
+    
+    <p class="meta">
       
-    </footer>
-  
+        <a class="basic-alignment left articlenav" href="/blog/2014/03/06/introducing-hadoop-fieldformat/" title="Previous Post: Introducing Hadoop-FieldFormat">&laquo; Introducing Hadoop-FieldFormat</a>
+      
+      
+    </p>
+  </footer>
 </article>
 
   <section>
@@ -257,8 +383,8 @@ MathJax.Hub.Config({
       
         
         // var disqus_developer = 1;
-        var disqus_identifier = 'http://www.idryman.org/double-pendulum/index.html';
-        var disqus_url = 'http://www.idryman.org/double-pendulum/index.html';
+        var disqus_identifier = 'http://www.idryman.org/blog/2014/11/29/integer-promotion-part-2/';
+        var disqus_url = 'http://www.idryman.org/blog/2014/11/29/integer-promotion-part-2/';
         var disqus_script = 'embed.js';
       
     (function () {
@@ -341,7 +467,7 @@ SOFTWARE.
       hn_like.src = "http://hnlike.com/upvote.php?link="
                     + encodeURIComponent(document.location)
                     + "&title="
-                    + encodeURIComponent("double pendulum");
+                    + encodeURIComponent("Integer Promotion Part 2");
       hn_like.innerHTML="iframes not supported by your browser";
       var twitter = document.getElementsByClassName("twitter-share-button")[0];
 

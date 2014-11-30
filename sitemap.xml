@@ -221,12 +221,20 @@
         <lastmod>2014-03-06T09:28:44-08:00</lastmod>
     </url>
     <url>
+        <loc>http://www.idryman.org/blog/2014/03/06/introducing-hadoop-fieldformat/</loc>
+        <lastmod>2014-03-07T16:25:25-08:00</lastmod>
+    </url>
+    <url>
+        <loc>http://www.idryman.org/blog/2014/11/29/integer-promotion-part-2/</loc>
+        <lastmod>2014-11-29T21:57:32-08:00</lastmod>
+    </url>
+    <url>
         <loc>http://www.idryman.org/about-me/</loc>
         <lastmod>2014-02-26T15:59:07-08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/archives/</loc>
-        <lastmod>2014-03-06T09:28:44-08:00</lastmod>
+        <lastmod>2014-11-29T21:57:32-08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/double-pendulum/</loc>
@@ -242,6 +250,6 @@
     </url>
     <url>
         <loc>http://www.idryman.org/</loc>
-        <lastmod>2014-03-06T09:28:44-08:00</lastmod>
+        <lastmod>2014-11-29T21:57:32-08:00</lastmod>
     </url>
 </urlset>
