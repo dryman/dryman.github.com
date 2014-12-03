@@ -1,0 +1,744 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Writing 64 bit assembly on Mac OS X - Carpe diem (Felix's blog)</title>
+  <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
+
+  
+  <meta name="description" content="Many assembly tutorials and books doesn’t cover
+how to write a simple assembly program on the Mac OS X.
+Here are some baby steps that can help people &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://www.idryman.org/blog/2014/12/02/writing-64-bit-assembly-on-mac-os-x/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Carpe diem (Felix's blog)" type="application/atom+xml">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- mathjax config similar to math.stackexchange -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/HTML-CSS"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-23425996-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <!--div id="logo">
+  	<div id="logoLeft">{</div>
+  	<div id="logoText">mob</div>
+  	<div id="logoRight">}</div>
+  	<div class="clear"></div>
+  </div-->
+  <h1><a href="/">Carpe diem (Felix's blog)</a></h1>
+  
+    <h2>I am a happy developer</h2>
+  
+  <div class="clear"></div>
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:www.idryman.org" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about-me">About Me</a></li>
+  <li><a href="https://github.com/dryman">Github</a></li>
+  <li><a href="http://idryman.tumblr.com/">Drawings</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      
+        <h1 class="entry-title">Writing 64 Bit Assembly on Mac OS X</h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-12-02T17:18:00-08:00" pubdate data-updated="true">Dec 2<span>nd</span>, 2014</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Many assembly tutorials and books doesn’t cover
+how to write a simple assembly program on the Mac OS X.
+Here are some baby steps that can help people who
+are also interested in assembly to get started
+easier.</p>
+
+<!--more-->
+
+<h2 id="mach-o-file-format">Mach-O file format</h2>
+
+<p>To get started on writing OSX assembly, you need to
+understand OSX executable file format – the <a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachORuntime/index.html">Mach-O
+file format</a>. It’s similar to ELF, but instead
+of sections of data, bss, and text, it has segments that
+contains sections.</p>
+
+<p>A common assembly in Linux like</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="gas"><span class="line"><span class="na">.section</span> <span class="no">data</span>
+</span><span class="line"><span class="na">.section</span> <span class="no">text</span>
+</span><span class="line"><span class="c"># your code here</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>would translate into this in Mach-O</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="gas"><span class="line"><span class="na">.section</span> <span class="no">__DATA</span><span class="p">,</span><span class="no">__data</span>
+</span><span class="line"><span class="c"># __DATA is segment, __data is section</span>
+</span><span class="line"><span class="na">.section</span> <span class="no">__TEXT</span><span class="p">,</span><span class="no">__text</span>
+</span><span class="line"><span class="c"># __TEXT is segment, __text is section</span>
+</span><span class="line">
+</span><span class="line"><span class="c"># your code here</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Mach-O is pretty flexible. You can embed a
+<code>cstring</code> section in your <code>__TEXT</code> segment instead
+of putting it in <code>__DATA,__data</code>. Actually this is
+the default behavior that compiler does on your Mac.</p>
+
+<h2 id="hello-assembly">Hello Assembly</h2>
+
+<p>Now we know how to translate common linux assembly
+to mac, let’s write a basic program – do a system call
+with an exit code.</p>
+
+<p>On x86 you do a system call by <code>int x80</code> instruction. On
+64 bit machine, you do this by <code>syscall</code>. Here’s the sample
+code:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="gas"><span class="line"><span class="c"># Simple exit program</span>
+</span><span class="line"><span class="na">.section</span> <span class="no">__TEXT</span><span class="p">,</span><span class="no">__text</span>
+</span><span class="line"><span class="na">.globl</span> <span class="no">_main</span>
+</span><span class="line"><span class="nl">_main:</span>
+</span><span class="line">  <span class="nf">movl</span> <span class="no">$0x2000001</span><span class="p">,</span> <span class="nv">%eax</span> <span class="c"># system call $1 with $0x2000000 offset</span>
+</span><span class="line">  <span class="nf">movl</span> <span class="no">$0</span><span class="p">,</span> <span class="nv">%ebx</span>         <span class="c"># set the exit code to be $0</span>
+</span><span class="line">  <span class="nf">syscall</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>you can compile the code by the following commands:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">as exit.s -o exit.o
+</span><span class="line">ld exit.o -e _main -o <span class="nb">exit</span>     <span class="c"># -e specify the entry point of the executable</span>
+</span><span class="line">./exit
+</span><span class="line"><span class="nb">echo</span> <span class="nv">$?</span> <span class="c"># show last return code, should show 0</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>To perform a system call, you put the system call number in
+<code>%eax</code>, and put the actual exit code to <code>%ebx</code>. The system
+call number can be found in <code>/usr/include/sys/syscall.h</code>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="cp">#define	SYS_syscall        0</span>
+</span><span class="line"><span class="cp">#define	SYS_exit           1</span>
+</span><span class="line"><span class="cp">#define	SYS_fork           2</span>
+</span><span class="line"><span class="cp">#define	SYS_read           3</span>
+</span><span class="line"><span class="cp">#define	SYS_write          4</span>
+</span><span class="line"><span class="cp">#define	SYS_open           5</span>
+</span><span class="line"><span class="cp">#define	SYS_close          6</span>
+</span><span class="line"><span class="cp">#define	SYS_wait4          7</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The system call number need to add an offset <code>0x2000000</code>, because
+OSX has 4 different class of system calls. You can find the reference
+here <a href="http://www.opensource.apple.com/source/xnu/xnu-1699.26.8/osfmk/mach/i386/syscall_sw.h">XNU syscall</a>.</p>
+
+<h2 id="system-call-by-using-wrapper-functions">System call by using wrapper functions</h2>
+
+<p>If you’re like me that had no assembly background, you might
+feel that <code>syscall</code> is alien to you. In C, we usually use
+wrapper functions to perform the call:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+</pre></td><td class="code"><pre><code class="gas"><span class="line"><span class="c"># exit2.s</span>
+</span><span class="line"><span class="c"># To compile it, type the following in shell</span>
+</span><span class="line"><span class="c"># as exit2.s -o exit2.o</span>
+</span><span class="line"><span class="c"># ld exit2.o -e _main -lc -o exit</span>
+</span><span class="line">
+</span><span class="line"><span class="na">.section</span> <span class="no">__TEXT</span><span class="p">,</span><span class="no">__text</span>
+</span><span class="line"><span class="na">.globl</span> <span class="no">_main</span>
+</span><span class="line"><span class="nl">_main:</span>
+</span><span class="line">  <span class="nf">pushq</span> <span class="nv">%rbp</span>
+</span><span class="line">  <span class="nf">movq</span> <span class="nv">%rsp</span><span class="p">,</span> <span class="nv">%rbp</span>
+</span><span class="line">  <span class="nf">movl</span> <span class="no">$5</span><span class="p">,</span> <span class="nv">%edi</span>        <span class="c"># exit(5);</span>
+</span><span class="line">  <span class="nf">callq</span> <span class="no">_exit</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Now we call a <code>libc</code> function instead of performing a system
+call. To do this we need to link to libc by passing <code>-lc</code>
+to linker <code>ld</code>. There are several things you need to do
+to make a function call. </p>
+
+<h3 id="call-frame">Call frame</h3>
+
+<p>We need to prepare the stack before we call a function. Else
+you would probably get a segmentation fault.
+The values in <code>%rsp</code> and <code>%rbp</code> is used to preserve frame information.
+To maintain the stack, you first push the base register <code>%rbp</code>
+onto the stack by <code>pushq %rbp</code>;
+then you copy the stack register <code>%rsp</code> to the base register.</p>
+
+<p>If you have local variables, you subtract <code>%rsp</code> for space.
+Remember, stack grows down and heap grows up.
+When releasing the frame, you add the space back to <code>%rsp</code>.</p>
+
+<p>A live cycle of a function would look like this:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td><td class="code"><pre><code class="gas"><span class="line"><span class="c"># function start</span>
+</span><span class="line"><span class="nf">pushq</span> <span class="nv">%rbp</span>
+</span><span class="line"><span class="nf">movq</span> <span class="nv">%rsp</span><span class="p">,</span> <span class="nv">%rbp</span>
+</span><span class="line"><span class="nf">subq</span> <span class="no">$4</span><span class="p">,</span> <span class="nv">%rsp</span>      <span class="c"># reserve 4 bytes on stack</span>
+</span><span class="line"><span class="nf">movl</span> <span class="no">$5</span><span class="p">,</span> <span class="p">-</span><span class="mi">4</span><span class="p">(</span><span class="nv">%rbp</span><span class="p">)</span>  <span class="c"># We usually use base register instead</span>
+</span><span class="line">                   <span class="c"># of stack pointer to access data</span>
+</span><span class="line"><span class="nf">addq</span> <span class="no">$4</span><span class="p">,</span> <span class="nv">%rsp</span>      <span class="c"># release the stack</span>
+</span><span class="line"><span class="nf">popq</span> <span class="nv">%rbp</span>          <span class="c"># restore old %rbp</span>
+</span><span class="line"><span class="nf">retq</span>               <span class="c"># function ends</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The stack size can be set at link time. On OSX, below are the
+example parameters you can pass to <code>ld</code> to set the stack size:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">ld stack.o -stack_size 0x4000 -stack_addr 0x7fff5fbff000 -lc -e _start -o stack
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>When setting the stack size, you also have to set the stack address.
+On the <a href="http://www.x86-64.org/documentation/abi.pdf">System V Application Binary Interface</a> it says</p>
+
+<blockquote>
+  <p>Although the AMD64 architecture uses 64-bit pointers, implementations
+are only required to handle 48-bit addresses. Therefore, conforming processes may only
+use addresses from <code>0x00000000 00000000</code> to <code>0x00007fff ffffffff</code></p>
+</blockquote>
+
+<p>I don’t know a good answer of how to chose a good stack address.
+I just copy whatever a normal code produces.</p>
+
+<h3 id="parameters-passing">Parameters passing</h3>
+
+<p>The rules for parameter passing can be found in <a href="http://www.x86-64.org/documentation/abi.pdf">System V
+Application Binary Interface</a>:</p>
+
+<ol>
+  <li>If the class is MEMORY, pass the argument on the stack.
+If the size of an object is larger than four eight bytes, or
+it contains unaligned fields, it has class MEMORY.</li>
+  <li>If the class is INTEGER, the next available register of the sequence <code>%rdi</code>,
+<code>%rsi</code>, <code>%rdx</code>, <code>%rcx</code>, <code>%r8</code> and <code>%r9</code> is used.</li>
+  <li>If the class is SSE, the next available vector register is used, the registers
+are taken in the order from <code>%xmm0</code> to <code>%xmm7</code>.</li>
+</ol>
+
+<p>The <code>exit()</code> function only need one integer parameter, therefore we put
+the exit code in <code>%edi</code>. Since the parameter is type <code>int</code>, we use 32 bit
+variance of register <code>%rdi</code> and the instruction is <code>movl</code> (mov long) instead
+of <code>movq</code> (mov quad).</p>
+
+<h2 id="hello-world">Hello world</h2>
+
+<p>Now we know the basics of how to perform
+a system call, and how to call a function.
+Let’s write a hello world program.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+</pre></td><td class="code"><pre><code class="gas"><span class="line"><span class="c"># hello_asm.s</span>
+</span><span class="line"><span class="c"># as hello_asm.s -o hello_asm.o</span>
+</span><span class="line"><span class="c"># ld hello_asm.o -e _main -o hello_asm</span>
+</span><span class="line"><span class="na">.section</span> <span class="no">__DATA</span><span class="p">,</span><span class="no">__data</span>
+</span><span class="line"><span class="nl">str:</span>
+</span><span class="line">  <span class="na">.asciz</span> <span class="s">&quot;Hello world!\n&quot;</span>
+</span><span class="line">
+</span><span class="line"><span class="na">.section</span> <span class="no">__TEXT</span><span class="p">,</span><span class="no">__text</span>
+</span><span class="line"><span class="na">.globl</span> <span class="no">_main</span>
+</span><span class="line"><span class="nl">_main:</span>
+</span><span class="line">  <span class="nf">movl</span> <span class="no">$0x2000004</span><span class="p">,</span> <span class="nv">%eax</span>           <span class="c"># preparing system call 4</span>
+</span><span class="line">  <span class="nf">movl</span> <span class="no">$1</span><span class="p">,</span> <span class="nv">%edi</span>                    <span class="c"># STDOUT file descriptor is 1</span>
+</span><span class="line">  <span class="nf">movq</span> <span class="no">str@GOTPCREL</span><span class="p">(</span><span class="nv">%rip</span><span class="p">),</span> <span class="nv">%rsi</span>   <span class="c"># The value to print</span>
+</span><span class="line">  <span class="nf">movq</span> <span class="no">$100</span><span class="p">,</span> <span class="nv">%rdx</span>                 <span class="c"># the size of the value to print</span>
+</span><span class="line">  <span class="nf">syscall</span>
+</span><span class="line">
+</span><span class="line">  <span class="nf">movl</span> <span class="no">$0</span><span class="p">,</span> <span class="nv">%ebx</span>
+</span><span class="line">  <span class="nf">movl</span> <span class="no">$0x2000001</span><span class="p">,</span> <span class="nv">%eax</span>           <span class="c"># exit 0</span>
+</span><span class="line">  <span class="nf">syscall</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The global variable <code>str</code> can only be accessed through GOT
+(Global Offset Table). And the GOT needs to be access from
+the instruction pointer <code>%rip</code>. For more curious you can
+read <a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachOTopics/1-Articles/x86_64_code.html">Mach-O Programming Topics: x86-64 Code Model</a>.</p>
+
+<p>The register used for <code>syscall</code> parameters are a little
+bit different than the normal function call.
+It uses <code>%rdi</code>, <code>%rsi</code>, <code>%rdx</code>, <code>%r10</code>, <code>%r8</code> and <code>%r9</code>.
+You cannot pass more than 6 parameters in <code>syscall</code>, nor
+can you put the parameters on the stack.</p>
+
+<h2 id="hello-world-using-printf">Hello world using printf</h2>
+
+<p>Now you know the basics of assembly. A hello world
+example using printf should be trivial to read:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+</pre></td><td class="code"><pre><code class="gas"><span class="line"><span class="c"># hello_asm2.s</span>
+</span><span class="line"><span class="c"># as hello_asm2.s -o hello_asm2.o</span>
+</span><span class="line"><span class="c"># ld hello_asm2.o -e _main -lc -o hello_asm2</span>
+</span><span class="line"><span class="na">.section</span> <span class="no">__DATA</span><span class="p">,</span><span class="no">__data</span>
+</span><span class="line"><span class="nl">str:</span>
+</span><span class="line">  <span class="na">.asciz</span> <span class="s">&quot;Hello world!\n&quot;</span>
+</span><span class="line">
+</span><span class="line"><span class="na">.section</span> <span class="no">__TEXT</span><span class="p">,</span><span class="no">__text</span>
+</span><span class="line"><span class="na">.globl</span> <span class="no">_main</span>
+</span><span class="line"><span class="nl">_main:</span>
+</span><span class="line">  <span class="nf">pushq</span> <span class="nv">%rbp</span>
+</span><span class="line">  <span class="nf">movq</span> <span class="nv">%rsp</span><span class="p">,</span> <span class="nv">%rbp</span>
+</span><span class="line">  <span class="nf">movq</span> <span class="no">str@GOTPCREL</span><span class="p">(</span><span class="nv">%rip</span><span class="p">),</span> <span class="nv">%rdi</span>
+</span><span class="line">  <span class="nf">movb</span> <span class="no">$0</span><span class="p">,</span> <span class="nv">%al</span>
+</span><span class="line">  <span class="no">callq</span> <span class="no">_printf</span>
+</span><span class="line">  <span class="nf">popq</span> <span class="nv">%rbp</span>
+</span><span class="line">  <span class="nf">movl</span> <span class="no">$0x2000001</span><span class="p">,</span> <span class="nv">%eax</span>
+</span><span class="line">  <span class="nf">syscall</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>The 64 bit assembly looks more vague than the tutorials
+written in X86 assembly. Once you know these basic differences,
+it’s easy for you to learn assembly in depth on your own,
+even if the material is designed for x86. I highly recommend
+the book “Programming from the ground up”. It is well written
+for self study purpose.</p>
+
+<h2 id="references">References</h2>
+
+<ol>
+  <li><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachORuntime/index.html">OS X ABI Mach-O File Format Reference</a></li>
+  <li><a href="http://www.x86-64.org/documentation/abi.pdf">System V Application Binary Interface</a></li>
+  <li><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/Assembler/000-Introduction/introduction.html#//apple_ref/doc/uid/TP30000851-CH211-SW1">OS X Assembler Reference</a> Assembler Directives</li>
+  <li><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachOTopics/0-Introduction/introduction.html#//apple_ref/doc/uid/TP40001827-SW1">Mach-O Programming Topics</a></li>
+  <li><a href="http://www.objc.io/issue-6/mach-o-executables.html">Mach-O Executables - Build Tools</a></li>
+  <li>Book: Programming from the ground up.</li>
+</ol>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2014-12-02T17:18:00-08:00" pubdate data-updated="true">Dec 2<span>nd</span>, 2014</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/asm/'>ASM</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2014/12/02/writing-64-bit-assembly-on-mac-os-x/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2014/12/02/writing-64-bit-assembly-on-mac-os-x/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left articlenav" href="/blog/2014/11/29/integer-promotion-part-2/" title="Previous Post: Integer Promotion Part 2">&laquo; Integer Promotion Part 2</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/12/02/writing-64-bit-assembly-on-mac-os-x/">Writing 64 bit assembly on Mac OS X</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/11/29/integer-promotion-part-2/">Integer Promotion Part 2</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/03/06/introducing-hadoop-fieldformat/">Introducing Hadoop-FieldFormat</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/03/05/hadoop-performance-tuning-best-practices/">Hadoop performance tuning best practices</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/26/setting-up-jasper-server-on-linux/">Setting up Jasper Server on Linux</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/27/capture-path-info-in-hadoop-inputformat-class/">Capture path info in hadoop InputFormat class</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/26/capture-directory-context-in-hadoop-mapper/">Capture directory context in Hadoop Mapper</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/23/yet-another-monad-tutorial/">Yet Another Monad Tutorial in 15 Minutes</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/03/convert-uf8-literals-in-java/">Convert utf8 literals in Java</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/09/28/java-fast-io-using-java-nio-api/">Java fast IO using java.nio API</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("idryman", 4, true);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/idryman" class="twitter-follow-button" data-show-count="false">Follow @idryman</a>
+  
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2014 - dryman (Felix Ren-Chyan Chern) -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'dryblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.idryman.org/blog/2014/12/02/writing-64-bit-assembly-on-mac-os-x/';
+        var disqus_url = 'http://www.idryman.org/blog/2014/12/02/writing-64-bit-assembly-on-mac-os-x/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+<!--
+hn like button plugin for jekyll/octopress
+Author: dryman (Felix Ren-Chyan Chern)
+
+Inpired from http://hnlike.com/ written by sbashyal
+
+(The MIT License)
+
+Copyright © 2012-2013 Felix Ren-Chyan Chern
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the ‘Software’), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED ‘AS IS’, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+  <script type="text/javascript">
+    (function(){
+      var hn_like = document.createElement('iframe');
+      hn_like.frameborder="no";
+      hn_like.scrolling="no";
+      hn_like.height="28px";
+      hn_like.width="115px";
+      hn_like.src = "http://hnlike.com/upvote.php?link="
+                    + encodeURIComponent(document.location)
+                    + "&title="
+                    + encodeURIComponent("Writing 64 bit assembly on Mac OS X");
+      hn_like.innerHTML="iframes not supported by your browser";
+      var twitter = document.getElementsByClassName("twitter-share-button")[0];
+
+      twitter.parentNode.insertBefore(
+        hn_like,
+        twitter
+      );
+    })();
+  </script>
+
+<!-- end of hn like button -->
+
+
+
+
+<script type="text/javascript">
+ $(function() {
+        /* For zebra striping */
+        $("table tr:nth-child(odd)").addClass("odd-row");
+        /* For cell text alignment */
+        $("table td:first-child, table th:first-child").addClass("first");
+        /* For removing the last border */
+        $("table td:last-child, table th:last-child").addClass("last");
+});
+</script>
+
+
+</body>
+</html>

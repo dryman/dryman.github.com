@@ -4,7 +4,7 @@
   <title><![CDATA[Category: C | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/c/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2014-11-29T22:00:09-08:00</updated>
+  <updated>2014-12-02T17:24:56-08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -91,7 +91,11 @@ the unsigned value, everything is converted to unsigned integer.</p>
   return 0;
 </code></p>
 
-<p>This program will print <strong>-1 is treated as 0xffffffff. Because sizeof returns size_t which is an unsigned int\n</strong></p>
+<p>This program will execute the <strong>else</strong> branch and print:</p>
+
+<p><code>
+-1 is treated as 0xffffffff. Because sizeof returns size_t which is an unsigned int
+</code></p>
 
 <h2 id="conclusion">Conclusion</h2>
 

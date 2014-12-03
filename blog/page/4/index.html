@@ -9,8 +9,8 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="Apple introduced blocks (anonymous functions or lambdas) as C extensions for its
-parallel programming model Grand Central Dispatch. Unlike ordinary C &hellip;">
+  <meta name="description" content="In the last post, I mentioned that __block variable (here we named it block
+byref) will be retained if multiple blocks referenced it. Here are some &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -104,6 +104,51 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2012/09/29/c-objc-block-byref-internals/">C/ObjC Block Byref Internals</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2012-09-29T15:21:00-07:00" pubdate data-updated="true">Sep 29<span>th</span>, 2012</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>In the last post, I mentioned that <code>__block</code> variable (here we named it block
+byref) will be retained if multiple blocks referenced it. Here are some sample
+code to show how runtime deals with reference counts.</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2012/09/29/c-objc-block-byref-internals/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -570,53 +615,6 @@ other patterns only when necessary.</p>
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/04/10/practical-software-verification-using-SPIN/">Practical Software Verification Using SPIN</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-04-10T10:31:00-07:00" pubdate data-updated="true">Apr 10<span>th</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>This is a note for the talk <a href="http://www.iis.sinica.edu.tw/page/events/FILE/120409.pdf">New frontiers in formal software verification</a> 
-spoken by <a href="http://spinroot.com/gerard/">Gerard J. Holzmann</a>, software verification architect for 
-<a href="http://www.jpl.nasa.gov/index.cfm">NASA Jet Propulsion Laboratory (JPL)</a>. He introduced a fast automatic software
-verification tool for distributed software system – <a href="http://spinroot.com/spin/whatispin.html">SPIN</a>.</p>
-
-<p><img src="/images/graphviz/g-f44bd3841c23d32cc5d46f28821bf434.svg" />
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/04/10/practical-software-verification-using-SPIN/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/5/">&larr; Older</a>
@@ -632,6 +630,10 @@ verification tool for distributed software system – <a href="http://spinroot.c
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/12/02/writing-64-bit-assembly-on-mac-os-x/">Writing 64 bit assembly on Mac OS X</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2014/11/29/integer-promotion-part-2/">Integer Promotion Part 2</a>
@@ -667,10 +669,6 @@ verification tool for distributed software system – <a href="http://spinroot.c
     
       <li class="post">
         <a href="/blog/2013/09/28/java-fast-io-using-java-nio-api/">Java fast IO using java.nio API</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-2/">Process Small Files on Hadoop using CombineFileInputFormat (2)</a>
       </li>
     
   </ul>

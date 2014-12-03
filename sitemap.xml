@@ -226,7 +226,11 @@
     </url>
     <url>
         <loc>http://www.idryman.org/blog/2014/11/29/integer-promotion-part-2/</loc>
-        <lastmod>2014-11-29T21:57:32-08:00</lastmod>
+        <lastmod>2014-12-02T17:21:00-08:00</lastmod>
+    </url>
+    <url>
+        <loc>http://www.idryman.org/blog/2014/12/02/writing-64-bit-assembly-on-mac-os-x/</loc>
+        <lastmod>2014-12-02T17:24:04-08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/about-me/</loc>
@@ -234,7 +238,7 @@
     </url>
     <url>
         <loc>http://www.idryman.org/blog/archives/</loc>
-        <lastmod>2014-11-29T21:57:32-08:00</lastmod>
+        <lastmod>2014-12-02T17:24:04-08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/double-pendulum/</loc>
@@ -250,6 +254,6 @@
     </url>
     <url>
         <loc>http://www.idryman.org/</loc>
-        <lastmod>2014-11-29T21:57:32-08:00</lastmod>
+        <lastmod>2014-12-02T17:24:04-08:00</lastmod>
     </url>
 </urlset>

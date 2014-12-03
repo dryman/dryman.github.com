@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: ASM | Carpe diem (Felix's blog)]]></title>
+  <link href="http://www.idryman.org/blog/categories/asm/atom.xml" rel="self"/>
+  <link href="http://www.idryman.org/"/>
+  <updated>2014-12-02T17:24:56-08:00</updated>
+  <id>http://www.idryman.org/</id>
+  <author>
+    <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Writing 64 bit assembly on Mac OS X]]></title>
+    <link href="http://www.idryman.org/blog/2014/12/02/writing-64-bit-assembly-on-mac-os-x/"/>
+    <updated>2014-12-02T17:18:00-08:00</updated>
+    <id>http://www.idryman.org/blog/2014/12/02/writing-64-bit-assembly-on-mac-os-x</id>
+    <content type="html"><![CDATA[<p>Many assembly tutorials and books doesn’t cover
+how to write a simple assembly program on the Mac OS X.
+Here are some baby steps that can help people who
+are also interested in assembly to get started
+easier.</p>
+
+<!--more-->
+
+<h2 id="mach-o-file-format">Mach-O file format</h2>
+
+<p>To get started on writing OSX assembly, you need to
+understand OSX executable file format – the <a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachORuntime/index.html">Mach-O
+file format</a>. It’s similar to ELF, but instead
+of sections of data, bss, and text, it has segments that
+contains sections.</p>
+
+<p>A common assembly in Linux like</p>
+
+<p><code>gas
+.section data
+.section text
+# your code here
+</code></p>
+
+<p>would translate into this in Mach-O</p>
+
+<p>```gas
+.section __DATA,__data
+# __DATA is segment, __data is section
+.section __TEXT,__text
+# __TEXT is segment, __text is section</p>
+
+<h1 id="your-code-here">your code here</h1>
+<p>```</p>
+
+<p>Mach-O is pretty flexible. You can embed a
+<code>cstring</code> section in your <code>__TEXT</code> segment instead
+of putting it in <code>__DATA,__data</code>. Actually this is
+the default behavior that compiler does on your Mac.</p>
+
+<h2 id="hello-assembly">Hello Assembly</h2>
+
+<p>Now we know how to translate common linux assembly
+to mac, let’s write a basic program – do a system call
+with an exit code.</p>
+
+<p>On x86 you do a system call by <code>int x80</code> instruction. On
+64 bit machine, you do this by <code>syscall</code>. Here’s the sample
+code:</p>
+
+<p><code>gas
+# Simple exit program
+.section __TEXT,__text
+.globl _main
+_main:
+  movl $0x2000001, %eax # system call $1 with $0x2000000 offset
+  movl $0, %ebx         # set the exit code to be $0
+  syscall
+</code></p>
+
+<p>you can compile the code by the following commands:</p>
+
+<p><code>bash
+as exit.s -o exit.o
+ld exit.o -e _main -o exit     # -e specify the entry point of the executable
+./exit
+echo $? # show last return code, should show 0
+</code></p>
+
+<p>To perform a system call, you put the system call number in
+<code>%eax</code>, and put the actual exit code to <code>%ebx</code>. The system
+call number can be found in <code>/usr/include/sys/syscall.h</code>.</p>
+
+<p><code>c
+#define	SYS_syscall        0
+#define	SYS_exit           1
+#define	SYS_fork           2
+#define	SYS_read           3
+#define	SYS_write          4
+#define	SYS_open           5
+#define	SYS_close          6
+#define	SYS_wait4          7
+</code></p>
+
+<p>The system call number need to add an offset <code>0x2000000</code>, because
+OSX has 4 different class of system calls. You can find the reference
+here <a href="http://www.opensource.apple.com/source/xnu/xnu-1699.26.8/osfmk/mach/i386/syscall_sw.h">XNU syscall</a>.</p>
+
+<h2 id="system-call-by-using-wrapper-functions">System call by using wrapper functions</h2>
+
+<p>If you’re like me that had no assembly background, you might
+feel that <code>syscall</code> is alien to you. In C, we usually use
+wrapper functions to perform the call:</p>
+
+<p>```gas
+# exit2.s
+# To compile it, type the following in shell
+# as exit2.s -o exit2.o
+# ld exit2.o -e _main -lc -o exit</p>
+
+<p>.section __TEXT,__text
+.globl _main
+_main:
+  pushq %rbp
+  movq %rsp, %rbp
+  movl $5, %edi        # exit(5);
+  callq _exit
+```</p>
+
+<p>Now we call a <code>libc</code> function instead of performing a system
+call. To do this we need to link to libc by passing <code>-lc</code>
+to linker <code>ld</code>. There are several things you need to do
+to make a function call. </p>
+
+<h3 id="call-frame">Call frame</h3>
+
+<p>We need to prepare the stack before we call a function. Else
+you would probably get a segmentation fault.
+The values in <code>%rsp</code> and <code>%rbp</code> is used to preserve frame information.
+To maintain the stack, you first push the base register <code>%rbp</code>
+onto the stack by <code>pushq %rbp</code>;
+then you copy the stack register <code>%rsp</code> to the base register.</p>
+
+<p>If you have local variables, you subtract <code>%rsp</code> for space.
+Remember, stack grows down and heap grows up.
+When releasing the frame, you add the space back to <code>%rsp</code>.</p>
+
+<p>A live cycle of a function would look like this:</p>
+
+<p><code>gas
+# function start
+pushq %rbp
+movq %rsp, %rbp
+subq $4, %rsp      # reserve 4 bytes on stack
+movl $5, -4(%rbp)  # We usually use base register instead
+                   # of stack pointer to access data
+addq $4, %rsp      # release the stack
+popq %rbp          # restore old %rbp
+retq               # function ends
+</code></p>
+
+<p>The stack size can be set at link time. On OSX, below are the
+example parameters you can pass to <code>ld</code> to set the stack size:</p>
+
+<p><code>bash
+ld stack.o -stack_size 0x4000 -stack_addr 0x7fff5fbff000 -lc -e _start -o stack
+</code></p>
+
+<p>When setting the stack size, you also have to set the stack address.
+On the <a href="http://www.x86-64.org/documentation/abi.pdf">System V Application Binary Interface</a> it says</p>
+
+<blockquote>
+  <p>Although the AMD64 architecture uses 64-bit pointers, implementations
+are only required to handle 48-bit addresses. Therefore, conforming processes may only
+use addresses from <code>0x00000000 00000000</code> to <code>0x00007fff ffffffff</code></p>
+</blockquote>
+
+<p>I don’t know a good answer of how to chose a good stack address.
+I just copy whatever a normal code produces.</p>
+
+<h3 id="parameters-passing">Parameters passing</h3>
+
+<p>The rules for parameter passing can be found in <a href="http://www.x86-64.org/documentation/abi.pdf">System V
+Application Binary Interface</a>:</p>
+
+<ol>
+  <li>If the class is MEMORY, pass the argument on the stack.
+If the size of an object is larger than four eight bytes, or
+it contains unaligned fields, it has class MEMORY.</li>
+  <li>If the class is INTEGER, the next available register of the sequence <code>%rdi</code>,
+<code>%rsi</code>, <code>%rdx</code>, <code>%rcx</code>, <code>%r8</code> and <code>%r9</code> is used.</li>
+  <li>If the class is SSE, the next available vector register is used, the registers
+are taken in the order from <code>%xmm0</code> to <code>%xmm7</code>.</li>
+</ol>
+
+<p>The <code>exit()</code> function only need one integer parameter, therefore we put
+the exit code in <code>%edi</code>. Since the parameter is type <code>int</code>, we use 32 bit
+variance of register <code>%rdi</code> and the instruction is <code>movl</code> (mov long) instead
+of <code>movq</code> (mov quad).</p>
+
+<h2 id="hello-world">Hello world</h2>
+
+<p>Now we know the basics of how to perform
+a system call, and how to call a function.
+Let’s write a hello world program.</p>
+
+<p>```gas
+# hello_asm.s
+# as hello_asm.s -o hello_asm.o
+# ld hello_asm.o -e _main -o hello_asm
+.section __DATA,__data
+str:
+  .asciz “Hello world!\n”</p>
+
+<p>.section __TEXT,__text
+.globl _main
+_main:
+  movl $0x2000004, %eax           # preparing system call 4
+  movl $1, %edi                    # STDOUT file descriptor is 1
+  movq str@GOTPCREL(%rip), %rsi   # The value to print
+  movq $100, %rdx                 # the size of the value to print
+  syscall</p>
+
+<p>movl $0, %ebx
+  movl $0x2000001, %eax           # exit 0
+  syscall
+```</p>
+
+<p>The global variable <code>str</code> can only be accessed through GOT
+(Global Offset Table). And the GOT needs to be access from
+the instruction pointer <code>%rip</code>. For more curious you can
+read <a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachOTopics/1-Articles/x86_64_code.html">Mach-O Programming Topics: x86-64 Code Model</a>.</p>
+
+<p>The register used for <code>syscall</code> parameters are a little
+bit different than the normal function call.
+It uses <code>%rdi</code>, <code>%rsi</code>, <code>%rdx</code>, <code>%r10</code>, <code>%r8</code> and <code>%r9</code>.
+You cannot pass more than 6 parameters in <code>syscall</code>, nor
+can you put the parameters on the stack.</p>
+
+<h2 id="hello-world-using-printf">Hello world using printf</h2>
+
+<p>Now you know the basics of assembly. A hello world
+example using printf should be trivial to read:</p>
+
+<p>```gas
+# hello_asm2.s
+# as hello_asm2.s -o hello_asm2.o
+# ld hello_asm2.o -e _main -lc -o hello_asm2
+.section __DATA,__data
+str:
+  .asciz “Hello world!\n”</p>
+
+<p>.section __TEXT,__text
+.globl _main
+_main:
+  pushq %rbp
+  movq %rsp, %rbp
+  movq str@GOTPCREL(%rip), %rdi
+  movb $0, %al 
+  callq _printf
+  popq %rbp
+  movl $0x2000001, %eax
+  syscall
+```</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>The 64 bit assembly looks more vague than the tutorials
+written in X86 assembly. Once you know these basic differences,
+it’s easy for you to learn assembly in depth on your own,
+even if the material is designed for x86. I highly recommend
+the book “Programming from the ground up”. It is well written
+for self study purpose.</p>
+
+<h2 id="references">References</h2>
+
+<ol>
+  <li><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachORuntime/index.html">OS X ABI Mach-O File Format Reference</a></li>
+  <li><a href="http://www.x86-64.org/documentation/abi.pdf">System V Application Binary Interface</a></li>
+  <li><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/Assembler/000-Introduction/introduction.html#//apple_ref/doc/uid/TP30000851-CH211-SW1">OS X Assembler Reference</a> Assembler Directives</li>
+  <li><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachOTopics/0-Introduction/introduction.html#//apple_ref/doc/uid/TP40001827-SW1">Mach-O Programming Topics</a></li>
+  <li><a href="http://www.objc.io/issue-6/mach-o-executables.html">Mach-O Executables - Build Tools</a></li>
+  <li>Book: Programming from the ground up.</li>
+</ol>
+
+]]></content>
+  </entry>
+  
+</feed>

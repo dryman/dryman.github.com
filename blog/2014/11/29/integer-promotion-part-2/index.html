@@ -218,7 +218,11 @@ the unsigned value, everything is converted to unsigned integer.</p>
 </span><span class="line">  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
-<p>This program will print <strong>-1 is treated as 0xffffffff. Because sizeof returns size_t which is an unsigned int\n</strong></p>
+<p>This program will execute the <strong>else</strong> branch and print:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="o">-</span><span class="mi">1</span> <span class="n">is</span> <span class="n">treated</span> <span class="n">as</span> <span class="mh">0xffffffff</span><span class="p">.</span> <span class="n">Because</span> <span class="k">sizeof</span> <span class="n">returns</span> <span class="kt">size_t</span> <span class="n">which</span> <span class="n">is</span> <span class="n">an</span> <span class="kt">unsigned</span> <span class="kt">int</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
 
 <h2 id="conclusion">Conclusion</h2>
 
@@ -282,6 +286,8 @@ straight forward to them.</p>
         <a class="basic-alignment left articlenav" href="/blog/2014/03/06/introducing-hadoop-fieldformat/" title="Previous Post: Introducing Hadoop-FieldFormat">&laquo; Introducing Hadoop-FieldFormat</a>
       
       
+        <a class="basic-alignment right articlenav" href="/blog/2014/12/02/writing-64-bit-assembly-on-mac-os-x/" title="Next Post: Writing 64 bit assembly on Mac OS X">Writing 64 bit assembly on Mac OS X &raquo;</a>
+      
     </p>
   </footer>
 </article>
@@ -299,6 +305,10 @@ straight forward to them.</p>
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/12/02/writing-64-bit-assembly-on-mac-os-x/">Writing 64 bit assembly on Mac OS X</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2014/11/29/integer-promotion-part-2/">Integer Promotion Part 2</a>
@@ -334,10 +344,6 @@ straight forward to them.</p>
     
       <li class="post">
         <a href="/blog/2013/09/28/java-fast-io-using-java-nio-api/">Java fast IO using java.nio API</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-2/">Process Small Files on Hadoop using CombineFileInputFormat (2)</a>
       </li>
     
   </ul>

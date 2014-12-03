@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2014-11-29T22:00:09-08:00</updated>
+  <updated>2014-12-02T17:24:56-08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,356 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Writing 64 bit assembly on Mac OS X]]></title>
+    <link href="http://www.idryman.org/blog/2014/12/02/writing-64-bit-assembly-on-mac-os-x/"/>
+    <updated>2014-12-02T17:18:00-08:00</updated>
+    <id>http://www.idryman.org/blog/2014/12/02/writing-64-bit-assembly-on-mac-os-x</id>
+    <content type="html"><![CDATA[<p>Many assembly tutorials and books doesn’t cover
+how to write a simple assembly program on the Mac OS X.
+Here are some baby steps that can help people who
+are also interested in assembly to get started
+easier.</p>
+
+<!--more-->
+
+<h2 id="mach-o-file-format">Mach-O file format</h2>
+
+<p>To get started on writing OSX assembly, you need to
+understand OSX executable file format – the <a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachORuntime/index.html">Mach-O
+file format</a>. It’s similar to ELF, but instead
+of sections of data, bss, and text, it has segments that
+contains sections.</p>
+
+<p>A common assembly in Linux like</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="gas"><span class="line"><span class="na">.section</span> <span class="no">data</span>
+</span><span class="line"><span class="na">.section</span> <span class="no">text</span>
+</span><span class="line"><span class="c"># your code here</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>would translate into this in Mach-O</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="gas"><span class="line"><span class="na">.section</span> <span class="no">__DATA</span><span class="p">,</span><span class="no">__data</span>
+</span><span class="line"><span class="c"># __DATA is segment, __data is section</span>
+</span><span class="line"><span class="na">.section</span> <span class="no">__TEXT</span><span class="p">,</span><span class="no">__text</span>
+</span><span class="line"><span class="c"># __TEXT is segment, __text is section</span>
+</span><span class="line">
+</span><span class="line"><span class="c"># your code here</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Mach-O is pretty flexible. You can embed a
+<code>cstring</code> section in your <code>__TEXT</code> segment instead
+of putting it in <code>__DATA,__data</code>. Actually this is
+the default behavior that compiler does on your Mac.</p>
+
+<h2 id="hello-assembly">Hello Assembly</h2>
+
+<p>Now we know how to translate common linux assembly
+to mac, let’s write a basic program – do a system call
+with an exit code.</p>
+
+<p>On x86 you do a system call by <code>int x80</code> instruction. On
+64 bit machine, you do this by <code>syscall</code>. Here’s the sample
+code:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="gas"><span class="line"><span class="c"># Simple exit program</span>
+</span><span class="line"><span class="na">.section</span> <span class="no">__TEXT</span><span class="p">,</span><span class="no">__text</span>
+</span><span class="line"><span class="na">.globl</span> <span class="no">_main</span>
+</span><span class="line"><span class="nl">_main:</span>
+</span><span class="line">  <span class="nf">movl</span> <span class="no">$0x2000001</span><span class="p">,</span> <span class="nv">%eax</span> <span class="c"># system call $1 with $0x2000000 offset</span>
+</span><span class="line">  <span class="nf">movl</span> <span class="no">$0</span><span class="p">,</span> <span class="nv">%ebx</span>         <span class="c"># set the exit code to be $0</span>
+</span><span class="line">  <span class="nf">syscall</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>you can compile the code by the following commands:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">as exit.s -o exit.o
+</span><span class="line">ld exit.o -e _main -o <span class="nb">exit</span>     <span class="c"># -e specify the entry point of the executable</span>
+</span><span class="line">./exit
+</span><span class="line"><span class="nb">echo</span> <span class="nv">$?</span> <span class="c"># show last return code, should show 0</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>To perform a system call, you put the system call number in
+<code>%eax</code>, and put the actual exit code to <code>%ebx</code>. The system
+call number can be found in <code>/usr/include/sys/syscall.h</code>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="cp">#define	SYS_syscall        0</span>
+</span><span class="line"><span class="cp">#define	SYS_exit           1</span>
+</span><span class="line"><span class="cp">#define	SYS_fork           2</span>
+</span><span class="line"><span class="cp">#define	SYS_read           3</span>
+</span><span class="line"><span class="cp">#define	SYS_write          4</span>
+</span><span class="line"><span class="cp">#define	SYS_open           5</span>
+</span><span class="line"><span class="cp">#define	SYS_close          6</span>
+</span><span class="line"><span class="cp">#define	SYS_wait4          7</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The system call number need to add an offset <code>0x2000000</code>, because
+OSX has 4 different class of system calls. You can find the reference
+here <a href="http://www.opensource.apple.com/source/xnu/xnu-1699.26.8/osfmk/mach/i386/syscall_sw.h">XNU syscall</a>.</p>
+
+<h2 id="system-call-by-using-wrapper-functions">System call by using wrapper functions</h2>
+
+<p>If you’re like me that had no assembly background, you might
+feel that <code>syscall</code> is alien to you. In C, we usually use
+wrapper functions to perform the call:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+</pre></td><td class="code"><pre><code class="gas"><span class="line"><span class="c"># exit2.s</span>
+</span><span class="line"><span class="c"># To compile it, type the following in shell</span>
+</span><span class="line"><span class="c"># as exit2.s -o exit2.o</span>
+</span><span class="line"><span class="c"># ld exit2.o -e _main -lc -o exit</span>
+</span><span class="line">
+</span><span class="line"><span class="na">.section</span> <span class="no">__TEXT</span><span class="p">,</span><span class="no">__text</span>
+</span><span class="line"><span class="na">.globl</span> <span class="no">_main</span>
+</span><span class="line"><span class="nl">_main:</span>
+</span><span class="line">  <span class="nf">pushq</span> <span class="nv">%rbp</span>
+</span><span class="line">  <span class="nf">movq</span> <span class="nv">%rsp</span><span class="p">,</span> <span class="nv">%rbp</span>
+</span><span class="line">  <span class="nf">movl</span> <span class="no">$5</span><span class="p">,</span> <span class="nv">%edi</span>        <span class="c"># exit(5);</span>
+</span><span class="line">  <span class="nf">callq</span> <span class="no">_exit</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Now we call a <code>libc</code> function instead of performing a system
+call. To do this we need to link to libc by passing <code>-lc</code>
+to linker <code>ld</code>. There are several things you need to do
+to make a function call. </p>
+
+<h3 id="call-frame">Call frame</h3>
+
+<p>We need to prepare the stack before we call a function. Else
+you would probably get a segmentation fault.
+The values in <code>%rsp</code> and <code>%rbp</code> is used to preserve frame information.
+To maintain the stack, you first push the base register <code>%rbp</code>
+onto the stack by <code>pushq %rbp</code>;
+then you copy the stack register <code>%rsp</code> to the base register.</p>
+
+<p>If you have local variables, you subtract <code>%rsp</code> for space.
+Remember, stack grows down and heap grows up.
+When releasing the frame, you add the space back to <code>%rsp</code>.</p>
+
+<p>A live cycle of a function would look like this:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td><td class="code"><pre><code class="gas"><span class="line"><span class="c"># function start</span>
+</span><span class="line"><span class="nf">pushq</span> <span class="nv">%rbp</span>
+</span><span class="line"><span class="nf">movq</span> <span class="nv">%rsp</span><span class="p">,</span> <span class="nv">%rbp</span>
+</span><span class="line"><span class="nf">subq</span> <span class="no">$4</span><span class="p">,</span> <span class="nv">%rsp</span>      <span class="c"># reserve 4 bytes on stack</span>
+</span><span class="line"><span class="nf">movl</span> <span class="no">$5</span><span class="p">,</span> <span class="p">-</span><span class="mi">4</span><span class="p">(</span><span class="nv">%rbp</span><span class="p">)</span>  <span class="c"># We usually use base register instead</span>
+</span><span class="line">                   <span class="c"># of stack pointer to access data</span>
+</span><span class="line"><span class="nf">addq</span> <span class="no">$4</span><span class="p">,</span> <span class="nv">%rsp</span>      <span class="c"># release the stack</span>
+</span><span class="line"><span class="nf">popq</span> <span class="nv">%rbp</span>          <span class="c"># restore old %rbp</span>
+</span><span class="line"><span class="nf">retq</span>               <span class="c"># function ends</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The stack size can be set at link time. On OSX, below are the
+example parameters you can pass to <code>ld</code> to set the stack size:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">ld stack.o -stack_size 0x4000 -stack_addr 0x7fff5fbff000 -lc -e _start -o stack
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>When setting the stack size, you also have to set the stack address.
+On the <a href="http://www.x86-64.org/documentation/abi.pdf">System V Application Binary Interface</a> it says</p>
+
+<blockquote>
+  <p>Although the AMD64 architecture uses 64-bit pointers, implementations
+are only required to handle 48-bit addresses. Therefore, conforming processes may only
+use addresses from <code>0x00000000 00000000</code> to <code>0x00007fff ffffffff</code></p>
+</blockquote>
+
+<p>I don’t know a good answer of how to chose a good stack address.
+I just copy whatever a normal code produces.</p>
+
+<h3 id="parameters-passing">Parameters passing</h3>
+
+<p>The rules for parameter passing can be found in <a href="http://www.x86-64.org/documentation/abi.pdf">System V
+Application Binary Interface</a>:</p>
+
+<ol>
+  <li>If the class is MEMORY, pass the argument on the stack.
+If the size of an object is larger than four eight bytes, or
+it contains unaligned fields, it has class MEMORY.</li>
+  <li>If the class is INTEGER, the next available register of the sequence <code>%rdi</code>,
+<code>%rsi</code>, <code>%rdx</code>, <code>%rcx</code>, <code>%r8</code> and <code>%r9</code> is used.</li>
+  <li>If the class is SSE, the next available vector register is used, the registers
+are taken in the order from <code>%xmm0</code> to <code>%xmm7</code>.</li>
+</ol>
+
+<p>The <code>exit()</code> function only need one integer parameter, therefore we put
+the exit code in <code>%edi</code>. Since the parameter is type <code>int</code>, we use 32 bit
+variance of register <code>%rdi</code> and the instruction is <code>movl</code> (mov long) instead
+of <code>movq</code> (mov quad).</p>
+
+<h2 id="hello-world">Hello world</h2>
+
+<p>Now we know the basics of how to perform
+a system call, and how to call a function.
+Let’s write a hello world program.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+</pre></td><td class="code"><pre><code class="gas"><span class="line"><span class="c"># hello_asm.s</span>
+</span><span class="line"><span class="c"># as hello_asm.s -o hello_asm.o</span>
+</span><span class="line"><span class="c"># ld hello_asm.o -e _main -o hello_asm</span>
+</span><span class="line"><span class="na">.section</span> <span class="no">__DATA</span><span class="p">,</span><span class="no">__data</span>
+</span><span class="line"><span class="nl">str:</span>
+</span><span class="line">  <span class="na">.asciz</span> <span class="s">&quot;Hello world!\n&quot;</span>
+</span><span class="line">
+</span><span class="line"><span class="na">.section</span> <span class="no">__TEXT</span><span class="p">,</span><span class="no">__text</span>
+</span><span class="line"><span class="na">.globl</span> <span class="no">_main</span>
+</span><span class="line"><span class="nl">_main:</span>
+</span><span class="line">  <span class="nf">movl</span> <span class="no">$0x2000004</span><span class="p">,</span> <span class="nv">%eax</span>           <span class="c"># preparing system call 4</span>
+</span><span class="line">  <span class="nf">movl</span> <span class="no">$1</span><span class="p">,</span> <span class="nv">%edi</span>                    <span class="c"># STDOUT file descriptor is 1</span>
+</span><span class="line">  <span class="nf">movq</span> <span class="no">str@GOTPCREL</span><span class="p">(</span><span class="nv">%rip</span><span class="p">),</span> <span class="nv">%rsi</span>   <span class="c"># The value to print</span>
+</span><span class="line">  <span class="nf">movq</span> <span class="no">$100</span><span class="p">,</span> <span class="nv">%rdx</span>                 <span class="c"># the size of the value to print</span>
+</span><span class="line">  <span class="nf">syscall</span>
+</span><span class="line">
+</span><span class="line">  <span class="nf">movl</span> <span class="no">$0</span><span class="p">,</span> <span class="nv">%ebx</span>
+</span><span class="line">  <span class="nf">movl</span> <span class="no">$0x2000001</span><span class="p">,</span> <span class="nv">%eax</span>           <span class="c"># exit 0</span>
+</span><span class="line">  <span class="nf">syscall</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The global variable <code>str</code> can only be accessed through GOT
+(Global Offset Table). And the GOT needs to be access from
+the instruction pointer <code>%rip</code>. For more curious you can
+read <a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachOTopics/1-Articles/x86_64_code.html">Mach-O Programming Topics: x86-64 Code Model</a>.</p>
+
+<p>The register used for <code>syscall</code> parameters are a little
+bit different than the normal function call.
+It uses <code>%rdi</code>, <code>%rsi</code>, <code>%rdx</code>, <code>%r10</code>, <code>%r8</code> and <code>%r9</code>.
+You cannot pass more than 6 parameters in <code>syscall</code>, nor
+can you put the parameters on the stack.</p>
+
+<h2 id="hello-world-using-printf">Hello world using printf</h2>
+
+<p>Now you know the basics of assembly. A hello world
+example using printf should be trivial to read:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+</pre></td><td class="code"><pre><code class="gas"><span class="line"><span class="c"># hello_asm2.s</span>
+</span><span class="line"><span class="c"># as hello_asm2.s -o hello_asm2.o</span>
+</span><span class="line"><span class="c"># ld hello_asm2.o -e _main -lc -o hello_asm2</span>
+</span><span class="line"><span class="na">.section</span> <span class="no">__DATA</span><span class="p">,</span><span class="no">__data</span>
+</span><span class="line"><span class="nl">str:</span>
+</span><span class="line">  <span class="na">.asciz</span> <span class="s">&quot;Hello world!\n&quot;</span>
+</span><span class="line">
+</span><span class="line"><span class="na">.section</span> <span class="no">__TEXT</span><span class="p">,</span><span class="no">__text</span>
+</span><span class="line"><span class="na">.globl</span> <span class="no">_main</span>
+</span><span class="line"><span class="nl">_main:</span>
+</span><span class="line">  <span class="nf">pushq</span> <span class="nv">%rbp</span>
+</span><span class="line">  <span class="nf">movq</span> <span class="nv">%rsp</span><span class="p">,</span> <span class="nv">%rbp</span>
+</span><span class="line">  <span class="nf">movq</span> <span class="no">str@GOTPCREL</span><span class="p">(</span><span class="nv">%rip</span><span class="p">),</span> <span class="nv">%rdi</span>
+</span><span class="line">  <span class="nf">movb</span> <span class="no">$0</span><span class="p">,</span> <span class="nv">%al</span>
+</span><span class="line">  <span class="no">callq</span> <span class="no">_printf</span>
+</span><span class="line">  <span class="nf">popq</span> <span class="nv">%rbp</span>
+</span><span class="line">  <span class="nf">movl</span> <span class="no">$0x2000001</span><span class="p">,</span> <span class="nv">%eax</span>
+</span><span class="line">  <span class="nf">syscall</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>The 64 bit assembly looks more vague than the tutorials
+written in X86 assembly. Once you know these basic differences,
+it’s easy for you to learn assembly in depth on your own,
+even if the material is designed for x86. I highly recommend
+the book “Programming from the ground up”. It is well written
+for self study purpose.</p>
+
+<h2 id="references">References</h2>
+
+<ol>
+  <li><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachORuntime/index.html">OS X ABI Mach-O File Format Reference</a></li>
+  <li><a href="http://www.x86-64.org/documentation/abi.pdf">System V Application Binary Interface</a></li>
+  <li><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Reference/Assembler/000-Introduction/introduction.html#//apple_ref/doc/uid/TP30000851-CH211-SW1">OS X Assembler Reference</a> Assembler Directives</li>
+  <li><a href="https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/MachOTopics/0-Introduction/introduction.html#//apple_ref/doc/uid/TP40001827-SW1">Mach-O Programming Topics</a></li>
+  <li><a href="http://www.objc.io/issue-6/mach-o-executables.html">Mach-O Executables - Build Tools</a></li>
+  <li>Book: Programming from the ground up.</li>
+</ol>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Integer Promotion Part 2]]></title>
@@ -105,7 +455,11 @@ the unsigned value, everything is converted to unsigned integer.</p>
 </span><span class="line">  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
-<p>This program will print <strong>-1 is treated as 0xffffffff. Because sizeof returns size_t which is an unsigned int\n</strong></p>
+<p>This program will execute the <strong>else</strong> branch and print:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="o">-</span><span class="mi">1</span> <span class="n">is</span> <span class="n">treated</span> <span class="n">as</span> <span class="mh">0xffffffff</span><span class="p">.</span> <span class="n">Because</span> <span class="k">sizeof</span> <span class="n">returns</span> <span class="kt">size_t</span> <span class="n">which</span> <span class="n">is</span> <span class="n">an</span> <span class="kt">unsigned</span> <span class="kt">int</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
 
 <h2 id="conclusion">Conclusion</h2>
 
@@ -3186,41 +3540,6 @@ is not documented anywhere in hadoop api nor document. You can only find it in <
 </span></code></pre></td></tr></table></div></figure></notextile></div>
 
 <p>Then read the README file in the same directory, and try out the example usage of python interface.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Emacs and PDF]]></title>
-    <link href="http://www.idryman.org/blog/2013/05/20/emacs-and-pdf/"/>
-    <updated>2013-05-20T22:07:00-07:00</updated>
-    <id>http://www.idryman.org/blog/2013/05/20/emacs-and-pdf</id>
-    <content type="html"><![CDATA[<p>Emacs has a built-in pdf viewer named <code>doc-view-mode</code>. It require ghostscript to convert the pdf files. On my OSX 10.8 laptop, I use <code>ghostscript 9.07 (2013-02-14)</code> version, installed by</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line">brew install ghostscript
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<h3 id="screen-shot">screen shot</h3>
-
-<p><img src="http://www.idryman.org/images/emacs/emacs-docview.png" alt="Screen shot" /></p>
-
-<h3 id="usage-and-configs">Usage and configs</h3>
-
-<p>Using docview is pretty simple, just use your emacs to open the file and it’s done. I added two keyboard macro to help me navigate the PDF.</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-</pre></td><td class="code"><pre><code class="scm"><span class="line"><span class="c1">;; view docs</span>
-</span><span class="line"><span class="p">(</span><span class="nf">fset</span> <span class="ss">&#39;doc-prev</span> <span class="s">&quot;\C-xo\C-x[\C-xo&quot;</span><span class="p">)</span>
-</span><span class="line"><span class="p">(</span><span class="nf">fset</span> <span class="ss">&#39;doc-next</span> <span class="s">&quot;\C-xo\C-x]\C-xo&quot;</span><span class="p">)</span>
-</span><span class="line"><span class="p">(</span><span class="nf">global-set-key</span> <span class="p">(</span><span class="nf">kbd</span> <span class="s">&quot;M-[&quot;</span><span class="p">)</span> <span class="ss">&#39;doc-prev</span><span class="p">)</span>
-</span><span class="line"><span class="p">(</span><span class="nf">global-set-key</span> <span class="p">(</span><span class="nf">kbd</span> <span class="s">&quot;M-]&quot;</span><span class="p">)</span> <span class="ss">&#39;doc-next</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>The keybindings is only for two windows layout. You can use <code>M-[</code> or <code>M-]</code> to navigate the pages while your cursor is in another window. So that you can write your notes and navigate without leaving your notes! Pretty neat, right?</p>
 ]]></content>
   </entry>
   

@@ -9,7 +9,7 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="This year I switched from vim to emacs. The reason is quite simple, I want to try different things, that’s all. Emacs is a highly configurable editor &hellip;">
+  <meta name="description" content="Emacs has a built-in pdf viewer named doc-view-mode. It require ghostscript to convert the pdf files. On my OSX 10.8 laptop, I use ghostscript 9.07 ( &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -103,6 +103,70 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2013/05/20/emacs-and-pdf/">Emacs and PDF</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-20T22:07:00-07:00" pubdate data-updated="true">May 20<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Emacs has a built-in pdf viewer named <code>doc-view-mode</code>. It require ghostscript to convert the pdf files. On my OSX 10.8 laptop, I use <code>ghostscript 9.07 (2013-02-14)</code> version, installed by</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">brew install ghostscript
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h3 id="screen-shot">screen shot</h3>
+
+<p><img src="/images/emacs/emacs-docview.png" alt="Screen shot" /></p>
+
+<h3 id="usage-and-configs">Usage and configs</h3>
+
+<p>Using docview is pretty simple, just use your emacs to open the file and it’s done. I added two keyboard macro to help me navigate the PDF.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="scm"><span class="line"><span class="c1">;; view docs</span>
+</span><span class="line"><span class="p">(</span><span class="nf">fset</span> <span class="ss">&#39;doc-prev</span> <span class="s">&quot;\C-xo\C-x[\C-xo&quot;</span><span class="p">)</span>
+</span><span class="line"><span class="p">(</span><span class="nf">fset</span> <span class="ss">&#39;doc-next</span> <span class="s">&quot;\C-xo\C-x]\C-xo&quot;</span><span class="p">)</span>
+</span><span class="line"><span class="p">(</span><span class="nf">global-set-key</span> <span class="p">(</span><span class="nf">kbd</span> <span class="s">&quot;M-[&quot;</span><span class="p">)</span> <span class="ss">&#39;doc-prev</span><span class="p">)</span>
+</span><span class="line"><span class="p">(</span><span class="nf">global-set-key</span> <span class="p">(</span><span class="nf">kbd</span> <span class="s">&quot;M-]&quot;</span><span class="p">)</span> <span class="ss">&#39;doc-next</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The keybindings is only for two windows layout. You can use <code>M-[</code> or <code>M-]</code> to navigate the pages while your cursor is in another window. So that you can write your notes and navigate without leaving your notes! Pretty neat, right?</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -595,51 +659,6 @@ helper functions every time! Thanks for
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/09/29/c-objc-block-byref-internals/">C/ObjC Block Byref Internals</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-09-29T15:21:00-07:00" pubdate data-updated="true">Sep 29<span>th</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>In the last post, I mentioned that <code>__block</code> variable (here we named it block
-byref) will be retained if multiple blocks referenced it. Here are some sample
-code to show how runtime deals with reference counts.</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/09/29/c-objc-block-byref-internals/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/4/">&larr; Older</a>
@@ -655,6 +674,10 @@ code to show how runtime deals with reference counts.</p>
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2014/12/02/writing-64-bit-assembly-on-mac-os-x/">Writing 64 bit assembly on Mac OS X</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2014/11/29/integer-promotion-part-2/">Integer Promotion Part 2</a>
@@ -690,10 +713,6 @@ code to show how runtime deals with reference counts.</p>
     
       <li class="post">
         <a href="/blog/2013/09/28/java-fast-io-using-java-nio-api/">Java fast IO using java.nio API</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-2/">Process Small Files on Hadoop using CombineFileInputFormat (2)</a>
       </li>
     
   </ul>
