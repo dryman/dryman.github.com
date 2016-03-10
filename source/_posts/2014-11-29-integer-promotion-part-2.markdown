@@ -78,7 +78,11 @@ the unsigned value, everything is converted to unsigned integer.
   return 0;
 ```
 
-This program will print **-1 is treated as 0xffffffff. Because sizeof returns size_t which is an unsigned int\n**
+This program will execute the **else** branch and print:
+
+```
+-1 is treated as 0xffffffff. Because sizeof returns size_t which is an unsigned int
+```
 
 ## Conclusion
 

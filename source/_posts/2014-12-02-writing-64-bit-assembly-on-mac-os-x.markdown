@@ -25,7 +25,7 @@ contains sections.
 
 A common assembly in Linux like
 
-```asm
+```gas
 .section data
 .section text
 # your code here
@@ -33,7 +33,7 @@ A common assembly in Linux like
 
 would translate into this in Mach-O
 
-```asm
+```gas
 .section __DATA,__data
 # __DATA is segment, __data is section
 .section __TEXT,__text
@@ -57,7 +57,7 @@ On x86 you do a system call by `int x80` instruction. On
 64 bit machine, you do this by `syscall`. Here's the sample
 code:
 
-```asm
+```gas
 # Simple exit program
 .section __TEXT,__text
 .globl _main
@@ -103,7 +103,7 @@ If you're like me that had no assembly background, you might
 feel that `syscall` is alien to you. In C, we usually use
 wrapper functions to perform the call:
 
-```asm
+```gas
 # exit2.s
 # To compile it, type the following in shell
 # as exit2.s -o exit2.o
@@ -138,7 +138,7 @@ When releasing the frame, you add the space back to `%rsp`.
 
 A live cycle of a function would look like this:
 
-```asm
+```gas
 # function start
 pushq %rbp
 movq %rsp, %rbp
@@ -194,7 +194,7 @@ Now we know the basics of how to perform
 a system call, and how to call a function.
 Let's write a hello world program.
 
-```asm
+```gas
 # hello_asm.s
 # as hello_asm.s -o hello_asm.o
 # ld hello_asm.o -e _main -o hello_asm
@@ -232,7 +232,7 @@ can you put the parameters on the stack.
 Now you know the basics of assembly. A hello world
 example using printf should be trivial to read:
 
-```asm
+```gas
 # hello_asm2.s
 # as hello_asm2.s -o hello_asm2.o
 # ld hello_asm2.o -e _main -lc -o hello_asm2
@@ -246,7 +246,6 @@ _main:
   pushq %rbp
   movq %rsp, %rbp
   movq str@GOTPCREL(%rip), %rdi
-  #movl $0, %esi
   movb $0, %al 
   callq _printf
   popq %rbp
@@ -260,7 +259,7 @@ The 64 bit assembly looks more vague than the tutorials
 written in X86 assembly. Once you know these basic differences,
 it's easy for you to learn assembly in depth on your own,
 even if the material is designed for x86. I highly recommend
-the book "Programming from the ground up", it is well written
+the book "Programming from the ground up". It is well written
 for self study purpose.
 
 ## References
