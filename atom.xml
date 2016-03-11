@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2014-12-02T17:24:56-08:00</updated>
+  <updated>2016-03-10T19:14:21-08:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,357 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Autoconf Tutorial Part-1]]></title>
+    <link href="http://www.idryman.org/blog/2016/03/10/autoconf-tutorial-1/"/>
+    <updated>2016-03-10T14:55:00-08:00</updated>
+    <id>http://www.idryman.org/blog/2016/03/10/autoconf-tutorial-1</id>
+    <content type="html"><![CDATA[<p>It’s been more than a year since my last update to my blog. I learnt a lot new
+stuffs in last year, but was too busy on work to write down what I’ve learnt.
+Luckily I got some breaks recently, and I’ll pick up some of the posts that
+I’ve wanted to write about. First I’ll start with a autoconf tutorial series.
+This is one of the difficult material to learn, but I’ll try to re-bottle it
+to make it more accessible to everyone.</p>
+
+<!-- more -->
+
+<h2 id="what-is-autoconf">What is Autoconf?</h2>
+
+<p>If you have ever installed third party packages, you probably already used the
+result of autoconf. Autoconf, automake, and libtool are the GNU Autotools
+family that generate the installation script:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">./configure
+</span><span class="line">make
+</span><span class="line">make install
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Many unix or unix-like system make use of the simplicity of these installation
+steps. The linux distros usually provides custom command line options to the
+<code>./configure</code> to customize the build, and further repackage it with rpm or dpkg.</p>
+
+<p>Autoconf is not only a build system, it also does many system compatibility
+checks. Does your operating system support memory-mapped file? Does your
+environment has X11? The standard autoconf already support a wide variety of
+checks, and there are 500 more in <a href="http://www.gnu.org/software/autoconf-archive/The-Macros.html">Autoconf Archive</a>. It’s the defacto
+standard build standard for building small and large linux/unix programs.</p>
+
+<p>Though the output of autoconf is easy for user to install, writing autoconf
+build script is less intuitive, compare to other fancier solution like
+<a href="https://cmake.org">CMake</a> or <a href="http://www.scons.org">Scons</a>. And that’s why I’m writing this tutorial - to
+reduce the learning curve of using autoconf.</p>
+
+<p>Through out this series, I’ll start with a minimal autoconf project, and later
+introduce how to bring in debug setup, how to build a library, how to setup unit
+test, how to write your own cross platform checks etc.</p>
+
+<h2 id="hello-autoconf">Hello Autoconf</h2>
+
+<p>The best way to learn is to practice through examples. Let’s start with a very
+simple one. First create a directory holding your project, </p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="nv">$ </span>mkdir example-1
+</span><span class="line"><span class="nv">$ </span><span class="nb">cd </span>example-1
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Install the autoconf on your system if it wasn’t installed</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="c"># OSX</span>
+</span><span class="line"><span class="nv">$ </span>brew install autoconf automake libtool
+</span><span class="line"><span class="c"># Ubuntu/Debian</span>
+</span><span class="line"><span class="nv">$ </span>sudo apt-get install autoconf automake libtool
+</span><span class="line"><span class="c"># RHEL/CentOS</span>
+</span><span class="line"><span class="nv">$ </span>sudo yum install autoconf automake libtool
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>And create three files: <code>configure.ac</code>, <code>Makefile.am</code>, and the program itself
+<code>hello.c</code>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>configure.ac</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="c"># Must init the autoconf setup</span>
+</span><span class="line"><span class="c"># The first parameter is project name</span>
+</span><span class="line"><span class="c"># second is version number</span>
+</span><span class="line"><span class="c"># third is bug report address</span>
+</span><span class="line">AC_INIT<span class="o">([</span>hello<span class="o">]</span>, <span class="o">[</span>1.0<span class="o">])</span>
+</span><span class="line">
+</span><span class="line"><span class="c"># Safety checks in case user overwritten --srcdir</span>
+</span><span class="line">AC_CONFIG_SRCDIR<span class="o">([</span>hello.c<span class="o">])</span>
+</span><span class="line">
+</span><span class="line"><span class="c"># Store the auxiliary build tools (e.g., install-sh, config.sub, config.guess)</span>
+</span><span class="line"><span class="c"># in this dir (build-aux)</span>
+</span><span class="line">AC_CONFIG_AUX_DIR<span class="o">([</span>build-aux<span class="o">])</span>
+</span><span class="line">
+</span><span class="line"><span class="c"># Init automake, and specify this program use relaxed structures.</span>
+</span><span class="line"><span class="c"># i.e. this program doesn&#39;t follow the gnu coding standards, and doesn&#39;t have</span>
+</span><span class="line"><span class="c"># ChangeLog, COPYING, AUTHORS, INSTALL, README etc. files.</span>
+</span><span class="line">AM_INIT_AUTOMAKE<span class="o">([</span>-Wall -Werror foreign<span class="o">])</span>
+</span><span class="line">
+</span><span class="line"><span class="c"># Check for C compiler</span>
+</span><span class="line">AC_PROG_CC
+</span><span class="line"><span class="c"># We can add more checks in this section</span>
+</span><span class="line">
+</span><span class="line"><span class="c"># Tells automake to create a Makefile</span>
+</span><span class="line"><span class="c"># See https://www.gnu.org/software/automake/manual/html_node/Requirements.html</span>
+</span><span class="line">AC_CONFIG_FILES<span class="o">([</span>Makefile<span class="o">])</span>
+</span><span class="line">
+</span><span class="line"><span class="c"># Generate the output</span>
+</span><span class="line">AC_OUTPUT
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>Makefile.am</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="make"><span class="line"><span class="nv">bin_PROGRAMS</span> <span class="o">=</span> hello
+</span><span class="line"><span class="nv">hello_SOURCES</span> <span class="o">=</span> hello.c
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>hello.c</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="cp">#include &lt;stdio.h&gt;</span>
+</span><span class="line"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">**</span> <span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;hello world!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+</span><span class="line">  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>That’s the minimal build script you need for your first autoconf program.
+Let’s try what we’ve got with this setup. Make sure your are in the <code>example-1</code>
+directory.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="c"># this creates the configure script</span>
+</span><span class="line"><span class="nv">$ </span>autoreconf --verbose --install --force
+</span><span class="line"><span class="nv">$ </span>./configure --help
+</span><span class="line"><span class="nv">$ </span>./configure
+</span><span class="line">ecking <span class="k">for </span>a BSD-compatible install... /usr/bin/install -c
+</span><span class="line">checking whether build environment is sane... yes
+</span><span class="line">checking <span class="k">for </span>a thread-safe mkdir -p... build-aux/install-sh -c -d
+</span><span class="line">checking <span class="k">for </span>mawk... no
+</span><span class="line">...
+</span><span class="line">config.status: creating Makefile
+</span><span class="line">config.status: executing depfiles commands
+</span><span class="line"><span class="c"># Now try the makefile</span>
+</span><span class="line"><span class="nv">$ </span>make
+</span><span class="line">gcc -DPACKAGE_NAME<span class="o">=</span><span class="se">\&quot;</span>hello<span class="se">\&quot;</span> -DPACKAGE_TARNAME<span class="o">=</span><span class="se">\&quot;</span>hello<span class="se">\&quot;</span> -DPACKAGE_VERSION<span class="o">=</span><span class="se">\&quot;</span>1.0<span class="se">\&quot;</span> -DPACKAGE_STRING<span class="o">=</span><span class="se">\&quot;</span>hello<span class="se">\ </span>1.0<span class="se">\&quot;</span> -DPACKAGE_BUGREPORT<span class="o">=</span><span class="se">\&quot;\&quot;</span> -DPACKAGE_URL<span class="o">=</span><span class="se">\&quot;\&quot;</span> -DPACKAGE<span class="o">=</span><span class="se">\&quot;</span>hello<span class="se">\&quot;</span> -DVERSION<span class="o">=</span><span class="se">\&quot;</span>1.0<span class="se">\&quot;</span> -I.     -g -O2 -MT hello.o -MD -MP -MF .deps/hello.Tpo -c -o hello.o hello.c
+</span><span class="line">mv -f .deps/hello.Tpo .deps/hello.Po
+</span><span class="line">gcc  -g -O2   -o hello hello.o
+</span><span class="line"><span class="c"># We now have the hello program built</span>
+</span><span class="line"><span class="nv">$ </span>./hello
+</span><span class="line">hello world!
+</span><span class="line"><span class="c"># Create hello-1.0.tar.gz that contains the configure script</span>
+</span><span class="line"><span class="nv">$ </span>make dist
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>You  might think this is overkill for a hello world program, but you can also
+think in another way. Just adding the <code>configure.ac</code> and <code>Makefile.am</code> made a
+simple hello world program looks like a serious production ready project (with
+all these fancy configure checks and compiler flags).</p>
+
+<p>Let’s iterate through each of the build script.</p>
+
+<h1 id="configureac">configure.ac</h1>
+
+<p>The syntax for <code>configure.ac</code> is <code>MACRO_NAME([param-1],[param-2]..)</code>. The
+parameter passed to the macro must be quoted by square brackets, (unless it is
+another macro that you want to expand BEFORE calling the outer macro, which is
+very rare). The macros will expands to shell script that perform the actual
+checks. You can also write shell script in your configure.ac file. Just one
+difference, you should use <code>if test &lt;expression&gt;; then...</code> instead of 
+<code>if [[ &lt;expression&gt; ]]; then...</code> for condition branching, because the square
+brackets would get expanded by the autoconf macro system.</p>
+
+<ul>
+  <li>
+    <p><code>AC_INIT(package, version, [bug-report], [tarname], [url])</code> In every autoconf
+configure script, you must first initialize autoconf with this macro. The
+square braket that wraps around each parameter cannot be omitted.</p>
+  </li>
+  <li>
+    <p><code>AC_CONFIG_SRCDIR(dir)</code> Next we specify a unique file identifying we are in
+the right directory. This is a safety check in case user override the –srcdir
+command line option.</p>
+  </li>
+  <li>
+    <p><code>AC_CONFIG_AUX_DIR(dir)</code> By default autoconf will create many auxiliary files
+that help to build and distribute the programs. However we don’t want to have
+these files to mess up the project home directory. In convention we call this
+macro with <code>[build-aux]</code> so that it put these extra files in <code>build-aux/</code>
+instead of project home.</p>
+  </li>
+  <li>
+    <p><code>AM_INIT_AUTOMAKE([options])</code> Initializes automake. An important note here is
+in early phase of your project development, you probably want to provide the
+option <code>foreign</code> to init automake. If foreign wasn’t provided, automake will
+complain that your project didn’t confirm to gnu coding standards, which would
+require you to have README, ChangLog, AUTHORS, and many other files in your
+project’s home directory.</p>
+  </li>
+  <li>
+    <p><code>AC_PROG_CC</code> Checks for a valid C compiler. There are hundreds more checks you
+can put in this section.</p>
+  </li>
+  <li>
+    <p><code>AC_CONFIG_FILES(files)</code> Required by automake to create the output file. Here
+we simply put the <code>Makefile</code> in. Checks the automake documentation for more
+detail.
+<a href="https://www.gnu.org/software/automake/manual/html_node/Requirements.html">automake</a>.</p>
+  </li>
+  <li>
+    <p><code>AC_OUTPUT</code> Creates the configure script</p>
+  </li>
+</ul>
+
+<h1 id="makefileam">Makefile.am</h1>
+
+<p>The automake file <code>Makefile.am</code> is an extension to Makefile. You can write
+standard make syntax, but normally you only need to define variables that
+conforms to the <a href="https://www.gnu.org/software/automake/manual/html_node/Uniform.html">uniform naming scheme</a>. In this post I’ll only give
+rough explanation, and dive in more detail in next post.</p>
+
+<ul>
+  <li>
+    <p><code>bin_PROGRAMS = hello</code> The output is a PROGRAM (other options are LIBRARY,
+HEADER, MAN, etc.) named <code>hello</code>, and will be installed in bin directory
+(default to <code>/usr/local/bin</code>, but can be configured when invoking
+<code>./configure</code>.</p>
+  </li>
+  <li>
+    <p><code>hello_SOURCES = hello.c</code> The sources of hello program is hello.c</p>
+  </li>
+</ul>
+
+<p>The complete program can be found in my github repository: 
+<a href="https://github.com/dryman/autoconf-tutorials/tree/master/example-1">Example 1</a>.</p>
+
+<h1 id="more-make-commands">More make commands</h1>
+
+<p>The Makefile generated by Autoconf and automake has more commands that you can
+run:</p>
+
+<ul>
+  <li>
+    <p><code>make all</code>
+Build programs, libraries, documentation, etc. (same as make).</p>
+  </li>
+  <li>
+    <p><code>make install</code>
+Install what needs to be installed, copying the files from the package’s tree to system-wide directories.</p>
+  </li>
+  <li>
+    <p><code>make install-strip</code>
+Same as make install, then strip debugging symbols. Some users like to trade space for useful bug reports…</p>
+  </li>
+  <li>
+    <p><code>make uninstall</code>
+The opposite of make install: erase the installed files. (This needs to be run from the same build tree that was installed.)</p>
+  </li>
+  <li>
+    <p><code>make clean</code>
+Erase from the build tree the files built by make all.</p>
+  </li>
+  <li>
+    <p><code>make maintainer-clean</code>
+Erase files that generated by autoconf.</p>
+  </li>
+  <li>
+    <p><code>make distclean</code>
+Additionally erase anything ./configure created.</p>
+  </li>
+  <li>
+    <p><code>make check</code>
+Run the test suite, if any.</p>
+  </li>
+  <li>
+    <p><code>make installcheck</code>
+Check the installed programs or libraries, if supported.</p>
+  </li>
+  <li>
+    <p><code>make dist</code>
+Recreate package-version.tar.gz from all the source files.</p>
+  </li>
+</ul>
+
+<p>When I first survey what build system I should pick for my own projects, I often
+see other alternatives claiming autoconf is old and hard to use. This is
+partially true, but the more I dig in the more I found how powerful autoconf is.
+As you see, this example can already cover many common cases, with a succinct
+build script and very powerful output. The package created by <code>make dist</code>
+only requires a minimal unix compatible environment (shell and make) to run.</p>
+
+<p>In the next post I’ll cover more detail in the autoconf syntax and Automake
+syntax.</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li><a href="http://www.gnu.org/software/autoconf/autoconf.html">Autoconf</a></li>
+  <li><a href="https://www.gnu.org/software/automake/">Automake</a></li>
+  <li><a href="https://autotools.io/index.html">Autoconf myth buster</a></li>
+  <li><a href="http://www.lrde.epita.fr/~adl/autotools.html">Autotools tutorials</a></li>
+</ul>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Writing 64 bit assembly on Mac OS X]]></title>
@@ -3415,131 +3766,6 @@ is not documented anywhere in hadoop api nor document. You can only find it in <
   <li><a href="https://github.com/flatland/classlojure">classlojure</a> Advanced class loading for clojure</li>
 </ul>
 
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[LibSVM on Mac OSX]]></title>
-    <link href="http://www.idryman.org/blog/2013/05/21/libsvm-on-mac-osx/"/>
-    <updated>2013-05-21T11:51:00-07:00</updated>
-    <id>http://www.idryman.org/blog/2013/05/21/libsvm-on-mac-osx</id>
-    <content type="html"><![CDATA[<p>Here are the basic steps to install libSVM on Mac OSX.</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line">brew install gnuplot
-</span><span class="line">brew install qt4
-</span><span class="line">brew install libsvm
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>Installing <code>libsvm</code> itself in system path is easy, however hombrew does not include demo-data, python/java integration, or other goodies. The finally installation in homebrew only consists these files:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line">libsvm
-</span><span class="line">libsvm/3.17
-</span><span class="line">libsvm/3.17/bin
-</span><span class="line">libsvm/3.17/bin/svm-predict
-</span><span class="line">libsvm/3.17/bin/svm-scale
-</span><span class="line">libsvm/3.17/bin/svm-train
-</span><span class="line">libsvm/3.17/COPYRIGHT
-</span><span class="line">libsvm/3.17/include
-</span><span class="line">libsvm/3.17/include/svm.h
-</span><span class="line">libsvm/3.17/INSTALL_RECEIPT.json
-</span><span class="line">libsvm/3.17/lib
-</span><span class="line">libsvm/3.17/lib/libsvm.2.dylib
-</span><span class="line">libsvm/3.17/lib/libsvm.dylib
-</span><span class="line">libsvm/3.17/README
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-<p>In this post, I’ll show you how to modify some Makefiles and create mac specific binaries.</p>
-
-<!--more-->
-
-<h2 id="python-java-or-gui-applications-qt">Python, java, or GUI applications (Qt)</h2>
-
-<p>First, fetch the source code of <code>libsvm</code>, and compile it.</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line">curl -LO http://www.csie.ntu.edu.tw/~cjlin/cgi-bin/libsvm.cgi?+http://www.csie.ntu.edu.tw/~cjlin/libsvm+tar.gz
-</span><span class="line">tar xzvpf libsvm+tar.gz
-</span><span class="line"><span class="nb">cd </span>libsvm-3.17
-</span><span class="line">make
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<h3 id="svm-toy-gui">SVM-Toy (GUI)</h3>
-
-<p>Now, goto <code>svm-toy/qt</code> directory. Change the CFLAGS and MOC variable in the <code>Makefile</code>.</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-<span class="line-number">16</span>
-<span class="line-number">17</span>
-</pre></td><td class="code"><pre><code class="make"><span class="line"><span class="err">CXX?</span> <span class="err">=</span> <span class="err">g++</span>
-</span><span class="line">
-</span><span class="line"><span class="nv">CFLAGS</span> <span class="o">=</span> -Wall -O3 -I<span class="k">$(</span>INCLUDE<span class="k">)</span> -I<span class="k">$(</span>INCLUDE<span class="k">)</span>/QtGui -framework QtCore -framework QtGui -F/usr/local/Cellar/qt/4.8.4/lib/
-</span><span class="line"><span class="nv">INCLUDE</span> <span class="o">=</span> /usr/local/Cellar/qt/4.8.4/include/
-</span><span class="line"><span class="nv">MOC</span> <span class="o">=</span> moc
-</span><span class="line">
-</span><span class="line">svm-toy: svm-toy.cpp svm-toy.moc ../../svm.o
-</span><span class="line">	<span class="k">$(</span>CXX<span class="k">)</span> <span class="k">$(</span>CFLAGS<span class="k">)</span> svm-toy.cpp ../../svm.o -o svm-toy
-</span><span class="line">
-</span><span class="line">svm-toy.moc: svm-toy.cpp
-</span><span class="line">	<span class="k">$(</span>MOC<span class="k">)</span> svm-toy.cpp -o svm-toy.moc
-</span><span class="line">
-</span><span class="line">../../svm.o: ../../svm.cpp ../../svm.h
-</span><span class="line">	make -C ../.. svm.o
-</span><span class="line">
-</span><span class="line">clean:
-</span><span class="line">	rm -f *~ svm-toy svm-toy.moc ../../svm.o
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>Then <code>make</code>. The compile step should run successfully. Try the program <code>./svm-toy</code>, press <strong>load</strong> button and select a demo svm-file (heart_scale for example), then press <strong>run</strong>, you should see the result!</p>
-
-<p><img src="http://www.idryman.org/images/select_heart_scale.png" alt="Select heart_scale" />
-<img src="http://www.idryman.org/images/svm_toy.png" alt="svm toy" /></p>
-
-<h3 id="python-interface">Python interface</h3>
-
-<p>To use the python interface, just export the <code>PYTHONPATH</code> variable to where python utility fuction located at.</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="nb">cd </span>libsvm-3.17/python
-</span><span class="line"><span class="nb">echo</span> <span class="s2">&quot;export PYTHONPATH=\$PYTHONPATH:$(pwd)&quot;</span> &gt;&gt; ~/.bash_profile
-</span><span class="line"><span class="nb">source</span> ~/.bash_profile
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>Then read the README file in the same directory, and try out the example usage of python interface.</p>
 ]]></content>
   </entry>
   

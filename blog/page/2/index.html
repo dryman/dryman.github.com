@@ -9,7 +9,7 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="Followed the previous article, in this post I ran several benchmarks and tuned the performance from 3 hours 34 minutes to 6 minutes 8 seconds! ">
+  <meta name="description" content="For modern computing, IO is always a big bottleneck to solve. I recently encounter a problem is to read a 355MB index file to memory, and do a run- &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -103,6 +103,49 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2013/09/28/java-fast-io-using-java-nio-api/">Java Fast IO Using java.nio API</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-09-28T17:18:00-07:00" pubdate data-updated="true">Sep 28<span>th</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>For modern computing, IO is always a big bottleneck to solve. I recently encounter a problem is to read a 355MB index file to memory, and do a run-time lookup base the index. This process will be repeated by thousands of Hadoop job instances, so a fast IO is a must. By using the <code>java.nio</code> API I sped the process from 194.054 seconds to 0.16 sec! Here’s how I did it.</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2013/09/28/java-fast-io-using-java-nio-api/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -499,90 +542,6 @@ MathJax.Hub.Config({
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2013/05/21/libsvm-on-mac-osx/">LibSVM on Mac OSX</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2013-05-21T11:51:00-07:00" pubdate data-updated="true">May 21<span>st</span>, 2013</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Here are the basic steps to install libSVM on Mac OSX.</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line">brew install gnuplot
-</span><span class="line">brew install qt4
-</span><span class="line">brew install libsvm
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>Installing <code>libsvm</code> itself in system path is easy, however hombrew does not include demo-data, python/java integration, or other goodies. The finally installation in homebrew only consists these files:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line">libsvm
-</span><span class="line">libsvm/3.17
-</span><span class="line">libsvm/3.17/bin
-</span><span class="line">libsvm/3.17/bin/svm-predict
-</span><span class="line">libsvm/3.17/bin/svm-scale
-</span><span class="line">libsvm/3.17/bin/svm-train
-</span><span class="line">libsvm/3.17/COPYRIGHT
-</span><span class="line">libsvm/3.17/include
-</span><span class="line">libsvm/3.17/include/svm.h
-</span><span class="line">libsvm/3.17/INSTALL_RECEIPT.json
-</span><span class="line">libsvm/3.17/lib
-</span><span class="line">libsvm/3.17/lib/libsvm.2.dylib
-</span><span class="line">libsvm/3.17/lib/libsvm.dylib
-</span><span class="line">libsvm/3.17/README
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-<p>In this post, I’ll show you how to modify some Makefiles and create mac specific binaries.</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2013/05/21/libsvm-on-mac-osx/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/3/">&larr; Older</a>
@@ -598,6 +557,10 @@ MathJax.Hub.Config({
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/03/10/autoconf-tutorial-1/">Autoconf Tutorial Part-1</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2014/12/02/writing-64-bit-assembly-on-mac-os-x/">Writing 64 bit assembly on Mac OS X</a>
@@ -635,10 +598,6 @@ MathJax.Hub.Config({
         <a href="/blog/2013/10/03/convert-uf8-literals-in-java/">Convert utf8 literals in Java</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2013/09/28/java-fast-io-using-java-nio-api/">Java fast IO using java.nio API</a>
-      </li>
-    
   </ul>
 </section>
 
@@ -669,7 +628,7 @@ MathJax.Hub.Config({
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2014 - dryman (Felix Ren-Chyan Chern) -
+  Copyright &copy; 2016 - dryman (Felix Ren-Chyan Chern) -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
 </p>
 

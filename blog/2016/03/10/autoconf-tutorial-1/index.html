@@ -1,0 +1,744 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Autoconf Tutorial Part-1 - Carpe diem (Felix's blog)</title>
+  <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
+
+  
+  <meta name="description" content="It’s been more than a year since my last update to my blog. I learnt a lot new
+stuffs in last year, but was too busy on work to write down what I’ve &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://www.idryman.org/blog/2016/03/10/autoconf-tutorial-1/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Carpe diem (Felix's blog)" type="application/atom+xml">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- mathjax config similar to math.stackexchange -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/HTML-CSS"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-23425996-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <!--div id="logo">
+  	<div id="logoLeft">{</div>
+  	<div id="logoText">mob</div>
+  	<div id="logoRight">}</div>
+  	<div class="clear"></div>
+  </div-->
+  <h1><a href="/">Carpe diem (Felix's blog)</a></h1>
+  
+    <h2>I am a happy developer</h2>
+  
+  <div class="clear"></div>
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:www.idryman.org" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about-me">About Me</a></li>
+  <li><a href="https://github.com/dryman">Github</a></li>
+  <li><a href="http://idryman.tumblr.com/">Drawings</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      
+        <h1 class="entry-title">Autoconf Tutorial Part-1</h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-03-10T14:55:00-08:00" pubdate data-updated="true">Mar 10<span>th</span>, 2016</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>It’s been more than a year since my last update to my blog. I learnt a lot new
+stuffs in last year, but was too busy on work to write down what I’ve learnt.
+Luckily I got some breaks recently, and I’ll pick up some of the posts that
+I’ve wanted to write about. First I’ll start with a autoconf tutorial series.
+This is one of the difficult material to learn, but I’ll try to re-bottle it
+to make it more accessible to everyone.</p>
+
+<!-- more -->
+
+<h2 id="what-is-autoconf">What is Autoconf?</h2>
+
+<p>If you have ever installed third party packages, you probably already used the
+result of autoconf. Autoconf, automake, and libtool are the GNU Autotools
+family that generate the installation script:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">./configure
+</span><span class="line">make
+</span><span class="line">make install
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Many unix or unix-like system make use of the simplicity of these installation
+steps. The linux distros usually provides custom command line options to the
+<code>./configure</code> to customize the build, and further repackage it with rpm or dpkg.</p>
+
+<p>Autoconf is not only a build system, it also does many system compatibility
+checks. Does your operating system support memory-mapped file? Does your
+environment has X11? The standard autoconf already support a wide variety of
+checks, and there are 500 more in <a href="http://www.gnu.org/software/autoconf-archive/The-Macros.html">Autoconf Archive</a>. It’s the defacto
+standard build standard for building small and large linux/unix programs.</p>
+
+<p>Though the output of autoconf is easy for user to install, writing autoconf
+build script is less intuitive, compare to other fancier solution like
+<a href="https://cmake.org">CMake</a> or <a href="http://www.scons.org">Scons</a>. And that’s why I’m writing this tutorial - to
+reduce the learning curve of using autoconf.</p>
+
+<p>Through out this series, I’ll start with a minimal autoconf project, and later
+introduce how to bring in debug setup, how to build a library, how to setup unit
+test, how to write your own cross platform checks etc.</p>
+
+<h2 id="hello-autoconf">Hello Autoconf</h2>
+
+<p>The best way to learn is to practice through examples. Let’s start with a very
+simple one. First create a directory holding your project, </p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="nv">$ </span>mkdir example-1
+</span><span class="line"><span class="nv">$ </span><span class="nb">cd </span>example-1
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Install the autoconf on your system if it wasn’t installed</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="c"># OSX</span>
+</span><span class="line"><span class="nv">$ </span>brew install autoconf automake libtool
+</span><span class="line"><span class="c"># Ubuntu/Debian</span>
+</span><span class="line"><span class="nv">$ </span>sudo apt-get install autoconf automake libtool
+</span><span class="line"><span class="c"># RHEL/CentOS</span>
+</span><span class="line"><span class="nv">$ </span>sudo yum install autoconf automake libtool
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>And create three files: <code>configure.ac</code>, <code>Makefile.am</code>, and the program itself
+<code>hello.c</code>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>configure.ac</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="c"># Must init the autoconf setup</span>
+</span><span class="line"><span class="c"># The first parameter is project name</span>
+</span><span class="line"><span class="c"># second is version number</span>
+</span><span class="line"><span class="c"># third is bug report address</span>
+</span><span class="line">AC_INIT<span class="o">([</span>hello<span class="o">]</span>, <span class="o">[</span>1.0<span class="o">])</span>
+</span><span class="line">
+</span><span class="line"><span class="c"># Safety checks in case user overwritten --srcdir</span>
+</span><span class="line">AC_CONFIG_SRCDIR<span class="o">([</span>hello.c<span class="o">])</span>
+</span><span class="line">
+</span><span class="line"><span class="c"># Store the auxiliary build tools (e.g., install-sh, config.sub, config.guess)</span>
+</span><span class="line"><span class="c"># in this dir (build-aux)</span>
+</span><span class="line">AC_CONFIG_AUX_DIR<span class="o">([</span>build-aux<span class="o">])</span>
+</span><span class="line">
+</span><span class="line"><span class="c"># Init automake, and specify this program use relaxed structures.</span>
+</span><span class="line"><span class="c"># i.e. this program doesn&#39;t follow the gnu coding standards, and doesn&#39;t have</span>
+</span><span class="line"><span class="c"># ChangeLog, COPYING, AUTHORS, INSTALL, README etc. files.</span>
+</span><span class="line">AM_INIT_AUTOMAKE<span class="o">([</span>-Wall -Werror foreign<span class="o">])</span>
+</span><span class="line">
+</span><span class="line"><span class="c"># Check for C compiler</span>
+</span><span class="line">AC_PROG_CC
+</span><span class="line"><span class="c"># We can add more checks in this section</span>
+</span><span class="line">
+</span><span class="line"><span class="c"># Tells automake to create a Makefile</span>
+</span><span class="line"><span class="c"># See https://www.gnu.org/software/automake/manual/html_node/Requirements.html</span>
+</span><span class="line">AC_CONFIG_FILES<span class="o">([</span>Makefile<span class="o">])</span>
+</span><span class="line">
+</span><span class="line"><span class="c"># Generate the output</span>
+</span><span class="line">AC_OUTPUT
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>Makefile.am</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="make"><span class="line"><span class="nv">bin_PROGRAMS</span> <span class="o">=</span> hello
+</span><span class="line"><span class="nv">hello_SOURCES</span> <span class="o">=</span> hello.c
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>hello.c</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="cp">#include &lt;stdio.h&gt;</span>
+</span><span class="line"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">**</span> <span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">  <span class="n">printf</span><span class="p">(</span><span class="s">&quot;hello world!</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+</span><span class="line">  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>That’s the minimal build script you need for your first autoconf program.
+Let’s try what we’ve got with this setup. Make sure your are in the <code>example-1</code>
+directory.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="c"># this creates the configure script</span>
+</span><span class="line"><span class="nv">$ </span>autoreconf --verbose --install --force
+</span><span class="line"><span class="nv">$ </span>./configure --help
+</span><span class="line"><span class="nv">$ </span>./configure
+</span><span class="line">ecking <span class="k">for </span>a BSD-compatible install... /usr/bin/install -c
+</span><span class="line">checking whether build environment is sane... yes
+</span><span class="line">checking <span class="k">for </span>a thread-safe mkdir -p... build-aux/install-sh -c -d
+</span><span class="line">checking <span class="k">for </span>mawk... no
+</span><span class="line">...
+</span><span class="line">config.status: creating Makefile
+</span><span class="line">config.status: executing depfiles commands
+</span><span class="line"><span class="c"># Now try the makefile</span>
+</span><span class="line"><span class="nv">$ </span>make
+</span><span class="line">gcc -DPACKAGE_NAME<span class="o">=</span><span class="se">\&quot;</span>hello<span class="se">\&quot;</span> -DPACKAGE_TARNAME<span class="o">=</span><span class="se">\&quot;</span>hello<span class="se">\&quot;</span> -DPACKAGE_VERSION<span class="o">=</span><span class="se">\&quot;</span>1.0<span class="se">\&quot;</span> -DPACKAGE_STRING<span class="o">=</span><span class="se">\&quot;</span>hello<span class="se">\ </span>1.0<span class="se">\&quot;</span> -DPACKAGE_BUGREPORT<span class="o">=</span><span class="se">\&quot;\&quot;</span> -DPACKAGE_URL<span class="o">=</span><span class="se">\&quot;\&quot;</span> -DPACKAGE<span class="o">=</span><span class="se">\&quot;</span>hello<span class="se">\&quot;</span> -DVERSION<span class="o">=</span><span class="se">\&quot;</span>1.0<span class="se">\&quot;</span> -I.     -g -O2 -MT hello.o -MD -MP -MF .deps/hello.Tpo -c -o hello.o hello.c
+</span><span class="line">mv -f .deps/hello.Tpo .deps/hello.Po
+</span><span class="line">gcc  -g -O2   -o hello hello.o
+</span><span class="line"><span class="c"># We now have the hello program built</span>
+</span><span class="line"><span class="nv">$ </span>./hello
+</span><span class="line">hello world!
+</span><span class="line"><span class="c"># Create hello-1.0.tar.gz that contains the configure script</span>
+</span><span class="line"><span class="nv">$ </span>make dist
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>You  might think this is overkill for a hello world program, but you can also
+think in another way. Just adding the <code>configure.ac</code> and <code>Makefile.am</code> made a
+simple hello world program looks like a serious production ready project (with
+all these fancy configure checks and compiler flags).</p>
+
+<p>Let’s iterate through each of the build script.</p>
+
+<h1 id="configureac">configure.ac</h1>
+
+<p>The syntax for <code>configure.ac</code> is <code>MACRO_NAME([param-1],[param-2]..)</code>. The
+parameter passed to the macro must be quoted by square brackets, (unless it is
+another macro that you want to expand BEFORE calling the outer macro, which is
+very rare). The macros will expands to shell script that perform the actual
+checks. You can also write shell script in your configure.ac file. Just one
+difference, you should use <code>if test &lt;expression&gt;; then...</code> instead of 
+<code>if [[ &lt;expression&gt; ]]; then...</code> for condition branching, because the square
+brackets would get expanded by the autoconf macro system.</p>
+
+<ul>
+  <li>
+    <p><code>AC_INIT(package, version, [bug-report], [tarname], [url])</code> In every autoconf
+configure script, you must first initialize autoconf with this macro. The
+square braket that wraps around each parameter cannot be omitted.</p>
+  </li>
+  <li>
+    <p><code>AC_CONFIG_SRCDIR(dir)</code> Next we specify a unique file identifying we are in
+the right directory. This is a safety check in case user override the –srcdir
+command line option.</p>
+  </li>
+  <li>
+    <p><code>AC_CONFIG_AUX_DIR(dir)</code> By default autoconf will create many auxiliary files
+that help to build and distribute the programs. However we don’t want to have
+these files to mess up the project home directory. In convention we call this
+macro with <code>[build-aux]</code> so that it put these extra files in <code>build-aux/</code>
+instead of project home.</p>
+  </li>
+  <li>
+    <p><code>AM_INIT_AUTOMAKE([options])</code> Initializes automake. An important note here is
+in early phase of your project development, you probably want to provide the
+option <code>foreign</code> to init automake. If foreign wasn’t provided, automake will
+complain that your project didn’t confirm to gnu coding standards, which would
+require you to have README, ChangLog, AUTHORS, and many other files in your
+project’s home directory.</p>
+  </li>
+  <li>
+    <p><code>AC_PROG_CC</code> Checks for a valid C compiler. There are hundreds more checks you
+can put in this section.</p>
+  </li>
+  <li>
+    <p><code>AC_CONFIG_FILES(files)</code> Required by automake to create the output file. Here
+we simply put the <code>Makefile</code> in. Checks the automake documentation for more
+detail.
+<a href="https://www.gnu.org/software/automake/manual/html_node/Requirements.html">automake</a>.</p>
+  </li>
+  <li>
+    <p><code>AC_OUTPUT</code> Creates the configure script</p>
+  </li>
+</ul>
+
+<h1 id="makefileam">Makefile.am</h1>
+
+<p>The automake file <code>Makefile.am</code> is an extension to Makefile. You can write
+standard make syntax, but normally you only need to define variables that
+conforms to the <a href="https://www.gnu.org/software/automake/manual/html_node/Uniform.html">uniform naming scheme</a>. In this post I’ll only give
+rough explanation, and dive in more detail in next post.</p>
+
+<ul>
+  <li>
+    <p><code>bin_PROGRAMS = hello</code> The output is a PROGRAM (other options are LIBRARY,
+HEADER, MAN, etc.) named <code>hello</code>, and will be installed in bin directory
+(default to <code>/usr/local/bin</code>, but can be configured when invoking
+<code>./configure</code>.</p>
+  </li>
+  <li>
+    <p><code>hello_SOURCES = hello.c</code> The sources of hello program is hello.c</p>
+  </li>
+</ul>
+
+<p>The complete program can be found in my github repository: 
+<a href="https://github.com/dryman/autoconf-tutorials/tree/master/example-1">Example 1</a>.</p>
+
+<h1 id="more-make-commands">More make commands</h1>
+
+<p>The Makefile generated by Autoconf and automake has more commands that you can
+run:</p>
+
+<ul>
+  <li>
+    <p><code>make all</code>
+Build programs, libraries, documentation, etc. (same as make).</p>
+  </li>
+  <li>
+    <p><code>make install</code>
+Install what needs to be installed, copying the files from the package’s tree to system-wide directories.</p>
+  </li>
+  <li>
+    <p><code>make install-strip</code>
+Same as make install, then strip debugging symbols. Some users like to trade space for useful bug reports…</p>
+  </li>
+  <li>
+    <p><code>make uninstall</code>
+The opposite of make install: erase the installed files. (This needs to be run from the same build tree that was installed.)</p>
+  </li>
+  <li>
+    <p><code>make clean</code>
+Erase from the build tree the files built by make all.</p>
+  </li>
+  <li>
+    <p><code>make maintainer-clean</code>
+Erase files that generated by autoconf.</p>
+  </li>
+  <li>
+    <p><code>make distclean</code>
+Additionally erase anything ./configure created.</p>
+  </li>
+  <li>
+    <p><code>make check</code>
+Run the test suite, if any.</p>
+  </li>
+  <li>
+    <p><code>make installcheck</code>
+Check the installed programs or libraries, if supported.</p>
+  </li>
+  <li>
+    <p><code>make dist</code>
+Recreate package-version.tar.gz from all the source files.</p>
+  </li>
+</ul>
+
+<p>When I first survey what build system I should pick for my own projects, I often
+see other alternatives claiming autoconf is old and hard to use. This is
+partially true, but the more I dig in the more I found how powerful autoconf is.
+As you see, this example can already cover many common cases, with a succinct
+build script and very powerful output. The package created by <code>make dist</code>
+only requires a minimal unix compatible environment (shell and make) to run.</p>
+
+<p>In the next post I’ll cover more detail in the autoconf syntax and Automake
+syntax.</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li><a href="http://www.gnu.org/software/autoconf/autoconf.html">Autoconf</a></li>
+  <li><a href="https://www.gnu.org/software/automake/">Automake</a></li>
+  <li><a href="https://autotools.io/index.html">Autoconf myth buster</a></li>
+  <li><a href="http://www.lrde.epita.fr/~adl/autotools.html">Autotools tutorials</a></li>
+</ul>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-03-10T14:55:00-08:00" pubdate data-updated="true">Mar 10<span>th</span>, 2016</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/autoconf/'>autoconf</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2016/03/10/autoconf-tutorial-1/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2016/03/10/autoconf-tutorial-1/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left articlenav" href="/blog/2014/12/02/writing-64-bit-assembly-on-mac-os-x/" title="Previous Post: Writing 64 bit assembly on Mac OS X">&laquo; Writing 64 bit assembly on Mac OS X</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/03/10/autoconf-tutorial-1/">Autoconf Tutorial Part-1</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/12/02/writing-64-bit-assembly-on-mac-os-x/">Writing 64 bit assembly on Mac OS X</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/11/29/integer-promotion-part-2/">Integer Promotion Part 2</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/03/06/introducing-hadoop-fieldformat/">Introducing Hadoop-FieldFormat</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/03/05/hadoop-performance-tuning-best-practices/">Hadoop performance tuning best practices</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/26/setting-up-jasper-server-on-linux/">Setting up Jasper Server on Linux</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/27/capture-path-info-in-hadoop-inputformat-class/">Capture path info in hadoop InputFormat class</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/26/capture-directory-context-in-hadoop-mapper/">Capture directory context in Hadoop Mapper</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/23/yet-another-monad-tutorial/">Yet Another Monad Tutorial in 15 Minutes</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2013/10/03/convert-uf8-literals-in-java/">Convert utf8 literals in Java</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("idryman", 4, true);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/idryman" class="twitter-follow-button" data-show-count="false">Follow @idryman</a>
+  
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - dryman (Felix Ren-Chyan Chern) -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'dryblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.idryman.org/blog/2016/03/10/autoconf-tutorial-1/';
+        var disqus_url = 'http://www.idryman.org/blog/2016/03/10/autoconf-tutorial-1/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+<!--
+hn like button plugin for jekyll/octopress
+Author: dryman (Felix Ren-Chyan Chern)
+
+Inpired from http://hnlike.com/ written by sbashyal
+
+(The MIT License)
+
+Copyright © 2012-2013 Felix Ren-Chyan Chern
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the ‘Software’), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED ‘AS IS’, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+  <script type="text/javascript">
+    (function(){
+      var hn_like = document.createElement('iframe');
+      hn_like.frameborder="no";
+      hn_like.scrolling="no";
+      hn_like.height="28px";
+      hn_like.width="115px";
+      hn_like.src = "http://hnlike.com/upvote.php?link="
+                    + encodeURIComponent(document.location)
+                    + "&title="
+                    + encodeURIComponent("Autoconf Tutorial Part-1");
+      hn_like.innerHTML="iframes not supported by your browser";
+      var twitter = document.getElementsByClassName("twitter-share-button")[0];
+
+      twitter.parentNode.insertBefore(
+        hn_like,
+        twitter
+      );
+    })();
+  </script>
+
+<!-- end of hn like button -->
+
+
+
+
+<script type="text/javascript">
+ $(function() {
+        /* For zebra striping */
+        $("table tr:nth-child(odd)").addClass("odd-row");
+        /* For cell text alignment */
+        $("table td:first-child, table th:first-child").addClass("first");
+        /* For removing the last border */
+        $("table td:last-child, table th:last-child").addClass("last");
+});
+</script>
+
+
+</body>
+</html>
