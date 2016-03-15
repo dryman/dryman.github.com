@@ -4,7 +4,7 @@
   <title><![CDATA[Category: autoconf | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/autoconf/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2016-03-15T13:04:05-07:00</updated>
+  <updated>2016-03-15T13:06:37-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -14,10 +14,10 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Autconf Tutorial Part-3]]></title>
-    <link href="http://www.idryman.org/blog/2016/03/15/autconf-tutorial-part-3/"/>
+    <title type="html"><![CDATA[Autoconf Tutorial Part-3]]></title>
+    <link href="http://www.idryman.org/blog/2016/03/15/autoconf-tutorial-part-3/"/>
     <updated>2016-03-15T10:02:00-07:00</updated>
-    <id>http://www.idryman.org/blog/2016/03/15/autconf-tutorial-part-3</id>
+    <id>http://www.idryman.org/blog/2016/03/15/autoconf-tutorial-part-3</id>
     <content type="html"><![CDATA[<p>In this post I’ll show an example of how to write a cross-plaform OpenGL
 program. We’ll explore more autoconf features, including <code>config.h</code>, third party
 libraries, and many more.</p>
