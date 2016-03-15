@@ -1,0 +1,818 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Autoconf Tutorial Part-2 - Carpe diem (Felix's blog)</title>
+  <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
+
+  
+  <meta name="description" content="This is the second post of the autoconf tutorial series. In this post I’ll cover
+some fundamental units in autoconf and automake, and an example &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://www.idryman.org/blog/2016/03/14/autoconf-tutorial-2/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Carpe diem (Felix's blog)" type="application/atom+xml">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- mathjax config similar to math.stackexchange -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/HTML-CSS"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-23425996-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <!--div id="logo">
+  	<div id="logoLeft">{</div>
+  	<div id="logoText">mob</div>
+  	<div id="logoRight">}</div>
+  	<div class="clear"></div>
+  </div-->
+  <h1><a href="/">Carpe diem (Felix's blog)</a></h1>
+  
+    <h2>I am a happy developer</h2>
+  
+  <div class="clear"></div>
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:www.idryman.org" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about-me">About Me</a></li>
+  <li><a href="https://github.com/dryman">Github</a></li>
+  <li><a href="http://idryman.tumblr.com/">Drawings</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      
+        <h1 class="entry-title">Autoconf Tutorial Part-2</h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-03-14T16:28:00-07:00" pubdate data-updated="true">Mar 14<span>th</span>, 2016</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>This is the second post of the autoconf tutorial series. In this post I’ll cover
+some fundamental units in autoconf and automake, and an example cross platform
+X11 program that uses the concepts in this post. After reading this post, you
+should be able to write your own build script for small scope projects.</p>
+
+<!-- more -->
+
+<h2 id="autoconf">Autoconf</h2>
+
+<p>Autoconf is part of the GNU Autotools build system. Autotools is a collection of
+three main packages: autoconf, automake, and libtools. Each of the package has
+smaller sub-packages including autoheader, aclocal, autoscan etc. I won’t cover
+the details of all the packages; instead I’ll only focus on how autoconf plays
+its role in the build chain.</p>
+
+<p>Autoconf is mainly used to generate the <code>configure</code> script.  <code>configure</code> is a
+<strong>shell script</strong> that detects the build environment, and output proper build
+flags to the Makefile, and preprocessor macros (like <code>HAVE_ALLOCA_H</code>) to
+<code>config.h</code>. However, writing a good portable, extensible shell script isn’t
+easy. This is where the <a href="http://www.gnu.org/software/m4/m4.html">gnu m4 macro</a> comes in. <a href="http://www.gnu.org/software/m4/m4.html">Gnu m4 macro</a> is an
+implementation of the traditional UNIX macro processor. By using m4, you can
+easily create portable shell script, include different pre-defined macros, and
+define your own extensions easily.</p>
+
+<p>In short, autoconf syntax is shell script wrapped by <a href="http://www.gnu.org/software/m4/m4.html">gnu m4 macro</a>.</p>
+
+<p>In the early days, writing portable shell scripts wasn’t that easy. For example
+not all the <code>mkdir</code> support <code>-p</code> option, not all the shells are bash
+compatible, etc. Using the m4 macro to perform the regular shell logics, like
+<code>AS_IF</code> instead if <code>if [[ ]]; then...</code>, <code>AS_MKDIR_P</code> instead of <code>mkdir -p</code>,
+<code>AS_CASE</code> instead of <code>case ... esac</code> makes your configure script works better on
+all unix/unix-like environment, and more conventional. Most of the time you’ll
+be using macros instead of bare bone shell script, but keep in mind that behind
+the scene your final output is still shell script.</p>
+
+<h3 id="m4-macro-basics">M4 Macro Basics</h3>
+
+<p>Though the first look at M4 macros is very alien and unfriendly, but it only
+consist two basic concepts:</p>
+
+<ul>
+  <li>Macro expansion</li>
+  <li>Quoting</li>
+</ul>
+
+<p>You can define a macro like so:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="c"># define a macro MY_MACRO that expands to text ABC</span>
+</span><span class="line">m4_define<span class="o">([</span>MY_MACRO<span class="o">]</span>, <span class="o">[</span>ABC<span class="o">])</span>
+</span><span class="line"><span class="nv">MY_MACRO</span> <span class="o">=</span>&gt; ABC
+</span><span class="line">
+</span><span class="line"><span class="c"># define a macro that is visible to other m4 scripts</span>
+</span><span class="line">AC_DEFUN<span class="o">([</span>MY_MACRO<span class="o">]</span>, <span class="o">[</span>ABC<span class="o">])</span>
+</span><span class="line"><span class="nv">MY_MACRO</span> <span class="o">=</span>&gt; ABC
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>It’s pretty much similar to C macro or Lisp macro. The macro expands at compile
+time (<code>configure.ac</code> =&gt; <code>configure</code>). You can define a macro <code>MY_MACRO</code> that
+expands to a snippet of shell script. Here we just expands it to <code>ABC</code>, which
+doesn’t have any meaning in shell script and can trigger an error.</p>
+
+<p>Every symbol in your script is expandable. For example if you simply write <code>ABC</code>
+in your script, is it a shell symbol, or is it a m4 symbol that needs to expand?
+The m4 system uses <strong>quoting</strong> to differentiate the two. The default quoting in
+autoconf is square brackets <code>[</code>, <code>]</code>. Though you can change it, but it is highly
+unrecommended.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">ABC   <span class="c"># m4 would try to find *macro* definition of ABC and try to expand it</span>
+</span><span class="line"><span class="o">[</span>ABC<span class="o">]</span> <span class="c"># shell symbol ABC</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Why does it matter? Consider these two examples</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="nv">ABC</span><span class="o">=</span><span class="s2">&quot;hello world&quot;</span>     <span class="c"># m4 would try to expand ABC, hello, and world</span>
+</span><span class="line"><span class="o">[</span><span class="nv">ABC</span><span class="o">=</span><span class="s2">&quot;hello world&quot;</span><span class="o">]</span>   <span class="c"># m4 would just produce ABC=&quot;hello world&quot; to the output</span>
+</span><span class="line">
+</span><span class="line"><span class="c"># m4 will expand MY_MACRO and BODY *before* defining MY_MACRO as a symbol to</span>
+</span><span class="line"><span class="c"># BODY.</span>
+</span><span class="line">AC_DEFUN<span class="o">(</span>MY_MACRO, BODY<span class="o">)</span>
+</span><span class="line">
+</span><span class="line"><span class="c"># safe</span>
+</span><span class="line">AC_DEFUN<span class="o">([</span>MY_MACRO<span class="o">]</span>, <span class="o">[</span>BODY<span class="o">])</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>This is the base of all m4 macros. To recap, <strong>always quote the arguments for
+the macros, including symbols, expressions, or body statements</strong>. (I skipped
+some edge cases that requires double quoting or escapes, for the curious please
+check <a href="https://www.gnu.org/software/autoconf/manual/autoconf-2.69/html_node/Autoconf-Language.html">the autoconf language</a>).</p>
+
+<h3 id="printing-messages">Printing Messages</h3>
+
+<p>Now we know the basic syntax of m4, let’s see what are the functions it
+provides. In the configure script, if you invoke <code>echo</code> directly the output
+would be redirected to different places. The convention to print message in
+autoconf, is to use <code>AC_MSG_*</code> macros. Here are the two macros that is most
+commonly used:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="c"># Printing regular message</span>
+</span><span class="line">AC_MSG_NOTICE<span class="o">([</span>Greetings from Autoconf<span class="o">])</span>
+</span><span class="line">
+</span><span class="line"><span class="c"># Prints an error message and stops the configure script</span>
+</span><span class="line">AC_MSG_ERROR<span class="o">([</span>We have an error here!<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>For the more curious, check the <a href="https://www.gnu.org/software/autoconf/manual/autoconf-2.60/html_node/Printing-Messages.html">Printing Messages</a> section in autoconf
+manual.</p>
+
+<h3 id="if-condition">If-condition</h3>
+
+<p>To write an if condition in autoconf, simply invoke 
+<code>AS_IF(test-1, [run-if-true-1], ..., [run-if-false])</code>.
+The best way to see how it works is by looking an example:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="nv">abc</span><span class="o">=</span><span class="s2">&quot;yes&quot;</span>
+</span><span class="line"><span class="nv">def</span><span class="o">=</span><span class="s2">&quot;no&quot;</span>
+</span><span class="line">AS_IF<span class="o">([</span><span class="nb">test</span> <span class="s2">&quot;X$abc&quot;</span> <span class="o">=</span> <span class="s2">&quot;Xyes&quot;</span><span class="o">]</span>,             <span class="c"># test condition</span>
+</span><span class="line">      <span class="o">[</span>AC_MSG_NOTICE<span class="o">([</span>abc is yes<span class="o">])]</span>,       <span class="c"># then case</span>
+</span><span class="line">      <span class="o">[</span><span class="nb">test</span> <span class="s2">&quot;X$def&quot;</span> <span class="o">=</span> <span class="s2">&quot;Xyes&quot;</span><span class="o">]</span>,             <span class="c"># else if</span>
+</span><span class="line">      <span class="o">[</span>AC_MSG_NOTICE<span class="o">([</span>def is yes<span class="o">])]</span>,
+</span><span class="line">      <span class="o">[</span>AC_MSG_ERROR<span class="o">([</span>abc check failed<span class="o">])]</span>   <span class="c"># else case</span>
+</span><span class="line">     <span class="o">)</span>
+</span><span class="line">
+</span><span class="line"><span class="c"># expands to the following shell script</span>
+</span><span class="line"><span class="nv">abc</span><span class="o">=</span><span class="s2">&quot;yes&quot;</span>
+</span><span class="line"><span class="nv">def</span><span class="o">=</span><span class="s2">&quot;no&quot;</span>
+</span><span class="line"><span class="k">if </span><span class="nb">test</span> <span class="s2">&quot;X$abc&quot;</span> <span class="o">=</span> <span class="s2">&quot;Xyes&quot;</span>; <span class="k">then</span> :
+</span><span class="line">  <span class="c"># test condition</span>
+</span><span class="line">       <span class="nv">$as_echo</span> <span class="s2">&quot;$as_me: abc is yes&quot;</span> &gt;&amp;6
+</span><span class="line"><span class="k">elif</span> <span class="c"># then case</span>
+</span><span class="line">       <span class="nb">test</span> <span class="s2">&quot;X$def&quot;</span> <span class="o">=</span> <span class="s2">&quot;Xyes&quot;</span>; <span class="k">then</span> :
+</span><span class="line">  <span class="c"># else if</span>
+</span><span class="line">       <span class="nv">$as_echo</span> <span class="s2">&quot;$as_me: def is yes&quot;</span> &gt;&amp;6
+</span><span class="line"><span class="k">else</span>
+</span><span class="line"><span class="k">  </span>as_fn_error <span class="nv">$?</span> <span class="s2">&quot;abc check failed&quot;</span>   <span class="c"># else case</span>
+</span><span class="line"><span class="k">fi</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Note that we don’t use common shell test operator <code>[[</code> and <code>]]</code>, instead we use
+<code>test</code> because the square bracket is preserved for macro expansion. The
+recommended way to invoke test is <code>test "X$variable" = "Xvalue"</code>. This is how we
+avoid null cases of the shell variable.</p>
+
+<p>Another common branching function is <code>AS_CASE(word, [pattern1], [if-matched1], ..., [default])</code>
+the logic is pretty much the same.</p>
+
+<p>That all the basics we need to know for autoconf, let’s take a break and switch
+to automake.</p>
+
+<h2 id="automake">Automake</h2>
+
+<p>Like autoconf, automake is additional semantics on top of another existing
+language – the Makefile syntax. Unlike autoconf, it’s not using m4 to extend
+the syntax. It uses a naming convention that converts to the actual logic. Most
+of the time, we only need to use the following two rules, which we’ll discuss in
+detail.</p>
+
+<ul>
+  <li><code>where_PRIMARY = targets</code></li>
+  <li><code>target_SECONDARY = inputs</code></li>
+</ul>
+
+<h3 id="whereprimary--targets"><code>where_PRIMARY = targets</code></h3>
+
+<p>This syntax has three parts, <code>targets</code>, type <code>PRIMARY</code>, and where to install
+<code>where</code>. Some examples shown as below:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="make"><span class="line"><span class="c"># target &quot;hello&quot; is a program that will be installed in $bindir</span>
+</span><span class="line"><span class="nv">bin_PROGRAMS</span> <span class="o">=</span> hello
+</span><span class="line">
+</span><span class="line"><span class="c"># target &quot;libabc&quot; is a library that will be installed in $libdir</span>
+</span><span class="line"><span class="nv">lib_LIBRARIES</span> <span class="o">=</span> libabc.la
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The <code>targets</code> is a list of targets with the type <code>PRIMARY</code>. Depending on what
+<code>PRIMARY</code> is, it can be a program, a library, a shell script, or whatever
+<code>PRIMARY</code> supports. The current primary names are “PROGRAMS”, “LIBRARIES”,
+“LTLIBRARIES”, “LISP”, “PYTHON”, “JAVA”, “SCRIPTS”, “DATA”, “HEADERS”, “MANS”,
+and “TEXINFOS”.</p>
+
+<p>There are three possible type of variables you can put into the <code>where</code> clause.</p>
+
+<ul>
+  <li>
+    <p>GNU standard directory variables (bindir, sbindir, includedir, etc.) omitting
+the suffix “dir”. See <a href="https://www.gnu.org/prep/standards/html_node/Directory-Variables.html">GNU Coding Standard - Directory Variables</a> for
+list of predefined directories. Automake extends this list with <code>pkgdatadir</code>,
+<code>pkgincludedir</code>, <code>pkglibdir</code>, and <code>pkglibexecdir</code> Automake will check if your
+target is valid to install the directory you specified.</p>
+  </li>
+  <li>
+    <p>Self-defined directories. You can hack around automake default type check by
+defining your own directories. Do not do this unless you have a good reason!</p>
+  </li>
+</ul>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="make"><span class="line"><span class="c"># Work around forbidden directory combinations.  Do not use this</span>
+</span><span class="line"><span class="c"># without a very good reason!</span>
+</span><span class="line"><span class="nv">my_execbindir</span> <span class="o">=</span> <span class="k">$(</span>pkglibdir<span class="k">)</span>
+</span><span class="line"><span class="nv">my_doclibdir</span> <span class="o">=</span> <span class="k">$(</span>docdir<span class="k">)</span>
+</span><span class="line"><span class="nv">my_execbin_PROGRAMS</span> <span class="o">=</span> foo
+</span><span class="line"><span class="nv">my_doclib_LIBRARIES</span> <span class="o">=</span> libquux.a
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<ul>
+  <li>Special prefixes <code>noinst_</code>, <code>check_</code>, <code>dist_</code>, <code>nodist_</code>, <code>nobase_</code>, and
+ <code>notrans_</code>. <code>noinst_</code> indicates the targets that you don’t want to install;
+ <code>check_</code> is used for unit tests. For the others are less common, please check
+ the automake manual for detail.</li>
+</ul>
+
+<h3 id="targetsecondary--inputs"><code>target_SECONDARY = inputs</code></h3>
+
+<p>Depending on what your <code>PRIMARY</code> type is, there are different <code>SECONDARY</code> types
+you can use for further logic. The common <code>SECONDARY</code> types are</p>
+
+<ul>
+  <li><code>_SOURCES</code> defines the source for primary type <code>_PROGRAMS</code> or <code>_LIBRARIES</code></li>
+  <li><code>_CFLAGS</code>, <code>_LDFLAGS</code>, etc. compiler flags used for primary type <code>_PROGRAMES</code>
+ or <code>_LIBRARIES</code></li>
+</ul>
+
+<p>Note that the invalid character in <code>target</code> name will get substituted with
+underscore. The following example illustrate all the above:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="make"><span class="line"><span class="nv">lib_LTLIBRARIES</span> <span class="o">=</span> libgettext.la
+</span><span class="line"><span class="c"># the dot got substituted with underscore</span>
+</span><span class="line"><span class="nv">libgettext_la_SOURCES</span> <span class="o">=</span> gettext.c gettext.h
+</span><span class="line"><span class="nv">include_HEADERS</span> <span class="o">=</span> gettext.h
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The example above requires <a href="https://www.gnu.org/software/libtool/">libtool</a>. You need to declare
+<code>AC_PROG_LIBTOOL</code> in your <code>configure.ac</code> for it to work.</p>
+
+<h2 id="wraps-it-up---a-x11-example-program">Wraps it up - A X11 example program</h2>
+
+<p>With everything we learnt so far, let’s write a more complicated autoconf
+program. This is a very simple X11 program that aims to be portable on all
+existing platforms with valid X11 installed. To test if X11 is installed, we use
+the macro <code>AC_PATH_XTRA</code>, the manual for this macro is defined in 
+<a href="https://www.gnu.org/software/autoconf/manual/autoconf-2.67/html_node/System-Services.html">autoconf existing test for system services</a>.</p>
+
+<p>The manual says: An enhanced version of <code>AC_PATH_X</code>. It adds the C compiler flags
+that X needs to output variable <code>X_CFLAGS</code>, and the X linker flags to <code>X_LIBS</code>.
+Define <code>X_DISPLAY_MISSING</code> if X is not available. And in the <code>AC_PATH_X</code> it
+states “If this method fails to find the X Window System … set the shell
+variable no_x to ‘yes’; otherwise set it to the empty string”. We can use the
+logic and write our <code>configure.ac</code> script as following:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">AC_INIT<span class="o">([</span>x11-example<span class="o">]</span>, <span class="o">[</span>1.0<span class="o">])</span>
+</span><span class="line">
+</span><span class="line"><span class="c"># safety check in case user overwritten --srcdir</span>
+</span><span class="line">AC_CONFIG_SRCDIR<span class="o">([</span>x11-example.c<span class="o">])</span>
+</span><span class="line">
+</span><span class="line">AC_CONFIG_AUX_DIR<span class="o">([</span>build-aux<span class="o">])</span>
+</span><span class="line">
+</span><span class="line">AM_INIT_AUTOMAKE<span class="o">([</span>-Wall -Werror foreign<span class="o">])</span>
+</span><span class="line">
+</span><span class="line"><span class="c"># Check for C compiler</span>
+</span><span class="line">AC_PROG_CC
+</span><span class="line">
+</span><span class="line"><span class="c"># Check for X11</span>
+</span><span class="line"><span class="c"># It exports variable X_CFLAGS and X_LIBS</span>
+</span><span class="line">AC_PATH_XTRA
+</span><span class="line">
+</span><span class="line"><span class="c"># AC_PATH_XTRA doesn&#39;t error out by default,</span>
+</span><span class="line"><span class="c"># hence we need to do it manually</span>
+</span><span class="line">AS_IF<span class="o">([</span><span class="nb">test</span> <span class="s2">&quot;X$no_x&quot;</span> <span class="o">=</span> <span class="s2">&quot;Xyes&quot;</span><span class="o">]</span>,
+</span><span class="line">  <span class="o">[</span>AC_MSG_ERROR<span class="o">([</span>Could not find X11<span class="o">])])</span>
+</span><span class="line">
+</span><span class="line">AC_CONFIG_FILES<span class="o">([</span>Makefile<span class="o">])</span>
+</span><span class="line">
+</span><span class="line">AC_OUTPUT
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Note that the <code>AC_PATH_XTRA</code> export variables <code>X_CFLAGS</code> and <code>X_LIBS</code>. To use
+these variables in <code>Makefile.am</code>, just surround it with <code>@</code>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="make"><span class="line"><span class="nv">bin_PROGRAMS</span> <span class="o">=</span> x11-example
+</span><span class="line">
+</span><span class="line"><span class="nv">x11_example_SOURCES</span> <span class="o">=</span> x11-example.c
+</span><span class="line"><span class="nv">x11_example_CFLAGS</span> <span class="o">=</span> @X_CFLAGS@
+</span><span class="line"><span class="c"># AX_PATH_XTRA only specify the root of X11</span>
+</span><span class="line"><span class="c"># we still have to include -lX11 ourselves</span>
+</span><span class="line"><span class="nv">x11_example_LDFLAGS</span> <span class="o">=</span> @X_LIBS@ -lX11
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>That all we need to build a platform independent X11 program! Check the full
+source on <a href="https://github.com/dryman/autoconf-tutorials/tree/master/example-2">github</a>. The X11 example program was written by Brian Hammond
+2/9/96. He generously released this to public for any use.</p>
+
+<p>This program can easily work on Linux. I’ll use OSX as an example of how cross
+platform works. Before you run the example, make sure you have
+<a href="http://www.xquartz.org">XQuartz</a> installed.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="nb">cd </span>example-2
+</span><span class="line">autoreconf -vif <span class="c"># shortcut of --verbose --install --force</span>
+</span><span class="line">./configure --with-x --x-includes<span class="o">=</span>/opt/X11/include/ --x-libraries<span class="o">=</span>/opt/X11/lib
+</span><span class="line">make
+</span><span class="line">./x11-example
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Change the <code>--x-includes</code> and <code>--x-libraries</code> to proper directory if you
+installed the xquartz to a different location.</p>
+
+<p>I only introduced very little syntax for autoconf (if-else, print message) and
+automake (primary/secondary rules, use of export variables by <code>@</code>). But just
+using these basic component is already very sufficient for writing conventional
+build scripts. How to do it? Check the [existing tests provided by
+autoconf][exsisting test]. Here are some of the most commonly used existing
+checks:</p>
+
+<ul>
+  <li>Library checks: <code>AC_CHECK_LIB</code> <code>AC_SEARCH_LIBS</code>. <a href="https://www.gnu.org/software/autoconf/manual/autoconf-2.67/html_node/Libraries.html">library documentation</a>.</li>
+  <li>Header checks: <code>AC_CHECK_HEADER[S]</code>. <a href="https://www.gnu.org/software/autoconf/manual/autoconf-2.67/html_node/Generic-Headers.html">header documentation</a>.</li>
+  <li><a href="https://www.gnu.org/software/autoconf/manual/autoconf-2.67/html_node/Compilers-and-Preprocessors.html">Compiler characteristics</a>.</li>
+</ul>
+
+<p>For the checks that are not included in the default autoconf package, it
+probably exists in the extended package <a href="http://www.gnu.org/software/autoconf-archive">autoconf archive</a>, which I’ll
+cover in the next post.</p>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-03-14T16:28:00-07:00" pubdate data-updated="true">Mar 14<span>th</span>, 2016</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/autoconf/'>autoconf</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2016/03/14/autoconf-tutorial-2/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2016/03/14/autoconf-tutorial-2/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left articlenav" href="/blog/2016/03/10/autoconf-tutorial-1/" title="Previous Post: Autoconf Tutorial Part-1">&laquo; Autoconf Tutorial Part-1</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/03/14/autoconf-tutorial-2/">Autoconf Tutorial Part-2</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/03/10/autoconf-tutorial-1/">Autoconf Tutorial Part-1</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/12/02/writing-64-bit-assembly-on-mac-os-x/">Writing 64 bit assembly on Mac OS X</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/11/29/integer-promotion-part-2/">Integer Promotion Part 2</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/03/06/introducing-hadoop-fieldformat/">Introducing Hadoop-FieldFormat</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/03/05/hadoop-performance-tuning-best-practices/">Hadoop performance tuning best practices</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/26/setting-up-jasper-server-on-linux/">Setting up Jasper Server on Linux</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/27/capture-path-info-in-hadoop-inputformat-class/">Capture path info in hadoop InputFormat class</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/26/capture-directory-context-in-hadoop-mapper/">Capture directory context in Hadoop Mapper</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/23/yet-another-monad-tutorial/">Yet Another Monad Tutorial in 15 Minutes</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("idryman", 4, true);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/idryman" class="twitter-follow-button" data-show-count="false">Follow @idryman</a>
+  
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - dryman (Felix Ren-Chyan Chern) -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'dryblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.idryman.org/blog/2016/03/14/autoconf-tutorial-2/';
+        var disqus_url = 'http://www.idryman.org/blog/2016/03/14/autoconf-tutorial-2/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+<!--
+hn like button plugin for jekyll/octopress
+Author: dryman (Felix Ren-Chyan Chern)
+
+Inpired from http://hnlike.com/ written by sbashyal
+
+(The MIT License)
+
+Copyright © 2012-2013 Felix Ren-Chyan Chern
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the ‘Software’), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED ‘AS IS’, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+  <script type="text/javascript">
+    (function(){
+      var hn_like = document.createElement('iframe');
+      hn_like.frameborder="no";
+      hn_like.scrolling="no";
+      hn_like.height="28px";
+      hn_like.width="115px";
+      hn_like.src = "http://hnlike.com/upvote.php?link="
+                    + encodeURIComponent(document.location)
+                    + "&title="
+                    + encodeURIComponent("Autoconf Tutorial Part-2");
+      hn_like.innerHTML="iframes not supported by your browser";
+      var twitter = document.getElementsByClassName("twitter-share-button")[0];
+
+      twitter.parentNode.insertBefore(
+        hn_like,
+        twitter
+      );
+    })();
+  </script>
+
+<!-- end of hn like button -->
+
+
+
+
+<script type="text/javascript">
+ $(function() {
+        /* For zebra striping */
+        $("table tr:nth-child(odd)").addClass("odd-row");
+        /* For cell text alignment */
+        $("table td:first-child, table th:first-child").addClass("first");
+        /* For removing the last border */
+        $("table td:last-child, table th:last-child").addClass("last");
+});
+</script>
+
+
+</body>
+</html>
