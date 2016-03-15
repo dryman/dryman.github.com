@@ -1,0 +1,699 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Autconf Tutorial Part-3 - Carpe diem (Felix's blog)</title>
+  <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
+
+  
+  <meta name="description" content="In this post I’ll show an example of how to write a cross-plaform OpenGL
+program. We’ll explore more autoconf features, including config.h, third &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://www.idryman.org/blog/2016/03/15/autconf-tutorial-part-3/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Carpe diem (Felix's blog)" type="application/atom+xml">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- mathjax config similar to math.stackexchange -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/HTML-CSS"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-23425996-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <!--div id="logo">
+  	<div id="logoLeft">{</div>
+  	<div id="logoText">mob</div>
+  	<div id="logoRight">}</div>
+  	<div class="clear"></div>
+  </div-->
+  <h1><a href="/">Carpe diem (Felix's blog)</a></h1>
+  
+    <h2>I am a happy developer</h2>
+  
+  <div class="clear"></div>
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:www.idryman.org" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about-me">About Me</a></li>
+  <li><a href="https://github.com/dryman">Github</a></li>
+  <li><a href="http://idryman.tumblr.com/">Drawings</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      
+        <h1 class="entry-title">Autconf Tutorial Part-3</h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-03-15T10:02:00-07:00" pubdate data-updated="true">Mar 15<span>th</span>, 2016</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>In this post I’ll show an example of how to write a cross-plaform OpenGL
+program. We’ll explore more autoconf features, including <code>config.h</code>, third party
+libraries, and many more.</p>
+
+<!-- more -->
+
+<h2 id="cross-plaform-opengl">Cross plaform OpenGL</h2>
+
+<p>Although OpenGL API is basically the same on all platforms, their headers and
+linking options are very different on different plaforms! To use OpenGL on OSX,
+you must include <code>&lt;OpenGL/gl.h&gt;</code>, however on other platform you have to use
+<code>&lt;GL/gl.h&gt;</code>. Sometimes you might have multiple possible OpenGL implementation on
+the same platform. If you search for OpenGL tutorials, most of it can only built
+on one platform.</p>
+
+<p>And that where autoconf comes to play its role. I recently submit a new version
+of <a href="http://www.gnu.org/software/autoconf-archive/ax_check_gl.html">AX_CHECK_GL</a>, that can address these complicated portability issues.</p>
+
+<p>Check out the three OpenGL checking macros: <a href="http://www.gnu.org/software/autoconf-archive/ax_check_gl.html">AX_CHECK_GL</a>,
+<a href="http://www.gnu.org/software/autoconf-archive/ax_check_glu.html">AX_CHECK_GLU</a>, and <a href="http://www.gnu.org/software/autoconf-archive/ax_check_glut.html">AX_CHECK_GLUT</a> on autoconf archive. The syntax
+is very easy.</p>
+
+<ul>
+  <li><code>AX_CHECK_GL([ACTION-IF-FOUND],[ACTION-IF-NOT-FOUND])</code></li>
+  <li><code>AX_CHECK_GLU([ACTION-IF-FOUND],[ACTION-IF-NOT-FOUND])</code></li>
+  <li><code>AX_CHECK_GLUT([ACTION-IF-FOUND],[ACTION-IF-NOT-FOUND])</code></li>
+</ul>
+
+<p>However, it doesn’t come with the default autoconf package, you need to include
+the third party <a href="http://www.gnu.org/software/autoconf-archive/">autoconf archive</a> in your build script. Here’s how to
+do it.</p>
+
+<h2 id="adding-extra-macros">Adding Extra Macros</h2>
+
+<p>First, install third party macros by git submodule. Alternatively you can just
+copy the macros you need, but be sure to include all the dependent macro it uses. </p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">git submodule add git@github.com:peti/autoconf-archive.git
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Next, in your <code>configure.ac</code> add the following line:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="c"># before invoking AM_INIT_AUTOMAKE</span>
+</span><span class="line">AC_CONFIG_MACRO_DIR<span class="o">([</span>autoconf-archive/m4<span class="o">])</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>After these two steps you are free to invoke 500+ macros in the archive package.</p>
+
+<h2 id="c-preprocessor-macros">C Preprocessor macros</h2>
+
+<p>Just adding the macro is not enough. You also have to pass the C preprocessor
+macros to your C program. To do so, add another line to your <code>configure.ac</code>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">AC_CONFIG_HEADERS<span class="o">([</span>config.h<span class="o">])</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>And now in your C program you can write the following to make it portable on all
+systems. The listing is availabe in the <a href="http://www.gnu.org/software/autoconf-archive/ax_check_gl.html">AX_CHECK_GL document</a>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="cp"># include &quot;config.h&quot;</span>
+</span><span class="line">
+</span><span class="line"><span class="cp">#if defined(HAVE_WINDOWS_H) &amp;&amp; defined(_WIN32)</span>
+</span><span class="line"><span class="cp"># include &lt;windows.h&gt;</span>
+</span><span class="line"><span class="cp">#endif</span>
+</span><span class="line"><span class="cp">#ifdef HAVE_GL_GL_H</span>
+</span><span class="line"><span class="cp"># include &lt;GL/gl.h&gt;</span>
+</span><span class="line"><span class="cp">#elif defined(HAVE_OPENGL_GL_H)</span>
+</span><span class="line"><span class="cp"># include &lt;OpenGL/gl.h&gt;</span>
+</span><span class="line"><span class="cp">#else</span>
+</span><span class="line"><span class="cp"># error no gl.h</span>
+</span><span class="line"><span class="cp">#endif</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="wrapping-it-up">Wrapping it up</h2>
+
+<p>The full working example can be <a href="https://github.com/dryman/autoconf-tutorials/tree/master/example-3">downloaded from here</a>. Here is the
+listing of each code:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>configure.ac</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">AC_INIT<span class="o">([</span>gl-example<span class="o">]</span>, <span class="o">[</span>1.0<span class="o">])</span>
+</span><span class="line">
+</span><span class="line">AC_CONFIG_SRCDIR<span class="o">([</span>gl-example.c<span class="o">])</span>
+</span><span class="line">AC_CONFIG_AUX_DIR<span class="o">([</span>build-aux<span class="o">])</span>
+</span><span class="line">AC_CONFIG_MACRO_DIR<span class="o">([</span>autoconf-archive/m4<span class="o">])</span>
+</span><span class="line">AM_INIT_AUTOMAKE<span class="o">([</span>-Wall -Werror foreign<span class="o">])</span>
+</span><span class="line">
+</span><span class="line">AC_PROG_CC
+</span><span class="line">
+</span><span class="line">AX_CHECK_GL
+</span><span class="line">AX_CHECK_GLUT
+</span><span class="line">
+</span><span class="line"><span class="c"># For glew you can simply use</span>
+</span><span class="line"><span class="c"># AC_CHECK_LIB([GLEW], [glewInit])</span>
+</span><span class="line">
+</span><span class="line">AC_CONFIG_HEADERS<span class="o">([</span>config.h<span class="o">])</span>
+</span><span class="line">AC_CONFIG_FILES<span class="o">([</span>Makefile<span class="o">])</span>
+</span><span class="line">
+</span><span class="line">AC_OUTPUT
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The default rule for <code>gl_example_SOURCES</code> is to look at the c program with the
+same name, thus can be omitted.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>Makefile.am</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="make"><span class="line"><span class="nv">bin_PROGRAMS</span> <span class="o">=</span> gl-example
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>gl-example.c</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+<span class="line-number">38</span>
+<span class="line-number">39</span>
+<span class="line-number">40</span>
+<span class="line-number">41</span>
+<span class="line-number">42</span>
+<span class="line-number">43</span>
+<span class="line-number">44</span>
+<span class="line-number">45</span>
+<span class="line-number">46</span>
+<span class="line-number">47</span>
+<span class="line-number">48</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="cp">#include &quot;config.h&quot;</span>
+</span><span class="line"><span class="cp">#include &lt;stdlib.h&gt;</span>
+</span><span class="line"><span class="cp"># if HAVE_WINDOWS_H &amp;&amp; defined(_WIN32)</span>
+</span><span class="line">  <span class="cp">#include &lt;windows.h&gt;</span>
+</span><span class="line"><span class="cp"># endif</span>
+</span><span class="line">
+</span><span class="line"><span class="cp">#ifdef HAVE_GL_GL_H</span>
+</span><span class="line"><span class="cp"># include &lt;GL/gl.h&gt;</span>
+</span><span class="line"><span class="cp">#elif defined(HAVE_OPENGL_GL_H)</span>
+</span><span class="line"><span class="cp"># include &lt;OpenGL/gl.h&gt;</span>
+</span><span class="line"><span class="cp">#else</span>
+</span><span class="line"><span class="cp"># error no gl.h</span>
+</span><span class="line"><span class="cp">#endif</span>
+</span><span class="line">
+</span><span class="line"><span class="cp"># if defined(HAVE_GL_GLUT_H)</span>
+</span><span class="line"><span class="cp">#  include &lt;GL/glut.h&gt;</span>
+</span><span class="line"><span class="cp"># elif defined(HAVE_GLUT_GLUT_H)</span>
+</span><span class="line"><span class="cp">#  include &lt;GLUT/glut.h&gt;</span>
+</span><span class="line"><span class="cp"># else</span>
+</span><span class="line"><span class="cp">#  error no glut.h</span>
+</span><span class="line"><span class="cp"># endif</span>
+</span><span class="line">
+</span><span class="line"><span class="k">static</span> <span class="kt">void</span> <span class="n">render</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+</span><span class="line">
+</span><span class="line"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">**</span> <span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">  <span class="n">glutInit</span><span class="p">(</span><span class="o">&amp;</span><span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">);</span>
+</span><span class="line">  <span class="n">glutInitDisplayMode</span><span class="p">(</span><span class="n">GLUT_RGB</span> <span class="o">|</span> <span class="n">GLUT_DOUBLE</span><span class="p">);</span>
+</span><span class="line">  <span class="n">glutInitWindowSize</span><span class="p">(</span><span class="mi">640</span><span class="p">,</span> <span class="mi">640</span><span class="p">);</span>
+</span><span class="line">  <span class="n">glutInitWindowPosition</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">);</span>
+</span><span class="line">  <span class="n">glutCreateWindow</span><span class="p">(</span><span class="s">&quot;Hello World!&quot;</span><span class="p">);</span>
+</span><span class="line">  <span class="n">glutDisplayFunc</span><span class="p">(</span><span class="o">&amp;</span><span class="n">render</span><span class="p">);</span>
+</span><span class="line">  <span class="n">glClearColor</span><span class="p">(</span><span class="mf">0.0f</span><span class="p">,</span> <span class="mf">0.0f</span><span class="p">,</span> <span class="mf">0.0f</span><span class="p">,</span> <span class="mf">0.0f</span><span class="p">);</span>
+</span><span class="line">
+</span><span class="line">  <span class="n">glutMainLoop</span><span class="p">();</span>
+</span><span class="line">  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class="line"><span class="p">}</span>
+</span><span class="line">
+</span><span class="line"><span class="kt">void</span> <span class="nf">render</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">  <span class="n">glClear</span><span class="p">(</span><span class="n">GL_COLOR_BUFFER_BIT</span> <span class="o">|</span> <span class="n">GL_DEPTH_BUFFER_BIT</span><span class="p">);</span>
+</span><span class="line">  <span class="n">glMatrixMode</span><span class="p">(</span><span class="n">GL_MODELVIEW</span><span class="p">);</span>
+</span><span class="line">  <span class="n">glLoadIdentity</span><span class="p">();</span>
+</span><span class="line">  <span class="n">glBegin</span><span class="p">(</span><span class="n">GL_TRIANGLES</span><span class="p">);</span>
+</span><span class="line">  <span class="n">glVertex3f</span><span class="p">(</span> <span class="mf">0.0f</span><span class="p">,</span> <span class="mf">0.0f</span><span class="p">,</span> <span class="mf">0.0f</span><span class="p">);</span>
+</span><span class="line">  <span class="n">glVertex3f</span><span class="p">(</span> <span class="mf">0.5f</span><span class="p">,</span> <span class="mf">1.0f</span><span class="p">,</span> <span class="mf">0.0f</span><span class="p">);</span>
+</span><span class="line">  <span class="n">glVertex3f</span><span class="p">(</span> <span class="mf">1.0f</span><span class="p">,</span> <span class="mf">0.0f</span><span class="p">,</span> <span class="mf">0.0f</span><span class="p">);</span>
+</span><span class="line">  <span class="n">glEnd</span><span class="p">();</span>
+</span><span class="line">  <span class="n">glutSwapBuffers</span><span class="p">();</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Try out the configure options by invoking <code>./configure --help</code>. You’ll find it
+provides rich options that is familiar to power users.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">./configure --help
+</span><span class="line"><span class="sb">`</span>configure<span class="s1">&#39; configures gl-example 1.0 to adapt to many kinds of systems.</span>
+</span><span class="line">
+</span><span class="line"><span class="s1">Usage: ./configure [OPTION]... [VAR=VALUE]...</span>
+</span><span class="line"><span class="s1">...</span>
+</span><span class="line"><span class="s1">Optional Packages:</span>
+</span><span class="line"><span class="s1">  --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]</span>
+</span><span class="line"><span class="s1">  --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)</span>
+</span><span class="line"><span class="s1">  --with-xquartz-gl[=DIR] On Mac OSX, use opengl provided by X11/XQuartz</span>
+</span><span class="line"><span class="s1">                          instead of the built-in framework. If enabled, the</span>
+</span><span class="line"><span class="s1">                          default location is [DIR=/opt/X11]. This option is</span>
+</span><span class="line"><span class="s1">                          default to false.</span>
+</span><span class="line"><span class="s1">...</span>
+</span><span class="line"><span class="s1">  PKG_CONFIG  path to pkg-config utility</span>
+</span><span class="line"><span class="s1">  PKG_CONFIG_PATH</span>
+</span><span class="line"><span class="s1">              directories to add to pkg-config&#39;</span>s search path
+</span><span class="line">  PKG_CONFIG_LIBDIR
+</span><span class="line">              path overriding pkg-config<span class="err">&#39;</span>s built-in search path
+</span><span class="line">  GL_CFLAGS   C compiler flags <span class="k">for </span>GL, overriding configure script defaults
+</span><span class="line">  GL_LIBS     Linker flags <span class="k">for </span>GL, overriding configure script defaults
+</span><span class="line">  CPP         C preprocessor
+</span><span class="line">  GLUT_CFLAGS C compiler flags <span class="k">for </span>GLUT, overriding configure script defaults
+</span><span class="line">  GLUT_LIBS   Linker flags <span class="k">for </span>GLUT, overriding configure script defaults
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>So far I haven’t seen other build system that can do OpenGL cross platform
+setup. (I only searched for CMake and Scons). Though autoconf is said to be
+harder to learn, but by learning through these three articles, now the
+syntax shouldn’t be that alien anymore, right?</p>
+
+<p>In the next post, I’ll give another example of how to build a library, with unit
+tests and debugger setup.</p>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2016-03-15T10:02:00-07:00" pubdate data-updated="true">Mar 15<span>th</span>, 2016</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/autoconf/'>autoconf</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2016/03/15/autconf-tutorial-part-3/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2016/03/15/autconf-tutorial-part-3/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left articlenav" href="/blog/2016/03/14/autoconf-tutorial-2/" title="Previous Post: Autoconf Tutorial Part-2">&laquo; Autoconf Tutorial Part-2</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/03/15/autconf-tutorial-part-3/">Autconf Tutorial Part-3</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/03/14/autoconf-tutorial-2/">Autoconf Tutorial Part-2</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/03/10/autoconf-tutorial-1/">Autoconf Tutorial Part-1</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/12/02/writing-64-bit-assembly-on-mac-os-x/">Writing 64 bit assembly on Mac OS X</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/11/29/integer-promotion-part-2/">Integer Promotion Part 2</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/03/06/introducing-hadoop-fieldformat/">Introducing Hadoop-FieldFormat</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/03/05/hadoop-performance-tuning-best-practices/">Hadoop performance tuning best practices</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/26/setting-up-jasper-server-on-linux/">Setting up Jasper Server on Linux</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/27/capture-path-info-in-hadoop-inputformat-class/">Capture path info in hadoop InputFormat class</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/26/capture-directory-context-in-hadoop-mapper/">Capture directory context in Hadoop Mapper</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("idryman", 4, true);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/idryman" class="twitter-follow-button" data-show-count="false">Follow @idryman</a>
+  
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - dryman (Felix Ren-Chyan Chern) -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'dryblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.idryman.org/blog/2016/03/15/autconf-tutorial-part-3/';
+        var disqus_url = 'http://www.idryman.org/blog/2016/03/15/autconf-tutorial-part-3/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+<!--
+hn like button plugin for jekyll/octopress
+Author: dryman (Felix Ren-Chyan Chern)
+
+Inpired from http://hnlike.com/ written by sbashyal
+
+(The MIT License)
+
+Copyright © 2012-2013 Felix Ren-Chyan Chern
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the ‘Software’), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED ‘AS IS’, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+  <script type="text/javascript">
+    (function(){
+      var hn_like = document.createElement('iframe');
+      hn_like.frameborder="no";
+      hn_like.scrolling="no";
+      hn_like.height="28px";
+      hn_like.width="115px";
+      hn_like.src = "http://hnlike.com/upvote.php?link="
+                    + encodeURIComponent(document.location)
+                    + "&title="
+                    + encodeURIComponent("Autconf Tutorial Part-3");
+      hn_like.innerHTML="iframes not supported by your browser";
+      var twitter = document.getElementsByClassName("twitter-share-button")[0];
+
+      twitter.parentNode.insertBefore(
+        hn_like,
+        twitter
+      );
+    })();
+  </script>
+
+<!-- end of hn like button -->
+
+
+
+
+<script type="text/javascript">
+ $(function() {
+        /* For zebra striping */
+        $("table tr:nth-child(odd)").addClass("odd-row");
+        /* For cell text alignment */
+        $("table td:first-child, table th:first-child").addClass("first");
+        /* For removing the last border */
+        $("table td:last-child, table th:last-child").addClass("last");
+});
+</script>
+
+
+</body>
+</html>

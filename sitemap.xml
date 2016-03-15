@@ -241,12 +241,16 @@
         <lastmod>2016-03-14T23:48:55-07:00</lastmod>
     </url>
     <url>
+        <loc>http://www.idryman.org/blog/2016/03/15/autconf-tutorial-part-3/</loc>
+        <lastmod>2016-03-15T13:02:55-07:00</lastmod>
+    </url>
+    <url>
         <loc>http://www.idryman.org/about-me/</loc>
         <lastmod>2014-02-26T15:59:07-08:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/archives/</loc>
-        <lastmod>2016-03-14T23:48:55-07:00</lastmod>
+        <lastmod>2016-03-15T13:02:55-07:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/double-pendulum/</loc>
@@ -262,6 +266,6 @@
     </url>
     <url>
         <loc>http://www.idryman.org/</loc>
-        <lastmod>2016-03-14T23:48:55-07:00</lastmod>
+        <lastmod>2016-03-15T13:02:55-07:00</lastmod>
     </url>
 </urlset>

@@ -4,7 +4,7 @@
   <title><![CDATA[Category: autoconf | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/autoconf/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2016-03-15T00:56:45-07:00</updated>
+  <updated>2016-03-15T13:04:05-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,215 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Autconf Tutorial Part-3]]></title>
+    <link href="http://www.idryman.org/blog/2016/03/15/autconf-tutorial-part-3/"/>
+    <updated>2016-03-15T10:02:00-07:00</updated>
+    <id>http://www.idryman.org/blog/2016/03/15/autconf-tutorial-part-3</id>
+    <content type="html"><![CDATA[<p>In this post I’ll show an example of how to write a cross-plaform OpenGL
+program. We’ll explore more autoconf features, including <code>config.h</code>, third party
+libraries, and many more.</p>
+
+<!-- more -->
+
+<h2 id="cross-plaform-opengl">Cross plaform OpenGL</h2>
+
+<p>Although OpenGL API is basically the same on all platforms, their headers and
+linking options are very different on different plaforms! To use OpenGL on OSX,
+you must include <code>&lt;OpenGL/gl.h&gt;</code>, however on other platform you have to use
+<code>&lt;GL/gl.h&gt;</code>. Sometimes you might have multiple possible OpenGL implementation on
+the same platform. If you search for OpenGL tutorials, most of it can only built
+on one platform.</p>
+
+<p>And that where autoconf comes to play its role. I recently submit a new version
+of <a href="http://www.gnu.org/software/autoconf-archive/ax_check_gl.html">AX_CHECK_GL</a>, that can address these complicated portability issues.</p>
+
+<p>Check out the three OpenGL checking macros: <a href="http://www.gnu.org/software/autoconf-archive/ax_check_gl.html">AX_CHECK_GL</a>,
+<a href="http://www.gnu.org/software/autoconf-archive/ax_check_glu.html">AX_CHECK_GLU</a>, and <a href="http://www.gnu.org/software/autoconf-archive/ax_check_glut.html">AX_CHECK_GLUT</a> on autoconf archive. The syntax
+is very easy.</p>
+
+<ul>
+  <li><code>AX_CHECK_GL([ACTION-IF-FOUND],[ACTION-IF-NOT-FOUND])</code></li>
+  <li><code>AX_CHECK_GLU([ACTION-IF-FOUND],[ACTION-IF-NOT-FOUND])</code></li>
+  <li><code>AX_CHECK_GLUT([ACTION-IF-FOUND],[ACTION-IF-NOT-FOUND])</code></li>
+</ul>
+
+<p>However, it doesn’t come with the default autoconf package, you need to include
+the third party <a href="http://www.gnu.org/software/autoconf-archive/">autoconf archive</a> in your build script. Here’s how to
+do it.</p>
+
+<h2 id="adding-extra-macros">Adding Extra Macros</h2>
+
+<p>First, install third party macros by git submodule. Alternatively you can just
+copy the macros you need, but be sure to include all the dependent macro it uses. </p>
+
+<p><code>bash
+git submodule add git@github.com:peti/autoconf-archive.git
+</code></p>
+
+<p>Next, in your <code>configure.ac</code> add the following line:</p>
+
+<p><code>bash
+# before invoking AM_INIT_AUTOMAKE
+AC_CONFIG_MACRO_DIR([autoconf-archive/m4])
+</code></p>
+
+<p>After these two steps you are free to invoke 500+ macros in the archive package.</p>
+
+<h2 id="c-preprocessor-macros">C Preprocessor macros</h2>
+
+<p>Just adding the macro is not enough. You also have to pass the C preprocessor
+macros to your C program. To do so, add another line to your <code>configure.ac</code>.</p>
+
+<p><code>bash
+AC_CONFIG_HEADERS([config.h])
+</code></p>
+
+<p>And now in your C program you can write the following to make it portable on all
+systems. The listing is availabe in the <a href="http://www.gnu.org/software/autoconf-archive/ax_check_gl.html">AX_CHECK_GL document</a>.</p>
+
+<p>```c
+# include “config.h”</p>
+
+<h1 id="if-definedhavewindowsh--definedwin32">if defined(HAVE_WINDOWS_H) &amp;&amp; defined(_WIN32)</h1>
+<p># include <windows.h>
+#endif
+#ifdef HAVE_GL_GL_H
+# include &lt;GL/gl.h&gt;
+#elif defined(HAVE_OPENGL_GL_H)
+# include &lt;OpenGL/gl.h&gt;
+#else
+# error no gl.h
+#endif
+```</windows.h></p>
+
+<h2 id="wrapping-it-up">Wrapping it up</h2>
+
+<p>The full working example can be <a href="https://github.com/dryman/autoconf-tutorials/tree/master/example-3">downloaded from here</a>. Here is the
+listing of each code:</p>
+
+<p>```bash configure.ac
+AC_INIT([gl-example], [1.0])</p>
+
+<p>AC_CONFIG_SRCDIR([gl-example.c])
+AC_CONFIG_AUX_DIR([build-aux])
+AC_CONFIG_MACRO_DIR([autoconf-archive/m4])
+AM_INIT_AUTOMAKE([-Wall -Werror foreign])</p>
+
+<p>AC_PROG_CC</p>
+
+<p>AX_CHECK_GL
+AX_CHECK_GLUT</p>
+
+<h1 id="for-glew-you-can-simply-use">For glew you can simply use</h1>
+<p># AC_CHECK_LIB([GLEW], [glewInit])</p>
+
+<p>AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_FILES([Makefile])</p>
+
+<p>AC_OUTPUT
+```</p>
+
+<p>The default rule for <code>gl_example_SOURCES</code> is to look at the c program with the
+same name, thus can be omitted.</p>
+
+<p><code>make Makefile.am
+bin_PROGRAMS = gl-example
+</code></p>
+
+<p>```c gl-example.c
+#include “config.h”
+#include <stdlib.h>
+# if HAVE_WINDOWS_H &amp;&amp; defined(_WIN32)
+  #include <windows.h>
+# endif</windows.h></stdlib.h></p>
+
+<h1 id="ifdef-haveglglh">ifdef HAVE_GL_GL_H</h1>
+<p># include &lt;GL/gl.h&gt;
+#elif defined(HAVE_OPENGL_GL_H)
+# include &lt;OpenGL/gl.h&gt;
+#else
+# error no gl.h
+#endif</p>
+
+<h1 id="if-definedhaveglgluth">if defined(HAVE_GL_GLUT_H)</h1>
+<p>#  include &lt;GL/glut.h&gt;
+# elif defined(HAVE_GLUT_GLUT_H)
+#  include &lt;GLUT/glut.h&gt;
+# else
+#  error no glut.h
+# endif</p>
+
+<p>static void render(void);</p>
+
+<p>int main(int argc, char** argv) {
+  glutInit(&amp;argc, argv);
+  glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
+  glutInitWindowSize(640, 640);
+  glutInitWindowPosition(100, 100);
+  glutCreateWindow(“Hello World!”);
+  glutDisplayFunc(&amp;render);
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);</p>
+
+<p>glutMainLoop();
+  return 0;
+}</p>
+
+<p>void render(void) {
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  glBegin(GL_TRIANGLES);
+  glVertex3f( 0.0f, 0.0f, 0.0f);
+  glVertex3f( 0.5f, 1.0f, 0.0f);
+  glVertex3f( 1.0f, 0.0f, 0.0f);
+  glEnd();
+  glutSwapBuffers();
+}</p>
+
+<p>```</p>
+
+<p>Try out the configure options by invoking <code>./configure --help</code>. You’ll find it
+provides rich options that is familiar to power users.</p>
+
+<p>```bash
+./configure –help
+`configure’ configures gl-example 1.0 to adapt to many kinds of systems.</p>
+
+<p>Usage: ./configure [OPTION]… [VAR=VALUE]…
+…
+Optional Packages:
+  –with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
+  –without-PACKAGE       do not use PACKAGE (same as –with-PACKAGE=no)
+  –with-xquartz-gl[=DIR] On Mac OSX, use opengl provided by X11/XQuartz
+                          instead of the built-in framework. If enabled, the
+                          default location is [DIR=/opt/X11]. This option is
+                          default to false.
+…
+  PKG_CONFIG  path to pkg-config utility
+  PKG_CONFIG_PATH
+              directories to add to pkg-config’s search path
+  PKG_CONFIG_LIBDIR
+              path overriding pkg-config’s built-in search path
+  GL_CFLAGS   C compiler flags for GL, overriding configure script defaults
+  GL_LIBS     Linker flags for GL, overriding configure script defaults
+  CPP         C preprocessor
+  GLUT_CFLAGS C compiler flags for GLUT, overriding configure script defaults
+  GLUT_LIBS   Linker flags for GLUT, overriding configure script defaults</p>
+
+<p>```</p>
+
+<p>So far I haven’t seen other build system that can do OpenGL cross platform
+setup. (I only searched for CMake and Scons). Though autoconf is said to be
+harder to learn, but by learning through these three articles, now the
+syntax shouldn’t be that alien anymore, right?</p>
+
+<p>In the next post, I’ll give another example of how to build a library, with unit
+tests and debugger setup.</p>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Autoconf Tutorial Part-2]]></title>

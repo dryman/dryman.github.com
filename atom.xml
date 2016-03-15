@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2016-03-15T00:56:45-07:00</updated>
+  <updated>2016-03-15T13:04:05-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,312 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Autconf Tutorial Part-3]]></title>
+    <link href="http://www.idryman.org/blog/2016/03/15/autconf-tutorial-part-3/"/>
+    <updated>2016-03-15T10:02:00-07:00</updated>
+    <id>http://www.idryman.org/blog/2016/03/15/autconf-tutorial-part-3</id>
+    <content type="html"><![CDATA[<p>In this post I’ll show an example of how to write a cross-plaform OpenGL
+program. We’ll explore more autoconf features, including <code>config.h</code>, third party
+libraries, and many more.</p>
+
+<!-- more -->
+
+<h2 id="cross-plaform-opengl">Cross plaform OpenGL</h2>
+
+<p>Although OpenGL API is basically the same on all platforms, their headers and
+linking options are very different on different plaforms! To use OpenGL on OSX,
+you must include <code>&lt;OpenGL/gl.h&gt;</code>, however on other platform you have to use
+<code>&lt;GL/gl.h&gt;</code>. Sometimes you might have multiple possible OpenGL implementation on
+the same platform. If you search for OpenGL tutorials, most of it can only built
+on one platform.</p>
+
+<p>And that where autoconf comes to play its role. I recently submit a new version
+of <a href="http://www.gnu.org/software/autoconf-archive/ax_check_gl.html">AX_CHECK_GL</a>, that can address these complicated portability issues.</p>
+
+<p>Check out the three OpenGL checking macros: <a href="http://www.gnu.org/software/autoconf-archive/ax_check_gl.html">AX_CHECK_GL</a>,
+<a href="http://www.gnu.org/software/autoconf-archive/ax_check_glu.html">AX_CHECK_GLU</a>, and <a href="http://www.gnu.org/software/autoconf-archive/ax_check_glut.html">AX_CHECK_GLUT</a> on autoconf archive. The syntax
+is very easy.</p>
+
+<ul>
+  <li><code>AX_CHECK_GL([ACTION-IF-FOUND],[ACTION-IF-NOT-FOUND])</code></li>
+  <li><code>AX_CHECK_GLU([ACTION-IF-FOUND],[ACTION-IF-NOT-FOUND])</code></li>
+  <li><code>AX_CHECK_GLUT([ACTION-IF-FOUND],[ACTION-IF-NOT-FOUND])</code></li>
+</ul>
+
+<p>However, it doesn’t come with the default autoconf package, you need to include
+the third party <a href="http://www.gnu.org/software/autoconf-archive/">autoconf archive</a> in your build script. Here’s how to
+do it.</p>
+
+<h2 id="adding-extra-macros">Adding Extra Macros</h2>
+
+<p>First, install third party macros by git submodule. Alternatively you can just
+copy the macros you need, but be sure to include all the dependent macro it uses. </p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">git submodule add git@github.com:peti/autoconf-archive.git
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Next, in your <code>configure.ac</code> add the following line:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="c"># before invoking AM_INIT_AUTOMAKE</span>
+</span><span class="line">AC_CONFIG_MACRO_DIR<span class="o">([</span>autoconf-archive/m4<span class="o">])</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>After these two steps you are free to invoke 500+ macros in the archive package.</p>
+
+<h2 id="c-preprocessor-macros">C Preprocessor macros</h2>
+
+<p>Just adding the macro is not enough. You also have to pass the C preprocessor
+macros to your C program. To do so, add another line to your <code>configure.ac</code>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">AC_CONFIG_HEADERS<span class="o">([</span>config.h<span class="o">])</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>And now in your C program you can write the following to make it portable on all
+systems. The listing is availabe in the <a href="http://www.gnu.org/software/autoconf-archive/ax_check_gl.html">AX_CHECK_GL document</a>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="cp"># include &quot;config.h&quot;</span>
+</span><span class="line">
+</span><span class="line"><span class="cp">#if defined(HAVE_WINDOWS_H) &amp;&amp; defined(_WIN32)</span>
+</span><span class="line"><span class="cp"># include &lt;windows.h&gt;</span>
+</span><span class="line"><span class="cp">#endif</span>
+</span><span class="line"><span class="cp">#ifdef HAVE_GL_GL_H</span>
+</span><span class="line"><span class="cp"># include &lt;GL/gl.h&gt;</span>
+</span><span class="line"><span class="cp">#elif defined(HAVE_OPENGL_GL_H)</span>
+</span><span class="line"><span class="cp"># include &lt;OpenGL/gl.h&gt;</span>
+</span><span class="line"><span class="cp">#else</span>
+</span><span class="line"><span class="cp"># error no gl.h</span>
+</span><span class="line"><span class="cp">#endif</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<h2 id="wrapping-it-up">Wrapping it up</h2>
+
+<p>The full working example can be <a href="https://github.com/dryman/autoconf-tutorials/tree/master/example-3">downloaded from here</a>. Here is the
+listing of each code:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>configure.ac</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">AC_INIT<span class="o">([</span>gl-example<span class="o">]</span>, <span class="o">[</span>1.0<span class="o">])</span>
+</span><span class="line">
+</span><span class="line">AC_CONFIG_SRCDIR<span class="o">([</span>gl-example.c<span class="o">])</span>
+</span><span class="line">AC_CONFIG_AUX_DIR<span class="o">([</span>build-aux<span class="o">])</span>
+</span><span class="line">AC_CONFIG_MACRO_DIR<span class="o">([</span>autoconf-archive/m4<span class="o">])</span>
+</span><span class="line">AM_INIT_AUTOMAKE<span class="o">([</span>-Wall -Werror foreign<span class="o">])</span>
+</span><span class="line">
+</span><span class="line">AC_PROG_CC
+</span><span class="line">
+</span><span class="line">AX_CHECK_GL
+</span><span class="line">AX_CHECK_GLUT
+</span><span class="line">
+</span><span class="line"><span class="c"># For glew you can simply use</span>
+</span><span class="line"><span class="c"># AC_CHECK_LIB([GLEW], [glewInit])</span>
+</span><span class="line">
+</span><span class="line">AC_CONFIG_HEADERS<span class="o">([</span>config.h<span class="o">])</span>
+</span><span class="line">AC_CONFIG_FILES<span class="o">([</span>Makefile<span class="o">])</span>
+</span><span class="line">
+</span><span class="line">AC_OUTPUT
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>The default rule for <code>gl_example_SOURCES</code> is to look at the c program with the
+same name, thus can be omitted.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>Makefile.am</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="make"><span class="line"><span class="nv">bin_PROGRAMS</span> <span class="o">=</span> gl-example
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span>gl-example.c</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+<span class="line-number">38</span>
+<span class="line-number">39</span>
+<span class="line-number">40</span>
+<span class="line-number">41</span>
+<span class="line-number">42</span>
+<span class="line-number">43</span>
+<span class="line-number">44</span>
+<span class="line-number">45</span>
+<span class="line-number">46</span>
+<span class="line-number">47</span>
+<span class="line-number">48</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="cp">#include &quot;config.h&quot;</span>
+</span><span class="line"><span class="cp">#include &lt;stdlib.h&gt;</span>
+</span><span class="line"><span class="cp"># if HAVE_WINDOWS_H &amp;&amp; defined(_WIN32)</span>
+</span><span class="line">  <span class="cp">#include &lt;windows.h&gt;</span>
+</span><span class="line"><span class="cp"># endif</span>
+</span><span class="line">
+</span><span class="line"><span class="cp">#ifdef HAVE_GL_GL_H</span>
+</span><span class="line"><span class="cp"># include &lt;GL/gl.h&gt;</span>
+</span><span class="line"><span class="cp">#elif defined(HAVE_OPENGL_GL_H)</span>
+</span><span class="line"><span class="cp"># include &lt;OpenGL/gl.h&gt;</span>
+</span><span class="line"><span class="cp">#else</span>
+</span><span class="line"><span class="cp"># error no gl.h</span>
+</span><span class="line"><span class="cp">#endif</span>
+</span><span class="line">
+</span><span class="line"><span class="cp"># if defined(HAVE_GL_GLUT_H)</span>
+</span><span class="line"><span class="cp">#  include &lt;GL/glut.h&gt;</span>
+</span><span class="line"><span class="cp"># elif defined(HAVE_GLUT_GLUT_H)</span>
+</span><span class="line"><span class="cp">#  include &lt;GLUT/glut.h&gt;</span>
+</span><span class="line"><span class="cp"># else</span>
+</span><span class="line"><span class="cp">#  error no glut.h</span>
+</span><span class="line"><span class="cp"># endif</span>
+</span><span class="line">
+</span><span class="line"><span class="k">static</span> <span class="kt">void</span> <span class="n">render</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+</span><span class="line">
+</span><span class="line"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">**</span> <span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">  <span class="n">glutInit</span><span class="p">(</span><span class="o">&amp;</span><span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">);</span>
+</span><span class="line">  <span class="n">glutInitDisplayMode</span><span class="p">(</span><span class="n">GLUT_RGB</span> <span class="o">|</span> <span class="n">GLUT_DOUBLE</span><span class="p">);</span>
+</span><span class="line">  <span class="n">glutInitWindowSize</span><span class="p">(</span><span class="mi">640</span><span class="p">,</span> <span class="mi">640</span><span class="p">);</span>
+</span><span class="line">  <span class="n">glutInitWindowPosition</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">);</span>
+</span><span class="line">  <span class="n">glutCreateWindow</span><span class="p">(</span><span class="s">&quot;Hello World!&quot;</span><span class="p">);</span>
+</span><span class="line">  <span class="n">glutDisplayFunc</span><span class="p">(</span><span class="o">&amp;</span><span class="n">render</span><span class="p">);</span>
+</span><span class="line">  <span class="n">glClearColor</span><span class="p">(</span><span class="mf">0.0f</span><span class="p">,</span> <span class="mf">0.0f</span><span class="p">,</span> <span class="mf">0.0f</span><span class="p">,</span> <span class="mf">0.0f</span><span class="p">);</span>
+</span><span class="line">
+</span><span class="line">  <span class="n">glutMainLoop</span><span class="p">();</span>
+</span><span class="line">  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class="line"><span class="p">}</span>
+</span><span class="line">
+</span><span class="line"><span class="kt">void</span> <span class="nf">render</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">  <span class="n">glClear</span><span class="p">(</span><span class="n">GL_COLOR_BUFFER_BIT</span> <span class="o">|</span> <span class="n">GL_DEPTH_BUFFER_BIT</span><span class="p">);</span>
+</span><span class="line">  <span class="n">glMatrixMode</span><span class="p">(</span><span class="n">GL_MODELVIEW</span><span class="p">);</span>
+</span><span class="line">  <span class="n">glLoadIdentity</span><span class="p">();</span>
+</span><span class="line">  <span class="n">glBegin</span><span class="p">(</span><span class="n">GL_TRIANGLES</span><span class="p">);</span>
+</span><span class="line">  <span class="n">glVertex3f</span><span class="p">(</span> <span class="mf">0.0f</span><span class="p">,</span> <span class="mf">0.0f</span><span class="p">,</span> <span class="mf">0.0f</span><span class="p">);</span>
+</span><span class="line">  <span class="n">glVertex3f</span><span class="p">(</span> <span class="mf">0.5f</span><span class="p">,</span> <span class="mf">1.0f</span><span class="p">,</span> <span class="mf">0.0f</span><span class="p">);</span>
+</span><span class="line">  <span class="n">glVertex3f</span><span class="p">(</span> <span class="mf">1.0f</span><span class="p">,</span> <span class="mf">0.0f</span><span class="p">,</span> <span class="mf">0.0f</span><span class="p">);</span>
+</span><span class="line">  <span class="n">glEnd</span><span class="p">();</span>
+</span><span class="line">  <span class="n">glutSwapBuffers</span><span class="p">();</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>Try out the configure options by invoking <code>./configure --help</code>. You’ll find it
+provides rich options that is familiar to power users.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">./configure --help
+</span><span class="line"><span class="sb">`</span>configure<span class="s1">&#39; configures gl-example 1.0 to adapt to many kinds of systems.</span>
+</span><span class="line">
+</span><span class="line"><span class="s1">Usage: ./configure [OPTION]... [VAR=VALUE]...</span>
+</span><span class="line"><span class="s1">...</span>
+</span><span class="line"><span class="s1">Optional Packages:</span>
+</span><span class="line"><span class="s1">  --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]</span>
+</span><span class="line"><span class="s1">  --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)</span>
+</span><span class="line"><span class="s1">  --with-xquartz-gl[=DIR] On Mac OSX, use opengl provided by X11/XQuartz</span>
+</span><span class="line"><span class="s1">                          instead of the built-in framework. If enabled, the</span>
+</span><span class="line"><span class="s1">                          default location is [DIR=/opt/X11]. This option is</span>
+</span><span class="line"><span class="s1">                          default to false.</span>
+</span><span class="line"><span class="s1">...</span>
+</span><span class="line"><span class="s1">  PKG_CONFIG  path to pkg-config utility</span>
+</span><span class="line"><span class="s1">  PKG_CONFIG_PATH</span>
+</span><span class="line"><span class="s1">              directories to add to pkg-config&#39;</span>s search path
+</span><span class="line">  PKG_CONFIG_LIBDIR
+</span><span class="line">              path overriding pkg-config<span class="err">&#39;</span>s built-in search path
+</span><span class="line">  GL_CFLAGS   C compiler flags <span class="k">for </span>GL, overriding configure script defaults
+</span><span class="line">  GL_LIBS     Linker flags <span class="k">for </span>GL, overriding configure script defaults
+</span><span class="line">  CPP         C preprocessor
+</span><span class="line">  GLUT_CFLAGS C compiler flags <span class="k">for </span>GLUT, overriding configure script defaults
+</span><span class="line">  GLUT_LIBS   Linker flags <span class="k">for </span>GLUT, overriding configure script defaults
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>So far I haven’t seen other build system that can do OpenGL cross platform
+setup. (I only searched for CMake and Scons). Though autoconf is said to be
+harder to learn, but by learning through these three articles, now the
+syntax shouldn’t be that alien anymore, right?</p>
+
+<p>In the next post, I’ll give another example of how to build a library, with unit
+tests and debugger setup.</p>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Autoconf Tutorial Part-2]]></title>
@@ -4000,48 +4306,6 @@ is not documented anywhere in hadoop api nor document. You can only find it in <
     <p>Open your browser and hopefully <code>http://localhost:8080</code> is up</p>
   </li>
 </ol>
-
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Emacs loves iPython Notebook]]></title>
-    <link href="http://www.idryman.org/blog/2013/05/29/emacs-loves-ipython-notebook/"/>
-    <updated>2013-05-29T11:41:00-07:00</updated>
-    <id>http://www.idryman.org/blog/2013/05/29/emacs-loves-ipython-notebook</id>
-    <content type="html"><![CDATA[<!--more-->
-
-<h2 id="install">Install</h2>
-
-<p>Installing emacs ipython notebook is pretty simple.</p>
-
-<ol>
-  <li>
-    <p>follow the steps in <a href="http://www.idryman.org/blog/2013/03/13/python-setup-on-mac-osx/">Setting up Python on OSX Mountain Lion</a>.</p>
-  </li>
-  <li>
-    <p>Refresh emacs packages <code>M-x package-refresh-contents</code></p>
-  </li>
-  <li>
-    <p><code>M-x package-install</code> <code>ein</code></p>
-  </li>
-</ol>
-
-<h2 id="usage">Usage</h2>
-
-<ol>
-  <li>
-    <p><code>cd directory</code></p>
-  </li>
-  <li>
-    <p><code>ipython notebook --pylab inline</code></p>
-  </li>
-  <li>
-    <p><code>M-x ein:notebooklist-open</code></p>
-  </li>
-</ol>
-
-<p>Than, check on <a href="https://github.com/tkf/emacs-ipython-notebook">Emacs IPython Notebook</a> to see what key-bindings you can use in EIN mode. I only use <code>C-c C-c</code> to execute a buffer, and <code>C-c C-u</code> for changing the cell type. </p>
 
 ]]></content>
   </entry>
