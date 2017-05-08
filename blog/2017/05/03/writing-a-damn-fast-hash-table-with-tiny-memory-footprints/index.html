@@ -1,0 +1,862 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Writing a damn fast hash table with tiny memory footprints - Carpe diem (Felix's blog)</title>
+  <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
+
+  
+  <meta name="description" content="Hash table is probably the most commonly used data structure in
+software industry. Most implementations focus on its speed instead
+of memory usage, &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://www.idryman.org/blog/2017/05/03/writing-a-damn-fast-hash-table-with-tiny-memory-footprints/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="/javascripts/ender.js"></script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <link href="/atom.xml" rel="alternate" title="Carpe diem (Felix's blog)" type="application/atom+xml">
+  <link href='http://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- mathjax config similar to math.stackexchange -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/HTML-CSS"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+  <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-23425996-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+      var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+      ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+  </script>
+
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <!--div id="logo">
+  	<div id="logoLeft">{</div>
+  	<div id="logoText">mob</div>
+  	<div id="logoRight">}</div>
+  	<div class="clear"></div>
+  </div-->
+  <h1><a href="/">Carpe diem (Felix's blog)</a></h1>
+  
+    <h2>I am a happy developer</h2>
+  
+  <div class="clear"></div>
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:www.idryman.org" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about-me">About Me</a></li>
+  <li><a href="https://github.com/dryman">Github</a></li>
+  <li><a href="http://idryman.tumblr.com/">Drawings</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      
+        <h1 class="entry-title">Writing a Damn Fast Hash Table With Tiny Memory Footprints</h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2017-05-03T18:26:00-07:00" pubdate data-updated="true">May 3<span>rd</span>, 2017</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Hash table is probably <em>the</em> most commonly used data structure in
+software industry. Most implementations focus on its speed instead
+of memory usage, yet small memory footprint has significant impact
+on large in-memory tables and database hash indexes.</p>
+
+<p>In this post, I”ll provide a step by step guide for writing a modern
+hash table that optimize for both speed and memory efficiency. I’ll
+also give some mathematical bounds on how well the hash table could
+achieve, and shows how close we are to the optimal.</p>
+
+<!--more-->
+
+<p>Let me start with a disclaimer. I now work at google, and this project
+(OPIC including the hash table implementation) is approved by google
+<a href="https://opensource.google.com/docs/iarc/">Invention Assignment Review Committee</a> as my personal
+project. The work is done only in my spare time with my own machine
+and does not use and/or reference any of the google internal resources.</p>
+
+<h2 id="common-hash-table-memory-usages">Common hash table memory usages</h2>
+
+<p>As mentioned earlier, most hash hash table focus on its speed, not
+memory usage. Consequently there’s not much benchmark compares the
+memory these hash table implementation consumes. Here is a very basic
+table for some high performance hash table I found. The input is 8 M
+key-value pairs; size of each key is 6 bytes and size of each value is
+8 bytes. The lower bound memory usage is $(6+8)\cdot 2^{23} =$ 117MB
+. Memory overhead is computed as memory usage divided by the
+theoretical lower bound. Currently I only collect 5 hash table
+implementations. More to be added in future.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th> </th>
+      <th style="text-align: right">Memory Usage</th>
+      <th style="text-align: right">　Memory Overhead</th>
+      <th style="text-align: right">　Insertion Time</th>
+      <th style="text-align: right">　Query Time</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>std::unordered_map</td>
+      <td style="text-align: right">588M</td>
+      <td style="text-align: right">5.03x</td>
+      <td style="text-align: right">2.626 sec</td>
+      <td style="text-align: right">2.134 sec</td>
+    </tr>
+    <tr>
+      <td>sparse_hash_map</td>
+      <td style="text-align: right">494M</td>
+      <td style="text-align: right">4.22x</td>
+      <td style="text-align: right">7.393 sec</td>
+      <td style="text-align: right">2.112 sec</td>
+    </tr>
+    <tr>
+      <td>dense_hash_map</td>
+      <td style="text-align: right">1280M</td>
+      <td style="text-align: right">10.94x</td>
+      <td style="text-align: right">1.455 sec</td>
+      <td style="text-align: right">1.436 sec</td>
+    </tr>
+    <tr>
+      <td>libcuckoo</td>
+      <td style="text-align: right">708M</td>
+      <td style="text-align: right">6.05x</td>
+      <td style="text-align: right">2.026 sec</td>
+      <td style="text-align: right">2.120 sec</td>
+    </tr>
+    <tr>
+      <td>klib khash</td>
+      <td style="text-align: right">642M</td>
+      <td style="text-align: right">5.48x</td>
+      <td style="text-align: right">4.232 sec</td>
+      <td style="text-align: right">1.647 sec</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<p>The metrics above actually surprises me. For example,
+[sparse hash map][shm] is advertised to use 4-10 bits per entry,
+but the overhead is actually 4 times the lower bound. If the
+hash table were implemented as large key-value store index, and
+you have 1 TB of data, you’ll need at least 4-5TB of space to
+hold the data. That’s not very space efficient. Can we do better?</p>
+
+<h2 id="overview-of-hash-table-types">Overview of hash table types</h2>
+
+<p>There’s two major types of hash table, one is <a href="https://en.wikipedia.org/wiki/Hash_table#Separate_chaining">chaining</a> and
+the other is <a href="https://en.wikipedia.org/wiki/Open_addressing">open addressing</a>. Chaining is quite common
+in most standard libraries, where the collision is handled by
+appending items into a linked list headed by the bucket the key is
+mapped to.  Open addressing uses a different mechanism to handle
+collision: the key (and value) is inserted to another bucket if the
+bucket it attempt to insert is already occupied.</p>
+
+<p>Open addressing has some clear advantages over chaining. First, it
+does not require extra memory allocation. This reduces memory allocation
+overhead and can possibly improve cpu caching. Moreover, in open
+addressing the developer has more control on memory layout – placing
+elements in buckets with certain order to make probing (search on
+alternative location for key) fast. Best of all, open addressing
+gives us better memory lower bound over chaining.</p>
+
+<p>The hash collision rate affects the chaining memory usage.  Given a
+hash table with $N$ buckets, we insert $M$ elements into the
+table. The expected collision number in the table is $M(1 - (1 -
+1/N)^{M-1})$. For a table with 1000 buckets the expected collisions
+under high loads ($M/N &gt; 80%$) are:</p>
+
+<ul>
+  <li>80% -&gt; 440</li>
+  <li>90% -&gt; 534</li>
+  <li>100% -&gt; 632</li>
+</ul>
+
+<p><img src="/images/collision_rate.png" alt="collision" /></p>
+
+<p>Accounting the extra payload that chaining requires, we can now compute
+the lower bound for the overhead under different loads.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: right">load</th>
+      <th style="text-align: right">　Chaining</th>
+      <th style="text-align: right">　Open Addressing</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: right">100%</td>
+      <td style="text-align: right">1.31x</td>
+      <td style="text-align: right">1.00x</td>
+    </tr>
+    <tr>
+      <td style="text-align: right">90%</td>
+      <td style="text-align: right">1.37x</td>
+      <td style="text-align: right">1.11x</td>
+    </tr>
+    <tr>
+      <td style="text-align: right">80%</td>
+      <td style="text-align: right">1.47x</td>
+      <td style="text-align: right">1.25x</td>
+    </tr>
+    <tr>
+      <td style="text-align: right">70%</td>
+      <td style="text-align: right">1.60x</td>
+      <td style="text-align: right">1.42x</td>
+    </tr>
+    <tr>
+      <td style="text-align: right">50%</td>
+      <td style="text-align: right">2.09x</td>
+      <td style="text-align: right">2.00x</td>
+    </tr>
+    <tr>
+      <td style="text-align: right">25%</td>
+      <td style="text-align: right">4.03x</td>
+      <td style="text-align: right">4.00x</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Here I assume if the collision rate were 60%, half of it is chained
+and half of it fits the buckets. The actual number may have some
+digits off, but it doesn’t change my conclusion on choosing open
+addressing for hash table implementation.</p>
+
+<h2 id="probing-methods">Probing methods</h2>
+
+<p>In open addressing, hash collisions are resolved by probing, a search
+through alternative buckets until the target record is found, or some
+failure criteria is met. The following all belongs to some kinds of
+probing strategies:</p>
+
+<ul>
+  <li>Linear Probing</li>
+  <li>Quadratic Probing</li>
+  <li>Double Hashing</li>
+  <li>Hopscotch Hashing</li>
+  <li>Robin Hood Hashing</li>
+  <li>Cuckoo Hashing</li>
+</ul>
+
+<p>For each of the probing method, we’re interested in their worst case
+and average case probing numbers, and is their space bound. </p>
+
+<h3 id="linear-probing-and-quadratic-probing">Linear Probing and Quadratic Probing</h3>
+
+<p>Linear probing can be represented as a hash function of a key and a
+probe number $h(k, i) = (h(k) + i) \mod N$. Similarly, quadratic
+probing is usually written as $h(k, i) = (h(k) + i^2) \mod N$. Both
+methods has worst case probing count $O(N)$, and are bounded on
+space usage. In other words, there no condition where we need to
+increase the bucket count and rehash.</p>
+
+<h3 id="double-hashing">Double hashing</h3>
+
+<p>Double hashing can be written as
+$h(k, i) = (h1(k) + i \cdot h2(k)) \mod N$.
+Same as linear probing and quadratic probing, it has worst
+case probing count $O(N)$, and is bounded on space usage.</p>
+
+<h3 id="hopscotch-hashing">Hopscotch Hashing</h3>
+
+<p>Here is the algorithm copied from <a href="https://en.wikipedia.org/wiki/Hopscotch_hashing">wikipedia</a>.
+This is how the collision is handled</p>
+
+<blockquote>
+  <p>If the empty entry’s index j is within H-1 of entry i, place x
+ there and return. Otherwise, find an item y whose hash value lies
+ between i and j, but within H-1 of j. Displacing y to j creates a
+ new empty slot closer to i. If no such item y exists, or if the
+ bucket i already contains H items, resize and rehash the table.</p>
+</blockquote>
+
+<p>This mechanism has a good worst case probing number $O(H)$. However,
+since it could resize the hash table, the hash table size is unbounded.</p>
+
+<h3 id="robin-hood-hashing">Robin Hood Hashing</h3>
+
+<p>The concept for robin hood hashing is simple and clever. When
+a collision occur, compare the two items’ probing count, the one
+with larger probing number stays and the other continue to probe.
+Repeat until the probing item finds an empty spot. For more detailed
+analysis checkout <a href="https://cs.uwaterloo.ca/research/tr/1986/CS-86-14.pdf">the original paper</a>. It’s worth to read.</p>
+
+<p>The expected probing length is</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+\begin{align}
+E\lbrack i \rbrack & = \frac{n}{m}\left(\sum_{x=1}^n\frac{1}{x} -
+\sum_{x=1}^{n-m}\frac{1}{x}\right) \\
+& = \frac{n}{m}\left(H_n - H_{n-m} \right) \\
+& \approx \frac{n}{m}\ln\left(\frac{1}{1-\frac{m}{n}}\right)
+\end{align}
+ %]]></script>
+
+<p><img src="/images/psl.png" alt="psl" /></p>
+
+<p>Even under a high load, we still get very good probing numbers.
+The best thing about robin hood hashing is it does not expand
+the hash table, which is important because we want to build a
+hash table with bounded size. This is the probing strategy I chose.</p>
+
+<h3 id="cuckoo-hashing">Cuckoo hashing</h3>
+
+<p>The following description is also copied from <a href="https://en.wikipedia.org/wiki/Cuckoo_hashing">wikipedia</a>.</p>
+
+<blockquote>
+  <p>It uses two or more hash functions, which means any key/value pair
+could be in two or more locations. For lookup, the first hash
+function is used; if the key/value is not found, then the second hash
+function is used, and so on. If a collision happens during insertion,
+then the key is re-hashed with the second hash function to map it to
+another bucket.</p>
+</blockquote>
+
+<p>The expected probing number is below 2. However, the load factor has
+to be below 50% to achieve good performance. For using 3 hash functions,
+the load can increase to 91%. Combining linear/quadratic probing with
+cuckoo, the load factor can go beyond 80%. (All numbers comes from
+wikipedia).</p>
+
+<h2 id="optimizing-division-for-hash-table-size">Optimizing Division for Hash Table Size</h2>
+
+<p>I implemented a robin hood hashing prototype a month ago. The prototype
+satisfy the low memory footprint, but hard to get it fast. The major
+reason is the modulo operation is very slow on most platforms. For example,
+on Intel Haswell the <code>div</code> instruction on 64bit integer can take 32-96
+cycles. Almost all major hash implementation use power of 2 table size,
+so that the modulo is just one bitwise and operation. The problem with
+power of 2 table size is it scales too fast! If our data size is 1 bit
+above 2GB, the table must be at least 4GB, giving us 50% load. Finding
+a fast alternative modulo operation is critical for creating a table
+with high load without loosing much performance.</p>
+
+<p>Professor Lemire is probably the first person that addresses this issue.
+He wrote a blog post that provides <a href="http://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction/">a fast alternative to modulo</a>.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="kt">uint32_t</span> <span class="nf">reduce</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">x</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">N</span><span class="p">)</span> <span class="p">{</span>
+</span><span class="line">  <span class="k">return</span> <span class="p">((</span><span class="kt">uint64_t</span><span class="p">)</span> <span class="n">x</span> <span class="o">*</span> <span class="p">(</span><span class="kt">uint64_t</span><span class="p">)</span> <span class="n">N</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">32</span> <span class="p">;</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>He named this method as <em>fast range</em>. Another intuitive way to think
+about it is <strong>scaling</strong>. Number $x$ ranges $\lbrack 0, 2^{32}-1\rbrack$,
+multiplying it by $N$ then divide by $2^{32}$, the range becomes
+$\lbrack 0, N\rbrack$.</p>
+
+<p>There’s one big problem to apply <em>fast range</em> on probing. Probing
+usually add the probe bias to <em>lower bits</em> of the hashed key. Modulo
+and bitwise and preserves the lower bits information, but <em>fast range</em>
+only use the <em>higher bits</em> and the probe would have no effect on the
+output. The first bits where it can bias the output in <em>fast range</em> is
+$\frac{2^{32}}{N}$. Hence, writing a linear probing using <em>fast range</em>
+would be:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="kt">uint32_t</span> <span class="nf">fast_range_probing</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">hashed_key</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">probe</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">N</span><span class="p">)</span>
+</span><span class="line"><span class="p">{</span>
+</span><span class="line">  <span class="k">return</span> <span class="p">((</span><span class="kt">uint64_t</span><span class="p">)</span><span class="n">hashe_key</span> <span class="o">+</span> <span class="p">((</span><span class="kt">uint64_t</span><span class="p">)</span><span class="n">probe</span> <span class="o">&lt;&lt;</span> <span class="mi">32</span><span class="p">)</span><span class="o">/</span><span class="n">N</span><span class="p">)</span> <span class="o">*</span> <span class="n">N</span> <span class="o">&gt;&gt;</span> <span class="mi">32</span><span class="p">;</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>To make the output correct we used division again, which makes it slow.
+Is there a better way?</p>
+
+<h3 id="fast-mod-and-scale">Fast mod and scale</h3>
+
+<p>I created an alternative method with a more relaxed condition.
+Instead of finding a fast modulo replacement for <strong>all N</strong>, I want to
+find <strong>some N</strong> that satisfy fast modulo and can preserve the biases
+of probing.</p>
+
+<p>The actual algorithm is pretty simple: First, mask the hashed key to
+the next power of 2 boundary, then multiply it by
+$\frac{N}{16}, N=8..15$. This is a combination of traditional power
+of 2 modulo and professor Lemire’s scaling method. The difference is
+now the scale can only get up to 2 times. In other words, only the least
+significant bit will get omitted when scaling. The probing
+implementation can be written as:</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="k">static</span> <span class="kr">inline</span> <span class="kt">uintptr_t</span>
+</span><span class="line"><span class="nf">hash_with_probe</span><span class="p">(</span><span class="n">RobinHoodHash</span><span class="o">*</span> <span class="n">rhh</span><span class="p">,</span> <span class="kt">uint64_t</span> <span class="n">key</span><span class="p">,</span> <span class="kt">int</span> <span class="n">probe</span><span class="p">)</span>
+</span><span class="line"><span class="p">{</span>
+</span><span class="line">  <span class="kt">uintptr_t</span> <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1ULL</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="mi">64</span> <span class="o">-</span> <span class="n">rhh</span><span class="o">-&gt;</span><span class="n">capacity_clz</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
+</span><span class="line">
+</span><span class="line">  <span class="c1">// linear probing</span>
+</span><span class="line">  <span class="c1">// uint64_t probed_hash = key + probe * 2;</span>
+</span><span class="line">
+</span><span class="line">  <span class="c1">// quadratic probing</span>
+</span><span class="line">  <span class="kt">uint64_t</span> <span class="n">probed_hash</span> <span class="o">=</span> <span class="n">key</span> <span class="o">+</span> <span class="n">probe</span> <span class="o">*</span> <span class="n">probe</span> <span class="o">*</span> <span class="mi">2</span><span class="p">;</span>
+</span><span class="line">
+</span><span class="line">  <span class="c1">// Fast mod and scale</span>
+</span><span class="line">  <span class="k">return</span> <span class="p">(</span><span class="n">probed_hash</span> <span class="o">&amp;</span> <span class="n">mask</span><span class="p">)</span> <span class="o">*</span> <span class="n">rhh</span><span class="o">-&gt;</span><span class="n">capacity_ms4b</span> <span class="o">&gt;&gt;</span> <span class="mi">4</span><span class="p">;</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>This is <a href="https://github.com/dryman/opic/blob/master/opic/hash/robin_hood.c#L155">the straight copy</a> of my robin hood hash
+implementation.  When the probe is scaled by 2 it is guaranteed to
+have biases on the output. The mask can be derived from leading zeros
+of the capacity <code>capacity_clz</code>, the scale is defined by the most
+significant 4 bits of the capacity <code>capacity_ms4b</code>. The <code>capacity_ms4b</code>
+is pre-computed on hash table creation or resizing time. It’s a round
+up of desired capacity with finer granularity compare to power of 2
+tables.</p>
+
+<p>I used <a href="https://software.intel.com/en-us/articles/intel-architecture-code-analyzer">Intel Architecture Code Analyzer</a> to analyze the instruction
+throughput of my methods, and the result is very satisfying:</p>
+
+<ul>
+  <li>Power of 2 table with quadratic probing
+    <ul>
+      <li>Block Throughput: 4.10 Cycles</li>
+      <li>Total Num Of Uops: 9</li>
+    </ul>
+  </li>
+  <li>Fast mod and scale with quadratic probing
+    <ul>
+      <li>Block Throughput: 4.15 Cycles</li>
+      <li>Total Num Of Uops: 12</li>
+    </ul>
+  </li>
+</ul>
+
+<h2 id="benchmarks">Benchmarks</h2>
+
+<p>I hope all these analysis didn’t bored you all! Turns out these analysis
+are all useful. We now have a hash table with very optimal memory usage
+but still having great performance.</p>
+
+<p><img src="/images/short_key_mem.png" alt="Memory usage" /></p>
+
+<p><img src="/images/short_key_insert_time.png" alt="Insert time" /></p>
+
+<p><img src="/images/short_key_lookup_time.png" alt="Lookup time" /></p>
+
+<p>The most impressive part is the memory usage. Under load 89% we
+achieve overhead 1.20x ~ 1.50x. The ideal overhead should be 1.12 but
+we have an extra byte used per bucket to determine whether the bucket
+is emptied or tumbstoned.</p>
+
+<p>The insertion time is not as good as <code>dense_hash_map</code> under high load.
+The reason is robin hood hashing moves the buckets around during the
+insert, but <code>dense_hash_map</code> simply probe and insert it to an empty
+bucket if found.</p>
+
+<p>Luckily, robin hood hashing gets a faster lookup time compare to
+<code>dense_hash_map</code>. I think the major reason is robin hood hashing
+results a great expected probing number, and the overall throughput
+benefits from it.</p>
+
+<p>The benchmark code is available at <a href="https://github.com/dryman/hash_bench">hash_bench</a>. My robin hood
+hashing implementation is available at <a href="https://github.com/dryman/opic">opic robin hood hashing</a>.</p>
+
+<h2 id="summary">Summary</h2>
+
+<p>Hash table implementations has been focused on its speed over memory
+usages. Turns out we can sacrifice some insertion time to gain way
+better memory utilization, and also improve the look up time. I believe
+this can be the new state of the art implementation for hash tables.
+Let me know what you think in the comments. :)</p>
+
+<p>Many details were omitted in this post, but will be discussed on my
+next post. Some outlines for the things I’d like to cover would be</p>
+
+<ul>
+  <li>Probe distributions under different probing strategies (linear probing, quadratic probing, double hashing, and some probing methods I created).</li>
+  <li>Optimize probing by using gcc/clang vector extensions</li>
+  <li>Deletion mechanisms, its performance, and how it affects probe distributions.</li>
+  <li>Serialization and deserialization performance</li>
+  <li>Performance with different popular hash functions</li>
+  <li>Benchmark with other robin hood implementations</li>
+  <li>Benchmark with other embedded key-value store.</li>
+</ul>
+
+<p>I may not be able to cover all the above in my next post, so please
+put down your comment to let me know what do you want to read the next.</p>
+
+<h2 id="one-more-thing">One more thing…</h2>
+
+<p>This robin hood hashing is implemented using my project
+<a href="https://github.com/dryman/opic">Object Persistence In C (OPIC)</a>. OPIC is a new general serialization
+framework I just released. Any in-memory object created with OPIC can
+be serialized without knowing how it was structured. Deserializing
+objects from OPIC only requires one mmap syscall. That’s say, this
+robin hood implementation can work not only for a living process, the
+data it stored can be used as a key-value store after the process exits.</p>
+
+<p>Right now, the throughput of OPIC robin hood hash map on small keys (6bytes)
+is 9M (1048576/0.115454). This is way better than most
+<a href="http://www.datastax.com/nosql-databases/benchmarks-cassandra-vs-mongodb-vs-hbase">NoSQL key-value stores</a>. Of course, OPIC robin hood hash
+map does not support transactions or concurrent writes. I probably
+should compare it to other embedded databases instead of general
+purpose NoSQL key-value store instead.</p>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2017-05-03T18:26:00-07:00" pubdate data-updated="true">May 3<span>rd</span>, 2017</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/algorithm/'>Algorithm</a>, <a class='category' href='/blog/categories/c-/'>C,</a>, <a class='category' href='/blog/categories/hashtable-/'>HashTable,</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2017/05/03/writing-a-damn-fast-hash-table-with-tiny-memory-footprints/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2017/05/03/writing-a-damn-fast-hash-table-with-tiny-memory-footprints/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left articlenav" href="/blog/2016/03/15/autoconf-tutorial-part-3/" title="Previous Post: Autoconf Tutorial Part-3">&laquo; Autoconf Tutorial Part-3</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/05/03/writing-a-damn-fast-hash-table-with-tiny-memory-footprints/">Writing a damn fast hash table with tiny memory footprints</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/03/15/autoconf-tutorial-part-3/">Autoconf Tutorial Part-3</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/03/14/autoconf-tutorial-2/">Autoconf Tutorial Part-2</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/03/10/autoconf-tutorial-1/">Autoconf Tutorial Part-1</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/12/02/writing-64-bit-assembly-on-mac-os-x/">Writing 64 bit assembly on Mac OS X</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/11/29/integer-promotion-part-2/">Integer Promotion Part 2</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/03/06/introducing-hadoop-fieldformat/">Introducing Hadoop-FieldFormat</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/03/05/hadoop-performance-tuning-best-practices/">Hadoop performance tuning best practices</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/02/26/setting-up-jasper-server-on-linux/">Setting up Jasper Server on Linux</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2014/01/27/capture-path-info-in-hadoop-inputformat-class/">Capture path info in hadoop InputFormat class</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+<section>
+  <h1>Latest Tweets</h1>
+  <ul id="tweets">
+    <li class="loading">Status updating...</li>
+  </ul>
+  <script type="text/javascript">
+    $.domReady(function(){
+      getTwitterFeed("idryman", 4, true);
+    });
+  </script>
+  <script src="/javascripts/twitter.js" type="text/javascript"> </script>
+  
+    <a href="http://twitter.com/idryman" class="twitter-follow-button" data-show-count="false">Follow @idryman</a>
+  
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - dryman (Felix Ren-Chyan Chern) -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'dryblog';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.idryman.org/blog/2017/05/03/writing-a-damn-fast-hash-table-with-tiny-memory-footprints/';
+        var disqus_url = 'http://www.idryman.org/blog/2017/05/03/writing-a-damn-fast-hash-table-with-tiny-memory-footprints/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = 'http://' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#appId=212934732101925&xfbml=1";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+
+
+  <script type="text/javascript">
+    (function() {
+      var script = document.createElement('script'); script.type = 'text/javascript'; script.async = true;
+      script.src = 'https://apis.google.com/js/plusone.js';
+      var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(script, s);
+    })();
+  </script>
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+<!--
+hn like button plugin for jekyll/octopress
+Author: dryman (Felix Ren-Chyan Chern)
+
+Inpired from http://hnlike.com/ written by sbashyal
+
+(The MIT License)
+
+Copyright © 2012-2013 Felix Ren-Chyan Chern
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the ‘Software’), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED ‘AS IS’, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+  <script type="text/javascript">
+    (function(){
+      var hn_like = document.createElement('iframe');
+      hn_like.frameborder="no";
+      hn_like.scrolling="no";
+      hn_like.height="28px";
+      hn_like.width="115px";
+      hn_like.src = "http://hnlike.com/upvote.php?link="
+                    + encodeURIComponent(document.location)
+                    + "&title="
+                    + encodeURIComponent("Writing a damn fast hash table with tiny memory footprints");
+      hn_like.innerHTML="iframes not supported by your browser";
+      var twitter = document.getElementsByClassName("twitter-share-button")[0];
+
+      twitter.parentNode.insertBefore(
+        hn_like,
+        twitter
+      );
+    })();
+  </script>
+
+<!-- end of hn like button -->
+
+
+
+
+<script type="text/javascript">
+ $(function() {
+        /* For zebra striping */
+        $("table tr:nth-child(odd)").addClass("odd-row");
+        /* For cell text alignment */
+        $("table td:first-child, table th:first-child").addClass("first");
+        /* For removing the last border */
+        $("table td:last-child, table th:last-child").addClass("last");
+});
+</script>
+
+
+</body>
+</html>

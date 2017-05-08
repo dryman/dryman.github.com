@@ -9,7 +9,7 @@
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="">
+  <meta name="description" content="Installing graphite on OSX is a pain. This post is a quick note that I would never want to go through again. If you are looking this post, I’d &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -103,6 +103,51 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
+        <h1 class="entry-title"><a href="/blog/2013/05/31/graphite-on-osx/">Install Graphite on OSX</a></h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-05-31T16:59:00-07:00" pubdate data-updated="true">May 31<span>st</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Installing graphite on OSX is a <em>pain</em>. This post is a quick note that I would never want to go through again. If you are looking this post, I’d suggest you to install graphite on linux.</p>
+
+<p>Most installation steps are from this <a href="https://gist.github.com/oyiptong/2430817">gist</a>.</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2013/05/31/graphite-on-osx/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -605,75 +650,6 @@ of ARC especially when gluing CF objects with <strong>toll-free bridging</strong
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <!-- Now we're back to normal posts. Note the links used under href in both headers.-->
-        <h1 class="entry-title"><a href="/blog/2012/11/21/integer-promotion/">Deep C: Integer Promotion</a></h1>
-      
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-  
-
-
-<time datetime="2012-11-21T14:15:00-08:00" pubdate data-updated="true">Nov 21<span>st</span>, 2012</time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Almost every programmer has learned about C, and a lot of them use it for their
-career. It is certainly one of the most popular programming languages on
-<a href="http://www.tiobe.com/index.php/content/paperinfo/tpci/index.html">TIOBE</a> (first place in November 2012). Yet, C can be really tricky and
-behave unexpectedly sometimes. One of those dodgy side of C is <strong>integer
-promotion</strong>. See the following example that illustrate the issue:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="cp">#include &lt;stdio.h&gt;</span>
-</span><span class="line">
-</span><span class="line"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
-</span><span class="line"><span class="p">{</span>
-</span><span class="line">    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">a</span> <span class="o">=</span> <span class="mh">0xff</span><span class="p">;</span>
-</span><span class="line">    <span class="kt">char</span> <span class="n">b</span> <span class="o">=</span> <span class="mh">0xff</span><span class="p">;</span>
-</span><span class="line">    <span class="kt">int</span> <span class="n">c</span> <span class="o">=</span> <span class="n">a</span><span class="o">==</span><span class="n">b</span><span class="p">;</span> <span class="c1">// true, or false?</span>
-</span><span class="line">    <span class="n">printf</span><span class="p">(</span><span class="s">&quot;C: %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="n">c</span><span class="p">);</span>
-</span><span class="line"><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>You might think the output is <code>1</code>, yet the answer is <code>0</code>. Oops.</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2012/11/21/integer-promotion/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/blog/page/4/">&larr; Older</a>
@@ -689,6 +665,10 @@ promotion</strong>. See the following example that illustrate the issue:</p>
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/05/03/writing-a-damn-fast-hash-table-with-tiny-memory-footprints/">Writing a damn fast hash table with tiny memory footprints</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2016/03/15/autoconf-tutorial-part-3/">Autoconf Tutorial Part-3</a>
@@ -726,10 +706,6 @@ promotion</strong>. See the following example that illustrate the issue:</p>
         <a href="/blog/2014/01/27/capture-path-info-in-hadoop-inputformat-class/">Capture path info in hadoop InputFormat class</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2014/01/26/capture-directory-context-in-hadoop-mapper/">Capture directory context in Hadoop Mapper</a>
-      </li>
-    
   </ul>
 </section>
 
@@ -760,7 +736,7 @@ promotion</strong>. See the following example that illustrate the issue:</p>
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2016 - dryman (Felix Ren-Chyan Chern) -
+  Copyright &copy; 2017 - dryman (Felix Ren-Chyan Chern) -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
 </p>
 
