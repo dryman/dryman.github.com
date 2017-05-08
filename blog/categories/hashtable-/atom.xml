@@ -4,7 +4,7 @@
   <title><![CDATA[Category: HashTable, | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/hashtable-/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2017-05-07T21:08:53-07:00</updated>
+  <updated>2017-05-07T21:14:58-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -441,7 +441,7 @@ next post. Some outlines for the things I’d like to cover would be</p>
 </ul>
 
 <p>I may not be able to cover all the above in my next post, so please
-put down your comment to let me know what do you want to read the next.</p>
+put down your comment and let me know what do you want to read the next.</p>
 
 <h2 id="one-more-thing">One more thing…</h2>
 
@@ -450,15 +450,15 @@ put down your comment to let me know what do you want to read the next.</p>
 framework I just released. Any in-memory object created with OPIC can
 be serialized without knowing how it was structured. Deserializing
 objects from OPIC only requires one mmap syscall. That’s say, this
-robin hood implementation can work not only for a living process, the
+robin hood implementation can work not only in a living process, the
 data it stored can be used as a key-value store after the process exits.</p>
 
 <p>Right now, the throughput of OPIC robin hood hash map on small keys (6bytes)
 is 9M (1048576/0.115454). This is way better than most
-<a href="http://www.datastax.com/nosql-databases/benchmarks-cassandra-vs-mongodb-vs-hbase">NoSQL key-value stores</a>. Of course, OPIC robin hood hash
-map does not support transactions or concurrent writes. I probably
-should compare it to other embedded databases instead of general
-purpose NoSQL key-value store instead.</p>
+<a href="http://www.datastax.com/nosql-databases/benchmarks-cassandra-vs-mongodb-vs-hbase">NoSQL key-value stores</a>. The difference might come from
+write ahead logs or some other IO? I’m not sure why the performance
+gain is so huge. My next stop is to benchmark against other embedded
+key-value store like rocksdb, leveldb and so forth.</p>
 
 ]]></content>
   </entry>
