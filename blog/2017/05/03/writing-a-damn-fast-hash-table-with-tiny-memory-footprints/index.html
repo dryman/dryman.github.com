@@ -550,7 +550,7 @@ results a great expected probing number, and the overall throughput
 benefits from it.</p>
 
 <p>The benchmark code is available at <a href="https://github.com/dryman/hash_bench">hash_bench</a>. My robin hood
-hashing implementation is available at <a href="https://github.com/dryman/opic">opic robin hood hashing</a>.</p>
+hashing implementation is available at <a href="http://opic.rocks/struct_robin_hood_hash%E3%80%80.html">opic robin hood hashing</a>.</p>
 
 <h2 id="summary">Summary</h2>
 
@@ -592,6 +592,15 @@ is 9M (1048576/0.115454). This is way better than most
 write ahead logs or some other IO? I’m not sure why the performance
 gain is so huge. My next stop is to benchmark against other embedded
 key-value store like rocksdb, leveldb and so forth.</p>
+
+<h2 id="references">References</h2>
+
+<p>If you like to know more about robin hood hashing, here are some
+posts worth to read:
+* <a href="https://www.sebastiansylvan.com/post/robin-hood-hashing-should-be-your-default-hash-table-implementation/">Robin Hood Hashing should be your default Hash Table implementation</a>
+* <a href="http://codecapsule.com/2013/11/17/robin-hood-hashing-backward-shift-deletion/">Robin Hood hashing: backward shift deletion</a>
+* <a href="https://probablydance.com/2017/02/26/i-wrote-the-fastest-hashtable/">I Wrote The Fastest Hashtable</a>
+* <a href="https://cs.uwaterloo.ca/research/tr/1986/CS-86-14.pdf">Original paper of robin hood hashing</a></p>
 
 </div>
 
