@@ -340,7 +340,7 @@ next post. Some outlines for the things I'd like to cover would be
 * Benchmark with other embedded key-value store.
 
 I may not be able to cover all the above in my next post, so please
-put down your comment to let me know what do you want to read the next.
+put down your comment and let me know what do you want to read the next.
 
 ## One more thing...
 
@@ -349,15 +349,15 @@ This robin hood hashing is implemented using my project
 framework I just released. Any in-memory object created with OPIC can
 be serialized without knowing how it was structured. Deserializing
 objects from OPIC only requires one mmap syscall. That's say, this
-robin hood implementation can work not only for a living process, the
+robin hood implementation can work not only in a living process, the
 data it stored can be used as a key-value store after the process exits.
 
 Right now, the throughput of OPIC robin hood hash map on small keys (6bytes)
 is 9M (1048576/0.115454). This is way better than most
-[NoSQL key-value stores][nosql_bench]. Of course, OPIC robin hood hash
-map does not support transactions or concurrent writes. I probably
-should compare it to other embedded databases instead of general
-purpose NoSQL key-value store instead.
+[NoSQL key-value stores][nosql_bench]. The difference might come from
+write ahead logs or some other IO? I'm not sure why the performance
+gain is so huge. My next stop is to benchmark against other embedded
+key-value store like rocksdb, leveldb and so forth.
 
 [chaining]: https://en.wikipedia.org/wiki/Hash_table#Separate_chaining
 [open_addr]: https://en.wikipedia.org/wiki/Open_addressing
