@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2017-05-08T05:33:26-07:00</updated>
+  <updated>2017-05-08T05:33:59-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -480,7 +480,7 @@ key-value store like rocksdb, leveldb and so forth.</p>
 
 <h2 id="references">References</h2>
 
-<p>If you like to know more about robin hood hashing, here are some
+<p>If you’d like to know more about robin hood hashing, here are some
 posts worth to read:
 * <a href="https://www.sebastiansylvan.com/post/robin-hood-hashing-should-be-your-default-hash-table-implementation/">Robin Hood Hashing should be your default Hash Table implementation</a>
 * <a href="http://codecapsule.com/2013/11/17/robin-hood-hashing-backward-shift-deletion/">Robin Hood hashing: backward shift deletion</a>
