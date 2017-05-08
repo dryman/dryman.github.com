@@ -427,7 +427,7 @@ He wrote a blog post that provides <a href="http://lemire.me/blog/2016/06/27/a-f
 <p>He named this method as <em>fast range</em>. Another intuitive way to think
 about it is <strong>scaling</strong>. Number $x$ ranges $\lbrack 0, 2^{32}-1\rbrack$,
 multiplying it by $N$ then divide by $2^{32}$, the range becomes
-$\lbrack 0, N\rbrack$.</p>
+$\lbrack 0, N-1\rbrack$.</p>
 
 <p>There’s one big problem to apply <em>fast range</em> on probing. Probing
 usually add the probe bias to <em>lower bits</em> of the hashed key. Modulo
