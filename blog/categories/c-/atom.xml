@@ -4,7 +4,7 @@
   <title><![CDATA[Category: C, | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/c-/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2017-05-08T05:33:59-07:00</updated>
+  <updated>2017-05-08T05:38:55-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -29,6 +29,8 @@ also give some mathematical bounds on how well the hash table could
 achieve, and shows how close we are to the optimal.</p>
 
 <!--more-->
+
+<hr />
 
 <p>Let me start with a disclaimer. I now work at google, and this project
 (OPIC including the hash table implementation) is approved by google
