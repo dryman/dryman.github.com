@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Algorithm | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/algorithm/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2017-05-08T05:38:55-07:00</updated>
+  <updated>2017-05-09T07:56:22-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -470,6 +470,25 @@ posts worth to read:
 * <a href="http://codecapsule.com/2013/11/17/robin-hood-hashing-backward-shift-deletion/">Robin Hood hashing: backward shift deletion</a>
 * <a href="https://probablydance.com/2017/02/26/i-wrote-the-fastest-hashtable/">I Wrote The Fastest Hashtable</a>
 * <a href="https://cs.uwaterloo.ca/research/tr/1986/CS-86-14.pdf">Original paper of robin hood hashing</a></p>
+
+<h2 id="edits">Edits</h2>
+
+<h4 id="section">5/7/17</h4>
+
+<p>As people pointed out in hacker news and comment below, C++
+<code>std::string</code> has 24 bytes overhead on small strings, so the memory
+comparison is not fair.  I’ll conduct another set of benchmarks using
+integers tonight.</p>
+
+<p>Also, one of the author of libcuckoo (@dga) pointed out that libcuckoo
+would perform better if I use thread-unsafe version. I’ll also update
+the benchmark with this new setup.</p>
+
+<p>The short string problem brings up a question: what is the best
+practice to use C++ hash map with short strings? Isn’t this a common
+use case in daily programming? I tried to do some quick search but
+didn’t find any useful information, and I’m suck at C++…
+Any good idea on how to do this better?</p>
 
 ]]></content>
   </entry>
