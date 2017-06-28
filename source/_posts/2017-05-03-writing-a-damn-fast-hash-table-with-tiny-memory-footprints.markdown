@@ -18,6 +18,8 @@ achieve, and shows how close we are to the optimal.
 
 <!--more-->
 
+* * *
+
 Let me start with a disclaimer. I now work at google, and this project
 (OPIC including the hash table implementation) is approved by google
 [Invention Assignment Review Committee][iarc] as my personal
@@ -219,7 +221,7 @@ uint32_t reduce(uint32_t x, uint32_t N) {
 He named this method as *fast range*. Another intuitive way to think
 about it is **scaling**. Number $x$ ranges $\lbrack 0, 2^{32}-1\rbrack$,
 multiplying it by $N$ then divide by $2^{32}$, the range becomes
-$\lbrack 0, N\rbrack$.
+$\lbrack 0, N-1\rbrack$.
 
 There's one big problem to apply *fast range* on probing. Probing
 usually add the probe bias to *lower bits* of the hashed key. Modulo
@@ -318,7 +320,7 @@ results a great expected probing number, and the overall throughput
 benefits from it.
 
 The benchmark code is available at [hash_bench](https://github.com/dryman/hash_bench). My robin hood
-hashing implementation is available at [opic robin hood hashing][opic].
+hashing implementation is available at [opic robin hood hashing][opic_rhh].
 
 ## Summary
 
@@ -340,7 +342,7 @@ next post. Some outlines for the things I'd like to cover would be
 * Benchmark with other embedded key-value store.
 
 I may not be able to cover all the above in my next post, so please
-put down your comment and let me know what do you want to read the next.
+put down your comment and let me know what do you want to read the most.
 
 ## One more thing...
 
@@ -359,6 +361,41 @@ write ahead logs or some other IO? I'm not sure why the performance
 gain is so huge. My next stop is to benchmark against other embedded
 key-value store like rocksdb, leveldb and so forth.
 
+## References
+
+If you'd like to know more about robin hood hashing, here are some
+posts worth to read:
+
+* [Robin Hood Hashing should be your default Hash Table implementation](https://www.sebastiansylvan.com/post/robin-hood-hashing-should-be-your-default-hash-table-implementation/)
+
+* [Robin Hood hashing: backward shift deletion](http://codecapsule.com/2013/11/17/robin-hood-hashing-backward-shift-deletion/)
+
+* [I Wrote The Fastest Hashtable](https://probablydance.com/2017/02/26/i-wrote-the-fastest-hashtable/)
+
+* [Unfinished draft of linearly probed robin hood hashing][https://pubby8.wordpress.com/2017/05/08/an-unfinished-draft-of-linearly-probed-robin-hood-hash-tables/?iframe=true&theme_preview=true]
+
+* [Original paper of robin hood hashing][rhh]
+
+## Edits
+
+#### 5/7/17
+
+As people pointed out in hacker news and comment below, C++
+`std::string` has 24 bytes overhead on small strings, so the memory
+comparison is not fair.  I'll conduct another set of benchmarks using
+integers tonight.
+
+Also, one of the author of libcuckoo (@dga) pointed out that libcuckoo
+would perform better if I use thread-unsafe version. I'll also update
+the benchmark with this new setup.
+
+The short string problem brings up a question: what is the best
+practice to use C++ hash map with short strings? Isn't this a common
+use case in daily programming? I tried to do some quick search but
+didn't find any useful information, and I'm suck at C++...
+Any good idea on how to do this better?
+
+
 [chaining]: https://en.wikipedia.org/wiki/Hash_table#Separate_chaining
 [open_addr]: https://en.wikipedia.org/wiki/Open_addressing
 [hopscotch]: https://en.wikipedia.org/wiki/Hopscotch_hashing
@@ -368,4 +405,5 @@ key-value store like rocksdb, leveldb and so forth.
 [fastmodandscale]: https://github.com/dryman/opic/blob/master/opic/hash/robin_hood.c#L155
 [iaca]: https://software.intel.com/en-us/articles/intel-architecture-code-analyzer
 [opic]: https://github.com/dryman/opic 
+[opic_rhh]: http://opic.rocks/struct_robin_hood_hash%E3%80%80.html
 [nosql_bench]: http://www.datastax.com/nosql-databases/benchmarks-cassandra-vs-mongodb-vs-hbase
