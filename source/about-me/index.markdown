@@ -7,20 +7,26 @@ sharing: true
 footer: true
 ---
 
-I'm a self-taught programmer and am familiar with many different kinds of
-programming languages for different tasks. For text processing I use Perl, and
-I'm also one of the CPAN authors. For highly concurrent server I experienced
-with NodeJS development. On iOS engineering, I wrote native Objective-C and
-published some useful Core Animation libraries.
-
-Now I'm working in SupplyFrame as a Hadoop engineer. We use low-level
-map-reduce API and constructed several libraries based on lower-level IO
-functions to improve the functionalities of hadoop.
+I'm a self-taught programmer passionate on various engineering fields.
+In my early career, I used perl for text processing and web programming.
+Later I experienced some iOS development shortly, and 3 years solid
+Hadoop map reduce engineering. Now I work at Google on cloud infrastructure,
+but in my spare time, my interests are still on data engineering related
+topics, algorithms, and complexity analysis.
 
 
 # Open source projects
 
+* [OPIC -- Object Persistence in C][opic] A memory allocator for fast
+serialization
+
+[opic]: https://github.com/dryman/opic
+
 ## Hadoop projects
+
+* [HyperLogLog for Hive][hive] Aggregate data with HyperLogLog from hive.
+
+[hive]: https://github.com/dryman/hive-probabilistic-utils
 
 * [Hadoop FieldFormat][fieldformat] Structured input, output, and writable classes for map-reduce
 
