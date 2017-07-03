@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Category: C | Carpe diem (Felix's blog)]]></title>
+  <title><![CDATA[Category: c | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/c/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2017-05-09T08:02:24-07:00</updated>
+  <updated>2017-07-02T20:21:35-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -14,840 +14,346 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Integer Promotion Part 2]]></title>
-    <link href="http://www.idryman.org/blog/2014/11/29/integer-promotion-part-2/"/>
-    <updated>2014-11-29T18:34:00-08:00</updated>
-    <id>http://www.idryman.org/blog/2014/11/29/integer-promotion-part-2</id>
-    <content type="html"><![CDATA[<p>It’s been a while since I wrote my last article. I recently read an old book <a href="http://www.amazon.com/Expert-Programming-Peter-van-Linden/dp/0131774298">Expert C Programming</a> and found there are many C langauge details that I never think about. Review and rethink what C integer promotion rules meant to C is one of the interesting topic that I want to share with you.</p>
+    <title type="html"><![CDATA[Writing a memory allocator for fast serialization]]></title>
+    <link href="http://www.idryman.org/blog/2017/06/28/opic-a-memory-allocator-for-fast-serialization/"/>
+    <updated>2017-06-28T12:19:00-07:00</updated>
+    <id>http://www.idryman.org/blog/2017/06/28/opic-a-memory-allocator-for-fast-serialization</id>
+    <content type="html"><![CDATA[<p>In my last post, I briefly introduced OPIC (Object Persistance
+in C), which is a general serialization framework that can
+serialize any object without knowing its internal layout.
+In this post, I’ll give a deeper dive on how it works.</p>
 
 <!--more-->
 
-<h2 id="what-is-type-systems">What is type systems?</h2>
+<hr />
 
-<p>Type is the methods that interpret and process your data.
-Sounds familiar to OOP? Definiing a class <strong>IS</strong> defining a method.
-In C, expressions on different data type produces different
-instructions. What instruction to generate? Depends on the data
-type. (int is different than float, for example).</p>
+<p>Still with the same disclaimer. I now work at google, and this project
+(OPIC including the hash table implementation) is approved by google
+<a href="https://opensource.google.com/docs/iarc/">Invention Assignment Review Committee</a> as my personal
+project. The work is done only in my spare time on my own machine,
+and does not use and/or reference any of the google internal resources.</p>
 
-<p>A chunk of data in memory or register can mean anything
-on a CPU. The type system defines how operators works on different types.
-Given the example below:</p>
+<h2 id="rationale-key-value-store-performance">Rationale: key-value store performance</h2>
 
-<p>```c
-int* p = 0x00007ffffffffcc0;
-int  i = 1;
-int* q = p + i; // =&gt; 0x00007fffffffffcc4 because the type “pointer to int”
-                // defines the multiplier of the offset is 4</p>
+<p>Key-value data retrieval is probably <em>the</em> most commonly used abstraction
+in computer engineering. It has many forms: NoSQL key value store, embedded
+key value store, and in-memory data structures. In terms of algorithm
+complexity, they are all having O(1) amortized insertion, deletion, and
+query time complecity. However, the actual performance ranges from 2K QPS
+(query per second) up to 200M QPS.</p>
 
-<p>int* r = p + q; // Invalid in C type system.
-```</p>
+<p>To make it easier to reason about, here I only compare read only performance.
+Furthermore, it’s single node, single core. In this setup, the data store
+should not have transaction or WAL (write ahead log) overhead; if table locking
+was required, only the reader lock is needed; if the data was stored on disk,
+the read only load should trigger the data store to cache it in memory, and
+the overall amortized performance <em>theoratically</em> should be close to what
+in-memory data structure can achieve.</p>
 
-<p>When adding an integer to a pointer, the compiler knows the offset multiplier
-by the type of the pointer points to. If <code>p</code> where defined as <code>char* p</code>, then
-the multiplier would be 1. Also, the <code>+</code> operator only make sense to add an
-offset to a pointer, therefore adding two pointer together is invalid in C
-syntax.</p>
-
-<h2 id="review-c-integer-promotion-rules">Review C integer promotion rules</h2>
-
-<p>I wrote an article about C integer promotion 2 years ago: <a href="http://www.idryman.org/blog/2012/11/21/integer-promotion/">Deep C: Integer Promotion</a>. The standard integer promotion rules in C99 is listed below.</p>
-
-<blockquote>
-  <p>If an int can represent all values of the original type, the value is converted
-to an int; otherwise, it is converted to an unsigned int. These are called the
-integer promotions. All other types are unchanged by the integer promotions.</p>
-</blockquote>
-
-<p>This is called <em>value preserving</em>. On machine level, the arithmetic works best on
-a whole register (or 32 bit register). Remember that C’s philosophy is to make
-your program runs as fast as possible, so it loads your small data chunk into
-the whole register, then do the calculation.</p>
-
-<p>However, things worked differently on K&amp;R C. It’s was defined as <em>unsigned
-preserving</em>. When mixing a signed and unsigned integer, the result is unsigned
-type. Below is the example copied from <strong>Expert C Programming</strong> book.</p>
-
-<p><code>c
-if ( -1 &lt; (unsigned char) 1 ) {
-  printf("C dialect after ANSI C, including C89, C99, and after\n");
-} else {
-  printf("Pre ANSI C (K&amp;R) dialect. -1 is treated as unsigned value 0xFFFFFFFF and thus greater than 1 ! \n");
-}
-</code></p>
-
-<h2 id="mixing-unsigned-and-signed-integer-in-modern-c">Mixing unsigned and signed integer in modern C</h2>
-
-<p>Although most of the time C will preserve the value of the type for you,
-you can still get surprising result. When the signed integer can’t hold
-the unsigned value, everything is converted to unsigned integer.</p>
-
-<p><code>c
-  if ( -1 &lt; sizeof(int) ) { 
-    printf("-1 is less than 4\n");
-  } else {
-    printf("-1 is treated as 0xffffffff. Because sizeof returns size_t which is an unsigned int\n");
-  }
-  return 0;
-</code></p>
-
-<p>This program will execute the <strong>else</strong> branch and print:</p>
-
-<p><code>
--1 is treated as 0xffffffff. Because sizeof returns size_t which is an unsigned int
-</code></p>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>Always be careful when you mix unsigned and signed integer in expressions.
-When possible, type cast it to signed int. C is designed to make program fast,
-but not safe for beginners. Additional checks would create a lot of overhead
-in the runtime, so the developer need to know the system and language well
-to avoid shooting at their own foot. Another possible reason may be that 
-the original C developers were all operating system writers and compiler 
-writers. Therefore, the mappings between Assembly and C langauge is
-straight forward to them.</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Deep C: Understanding The Design of C Integer Types]]></title>
-    <link href="http://www.idryman.org/blog/2012/12/03/the-design-of-c-integer-types/"/>
-    <updated>2012-12-03T15:32:00-08:00</updated>
-    <id>http://www.idryman.org/blog/2012/12/03/the-design-of-c-integer-types</id>
-    <content type="html"><![CDATA[<p>C is a popular language designed for cross platform development. However, when
-you dig deeper and deeper, you might get confused for the ambiguity of C
-integer types. Take <code>char</code> for example, number of bits can be 8, 9, or more; the
-minimum of a signed char is not strictly defined as -128 but <em>-127 or less</em>.</p>
-
-<div class="table">
-
-  <table>
-    <thead>
-      <tr>
-        <th style="text-align: center">name</th>
-        <th style="text-align: center">express</th>
-        <th style="text-align: center">value</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td style="text-align: center"><code>CHAR_BIT</code></td>
-        <td style="text-align: center">Number of bits for a char object (byte)</td>
-        <td style="text-align: center">8 or greater</td>
-      </tr>
-      <tr>
-        <td style="text-align: center"><code>SCHAR_MIN</code></td>
-        <td style="text-align: center">Minimum value for an object of type signed char</td>
-        <td style="text-align: center">-127 or less</td>
-      </tr>
-      <tr>
-        <td style="text-align: center"><code>SCHAR_MAX</code></td>
-        <td style="text-align: center">Maximum value for an object of type signed char</td>
-        <td style="text-align: center">127 or more</td>
-      </tr>
-      <tr>
-        <td style="text-align: center"><code>UChar_MAX</code></td>
-        <td style="text-align: center">Maximum value for an object of type unsigned char</td>
-        <td style="text-align: center">255 or more</td>
-      </tr>
-    </tbody>
-  </table>
-
-</div>
-
-<p>Why does C is designed like so? In this article I’ll discuss the design and the
-sprits of C.</p>
-
-<!--more-->
-
-<h1 id="c-type-system">C type system</h1>
-
-<p>Before we dig into C’s integer types, we need to understand what a <em>type</em>
-actually means to C language.</p>
-
-<blockquote>
-  <p>The meaning of a value stored in an object or returned by a function is
-determined by the <em>type</em> of the expression used to access it.</p>
-  <footer><cite>C99 6.2.5</cite></footer>
-</blockquote>
-
-<p>In other words, a region of data storage (specified as <em>object</em> in C99) is
-treated as some kinds of human readable value via the type system.</p>
-
-<h2 id="float">Float</h2>
-
-<p>Take <code>float</code> for example. A float number <code>1.0</code> is stored as <code>0x3f800000</code> on my
-intel mac. <code>0x3f800000</code> can be a unsigned int, int, long, or other self defined
-struct type as well. If we treated it as float, we use floating point register to
-operate it; If we use other type, the register may be different, the arithmetic
-operation may be different, too.</p>
-
-<p>```c
-/* cc -std=c99 -Wall play_float.c -o play_float */
-#include <stdio.h /></p>
-
-<p>int main (void)
-{
-    unsigned int object = 0;
-    object |= 127 « 23; </p>
-
-<pre><code>float* force_float = (float*)&amp;object;
-
-printf("stored object is 0x%08x, float representation is %f\n", object, *force_float);
-
-(*force_float)++;
-printf("++\n");
-
-printf("stored object is 0x%08x, float representation is %f\n", object, *force_float);
-
-return 0; } ```
-</code></pre>
-
-<p>The output would be:</p>
-
-<p><code>
-stored object is 0x3f800000, float representation is 1.000000
-++
-stored object is 0x40000000, float representation is 2.000000
-</code></p>
-
-<p><a href="http://ridiculousfish.com">Ridiculous fish</a> has a great article 
-<a href="http://ridiculousfish.com/blog/posts/float.html">about floating point representation</a>. That is a really interesting
-article. I can’t explain better than he does.</p>
-
-<h2 id="integer-promotion">Integer promotion</h2>
-
-<p>C integer promotion is another example of same data storage, but different
-arithmetic operation depend on type. On x86 machine, when you do arithmetic
-operations (+, -, /, ==, etc.) on a <code>signed short</code>, it is <em>promoted</em> to an 
-<code>int</code> with extended signed bit. </p>
-
-<p>```c
-short a = 0xffff; // 0xffff on disk space</p>
-
-<p>/* 
- * loaded into register as 0xffffffff 
- * calculated as 0xffffffff + 0x00000001
- * then store back to disk with possible 
- * truncation
- */
-a++;            <br />
-```</p>
-
-<p>If you use <code>unsigned short</code> instead of <code>signed short</code> the arithmetic operation
-would be different! It will loaded into register without signed bit. 
-A unsigned short with <code>0xffff</code> stored on disk, would be <code>0x0000ffff</code> in
-register. So, if you have a code like this:</p>
-
-<p>```c
-short          a = 0xffff;
-unsigned short b = 0xffff;</p>
-
-<p>printf(“%s\n”, a==b? “equal” : “not equal”);
-/* 
- * not equal, because one is 0xffffffff and 
- * another is 0x0000ffff in register
- */
-```</p>
-
-<p>It will not equal, even if they have the same disk storage! For further
-discussion see my previous post <a href="http://www.idryman.org/blog/2012/11/21/integer-promotion/">Deep C: Integer Promotion</a>.</p>
-
-<h1 id="the-spirit-of-c">The spirit of C</h1>
-
-<p>Some of the facets of the spirit of C can be summarized in phrases like:</p>
-
-<blockquote>
-  <ul>
-    <li>Trust the programmer.</li>
-    <li>Don’t prevent the programmer from doing what needs to be done.</li>
-    <li>Keep the language small and simple.</li>
-    <li>Make it fast, even if it is not guaranteed to be portable.</li>
-  </ul>
-
-  <p>The last proverb needs a little explanation. The potential for efficient code
-generation is one of the most important strengths of C. To help ensure that no
-code explosion occurs for what appears to be a very simple operation, many
-operations are defined to be how the target  machine’s hardware does it rather
-than by a general abstract rule.</p>
-  <footer><cite>C99 Rationale v5.10 page 3</cite></footer>
-</blockquote>
-
-<p>When you look at C spec, you should remember that C is designed <em>to run fast on
-target machine</em>, not designed <em>for simplicity of abstract machine</em>. This design
-goal directly affect the spec of C’s type system, since C’s type system is the
-rule of how machine arithmetic logic unit operates on data.</p>
-
-<h2 id="int">int</h2>
-
-<p><code>int</code> is a special type, it is defined to be <strong>the fastest implementation to
-represent an integer</strong>. It is mostly implemented to be the fastest register on
-the machine. For 16-bit machine, it is 16-bit; for 24-bit machine, it is 24-bit;
-for 32-bit machine, it is 32-bit; for 64-bit machine, well, the fastest register
-is 32-bit, so the most seen implementation is 32-bit.</p>
-
-<p>The size of <code>int</code> is also the size that integer promotion promotes to.
-On 32-bit machine, smaller integers like 8-bit and 16-bit will promote to 32-bit
-register when need to do calculations. On 16-bit machine, 16-bit integers don’t
-do promotion, but 8-bit integers do.</p>
-
-<h2 id="size-of-integer-types-in-limith">Size of integer types in <code>limit.h</code></h2>
-
-<p>The numerical limits were, and still are, presented as <em>minimum maxima</em>. That is,
-lower limit defined in SPEC, upper limits specified by the implementation. For
-example, the minimum of a <code>signed short</code> is <code>-128</code> on modern two’s complement
-machine. But on an one’s complement or sign-magnitude machine, the minimum value
-of <code>signed short</code> can only be <code>-127</code>. Some of the limits are listed below:</p>
-
-<div class="table">
-
-  <table>
-    <thead>
-      <tr>
-        <th style="text-align: left">name</th>
-        <th style="text-align: left">expresses</th>
-        <th style="text-align: left">value</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td style="text-align: left">CHAR_BIT</td>
-        <td style="text-align: left">Number of bits for a char object (byte) 8 or greater</td>
-        <td style="text-align: left"> </td>
-      </tr>
-      <tr>
-        <td style="text-align: left">SCHAR_MIN</td>
-        <td style="text-align: left">Minimum value for an object of type signed char</td>
-        <td style="text-align: left">-127 or less</td>
-      </tr>
-      <tr>
-        <td style="text-align: left">SCHAR_MAX</td>
-        <td style="text-align: left">Maximum value for an object of type signed char</td>
-        <td style="text-align: left">127 or more</td>
-      </tr>
-      <tr>
-        <td style="text-align: left">UCHAR_MAX</td>
-        <td style="text-align: left">Maximum value for an object of type unsigned char</td>
-        <td style="text-align: left">255 or more</td>
-      </tr>
-      <tr>
-        <td style="text-align: left">CHAR_MIN</td>
-        <td style="text-align: left">Minimum value for an object of type char</td>
-        <td style="text-align: left">either SCHAR_MIN or 0</td>
-      </tr>
-      <tr>
-        <td style="text-align: left">CHAR_MAX</td>
-        <td style="text-align: left">Maximum value for an object of type char</td>
-        <td style="text-align: left">either SCHAR_MAX or UCHAR_MAX</td>
-      </tr>
-      <tr>
-        <td style="text-align: left">SHRT_MIN</td>
-        <td style="text-align: left">Minimum value for an object of type short int</td>
-        <td style="text-align: left">-32767 or less</td>
-      </tr>
-      <tr>
-        <td style="text-align: left">SHRT_MAX</td>
-        <td style="text-align: left">Maximum value for an object of type short int</td>
-        <td style="text-align: left">32767 or greater</td>
-      </tr>
-      <tr>
-        <td style="text-align: left">USHRT_MAX</td>
-        <td style="text-align: left">Maximum value for an object of type unsigned short int</td>
-        <td style="text-align: left">65535 or greater</td>
-      </tr>
-      <tr>
-        <td style="text-align: left">LONG_MIN</td>
-        <td style="text-align: left">Minimum value for an object of type long int</td>
-        <td style="text-align: left">-2147483647 or less</td>
-      </tr>
-      <tr>
-        <td style="text-align: left">LONG_MAX</td>
-        <td style="text-align: left">Maximum value for an object of type long int</td>
-        <td style="text-align: left">2147483647 or greater</td>
-      </tr>
-      <tr>
-        <td style="text-align: left">ULONG_MAX</td>
-        <td style="text-align: left">Maximum value for an object of type unsigned long int</td>
-        <td style="text-align: left">4294967295 or greater</td>
-      </tr>
-    </tbody>
-  </table>
-
-</div>
-
-<h1 id="summary">Summary</h1>
-
-<p>The spirit of C targets on program speed instead of consistency of abstract
-machine across different platforms. It makes us easy to write programs that run
-fast for free, but the programmer have to take care to make the program
-<strong>safe</strong>. For calculations that is sensitive to data limits, one should use
-unambiguous type specifications like <code>int8_t</code>, <code>int32_t</code> specified in
-<code>inttypes.h</code>, and check the bounds with <code>limits.h</code> and static analyzers.</p>
-
-<h1 id="see-also">See also</h1>
+<p>The first tier of data stores we look at, are the full featured SQL/NoSQL
+database which support replication over cluster of nodes. A report created
+by engineers at University of Toronto is a good start:
+<a href="http://vldb.org/pvldb/vol5/p1724_tilmannrabl_vldb2012.pdf">Solving Big Data Challenges for Enterprise Application Performance
+Management</a>. In this report they compared Cassandra,
+Voldemort, Redis, HBase, VoltDB, and MySQL. Unfortunately, their report
+doesn’t have 100% read only performance comparison, only 95% read is
+reported.</p>
 
 <ul>
-  <li><a href="http://www.open-std.org/jtc1/sc22/wg14">C99 specifications</a></li>
-  <li><a href="http://www.open-std.org/jtc1/sc22/wg14">C99 rationale</a></li>
-  <li><a href="http://www.unix.org/whitepapers/64bit.html">The UNIX system – 64bit and Data Size Neutrality</a></li>
-  <li><a href="http://ridiculousfish.com/blog/posts/float.html">Ridiculous fish’s article on float</a></li>
-  <li><a href="http://www.idryman.org/blog/2012/11/21/integer-promotion/">C Integer Promotion</a></li>
+  <li>Cassandra: 25K QPS</li>
+  <li>Voldemort: 12K QPS</li>
+  <li>Redis: 50K QPS</li>
+  <li>HBase: 2.5K QPS</li>
+  <li>VoltDB: 40K QPS</li>
+  <li>MySQL: 25K QPS</li>
 </ul>
 
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Deep C: Integer Promotion]]></title>
-    <link href="http://www.idryman.org/blog/2012/11/21/integer-promotion/"/>
-    <updated>2012-11-21T14:15:00-08:00</updated>
-    <id>http://www.idryman.org/blog/2012/11/21/integer-promotion</id>
-    <content type="html"><![CDATA[<p>Almost every programmer has learned about C, and a lot of them use it for their
-career. It is certainly one of the most popular programming languages on
-<a href="http://www.tiobe.com/index.php/content/paperinfo/tpci/index.html">TIOBE</a> (first place in November 2012). Yet, C can be really tricky and
-behave unexpectedly sometimes. One of those dodgy side of C is <strong>integer
-promotion</strong>. See the following example that illustrate the issue:</p>
+<p>Some report gives even worse performance numbers. In
+<a href="https://jaxenter.com/evaluating-nosql-performance-which-database-is-right-for-your-data-107481.html">this nosql benchmark</a>, 100% read, Cassandra, HBase, and mongo
+are all having throughput lower than 2K QPS.</p>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="cp">#include &lt;stdio.h /&gt;&lt;/p&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="kt">int</span> <span class="n">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">a</span> <span class="o">=</span> <span class="mh">0xff</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">char</span> <span class="n">b</span> <span class="o">=</span> <span class="mh">0xff</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">int</span> <span class="n">c</span> <span class="o">=</span> <span class="n">a</span><span class="o">==</span><span class="n">b</span><span class="p">;</span> <span class="c1">// true, or false?</span>
-</span><span class='line'>    <span class="n">printf</span><span class="p">(</span><span class="err">“</span><span class="n">C</span><span class="o">:</span> <span class="o">%</span><span class="n">d</span><span class="err">\</span><span class="n">n</span><span class="err">”</span><span class="p">,</span><span class="n">c</span><span class="p">);</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+<p>The performance of the databases above may be biased by network,
+database driver overhead, or other internal complexities. We now look
+at the second tier, embedded databases: LMDB, LevelDB, RocksDB,
+HyperLevelDB, KyotoCabinet, MDBM and BerkelyDB all falls into this
+category. The comparison of first four databases can be found in
+<a href="https://www.influxdata.com/benchmarking-leveldb-vs-rocksdb-vs-hyperleveldb-vs-lmdb-performance-for-influxdb/">this influxdb report</a>.</p>
 
-<p>You might think the output is <code>1</code>, yet the answer is <code>0</code>. Oops.</p>
+<ul>
+  <li>100M values (integer key)
+    <ul>
+      <li>LevelDB: 578K QPS</li>
+      <li>RocksDB: 609K QPS</li>
+      <li>HyperLevelDB: 120K QPS</li>
+      <li>LMDB: 308K QPS</li>
+    </ul>
+  </li>
+  <li>50M values (integer key)
+    <ul>
+      <li>LevelDB: 4.12M QPS</li>
+      <li>RocksDB: 3.68M QPS</li>
+      <li>HyperLevelDB: 2.08M QPS</li>
+      <li>LMDB: 5.89M QPS</li>
+    </ul>
+  </li>
+</ul>
 
-<!--more-->
+<p>The performance report from <a href="https://yahooeng.tumblr.com/post/104861108931/mdbm-high-speed-database">MDBM benchmark</a> is also interesting. They
+only provide the latency number though.</p>
 
-<h2 id="c99-spec">C99 SPEC</h2>
+<ul>
+  <li>MDBM: 0.45 us, ~= 2M QPS (?)</li>
+  <li>LevelDB: 5.3 us, ~= 0.18 QPS (?)</li>
+  <li>KyotoCabinat: 4.9 us, ~= 0.20 QPS (?)</li>
+  <li>BerkeleyDB: 8.4 US, ~= 0.12 QPS (?)</li>
+</ul>
 
-<p>In the prior implementation of K&amp;R and C89, arithmetic operands on <code>short</code>
-and <code>char</code> fell into two major camps and may produce different results from the
-above C snippet. In C99, integer promotion is clearly defined in following rule
-(6.3.1.1):</p>
+<p>I’m guessing the performance number can be very different when the
+keys are different.  In <a href="http://www.lmdb.tech/bench/microbench/benchmark.html">this LMDB benchmark</a>, LevelDB
+only achieves 0.13M QPS.  We can see huge difference in the following
+in memory hash tables. I ran these benchmarks myself. The code is hosted
+at <a href="https://github.com/dryman/hash_bench">hash_bench</a>.</p>
+
+<ul>
+  <li>key: std::string
+    <ul>
+      <li>std::unordered_map: 5.3M QPS</li>
+      <li>sparse_hash_map: 4.4M QPS</li>
+      <li>dense_hash_map: 9.0M QPS</li>
+    </ul>
+  </li>
+  <li>key: int64
+    <ul>
+      <li>std::unordered_map: 106M QPS</li>
+      <li>dense_hash_map: 220M QPS</li>
+    </ul>
+  </li>
+</ul>
+
+<p>This is the state of the art I have surveyed and experimented so far.
+Clearly, the in memory data structure out performs all the other solutions.
+There’s a big gap between the data store that can save to disk, versus
+pure in-memory solutions. Can we fill the gap, and create a data store
+with competitive performance to the best hash tables? This motivates me
+to build OPIC (object persistence in C), where developer can focus on
+writing fast in-memory data structures, and offload the serialization to
+a general framework.</p>
+
+<h2 id="rethink-serialization">Rethink serialization</h2>
+
+<p>I like the clear definition in wikipedia that describes serialization:</p>
 
 <blockquote>
-  <p>If an int can represent all values of the original type, the value is converted
-to an int; otherwise, it is converted to an unsigned int. These are called the
-integer promotions. All other types are unchanged by the integer promotions.</p>
+  <p>serialization is the process of translating data structures or
+object state into a format that can be stored (for example, in a
+file or memory buffer) or transmitted (for example, across a network
+connection link) and reconstructed later (possibly in a different
+computer environment).</p>
 </blockquote>
 
-<p>Recall that the range of integer types:</p>
-
-<ul>
-  <li>signed char: -127 to 127</li>
-  <li>unsigned char: 0 to 255</li>
-  <li>signed short: -32767 to 32767</li>
-  <li>unsigned short: 0 to 65535</li>
-  <li>signed int: -2147483647 to 2147483647</li>
-</ul>
-
-<p>You can see that signed and unsigned char, short all can be represented in
-signed int, so they are all converted to signed int when doing arithmetic
-operations.</p>
-
-<p>In the previous example, <code>unsigned char a = 0xff</code> is presenting <em>255</em>. However,
-<code>char b = 0xff</code> is presenting <em>-1</em>. When both converted to int type, <code>a</code>
-remains <em>255</em>, or <code>0x000000ff</code>; <code>b</code> will be <code>0xffffffff</code> which is <em>-1</em>
-represented in int type. You can see how it works in this C snippet:</p>
-
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="cp">#include &lt;stdio.h /&gt;&lt;/p&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="kt">int</span> <span class="n">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">a</span> <span class="o">=</span> <span class="mh">0xff</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">char</span> <span class="n">b</span> <span class="o">=</span> <span class="mh">0xff</span><span class="p">;</span>
-</span><span class='line'>    <span class="n">printf</span><span class="p">(</span><span class="err">“</span><span class="n">A</span><span class="o">:</span> <span class="o">%</span><span class="mi">08</span><span class="n">x</span><span class="p">,</span> <span class="n">B</span><span class="o">:</span> <span class="o">%</span><span class="mi">08</span><span class="n">x</span><span class="err">\</span><span class="n">n</span><span class="err">”</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">);</span>
-</span><span class='line'>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
-
-<p>The output would be:</p>
-
-<pre><code>A: 000000ff, B: ffffffff
-</code></pre>
-
-<p>This is why the result of expression <code>a==b</code> is <code>0</code>.</p>
-
-<h2 id="understand-it-at-assembly-level">Understand it at assembly level</h2>
-
-<p>When I first understood integer promotion rules, I got even more confused: why
-is this rule so awkward? To understand why it is designed like so, you must dig
-into compiled assembly code.</p>
-
-<p>Let’s start with an easy example:</p>
-
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
-</span><span class='line'><span class="p">{</span>
-</span><span class='line'>    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">a</span> <span class="o">=</span> <span class="mh">0xff</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">char</span> <span class="n">b</span> <span class="o">=</span> <span class="mh">0xff</span><span class="p">;</span>
-</span><span class='line'>    <span class="kt">int</span> <span class="n">c</span> <span class="o">=</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="p">;</span>
-</span><span class='line'>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
-
-<p>The compiled assembly is:</p>
-
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-</pre></td><td class='code'><pre><code class='gas'><span class='line'><span class="nf">movl</span>    <span class="no">$0</span><span class="p">,</span> <span class="p">-</span><span class="mi">4</span><span class="p">(</span><span class="nv">%rbp</span><span class="p">)</span>        <span class="c"># The return value of main is 0</span>
-</span><span class='line'><span class="nf">movb</span>    <span class="no">$-1</span><span class="p">,</span> <span class="p">-</span><span class="mi">5</span><span class="p">(</span><span class="nv">%rbp</span><span class="p">)</span>       <span class="c"># unsigned char a = 0xff;</span>
-</span><span class='line'><span class="nf">movb</span>    <span class="no">$-1</span><span class="p">,</span> <span class="p">-</span><span class="mi">6</span><span class="p">(</span><span class="nv">%rbp</span><span class="p">)</span>       <span class="c"># char b = 0xff;</span>
-</span><span class='line'><span class="nf">movzbl</span>  <span class="p">-</span><span class="mi">5</span><span class="p">(</span><span class="nv">%rbp</span><span class="p">),</span> <span class="nv">%eax</span>
-</span><span class='line'><span class="nf">movsbl</span>  <span class="p">-</span><span class="mi">6</span><span class="p">(</span><span class="nv">%rbp</span><span class="p">),</span> <span class="nv">%ecx</span>
-</span><span class='line'><span class="nf">addl</span>    <span class="nv">%eax</span><span class="p">,</span> <span class="nv">%ecx</span>          <span class="c"># int c = a + b</span>
-</span><span class='line'><span class="nf">movl</span>    <span class="nv">%ecx</span><span class="p">,</span> <span class="p">-</span><span class="mi">12</span><span class="p">(</span><span class="nv">%rbp</span><span class="p">)</span>     <span class="c"># store c onto the stack</span>
-</span><span class='line'><span class="nf">movl</span>    <span class="p">-</span><span class="mi">4</span><span class="p">(</span><span class="nv">%rbp</span><span class="p">),</span> <span class="nv">%eax</span>
-</span><span class='line'><span class="nf">popq</span>    <span class="nv">%rbp</span>
-</span><span class='line'><span class="nf">ret</span>                         <span class="c"># return value 0 from eax</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
-
-<p>If you are not familiar with GAS syntax, you can check out 
-<a href="http://en.wikibooks.org/wiki/X86_Assembly/GAS_Syntax">X86 Assembly/GAS Syntax</a>. GAS assembly instructions are generally suffixed
-with the letters “b”, “s”, “w”, “l”, “q” or “t” to determine what size operand
-is being manipulated.</p>
-
-<ul>
-  <li>b = byte (8 bit)</li>
-  <li>s = short (16 bit integer) or single (32-bit floating point)</li>
-  <li>w = word (16 bit)</li>
-  <li>l = long (32 bit integer or 64-bit floating point)</li>
-  <li>q = quad (64 bit)</li>
-  <li>t = ten bytes (80-bit floating point)</li>
-</ul>
-
-<p>GAS convention is to push parameter from left-to-right. For instance, 
-<code>movl $0, -4(%rbp)</code> means to move <code>0x00000000</code> to address <code>-4(%rbp)</code>.</p>
-
-<p>The instruction <code>movzbl</code> means moving a byte to long (32 bit int) with <strong>zero
-fill</strong>.  <code>movzbl -5(%rbp), %eax</code> take <code>0xff</code> to <code>%eax</code> and fill the rest with
-zero.  <code>%eax</code> is now <code>0x000000ff</code>.</p>
-
-<p>The instruction <code>movsbl</code> means moving a byte to long with <strong>signed fill</strong>. 
-<code>movsbl -6(%rbp), %ecx</code> take <code>0xff</code> to <code>%eax</code> and fill the rest with signed
-value, which will cause <code>%ecx</code> to be <code>0xffffffff</code>.  Finally, <code>addl %eax, %ecx</code>
-do the add operation, and <code>movl %ecx, -12(%rbp)</code> store the result onto the
-stack.</p>
-
-<p>Now, you understand that integer promotion is a rule how C types being mapped
-directly to machine instructions. All arithmetics operands are applied to
-smaller integers <strong>after</strong> they are transformed into int with <em>signed</em> or
-<em>unsigned fill</em>.  You can think it this way: though <code>short</code> and <code>char</code> are stored
-in one or two byte, they are treated as int when you use it with arithmetic
-operations. The rule how they are transformed to int is called <strong>integer
-promotion</strong>.</p>
-
-<h2 id="summary">Summary</h2>
-
-<p>Typically, CPUs are fastest at operating on integers of their native integer
-size. On x86, 32-bit arithmetics are can be twice as fast compare to 16-bit
-operands. C is a language focused on performance, so it will do the integer
-promotion to make the program as fast as possible. Though, you need to
-keep the integer promotion rule in mind to prevent some integer overflow
-vulnerability issues.</p>
-
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Type Qualifiers and friends]]></title>
-    <link href="http://www.idryman.org/blog/2012/10/29/type-qualifiers/"/>
-    <updated>2012-10-29T08:55:00-07:00</updated>
-    <id>http://www.idryman.org/blog/2012/10/29/type-qualifiers</id>
-    <content type="html"><![CDATA[<p>Type qualifiers are heavily used in C and Objective C. In C99 there are three
-type qualifiers: <code>const</code>, <code>restrict</code>, and <code>volatile</code>. In objective C,
-Apple introduced <code>__weak</code>, <code>__strong</code>, <code>__unsafe_unretained</code>, and
-<code>__autoreleasing</code> for automatic reference counting.</p>
-
-<p>It is easy to get confused with complicated type qualifiers. For example:</p>
-
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">char</span><span class="o">*</span> <span class="k">const</span> <span class="o">*</span> <span class="n">x</span><span class="p">;</span>  <span class="c1">// x is a pointer to const pointer to char</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
-
-<p>In this post I’ll go through what type qualifiers are, and how do we read and
-write it in correct way.</p>
-
-<!-- more -->
-
-<h2 id="names-and-definitions">Names and definitions</h2>
-
-<p>Type qualifiers should not be confused with <strong>storage specifiers</strong> like <code>static</code>
-<code>auto</code>, <code>extern</code> and <code>register</code>. To illustrate this, allow me to use Mike Ash’s
-example:</p>
-
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">static</span> <span class="k">const</span> <span class="kt">int</span> <span class="n">x</span><span class="p">;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
-
-<p>Here, <code>static</code> is a storage specifier to tell complier how <code>x</code> is stored, and
-<code>const</code> is a type qualifier to tell complier <strong>the type</strong> of x is read-only
-data. Since <code>const</code> is part of the type, you can write:</p>
-
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">typedef</span> <span class="k">const</span> <span class="kt">int</span> <span class="n">MyInt</span><span class="p">;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
-
-<p>but you cannot write:</p>
-
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">typedef</span> <span class="k">static</span> <span class="kt">int</span> <span class="n">MyInt</span><span class="p">;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
-
-<p>This is because <code>static</code> is not part of the type.</p>
-
-<p>You might wonder: is <code>__block</code> a type qualifier or storage specifier?  The 
-<a href="http://clang.llvm.org/docs/BlockLanguageSpec.txt">clang block language spec</a> said that it is a <strong>storage qualifier</strong>.
-Don’t get confused.  <code>__block</code> is a <em>storage qualifer/specifer</em> which modifies
-how variable is stored.  For more curious on <code>__block</code>, you can check out my
-previous post <a href="http://www.idryman.org/blog/2012/09/29/c-objc-block-byref-internals/">Block byref internals</a>.</p>
-
-<h3 id="arc-ownership-qualifiers">ARC ownership qualifiers</h3>
-
-<p>What about <code>__strong</code>, <code>__weak</code>, <code>__unsafe_unretained</code>, and <code>__autoreleasing</code>?
-You <em>can</em> use it with <code>typedef</code>, and they are truly part of the type. However, they
-are a bit different from C type qualifiers. ARC generated code have an runtime
-API supports it. You can manually use some of those: <code>objc_storeWeak</code>,
-<code>objc_destroyWeak</code>…etc. In Clang specification, these qualifiers are named
-<strong>ownership qualifiers</strong>. Luckily, they share the same rule of type
-qualifiers.</p>
-
-<h2 id="the-grammar">The grammar</h2>
-
-<p>C declaration can be really complicated. In this section I’ll just cover the
-basics and the most commonly seen ones.</p>
-
-<ul>
-  <li>Rule 1: find the identifier (the variable), read from right to left.</li>
-</ul>
-
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">int</span> <span class="n">x</span><span class="p">;</span>                <span class="c1">// x is int</span>
-</span><span class='line'><span class="kt">int</span> <span class="o">*</span> <span class="n">x</span><span class="p">;</span>              <span class="c1">// x is a ‘pointer to’ int</span>
-</span><span class='line'><span class="kt">int</span> <span class="o">*</span> <span class="o">*</span> <span class="n">x</span><span class="p">;</span>            <span class="c1">// x is a ‘pointer to’ ‘pointer to’ int</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
-
-<p>When there is a type qualifier, it applies to its immediate left:</p>
-
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">int</span> <span class="k">const</span> <span class="n">x</span><span class="p">;</span>          <span class="c1">// x is a const int</span>
-</span><span class='line'><span class="kt">int</span> <span class="o">*</span> <span class="k">const</span> <span class="n">x</span><span class="p">;</span>        <span class="c1">// x is a ‘const pointer to’ int</span>
-</span><span class='line'><span class="kt">int</span> <span class="k">const</span> <span class="o">*</span> <span class="n">x</span><span class="p">;</span>        <span class="c1">// x is a ‘pointer to’ const int</span>
-</span><span class='line'><span class="kt">int</span> <span class="o">*</span> <span class="k">const</span> <span class="o">*</span> <span class="n">x</span><span class="p">;</span>      <span class="c1">// x is a ‘pointer to’ ‘const pointer to’ int</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
-
-<ul>
-  <li>Rule 2: If next to type specifier, it applies to type-specifier</li>
-</ul>
-
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">const</span> <span class="kt">int</span> <span class="n">x</span><span class="p">;</span>          <span class="c1">// x is a const int</span>
-</span><span class='line'><span class="k">const</span> <span class="kt">int</span> <span class="o">*</span> <span class="k">const</span> <span class="n">x</span><span class="p">;</span>  <span class="c1">// x is a ‘const pointer to’ const int</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
-
-<ul>
-  <li>Rule 3: If there are parenthesis or bracelets, reorder it to postfix form:</li>
-</ul>
-
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">int</span> <span class="o">*</span> <span class="k">const</span> <span class="o">*</span> <span class="p">(</span> <span class="o">*</span> <span class="n">p</span><span class="p">)();</span>
-</span><span class='line'><span class="c1">// postfix: p * () * const * int</span>
-</span><span class='line'><span class="c1">// p is a pointer to a function returning a</span>
-</span><span class='line'><span class="c1">// pointer to const-pointer-to-int</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
-
-<p>For more curious, checkout <a href="http://www.vineetgupta.com/2011/03/deciphering-complex-c-declarations/">Deciphering Complex C Declarations</a> and
-<a href="http://cdecl.org">cdecl</a>.</p>
-
-<h2 id="volatile-restrict">volatile, restrict</h2>
-
-<h3 id="volatile">volatile</h3>
-
-<blockquote>
-  <p>Every reference to the variable will reload the contents from memory rather
-than take advantage of situations where a copy can be in a register.</p>
-</blockquote>
-
-<p>The <code>volatile</code> qualifier maintains consistency of memory access to data objects.
-Volatile variable are read from memory each time their values is needed, and
-writen back to memory each time they are changed. However, volatile variables
-are not automic. If you want to write thread safe operation, you can write
-something like:</p>
-
-<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>OSAtomic.h </span><a href='http://www.opensource.apple.com/source/xnu/xnu-1456.1.26/libkern/libkern/OSAtomic.h'>link</a></figcaption> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="k">static</span> <span class="kr">__inline</span> <span class="n">bool</span> <span class="nf">OSAtomicCompareAndSwapInt</span><span class="p">(</span><span class="kt">int</span> <span class="n">oldi</span><span class="p">,</span> <span class="kt">int</span> <span class="n">newi</span><span class="p">,</span> <span class="kt">int</span> <span class="k">volatile</span> <span class="o">*</span><span class="n">dst</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>    <span class="kt">int</span> <span class="n">original</span> <span class="o">=</span> <span class="n">InterlockedCompareExchange</span><span class="p">(</span><span class="n">dst</span><span class="p">,</span> <span class="n">newi</span><span class="p">,</span> <span class="n">oldi</span><span class="p">);</span>
-</span><span class='line'>    <span class="k">return</span> <span class="p">(</span><span class="n">original</span> <span class="o">==</span> <span class="n">oldi</span><span class="p">);</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
-
-<p>This is a function that is thread and multiprocessor safe to swap/update an integer.
-Objective-C runtime uses these functions defined in <a href="http://www.opensource.apple.com/source/xnu/xnu-1456.1.26/libkern/libkern/OSAtomic.h">OSAtomic.h</a> to
-manage retain counts.</p>
-
-<h3 id="restrict">restrict</h3>
-
-<p><code>restrict</code> is a keyword purely for the purpose of optimization. </p>
-
-<blockquote>
-  <p>In the C programming language, as of the C99 standard, restrict is a keyword
-that can be used in pointer declarations. The restrict keyword is a
-declaration of intent given by the programmer to the compiler. It says that
-for the lifetime of the pointer, only it or a value directly derived from it
-(such as <code>pointer + 1</code>) will be used to access the object to which
-it points. This limits the effects of pointer aliasing, aiding caching
-optimizations.</p>
-</blockquote>
-
-<p><code>restrict</code> is a qualifier for pointers. It claims that the memory that pointer
-points to can only be accessed by this pointer.  Consider this case:</p>
-
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">char</span> <span class="o">*</span><span class="n">src</span><span class="p">,</span> <span class="o">*</span><span class="n">dst</span><span class="p">;</span>
-</span><span class='line'><span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span> <span class="n">len</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
-</span><span class='line'>    <span class="n">dst</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">src</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
-
-<p>If the <code>*dst</code> overlapped with <code>*src</code>, compiler can only generate code that load a
-small piece of memory and operate it once at a time. Fortran does not have this
-problem because it does not have pointers. Thus Fortran can do ambitious optimization
-to load a big chunck of memory and operate it all at once. <code>restrict</code> is a new
-keyword defined in C99 to address this problem. The original code can be
-rewritten as:</p>
-
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">void</span> <span class="o">*</span><span class="n">memcpy</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="kr">restrict</span> <span class="n">s1</span><span class="p">,</span> <span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="kr">restrict</span> <span class="n">s2</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">n</span><span class="p">);</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
-
-<p>and compiler can optimize this code like Fortran does!</p>
-
-<p>Note that <code>restrict</code> is a type qualifier for <strong>pointers</strong>.</p>
-
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-</pre></td><td class='code'><pre><code class='c'><span class='line'><span class="kt">int</span> <span class="o">*</span> <span class="kr">restrict</span> <span class="n">x</span><span class="p">;</span> <span class="c1">// correct</span>
-</span><span class='line'><span class="kt">int</span> <span class="kr">restrict</span> <span class="o">*</span> <span class="n">x</span><span class="p">;</span> <span class="c1">// wrong</span>
-</span><span class='line'><span class="kr">restrict</span> <span class="kt">int</span> <span class="o">*</span> <span class="n">x</span><span class="p">;</span> <span class="c1">// wrong</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
-
-<h2 id="arc-ownership-qualifiers-1">ARC ownership qualifiers</h2>
-
-<p>If you understand all the above, then Objective-C Automatic Reference Counting
-qualifiers should be easy to you! Here is the definition from Apple:</p>
+<p>In our case, we want to minimize this translation cost. The smaller
+the translation cost, the faster the system can load the data.
+Pushing this idea to extreme, what if the object have the same
+representation in memory and on disk? This concept is not new.
+Many modern serialization framework treats the serialized object
+as an actual in memory object with accessors. <a href="https://developers.google.com/protocol-buffers/">Protobuf</a>
+and <a href="https://thrift.apache.org">thrift</a> are two implementation for such idea. However,
+neither protobuf nor thrift is capable to represent general
+data structures like linked list, trees, or (large) hash tables. These
+solutions lack of pointers; the only supported object relationship is
+inline object or inline list of objects.</p>
+
+<p>Why is pointer hard for serialization? If you simply copy the pointer
+value for serialization, the address it pointed at would not be valid
+after you restore it from disk. Most general serialization framework
+would have to walk though all the related object user attempt to
+serialize, copy all the objects, either inline the object or create
+a special mapping of objects for cross references. In the current
+state of the art, either you drop the support of pointer and get
+minimized translation cost, or you pay high translation fee (walk
+through objects) for general data structure serialization. How
+can we do better?</p>
+
+<p>Turns out, once you have a good way to represent the pointer value,
+you gain the benefits of both solution: cheap serialization cost
+and freedom to implement all types of data structures.</p>
+
+<h2 id="key-idea-put-a-bound-on-pointer-addresses">Key idea: Put a bound on pointer addresses</h2>
+
+<p>Pointers are hard to serialize because it can point to anywhere
+in the full virtual memory space. The solution is pretty straight
+forward, simply bound the objects into a heap space we control.</p>
+
+<p><img src="/images/OPIC_memory_layout.png" alt="opic memory" /></p>
+
+<p>Having all objects bounded in one memory space, serialization is
+simply dumping the shaded memory out, and de-serialization is mmap the
+file back in memory.  What if the objects contain pointers? Instead of
+using pointers, we use the <strong>offset to the mmap base address</strong> to
+reference objects. When accessing objects, we add the base address
+back to the offset to reconstruct the pointer. Since we only use
+the offset <code>opref_t</code> to store the pointer, even if the whole mmap
+got mapped to a different address, we can still access the object
+by adding a different base address to the offset. If we can ensure
+all the pointers within the block are stored as <code>opref_t</code>, the whole
+block of memory can be dumped out without any translation!</p>
+
+<p><img src="/images/opref.png" alt="opic memory" /></p>
+
+<h2 id="implementation-challenges">Implementation challenges</h2>
+
+<p>Having zero translation (serialization/de-serialization) cost is very
+attractive. However, building a POC took me a year (actually this is
+the third version, but I omitted the details). Here are the challenges
+I’ve found during the development.</p>
 
 <ol>
-  <li><code>__strong</code> is the default. An object remains <strong>alive</strong> as long as there is a strong
-  pointer to it.</li>
-  <li><code>__weak</code> specifies a reference that does not keep the referenced object alive. A
-  weak reference is set to <code>nil</code> when there are no strong references to the object.</li>
-  <li><code>__unsafe_unretained</code> specifies a reference that does not keep the referenced
-  object alive and is not set to <code>nil</code> when there are no strong references to the
-  object. If the object it references is deallocated, the pointer is left
-  dangling.</li>
-  <li><code>__autoreleasing</code> is used to denote arguments that are passed by reference <code>(id *)</code>
-  and are autoreleased on return.</li>
+  <li>
+    <p>All objects need to be bounded in a memory chunk. Therefore I have
+to write a full featured memory allocator. Writing a good one is very
+time consuming.</p>
+  </li>
+  <li>
+    <p>Programming languages with run-time pointers, like vtables, pointers
+in existing containers, etc. cannot be used in this framework. All
+containers (hash tables, balanced tress) need to be rebuilt from ground up.
+C++, Rust, Go all have their run-time pointers and cannot be used. The only
+language I can use is pure C. (This is why the project is named Object
+Persistence in C).</p>
+  </li>
+  <li>
+    <p>Serialized object cannot be transferred between architectures like
+32bit/64bit, little endian or big endian. Depends on the use case, this
+problem might be minor.</p>
+  </li>
 </ol>
 
-<p>All ownership qualifiers should decorate on Objective-C object pointers.</p>
+<p>These constraints shapes OPIC. The core OPIC API is a memory manager
+for allocating C objects. All the objects created by OPIC would be
+bounded in the 64GB mmap space. The 64GB size were chosen to hold
+enough objects, while user can load many OPIC mmap files in the same
+process.</p>
 
-<p><div class='bogus-wrapper'><notextile><figure class='code'> <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-</pre></td><td class='code'><pre><code class='objc'><span class='line'><span class="n">MyClass</span> <span class="o">*</span> <span class="n">__weak</span> <span class="n">_weakSelf</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span>    <span class="c1">// correct</span>
-</span><span class='line'><span class="n">MyClass</span> <span class="n">__weak</span> <span class="o">*</span> <span class="n">_weakSelf</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span>    <span class="c1">// wrong! May cause serious bugs!</span>
-</span><span class='line'><span class="n">__weak</span> <span class="n">MyClass</span> <span class="o">*</span> <span class="n">_weakSelf</span> <span class="o">=</span> <span class="n">self</span><span class="p">;</span>    <span class="c1">// wrong!&lt;/p&gt;</span>
-</span><span class='line'>
-</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="c1">// Explicitly transfer CGColorRef ownership from UIColor to layer’s backgroundColor</span>
-</span><span class='line'><span class="n">CALayer</span><span class="o">*</span> <span class="n">layer</span> <span class="o">=</span> <span class="p">[</span><span class="n">CALayer</span> <span class="n">layer</span><span class="p">];</span>
-</span><span class='line'><span class="n">CGColorRef</span> <span class="n">redRef</span><span class="p">;</span>
-</span><span class='line'><span class="err">@</span><span class="n">autorelease</span><span class="p">{</span>
-</span><span class='line'>    <span class="n">UIColor</span> <span class="o">*</span> <span class="n">__autoreleasing</span> <span class="n">redColor</span> <span class="o">=</span> <span class="p">[[</span><span class="n">UIColor</span> <span class="n">redColor</span><span class="p">]</span> <span class="nl">colorWithAlphaComponent:</span><span class="mf">.5f</span><span class="p">];</span>
-</span><span class='line'>    <span class="n">redRef</span> <span class="o">=</span> <span class="n">CFRetain</span><span class="p">([</span><span class="n">redColor</span> <span class="n">CGColor</span><span class="p">]);</span>
-</span><span class='line'><span class="p">}</span> <span class="c1">// UIColor released</span>
-</span><span class='line'><span class="n">layer</span><span class="p">.</span><span class="n">backgroundColor</span> <span class="o">=</span> <span class="n">redRef</span><span class="p">;</span>
-</span><span class='line'><span class="n">CFRelease</span><span class="p">(</span><span class="n">redRef</span><span class="p">);</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+<p>Using OPIC malloc is very identical to standard malloc, except user
+need to specify an OPHeap object where the object would allocated in.</p>
 
-<p>For more curious on why do we need to write verbose code for <code>CGColor</code>, you can
-take a look at Big Nerd Ranch’s 
-<a href="http://weblog.bignerdranch.com/296-arc-gotcha-unexpectedly-short-lifetimes/">ARC Gotcha – Unexpectedly Short Lifetimes</a> and Amatten’s
-<a href="http://amattn.com/2011/12/07/arc_best_practices.html">ARC Best Practices</a>.</p>
+<p><code>c
+OPHeap* heap;
+// Initialize a 64GB OPIC heap via mmap
+OPHeapNew(&amp;heap);
+// pointer for accessing the object
+int *a_ptr = OPMalloc(heap, sizeof(int));
+// deallocate an object does not require specifying the heap
+OPDealloc(a_ptr);
+</code></p>
 
-<h2 id="references">References</h2>
+<p>What makes it different to regular malloc is, user can write the whole
+heap to disk and restoring back via file handles.</p>
 
-<ul>
-  <li><a href="http://www.vineetgupta.com/2011/03/deciphering-complex-c-declarations/">Deciphering complex c declarations</a></li>
-  <li><a href="http://www.mikeash.com/pyblog/friday-qa-2009-06-26-type-qualifiers-in-c-part-1.html">Mike Ash Friday QA: Type qualifiers in C part 1</a></li>
-  <li><a href="http://weblog.bignerdranch.com/296-arc-gotcha-unexpectedly-short-lifetimes/">ARC Gotcha – Unexpectedly Short Lifetimes</a> and Amatten’s</li>
-  <li><a href="http://amattn.com/2011/12/07/arc_best_practices.html">ARC Best Practices</a></li>
-  <li><a href="http://clang.llvm.org/docs/BlockLanguageSpec.txt">Block language spec</a></li>
-  <li><a href="http://clang.llvm.org/docs/AutomaticReferenceCounting.html">Clang ARC spec</a></li>
-  <li><a href="http://developer.apple.com/library/mac/#releasenotes/ObjectiveC/RN-TransitioningToARC/Introduction/Introduction.html">Transitioning to ARC Release Notes</a></li>
-</ul>
+<p><code>c
+void OPHeapWrite(OPHeap* heap, FILE* stream);
+bool OPHeapRead(OPHeap** heap_ref, FILE* stream);
+</code></p>
 
+<p>To make your data structure work, you must store your pointer as
+<code>opref_t</code> instead of regular pointer. Converting a pointer to <code>opref_t</code>
+and vise versa is similar, except when restoring <code>opref_t</code> back to
+pointer user must specify which <code>OPHeap</code> its belongs to.</p>
+
+<p><code>c
+// Convert the pointer to a offset to the OPHeap base address
+// The pointer must be a pointer created by OPHeap
+opref_t a_ref = OPPtr2Ref(a_ptr);
+// Add the offset a_ref with OPHeap base address to restore
+// the pointer.
+int* a_ptr = OPRef2Ptr(heap, a_ref);
+</code></p>
+
+<p>In regular programs, user keeps their own reference of the allocated
+objects. However, in the OPIC case, user would lost track of the
+objects they allocated after the heap is serialized. This problem
+can be solved by saving the pointers to the <em>root pointer slot</em>
+that OPIC provides. Each OPIC heap offers 8 root pointer slot.</p>
+
+<p>```c
+/**
+ * @relates OPHeap
+ * @brief Store a pointer to a root pointer slot in OPHeap.
+ *
+ * @param heap OPHeap instance.
+ * @param ptr the pointer we want to store in root pointer slot.
+ * @param pos index in the root pointer slot. 0 &lt;= pos &lt; 8.
+ <em>/
+void OPHeapStorePtr(OPHeap</em> heap, void* ptr, int pos);</p>
+
+<p>/**
+ * @relates OPHeap
+ * @brief Restore a pointer from specified root pointer slot.
+ *
+ * @param heap OPHeap instance.
+ * @param pos index in the root pointer slot. 0 &lt;= pos &lt; 8.
+ * @return The pointer we stored in the root pointer slot.
+ <em>/
+void</em> OPHeapRestorePtr(OPHeap* heap, int pos);
+```</p>
+
+<p>This API has been through many iterations. In the early version
+it was a bunch of C macros for building serializable objects.
+Fortunately it’s simplified and became more powerful and general
+to build serializable applications. I believe it is now simple
+enough and only require a little C/C++ programming skill to master.
+Check out the <a href="http://opic.rocks/group__malloc.html">OPIC Malloc API</a>
+for details</p>
+
+<h2 id="performance">Performance</h2>
+
+<p>OPIC can be used for general data serialization. The first data structure
+I implemented is Robin Hood hash table – a hash map variant which has
+good memory utilization without performance degradation. Memory utilization
+affects how large the serialized file is, therefore is a one of the main
+focus for writing OPIC containers. The details for keeping the memory footprint
+small is in <a href="http://www.idryman.org/blog/2017/05/03/writing-a-damn-fast-hash-table-with-tiny-memory-footprints/">my previous post</a>.</p>
+
+<p>The performance ends up super good: 9M QPS for in memory hash table.
+For non-cached performance, I tested it by de-serializing on every
+query. Every query would have to load the whole file back in memory
+via mmap, then page fault to load the query entry. For this test I
+got 2K QPS, which is 0.0005 second latency per load. Both cached
+and non-cached performance are very promising, and perhaps is very
+close to the upper bound for such application could perform.</p>
+
+<h2 id="current-and-future-scope-of-opic">Current and future scope of OPIC</h2>
+
+<p>Currently OPIC is implemented for building static data structures.
+Build the data structure once, then make it immutable. User can
+preprocess some data and store it with OPIC for later use. This
+is the minimal viable use case I can think of for the initial release,
+but OPIC can do more.</p>
+
+<p>First of all, I want to make OPIC easier to access for more programmers.
+Building high level application in pure C is time consuming, therefore
+I’ll be writing language wrappers for C++, Python, R, and Java so that
+more people can benefits the high speed serialization.</p>
+
+<p>Second, I’ll make OPIC able to mutate after first serialization. High
+level language user may treat OPIC as database of data structures
+that one can compose. This kind of abstraction is different to
+traditional database where program logic have to map to set of
+records. I believe this will bring in more creative usage of new
+types of applications.</p>
+
+<p>Finally, I’d want to make OPIC to work on distributed applications.
+I used to work on Hadoop and big data applications. I always wonder,
+why people rarely talks about complexity and data structures in big
+data world? Why there is no framework provide data structure abstraction
+for big data? Isn’t the large the data size is, the more important
+the complexity and data structure is? Building data structure for
+super scale application, is the ultimate goal of OPIC.</p>
+
+<p>Thank you for reading such a long post. If you also feel excited on
+what OPIC might achieve, please post your comment. If you want to
+contribute, that’s even better! The project page is at
+<a href="https://github.com/dryman/opic">github</a>. Feel free to fork and extend.</p>
 ]]></content>
   </entry>
   

@@ -251,12 +251,18 @@
         <lastmod>2017-05-09T07:59:29-07:00</lastmod>
     </url>
     <url>
+        <loc>
+            http://www.idryman.org/blog/2017/06/28/opic-a-memory-allocator-for-fast-serialization/
+        </loc>
+        <lastmod>2017-07-02T19:30:31-07:00</lastmod>
+    </url>
+    <url>
         <loc>http://www.idryman.org/about-me/</loc>
-        <lastmod>2014-02-26T15:59:07-08:00</lastmod>
+        <lastmod>2017-07-02T20:17:58-07:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/archives/</loc>
-        <lastmod>2017-05-09T07:59:29-07:00</lastmod>
+        <lastmod>2017-07-02T19:30:31-07:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/double-pendulum/</loc>
@@ -272,6 +278,6 @@
     </url>
     <url>
         <loc>http://www.idryman.org/</loc>
-        <lastmod>2017-05-09T07:59:29-07:00</lastmod>
+        <lastmod>2017-07-02T19:30:31-07:00</lastmod>
     </url>
 </urlset>

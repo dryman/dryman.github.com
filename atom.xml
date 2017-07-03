@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2017-05-09T08:02:24-07:00</updated>
+  <updated>2017-07-02T20:21:35-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,380 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Writing a memory allocator for fast serialization]]></title>
+    <link href="http://www.idryman.org/blog/2017/06/28/opic-a-memory-allocator-for-fast-serialization/"/>
+    <updated>2017-06-28T12:19:00-07:00</updated>
+    <id>http://www.idryman.org/blog/2017/06/28/opic-a-memory-allocator-for-fast-serialization</id>
+    <content type="html"><![CDATA[<p>In my last post, I briefly introduced OPIC (Object Persistance
+in C), which is a general serialization framework that can
+serialize any object without knowing its internal layout.
+In this post, I’ll give a deeper dive on how it works.</p>
+
+<!--more-->
+
+<hr />
+
+<p>Still with the same disclaimer. I now work at google, and this project
+(OPIC including the hash table implementation) is approved by google
+<a href="https://opensource.google.com/docs/iarc/">Invention Assignment Review Committee</a> as my personal
+project. The work is done only in my spare time on my own machine,
+and does not use and/or reference any of the google internal resources.</p>
+
+<h2 id="rationale-key-value-store-performance">Rationale: key-value store performance</h2>
+
+<p>Key-value data retrieval is probably <em>the</em> most commonly used abstraction
+in computer engineering. It has many forms: NoSQL key value store, embedded
+key value store, and in-memory data structures. In terms of algorithm
+complexity, they are all having O(1) amortized insertion, deletion, and
+query time complecity. However, the actual performance ranges from 2K QPS
+(query per second) up to 200M QPS.</p>
+
+<p>To make it easier to reason about, here I only compare read only performance.
+Furthermore, it’s single node, single core. In this setup, the data store
+should not have transaction or WAL (write ahead log) overhead; if table locking
+was required, only the reader lock is needed; if the data was stored on disk,
+the read only load should trigger the data store to cache it in memory, and
+the overall amortized performance <em>theoratically</em> should be close to what
+in-memory data structure can achieve.</p>
+
+<p>The first tier of data stores we look at, are the full featured SQL/NoSQL
+database which support replication over cluster of nodes. A report created
+by engineers at University of Toronto is a good start:
+<a href="http://vldb.org/pvldb/vol5/p1724_tilmannrabl_vldb2012.pdf">Solving Big Data Challenges for Enterprise Application Performance
+Management</a>. In this report they compared Cassandra,
+Voldemort, Redis, HBase, VoltDB, and MySQL. Unfortunately, their report
+doesn’t have 100% read only performance comparison, only 95% read is
+reported.</p>
+
+<ul>
+  <li>Cassandra: 25K QPS</li>
+  <li>Voldemort: 12K QPS</li>
+  <li>Redis: 50K QPS</li>
+  <li>HBase: 2.5K QPS</li>
+  <li>VoltDB: 40K QPS</li>
+  <li>MySQL: 25K QPS</li>
+</ul>
+
+<p>Some report gives even worse performance numbers. In
+<a href="https://jaxenter.com/evaluating-nosql-performance-which-database-is-right-for-your-data-107481.html">this nosql benchmark</a>, 100% read, Cassandra, HBase, and mongo
+are all having throughput lower than 2K QPS.</p>
+
+<p>The performance of the databases above may be biased by network,
+database driver overhead, or other internal complexities. We now look
+at the second tier, embedded databases: LMDB, LevelDB, RocksDB,
+HyperLevelDB, KyotoCabinet, MDBM and BerkelyDB all falls into this
+category. The comparison of first four databases can be found in
+<a href="https://www.influxdata.com/benchmarking-leveldb-vs-rocksdb-vs-hyperleveldb-vs-lmdb-performance-for-influxdb/">this influxdb report</a>.</p>
+
+<ul>
+  <li>100M values (integer key)
+    <ul>
+      <li>LevelDB: 578K QPS</li>
+      <li>RocksDB: 609K QPS</li>
+      <li>HyperLevelDB: 120K QPS</li>
+      <li>LMDB: 308K QPS</li>
+    </ul>
+  </li>
+  <li>50M values (integer key)
+    <ul>
+      <li>LevelDB: 4.12M QPS</li>
+      <li>RocksDB: 3.68M QPS</li>
+      <li>HyperLevelDB: 2.08M QPS</li>
+      <li>LMDB: 5.89M QPS</li>
+    </ul>
+  </li>
+</ul>
+
+<p>The performance report from <a href="https://yahooeng.tumblr.com/post/104861108931/mdbm-high-speed-database">MDBM benchmark</a> is also interesting. They
+only provide the latency number though.</p>
+
+<ul>
+  <li>MDBM: 0.45 us, ~= 2M QPS (?)</li>
+  <li>LevelDB: 5.3 us, ~= 0.18 QPS (?)</li>
+  <li>KyotoCabinat: 4.9 us, ~= 0.20 QPS (?)</li>
+  <li>BerkeleyDB: 8.4 US, ~= 0.12 QPS (?)</li>
+</ul>
+
+<p>I’m guessing the performance number can be very different when the
+keys are different.  In <a href="http://www.lmdb.tech/bench/microbench/benchmark.html">this LMDB benchmark</a>, LevelDB
+only achieves 0.13M QPS.  We can see huge difference in the following
+in memory hash tables. I ran these benchmarks myself. The code is hosted
+at <a href="https://github.com/dryman/hash_bench">hash_bench</a>.</p>
+
+<ul>
+  <li>key: std::string
+    <ul>
+      <li>std::unordered_map: 5.3M QPS</li>
+      <li>sparse_hash_map: 4.4M QPS</li>
+      <li>dense_hash_map: 9.0M QPS</li>
+    </ul>
+  </li>
+  <li>key: int64
+    <ul>
+      <li>std::unordered_map: 106M QPS</li>
+      <li>dense_hash_map: 220M QPS</li>
+    </ul>
+  </li>
+</ul>
+
+<p>This is the state of the art I have surveyed and experimented so far.
+Clearly, the in memory data structure out performs all the other solutions.
+There’s a big gap between the data store that can save to disk, versus
+pure in-memory solutions. Can we fill the gap, and create a data store
+with competitive performance to the best hash tables? This motivates me
+to build OPIC (object persistence in C), where developer can focus on
+writing fast in-memory data structures, and offload the serialization to
+a general framework.</p>
+
+<h2 id="rethink-serialization">Rethink serialization</h2>
+
+<p>I like the clear definition in wikipedia that describes serialization:</p>
+
+<blockquote>
+  <p>serialization is the process of translating data structures or
+object state into a format that can be stored (for example, in a
+file or memory buffer) or transmitted (for example, across a network
+connection link) and reconstructed later (possibly in a different
+computer environment).</p>
+</blockquote>
+
+<p>In our case, we want to minimize this translation cost. The smaller
+the translation cost, the faster the system can load the data.
+Pushing this idea to extreme, what if the object have the same
+representation in memory and on disk? This concept is not new.
+Many modern serialization framework treats the serialized object
+as an actual in memory object with accessors. <a href="https://developers.google.com/protocol-buffers/">Protobuf</a>
+and <a href="https://thrift.apache.org">thrift</a> are two implementation for such idea. However,
+neither protobuf nor thrift is capable to represent general
+data structures like linked list, trees, or (large) hash tables. These
+solutions lack of pointers; the only supported object relationship is
+inline object or inline list of objects.</p>
+
+<p>Why is pointer hard for serialization? If you simply copy the pointer
+value for serialization, the address it pointed at would not be valid
+after you restore it from disk. Most general serialization framework
+would have to walk though all the related object user attempt to
+serialize, copy all the objects, either inline the object or create
+a special mapping of objects for cross references. In the current
+state of the art, either you drop the support of pointer and get
+minimized translation cost, or you pay high translation fee (walk
+through objects) for general data structure serialization. How
+can we do better?</p>
+
+<p>Turns out, once you have a good way to represent the pointer value,
+you gain the benefits of both solution: cheap serialization cost
+and freedom to implement all types of data structures.</p>
+
+<h2 id="key-idea-put-a-bound-on-pointer-addresses">Key idea: Put a bound on pointer addresses</h2>
+
+<p>Pointers are hard to serialize because it can point to anywhere
+in the full virtual memory space. The solution is pretty straight
+forward, simply bound the objects into a heap space we control.</p>
+
+<p><img src="http://www.idryman.org/images/OPIC_memory_layout.png" alt="opic memory" /></p>
+
+<p>Having all objects bounded in one memory space, serialization is
+simply dumping the shaded memory out, and de-serialization is mmap the
+file back in memory.  What if the objects contain pointers? Instead of
+using pointers, we use the <strong>offset to the mmap base address</strong> to
+reference objects. When accessing objects, we add the base address
+back to the offset to reconstruct the pointer. Since we only use
+the offset <code>opref_t</code> to store the pointer, even if the whole mmap
+got mapped to a different address, we can still access the object
+by adding a different base address to the offset. If we can ensure
+all the pointers within the block are stored as <code>opref_t</code>, the whole
+block of memory can be dumped out without any translation!</p>
+
+<p><img src="http://www.idryman.org/images/opref.png" alt="opic memory" /></p>
+
+<h2 id="implementation-challenges">Implementation challenges</h2>
+
+<p>Having zero translation (serialization/de-serialization) cost is very
+attractive. However, building a POC took me a year (actually this is
+the third version, but I omitted the details). Here are the challenges
+I’ve found during the development.</p>
+
+<ol>
+  <li>
+    <p>All objects need to be bounded in a memory chunk. Therefore I have
+to write a full featured memory allocator. Writing a good one is very
+time consuming.</p>
+  </li>
+  <li>
+    <p>Programming languages with run-time pointers, like vtables, pointers
+in existing containers, etc. cannot be used in this framework. All
+containers (hash tables, balanced tress) need to be rebuilt from ground up.
+C++, Rust, Go all have their run-time pointers and cannot be used. The only
+language I can use is pure C. (This is why the project is named Object
+Persistence in C).</p>
+  </li>
+  <li>
+    <p>Serialized object cannot be transferred between architectures like
+32bit/64bit, little endian or big endian. Depends on the use case, this
+problem might be minor.</p>
+  </li>
+</ol>
+
+<p>These constraints shapes OPIC. The core OPIC API is a memory manager
+for allocating C objects. All the objects created by OPIC would be
+bounded in the 64GB mmap space. The 64GB size were chosen to hold
+enough objects, while user can load many OPIC mmap files in the same
+process.</p>
+
+<p>Using OPIC malloc is very identical to standard malloc, except user
+need to specify an OPHeap object where the object would allocated in.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="n">OPHeap</span><span class="o">*</span> <span class="n">heap</span><span class="p">;</span>
+</span><span class="line"><span class="c1">// Initialize a 64GB OPIC heap via mmap</span>
+</span><span class="line"><span class="n">OPHeapNew</span><span class="p">(</span><span class="o">&amp;</span><span class="n">heap</span><span class="p">);</span>
+</span><span class="line"><span class="c1">// pointer for accessing the object</span>
+</span><span class="line"><span class="kt">int</span> <span class="o">*</span><span class="n">a_ptr</span> <span class="o">=</span> <span class="n">OPMalloc</span><span class="p">(</span><span class="n">heap</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">));</span>
+</span><span class="line"><span class="c1">// deallocate an object does not require specifying the heap</span>
+</span><span class="line"><span class="n">OPDealloc</span><span class="p">(</span><span class="n">a_ptr</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>What makes it different to regular malloc is, user can write the whole
+heap to disk and restoring back via file handles.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="kt">void</span> <span class="n">OPHeapWrite</span><span class="p">(</span><span class="n">OPHeap</span><span class="o">*</span> <span class="n">heap</span><span class="p">,</span> <span class="kt">FILE</span><span class="o">*</span> <span class="n">stream</span><span class="p">);</span>
+</span><span class="line"><span class="n">bool</span> <span class="n">OPHeapRead</span><span class="p">(</span><span class="n">OPHeap</span><span class="o">**</span> <span class="n">heap_ref</span><span class="p">,</span> <span class="kt">FILE</span><span class="o">*</span> <span class="n">stream</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>To make your data structure work, you must store your pointer as
+<code>opref_t</code> instead of regular pointer. Converting a pointer to <code>opref_t</code>
+and vise versa is similar, except when restoring <code>opref_t</code> back to
+pointer user must specify which <code>OPHeap</code> its belongs to.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="c1">// Convert the pointer to a offset to the OPHeap base address</span>
+</span><span class="line"><span class="c1">// The pointer must be a pointer created by OPHeap</span>
+</span><span class="line"><span class="n">opref_t</span> <span class="n">a_ref</span> <span class="o">=</span> <span class="n">OPPtr2Ref</span><span class="p">(</span><span class="n">a_ptr</span><span class="p">);</span>
+</span><span class="line"><span class="c1">// Add the offset a_ref with OPHeap base address to restore</span>
+</span><span class="line"><span class="c1">// the pointer.</span>
+</span><span class="line"><span class="kt">int</span><span class="o">*</span> <span class="n">a_ptr</span> <span class="o">=</span> <span class="n">OPRef2Ptr</span><span class="p">(</span><span class="n">heap</span><span class="p">,</span> <span class="n">a_ref</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>In regular programs, user keeps their own reference of the allocated
+objects. However, in the OPIC case, user would lost track of the
+objects they allocated after the heap is serialized. This problem
+can be solved by saving the pointers to the <em>root pointer slot</em>
+that OPIC provides. Each OPIC heap offers 8 root pointer slot.</p>
+
+<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="cm">/**</span>
+</span><span class="line"><span class="cm"> * @relates OPHeap</span>
+</span><span class="line"><span class="cm"> * @brief Store a pointer to a root pointer slot in OPHeap.</span>
+</span><span class="line"><span class="cm"> *</span>
+</span><span class="line"><span class="cm"> * @param heap OPHeap instance.</span>
+</span><span class="line"><span class="cm"> * @param ptr the pointer we want to store in root pointer slot.</span>
+</span><span class="line"><span class="cm"> * @param pos index in the root pointer slot. 0 &lt;= pos &lt; 8.</span>
+</span><span class="line"><span class="cm"> */</span>
+</span><span class="line"><span class="kt">void</span> <span class="n">OPHeapStorePtr</span><span class="p">(</span><span class="n">OPHeap</span><span class="o">*</span> <span class="n">heap</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">ptr</span><span class="p">,</span> <span class="kt">int</span> <span class="n">pos</span><span class="p">);</span>
+</span><span class="line">
+</span><span class="line"><span class="cm">/**</span>
+</span><span class="line"><span class="cm"> * @relates OPHeap</span>
+</span><span class="line"><span class="cm"> * @brief Restore a pointer from specified root pointer slot.</span>
+</span><span class="line"><span class="cm"> *</span>
+</span><span class="line"><span class="cm"> * @param heap OPHeap instance.</span>
+</span><span class="line"><span class="cm"> * @param pos index in the root pointer slot. 0 &lt;= pos &lt; 8.</span>
+</span><span class="line"><span class="cm"> * @return The pointer we stored in the root pointer slot.</span>
+</span><span class="line"><span class="cm"> */</span>
+</span><span class="line"><span class="kt">void</span><span class="o">*</span> <span class="n">OPHeapRestorePtr</span><span class="p">(</span><span class="n">OPHeap</span><span class="o">*</span> <span class="n">heap</span><span class="p">,</span> <span class="kt">int</span> <span class="n">pos</span><span class="p">);</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+
+<p>This API has been through many iterations. In the early version
+it was a bunch of C macros for building serializable objects.
+Fortunately it’s simplified and became more powerful and general
+to build serializable applications. I believe it is now simple
+enough and only require a little C/C++ programming skill to master.
+Check out the <a href="http://opic.rocks/group__malloc.html">OPIC Malloc API</a>
+for details</p>
+
+<h2 id="performance">Performance</h2>
+
+<p>OPIC can be used for general data serialization. The first data structure
+I implemented is Robin Hood hash table – a hash map variant which has
+good memory utilization without performance degradation. Memory utilization
+affects how large the serialized file is, therefore is a one of the main
+focus for writing OPIC containers. The details for keeping the memory footprint
+small is in <a href="http://www.idryman.org/blog/2017/05/03/writing-a-damn-fast-hash-table-with-tiny-memory-footprints/">my previous post</a>.</p>
+
+<p>The performance ends up super good: 9M QPS for in memory hash table.
+For non-cached performance, I tested it by de-serializing on every
+query. Every query would have to load the whole file back in memory
+via mmap, then page fault to load the query entry. For this test I
+got 2K QPS, which is 0.0005 second latency per load. Both cached
+and non-cached performance are very promising, and perhaps is very
+close to the upper bound for such application could perform.</p>
+
+<h2 id="current-and-future-scope-of-opic">Current and future scope of OPIC</h2>
+
+<p>Currently OPIC is implemented for building static data structures.
+Build the data structure once, then make it immutable. User can
+preprocess some data and store it with OPIC for later use. This
+is the minimal viable use case I can think of for the initial release,
+but OPIC can do more.</p>
+
+<p>First of all, I want to make OPIC easier to access for more programmers.
+Building high level application in pure C is time consuming, therefore
+I’ll be writing language wrappers for C++, Python, R, and Java so that
+more people can benefits the high speed serialization.</p>
+
+<p>Second, I’ll make OPIC able to mutate after first serialization. High
+level language user may treat OPIC as database of data structures
+that one can compose. This kind of abstraction is different to
+traditional database where program logic have to map to set of
+records. I believe this will bring in more creative usage of new
+types of applications.</p>
+
+<p>Finally, I’d want to make OPIC to work on distributed applications.
+I used to work on Hadoop and big data applications. I always wonder,
+why people rarely talks about complexity and data structures in big
+data world? Why there is no framework provide data structure abstraction
+for big data? Isn’t the large the data size is, the more important
+the complexity and data structure is? Building data structure for
+super scale application, is the ultimate goal of OPIC.</p>
+
+<p>Thank you for reading such a long post. If you also feel excited on
+what OPIC might achieve, please post your comment. If you want to
+contribute, that’s even better! The project page is at
+<a href="https://github.com/dryman/opic">github</a>. Feel free to fork and extend.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Writing a damn fast hash table with tiny memory footprints]]></title>
@@ -4492,195 +4866,6 @@ is not documented anywhere in hadoop api nor document. You can only find it in <
 
 <p>Now you can reach whole eclipse ecosystem directly from vim! Enjoy!</p>
 
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Laziness and memoization in Clojure]]></title>
-    <link href="http://www.idryman.org/blog/2013/06/27/laziness-and-memoization-in-clojure/"/>
-    <updated>2013-06-27T20:01:00-07:00</updated>
-    <id>http://www.idryman.org/blog/2013/06/27/laziness-and-memoization-in-clojure</id>
-    <content type="html"><![CDATA[<p>I’m now having a job at supplyframe Inc., and luckily I can use Clojure for work! Clojure is a young language created by Rich Hickey on 2007. It uses Lisp syntax, immutable data structures by default, and supports both strict and lazy evaluations. As Christ Okasaki suggested:</p>
-
-<blockquote>
-  <p>Strict evaluation is useful in implementing worst-case data structures and lazy evaluation is useful in implementing amortized data structures.</p>
-</blockquote>
-
-<p>It’s really cheap to define lazy or strict data structures in Clojure that has low amortized cost even in a persistent manner. Let’s dig into the source code and see how does Clojure implement it.</p>
-
-<!--more-->
-
-<p>Before we go into Clojure’s java source code, we can first look at the <code>memoize</code> function.</p>
-
-<h2 id="memoize">Memoize</h2>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-</pre></td><td class="code"><pre><code class="clj"><span class="line"><span class="p">(</span><span class="kd">defn </span><span class="nv">memoize</span>
-</span><span class="line">  <span class="s">&quot;Returns a memoized version of a referentially transparent function. The</span>
-</span><span class="line"><span class="s">  memoized version of the function keeps a cache of the mapping from arguments</span>
-</span><span class="line"><span class="s">  to results and, when calls with the same arguments are repeated often, has</span>
-</span><span class="line"><span class="s">  higher performance at the expense of higher memory use.&quot;</span>
-</span><span class="line">  <span class="p">{</span><span class="ss">:added</span> <span class="s">&quot;1.0&quot;</span>
-</span><span class="line">   <span class="ss">:static</span> <span class="nv">true</span><span class="p">}</span>
-</span><span class="line">  <span class="p">[</span><span class="nv">f</span><span class="p">]</span>
-</span><span class="line">  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">mem</span> <span class="p">(</span><span class="nf">atom</span> <span class="p">{})]</span>
-</span><span class="line">    <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="o">&amp;</span> <span class="nv">args</span><span class="p">]</span>
-</span><span class="line">      <span class="p">(</span><span class="nb">if-let </span><span class="p">[</span><span class="nv">e</span> <span class="p">(</span><span class="nb">find </span><span class="err">@</span><span class="nv">mem</span> <span class="nv">args</span><span class="p">)]</span>
-</span><span class="line">        <span class="p">(</span><span class="nb">val </span><span class="nv">e</span><span class="p">)</span>
-</span><span class="line">        <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">ret</span> <span class="p">(</span><span class="nb">apply </span><span class="nv">f</span> <span class="nv">args</span><span class="p">)]</span>
-</span><span class="line">          <span class="p">(</span><span class="nf">swap!</span> <span class="nv">mem</span> <span class="nb">assoc </span><span class="nv">args</span> <span class="nv">ret</span><span class="p">)</span>
-</span><span class="line">          <span class="nv">ret</span><span class="p">)))))</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>The function is elegant; it captures whatever arguments that pass in the function, and pairs the arguments and the returned value to a persistent map. In order to make it thread safe, the persistent map is cast into an <code>atom</code> and can be modified via <code>swap!</code>.</p>
-
-<p>This is nice. And since Clojure uses $\log_{32}(N)$ hash map, it is also fast enough to do a memoized lookup. For the implementation of Clojure’s persistent hash map, you can check out <a href="http://blog.higher-order.net/2009/09/08/understanding-clojures-persistenthashmap-deftwice/">this post</a>.</p>
-
-<h2 id="lazy-seq">lazy-seq</h2>
-
-<p>In contrast to <code>memoize</code>, which is implemented in Clojure, <code>lazy-seq</code> is implemented in java. It contains three fields:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kd">public</span> <span class="kd">final</span> <span class="kd">class</span> <span class="nc">LazySeq</span> <span class="kd">extends</span> <span class="n">Obj</span> <span class="kd">implements</span> <span class="n">ISeq</span><span class="o">,</span> <span class="n">Sequential</span><span class="o">,</span> <span class="n">List</span><span class="o">,</span> <span class="n">IPending</span><span class="o">,</span> <span class="n">IHashEq</span><span class="o">{</span>
-</span><span class="line">
-</span><span class="line"><span class="kd">private</span> <span class="n">IFn</span> <span class="n">fn</span><span class="o">;</span>
-</span><span class="line"><span class="kd">private</span> <span class="n">Object</span> <span class="n">sv</span><span class="o">;</span>
-</span><span class="line"><span class="kd">private</span> <span class="n">ISeq</span> <span class="n">s</span><span class="o">;</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p><code>fn</code> is an un-evaluated thunk (function without arguments), and <code>sv</code> is the captured value after executing the thunk. The <code>ISeq s</code> is the realized version of the sequence.</p>
-
-<p>When the program tries to realize the lazy sequence, it calls <code>seq()</code> and <code>sval()</code> functions.</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-<span class="line-number">16</span>
-<span class="line-number">17</span>
-<span class="line-number">18</span>
-<span class="line-number">19</span>
-<span class="line-number">20</span>
-<span class="line-number">21</span>
-<span class="line-number">22</span>
-<span class="line-number">23</span>
-<span class="line-number">24</span>
-<span class="line-number">25</span>
-<span class="line-number">26</span>
-<span class="line-number">27</span>
-<span class="line-number">28</span>
-<span class="line-number">29</span>
-<span class="line-number">30</span>
-<span class="line-number">31</span>
-<span class="line-number">32</span>
-<span class="line-number">33</span>
-<span class="line-number">34</span>
-<span class="line-number">35</span>
-<span class="line-number">36</span>
-</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kd">final</span> <span class="kd">synchronized</span> <span class="n">Object</span> <span class="nf">sval</span><span class="o">(){</span>
-</span><span class="line">	<span class="k">if</span><span class="o">(</span><span class="n">fn</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span>
-</span><span class="line">		<span class="o">{</span>
-</span><span class="line">		<span class="k">try</span>
-</span><span class="line">			<span class="o">{</span>
-</span><span class="line">			<span class="n">sv</span> <span class="o">=</span> <span class="n">fn</span><span class="o">.</span><span class="na">invoke</span><span class="o">();</span>
-</span><span class="line">			<span class="n">fn</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
-</span><span class="line">			<span class="o">}</span>
-</span><span class="line">		<span class="k">catch</span><span class="o">(</span><span class="n">RuntimeException</span> <span class="n">e</span><span class="o">)</span>
-</span><span class="line">			<span class="o">{</span>
-</span><span class="line">			<span class="k">throw</span> <span class="n">e</span><span class="o">;</span>
-</span><span class="line">			<span class="o">}</span>
-</span><span class="line">		<span class="k">catch</span><span class="o">(</span><span class="n">Exception</span> <span class="n">e</span><span class="o">)</span>
-</span><span class="line">			<span class="o">{</span>
-</span><span class="line">			<span class="k">throw</span> <span class="n">Util</span><span class="o">.</span><span class="na">sneakyThrow</span><span class="o">(</span><span class="n">e</span><span class="o">);</span>
-</span><span class="line">			<span class="o">}</span>
-</span><span class="line">		<span class="o">}</span>
-</span><span class="line">	<span class="k">if</span><span class="o">(</span><span class="n">sv</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span>
-</span><span class="line">		<span class="k">return</span> <span class="n">sv</span><span class="o">;</span>
-</span><span class="line">	<span class="k">return</span> <span class="n">s</span><span class="o">;</span>
-</span><span class="line"><span class="o">}</span>
-</span><span class="line">
-</span><span class="line"><span class="kd">final</span> <span class="kd">synchronized</span> <span class="kd">public</span> <span class="n">ISeq</span> <span class="nf">seq</span><span class="o">(){</span>
-</span><span class="line">	<span class="n">sval</span><span class="o">();</span>
-</span><span class="line">	<span class="k">if</span><span class="o">(</span><span class="n">sv</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span>
-</span><span class="line">		<span class="o">{</span>
-</span><span class="line">		<span class="n">Object</span> <span class="n">ls</span> <span class="o">=</span> <span class="n">sv</span><span class="o">;</span>
-</span><span class="line">		<span class="n">sv</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
-</span><span class="line">		<span class="k">while</span><span class="o">(</span><span class="n">ls</span> <span class="k">instanceof</span> <span class="n">LazySeq</span><span class="o">)</span>
-</span><span class="line">			<span class="o">{</span>
-</span><span class="line">			<span class="n">ls</span> <span class="o">=</span> <span class="o">((</span><span class="n">LazySeq</span><span class="o">)</span><span class="n">ls</span><span class="o">).</span><span class="na">sval</span><span class="o">();</span>
-</span><span class="line">			<span class="o">}</span>
-</span><span class="line">		<span class="n">s</span> <span class="o">=</span> <span class="n">RT</span><span class="o">.</span><span class="na">seq</span><span class="o">(</span><span class="n">ls</span><span class="o">);</span>
-</span><span class="line">		<span class="o">}</span>
-</span><span class="line">	<span class="k">return</span> <span class="n">s</span><span class="o">;</span>
-</span><span class="line"><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>In the <code>sval()</code> function, Clojure handles the caching elegantly. If <code>fn</code> is not null, execute it and stores the value to <code>sv</code>. If the <code>LazySeq</code> is dereferenced, the whole object will be recycled by the garbage collector, else the object will hold the value and is thread-safe to be accessed by other threads.</p>
-
-<p>The <code>seq()</code> function is the wrapper around <code>sval()</code>. It realizes all <code>LazySeq</code> objects recursively, and wrap it into a <code>seq</code> object that implements <code>ISeq</code> interface.</p>
-
-<p>With the realized <code>seq</code>, it can support common sequence functions like <code>first</code> and <code>next</code>:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-</pre></td><td class="code"><pre><code class="java"><span class="line"><span class="kd">public</span> <span class="n">Object</span> <span class="nf">first</span><span class="o">(){</span>
-</span><span class="line">	<span class="n">seq</span><span class="o">();</span>
-</span><span class="line">	<span class="k">if</span><span class="o">(</span><span class="n">s</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span>
-</span><span class="line">		<span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
-</span><span class="line">	<span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="na">first</span><span class="o">();</span>
-</span><span class="line"><span class="o">}</span>
-</span><span class="line">
-</span><span class="line"><span class="kd">public</span> <span class="n">ISeq</span> <span class="nf">next</span><span class="o">(){</span>
-</span><span class="line">	<span class="n">seq</span><span class="o">();</span>
-</span><span class="line">	<span class="k">if</span><span class="o">(</span><span class="n">s</span> <span class="o">==</span> <span class="kc">null</span><span class="o">)</span>
-</span><span class="line">		<span class="k">return</span> <span class="kc">null</span><span class="o">;</span>
-</span><span class="line">	<span class="k">return</span> <span class="n">s</span><span class="o">.</span><span class="na">next</span><span class="o">();</span>	
-</span><span class="line"><span class="o">}</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>In Clojure’s documentation, it said that <code>lazy-seq</code> is cached after realizing it, but it didn’t document how it does it. Luckily the source code is pretty easy to understand. Clojure uses lazy sequences a lot, so knowing that it handles lazy sequence efficiently is important for all Clojure programmers. :) </p>
 ]]></content>
   </entry>
   
