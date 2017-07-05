@@ -4,7 +4,7 @@
   <title><![CDATA[Category: hash | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/hash/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2017-07-05T08:59:27-07:00</updated>
+  <updated>2017-07-05T09:11:45-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -225,8 +225,8 @@ buckets.</p>
 </ul>
 
 <p>Using the same calculation, but making the block size as a variable,
-we can now visualize the block growth difference between linear probing,
-quadratic probing, and double hashing.</p>
+we can now visualize the block growth of linear probing, quadratic
+probing, and double hashing.</p>
 
 <p><img src="/images/block_grow.png" alt="block grow" /></p>
 
