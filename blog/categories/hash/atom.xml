@@ -4,7 +4,7 @@
   <title><![CDATA[Category: hash | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/hash/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2017-07-05T08:57:54-07:00</updated>
+  <updated>2017-07-05T08:59:27-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -196,7 +196,7 @@ simplify it to $\frac{5}{N}$.</p>
 
 <ul>
   <li>Linear probing: $\frac{15}{N}$</li>
-  <li>Quadratic probing: $frac{10}{N}$</li>
+  <li>Quadratic probing: $\frac{10}{N}$</li>
   <li>Double hashing: $\sum_{i=1} i\cdot(\frac{5}{N})^i$</li>
 </ul>
 
