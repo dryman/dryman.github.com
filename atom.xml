@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2017-07-05T09:13:52-07:00</updated>
+  <updated>2017-07-15T11:22:52-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -81,9 +81,11 @@ map. The major difference is I allow non power of 2 table size, see
 <a href="http://www.idryman.org/blog/2017/05/03/writing-a-damn-fast-hash-table-with-tiny-memory-footprints/">my previous post</a> for why the performance does not degrade.</p>
 
 <p>I setup the test with 1M inserted items. Each test differs in its load
-(by adjusting the capacity) and probing strategies. Let’s first look
-at linear probing, quadratic probing and double hashing under 30%, 40%,
-and 50% load.</p>
+(by adjusting the capacity) and probing strategies.
+Although hash table is O(1) on amortized look up, we’ll still hope the
+worst case not larger than O(log(N)), which is log(1M) = 20 in this case.
+Let’s first look at linear probing, quadratic
+probing and double hashing under 30%, 40%, and 50% load.</p>
 
 <p><img src="http://www.idryman.org/images/low_load.png" alt="low load" /></p>
 
@@ -95,11 +97,12 @@ practice.  Next, we look at these methods under high load.</p>
 
 <p><img src="http://www.idryman.org/images/high_load.png" alt="high load" /></p>
 
-<p>The probe distribution now have a very high variance. Linear probing,
-among the other methods, has very bad variance under high load. Quadratic
-probing is slightly better, but still have some probes higher than 100.
-Double hashing still gives the best probe statistics. Below is the zoom
-in for each probe strategies:</p>
+<p>The probe distribution now have a very high variance. Obviously, many
+probes exceeds the 20 threshold, some even reach 800.
+Linear probing, among the other methods, has very bad variance under
+high load. Quadratic probing is slightly better, but still have some
+probes higher than 100.  Double hashing still gives the best probe
+statistics. Below is the zoom in for each probe strategies:</p>
 
 <p><img src="http://www.idryman.org/images/lp_high_load.png" alt="linear probe high load" /></p>
 
@@ -633,6 +636,32 @@ super scale application, is the ultimate goal of OPIC.</p>
 what OPIC might achieve, please post your comment. If you want to
 contribute, that’s even better! The project page is at
 <a href="https://github.com/dryman/opic">github</a>. Feel free to fork and extend.</p>
+
+<h2 id="edit-7152017">Edit (7/15/2017)</h2>
+
+<p>After posted on hacker news, some people pointed out that
+<a href="http://www.boost.org/doc/libs/1_63_0/doc/html/interprocess.html">boost::interprocess</a>
+provides similar functionality and approaches.
+To make a memory chunck work in different process, they also use special pointer
+which are offsets to base address of the mmap. The challenges are identical too.
+Any pointer that is unique to the process, like static members,
+virtual functions, references, function pointers etc. are forbidden.
+All the containers need to be reimplemented like I did.</p>
+
+<p>To make the project succeed, I think the most important part is to provide
+good abstractions for users. State of the art containers, simple API to use,
+create extensions for other languages to use etc. Now OPIC robin hood hash
+container has reached (or beyond) state of the art, I’ll be continue to create
+more useful abstractions for people to create persistent objects.</p>
+
+<p>The next container I’ll be working on is compressed trie. This would be a
+counter part of hash table. Hash table provides super fast random access,
+but there’s a high lower bound on memory usage (though I’m very close to
+the limit). For trie, I’ll be focus on make the memory usage as small as
+possible. If possible, make it succinct. Hash table can be used as short
+term data random look up, while trie can be used to store long term data,
+with compression and keeps the ability to do random look up.</p>
+
 ]]></content>
   </entry>
   

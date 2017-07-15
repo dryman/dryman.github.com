@@ -4,7 +4,7 @@
   <title><![CDATA[Category: hash | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/hash/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2017-07-05T09:13:52-07:00</updated>
+  <updated>2017-07-15T11:22:52-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -81,9 +81,11 @@ map. The major difference is I allow non power of 2 table size, see
 <a href="http://www.idryman.org/blog/2017/05/03/writing-a-damn-fast-hash-table-with-tiny-memory-footprints/">my previous post</a> for why the performance does not degrade.</p>
 
 <p>I setup the test with 1M inserted items. Each test differs in its load
-(by adjusting the capacity) and probing strategies. Let’s first look
-at linear probing, quadratic probing and double hashing under 30%, 40%,
-and 50% load.</p>
+(by adjusting the capacity) and probing strategies.
+Although hash table is O(1) on amortized look up, we’ll still hope the
+worst case not larger than O(log(N)), which is log(1M) = 20 in this case.
+Let’s first look at linear probing, quadratic
+probing and double hashing under 30%, 40%, and 50% load.</p>
 
 <p><img src="/images/low_load.png" alt="low load" /></p>
 
@@ -95,11 +97,12 @@ practice.  Next, we look at these methods under high load.</p>
 
 <p><img src="/images/high_load.png" alt="high load" /></p>
 
-<p>The probe distribution now have a very high variance. Linear probing,
-among the other methods, has very bad variance under high load. Quadratic
-probing is slightly better, but still have some probes higher than 100.
-Double hashing still gives the best probe statistics. Below is the zoom
-in for each probe strategies:</p>
+<p>The probe distribution now have a very high variance. Obviously, many
+probes exceeds the 20 threshold, some even reach 800.
+Linear probing, among the other methods, has very bad variance under
+high load. Quadratic probing is slightly better, but still have some
+probes higher than 100.  Double hashing still gives the best probe
+statistics. Below is the zoom in for each probe strategies:</p>
 
 <p><img src="/images/lp_high_load.png" alt="linear probe high load" /></p>
 
