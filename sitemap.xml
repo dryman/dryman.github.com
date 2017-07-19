@@ -261,12 +261,16 @@
         <lastmod>2017-07-15T11:22:24-07:00</lastmod>
     </url>
     <url>
+        <loc>http://www.idryman.org/blog/2017/07/18/learn-hash-table-the-hard-way-2/</loc>
+        <lastmod>2017-07-19T09:23:38-07:00</lastmod>
+    </url>
+    <url>
         <loc>http://www.idryman.org/about-me/</loc>
         <lastmod>2017-07-02T20:17:58-07:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/blog/archives/</loc>
-        <lastmod>2017-07-15T11:22:24-07:00</lastmod>
+        <lastmod>2017-07-19T09:23:38-07:00</lastmod>
     </url>
     <url>
         <loc>http://www.idryman.org/double-pendulum/</loc>
@@ -282,6 +286,6 @@
     </url>
     <url>
         <loc>http://www.idryman.org/</loc>
-        <lastmod>2017-07-15T11:22:24-07:00</lastmod>
+        <lastmod>2017-07-19T09:23:38-07:00</lastmod>
     </url>
 </urlset>
