@@ -4,7 +4,7 @@
   <title><![CDATA[Category: hash | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/hash/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2017-07-19T09:24:07-07:00</updated>
+  <updated>2017-07-19T18:48:39-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -96,12 +96,10 @@ we use this property and further derive other interesting properties?</p>
 that having deletion would cause the mean of probe count increase
 without bound, but the variance would remain bounded by small constant.</p>
 
-<p>[Paul Khuong][rhh del2] and <a href="http://codecapsule.com/2013/11/17/robin-hood-hashing-backward-shift-deletion/">Emmanuel Goossaert</a> pioneered
+<p><a href="https://www.pvk.ca/Blog/more_numerical_experiments_in_hashing.html">Paul Khuong</a> and <a href="http://codecapsule.com/2013/11/17/robin-hood-hashing-backward-shift-deletion/">Emmanuel Goossaert</a> pioneered
 to approach this problem. The intuition is fill the deleted bucket
 by scanning forward candidate buckets. See <a href="http://codecapsule.com/2013/11/17/robin-hood-hashing-backward-shift-deletion/">Emmanuel’s post</a>
 for more detail.</p>
-
-<p>[rhh del2: https://www.pvk.ca/Blog/more_numerical_experiments_in_hashing.html</p>
 
 <p>Inspired by their robin hood linear probing deletion, I created one
 for robin hood quadratic probing. The idea is similar, except the
@@ -174,7 +172,7 @@ result.</p>
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[learn hash table the hard way -- part 1: probe disributions]]></title>
+    <title type="html"><![CDATA[learn hash table the hard way -- part 1: probe distributions]]></title>
     <link href="http://www.idryman.org/blog/2017/07/04/learn-hash-table-the-hard-way/"/>
     <updated>2017-07-04T13:05:00-07:00</updated>
     <id>http://www.idryman.org/blog/2017/07/04/learn-hash-table-the-hard-way</id>
