@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2017-07-19T18:48:39-07:00</updated>
+  <updated>2017-07-22T15:55:23-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -1306,7 +1306,7 @@ posts worth to read:</p>
     <p><a href="https://probablydance.com/2017/02/26/i-wrote-the-fastest-hashtable/">I Wrote The Fastest Hashtable</a></p>
   </li>
   <li>
-    <p>[Unfinished draft of linearly probed robin hood hashing][https://pubby8.wordpress.com/2017/05/08/an-unfinished-draft-of-linearly-probed-robin-hood-hash-tables/?iframe=true&amp;theme_preview=true]</p>
+    <p><a href="https://pubby8.wordpress.com/2017/05/08/an-unfinished-draft-of-linearly-probed-robin-hood-hash-tables/?iframe=true&amp;theme_preview=true">Unfinished draft of linearly probed robin hood hashing</a></p>
   </li>
   <li>
     <p><a href="https://cs.uwaterloo.ca/research/tr/1986/CS-86-14.pdf">Original paper of robin hood hashing</a></p>
