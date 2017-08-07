@@ -372,7 +372,7 @@ posts worth to read:
 
 * [I Wrote The Fastest Hashtable](https://probablydance.com/2017/02/26/i-wrote-the-fastest-hashtable/)
 
-* [Unfinished draft of linearly probed robin hood hashing][https://pubby8.wordpress.com/2017/05/08/an-unfinished-draft-of-linearly-probed-robin-hood-hash-tables/?iframe=true&theme_preview=true]
+* [Unfinished draft of linearly probed robin hood hashing](https://pubby8.wordpress.com/2017/05/08/an-unfinished-draft-of-linearly-probed-robin-hood-hash-tables/?iframe=true&theme_preview=true)
 
 * [Original paper of robin hood hashing][rhh]
 

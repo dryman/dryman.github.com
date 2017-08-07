@@ -328,3 +328,30 @@ Thank you for reading such a long post. If you also feel excited on
 what OPIC might achieve, please post your comment. If you want to
 contribute, that's even better! The project page is at
 [github](https://github.com/dryman/opic). Feel free to fork and extend.
+
+## Edit (7/15/2017)
+
+After posted on hacker news, some people pointed out that
+[boost::interprocess][interprocess]
+provides similar functionality and approaches.
+To make a memory chunck work in different process, they also use special pointer
+which are offsets to base address of the mmap. The challenges are identical too.
+Any pointer that is unique to the process, like static members,
+virtual functions, references, function pointers etc. are forbidden.
+All the containers need to be reimplemented like I did.
+
+To make the project succeed, I think the most important part is to provide
+good abstractions for users. State of the art containers, simple API to use,
+create extensions for other languages to use etc. Now OPIC robin hood hash
+container has reached (or beyond) state of the art, I'll be continue to create
+more useful abstractions for people to create persistent objects.
+
+The next container I'll be working on is compressed trie. This would be a
+counter part of hash table. Hash table provides super fast random access,
+but there's a high lower bound on memory usage (though I'm very close to
+the limit). For trie, I'll be focus on make the memory usage as small as
+possible. If possible, make it succinct. Hash table can be used as short
+term data random look up, while trie can be used to store long term data,
+with compression and keeps the ability to do random look up.
+
+[interprocess]: http://www.boost.org/doc/libs/1_63_0/doc/html/interprocess.html
