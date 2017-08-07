@@ -4,7 +4,7 @@
   <title><![CDATA[Category: hash | Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/blog/categories/hash/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2017-08-06T21:27:21-07:00</updated>
+  <updated>2017-08-06T21:30:21-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -14,7 +14,7 @@
 
   
   <entry>
-    <title type="html"><![CDATA[learn hash table the hard way 3 -- probe distribution and run time performance]]></title>
+    <title type="html"><![CDATA[learn hash table the hard way -- part 3: probe distributions and run time performance]]></title>
     <link href="http://www.idryman.org/blog/2017/08/06/learn-hash-table-the-hard-way-3/"/>
     <updated>2017-08-06T09:03:00-07:00</updated>
     <id>http://www.idryman.org/blog/2017/08/06/learn-hash-table-the-hard-way-3</id>
@@ -91,7 +91,7 @@ please leave a comment! I’d like to reach out and learn more.</p>
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[learn hash table the hard way -- part 2: probe distribution with deletions]]></title>
+    <title type="html"><![CDATA[learn hash table the hard way -- part 2: probe distributions with deletions]]></title>
     <link href="http://www.idryman.org/blog/2017/07/18/learn-hash-table-the-hard-way-2/"/>
     <updated>2017-07-18T19:02:00-07:00</updated>
     <id>http://www.idryman.org/blog/2017/07/18/learn-hash-table-the-hard-way-2</id>
