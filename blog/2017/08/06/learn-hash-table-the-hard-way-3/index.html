@@ -5,11 +5,12 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Category: emacs - Carpe diem (Felix's blog)</title>
+  <title>learn hash table the hard way 3 -- probe distribution and run time performance - Carpe diem (Felix's blog)</title>
   <meta name="author" content="dryman (Felix Ren-Chyan Chern)">
 
   
-  <meta name="description" content="Category: emacs">
+  <meta name="description" content="In last two post I gathered the probe statistics in various scenarios.
+How does it impact the actual performance? I wrote some benchmarks this &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +19,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.idryman.orgblog/categories/emacs/">
+  <link rel="canonical" href="http://www.idryman.org/blog/2017/08/06/learn-hash-table-the-hard-way-3/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <script src="/javascripts/modernizr-2.0.js"></script>
@@ -101,92 +102,165 @@ MathJax.Hub.Config({
   <div id="main">
     <div id="content">
       <div>
-<article role="article">
+<article class="hentry" role="article">
   
   <header>
-    <h1 class="entry-title">Category: Emacs</h1>
+    
+      
+        <h1 class="entry-title">Learn Hash Table the Hard Way 3 -- Probe Distribution and Run Time Performance</h1>
+      
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2017-08-06T09:03:00-07:00" pubdate data-updated="true">Aug 6<span>th</span>, 2017</time>
+        
+      </p>
     
   </header>
-  
-  <div id="blog-archives" class="category">
 
 
+<div class="entry-content"><p>In last two post I gathered the probe statistics in various scenarios.
+How does it impact the actual performance? I wrote some benchmarks this
+weekend and got useful results.</p>
 
-  
-  <h2>2013</h2>
+<!--more-->
 
-<article>
-  
-<h1><a href="/blog/2013/08/29/my-emacs-setting-on-servers/">my emacs setting on servers</a></h1>
-<time datetime="2013-08-29T10:28:00-07:00" pubdate><span class='month'>Aug</span> <span class='day'>29</span> <span class='year'>2013</span></time>
+<hr />
 
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/emacs/'>emacs</a></span>
-</footer>
+<p>We know that hash table has O(1) amortized random read. It’s easy
+to tell the overall throughput in regular benchmarks. Nevertheless,
+it’s harder to know the performance of the worst cases: some keys
+has much longer probes than others. Does the performance degrade
+by a lot, or not so much? This is critical for applications that
+requires real time processing on key value look up.</p>
 
+<p>In order to find the keys with potential high latency,
+I designed the experiments as follows:</p>
 
-</article>
+<ol>
+  <li>Insert all keys into the hash table <em>and</em> key buffers.</li>
+  <li>Sort the keys in the key buffer by its probe count in the hash
+table.</li>
+  <li>Test the table random read throughput from different key range in
+the key buffer, where the later key range should have the larger
+probe count.</li>
+</ol>
 
+<p>My assumption is, the key look up performance should highly relate to
+the key probing count. In my
+<a href="http://www.idryman.org/blog/2017/07/04/learn-hash-table-the-hard-way/">first post of the learn hash table the hard way</a>, I showed
+that robin hood hashing can reduce the probe count variance
+significantly. The plot below compares quadratic probing under 80%
+load and quadratic robin hood hashing under 80% load:</p>
 
+<p><img src="/images/rhh_vs_qp.png" alt="qp vs rhh" /></p>
 
-<article>
-  
-<h1><a href="/blog/2013/05/29/emacs-loves-ipython-notebook/">Emacs loves iPython Notebook</a></h1>
-<time datetime="2013-05-29T11:41:00-07:00" pubdate><span class='month'>May</span> <span class='day'>29</span> <span class='year'>2013</span></time>
+<p>Actually, the mean of quadratic probing is slightly better than quadratic
+robin hood hashing (1.3 vs 1.45). However the probe count variance of
+quadratic probing is visibly way larger than its robin hood siblings.
+We’d expect the performance reflects such difference.</p>
 
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/emacs/'>emacs</a></span>
-</footer>
+<p><img src="/images/worst_case.png" alt="worst case" /></p>
 
+<p>It actually does. The average read throughput of quadratic probing
+over all keys is 33,822,611 op/s, but for the worst 1% keys it only has
+throughput of 3,137,599 op/s. The difference is 10x. On the other hand,
+the throughput of all keys in robin hood hashing is 45,167,612 op/s, and
+the throughput of its worst 1% keys is 11,275,010. The difference is 4x.</p>
 
-</article>
+<p>There’s another interesting observation. Although quadratic probing
+has smaller mean of probes compare to robin hood hashing, it’s total
+throughput doesn’t win. My guess is having too many large probes would
+cause bad cache efficiency.</p>
 
+<p>For instance, all probes in robin hood hashing are within 10 probes.
+In this experiments I use 6 bytes for key, 1 byte for key existence
+marker, and 8 bytes for value. 10 probes roughly converts to 100 buckets,
+each of size 6 + 1 + 8 = 15 bytes. Thus the worst case it need to
+walk through 1500 bytes, but only very few items need to go that far.
+On the other hand, there’s at least 100 items having probes larger than
+40 probes, which takes 24000 bytes. For such a long distance you’ll
+have lots of CPU cache misses.  This is my best guess of why robin
+hood hashing overtakes quadratic probing even when the average
+probe count is slightly larger.</p>
 
-
-<article>
-  
-<h1><a href="/blog/2013/05/20/emacs-and-pdf/">Emacs and PDF</a></h1>
-<time datetime="2013-05-20T22:07:00-07:00" pubdate><span class='month'>May</span> <span class='day'>20</span> <span class='year'>2013</span></time>
-
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/emacs/'>emacs</a></span>
-</footer>
-
-
-</article>
-
-
-
-<article>
-  
-<h1><a href="/blog/2013/05/20/emacs-w3m/">Emacs W3m</a></h1>
-<time datetime="2013-05-20T21:18:00-07:00" pubdate><span class='month'>May</span> <span class='day'>20</span> <span class='year'>2013</span></time>
-
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/emacs/'>emacs</a></span>
-</footer>
-
-
-</article>
-
-
-
-<article>
-  
-<h1><a href="/blog/2013/03/23/installing-swank-dot-js/">Installing swank.js</a></h1>
-<time datetime="2013-03-23T08:05:00-07:00" pubdate><span class='month'>Mar</span> <span class='day'>23</span> <span class='year'>2013</span></time>
-
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/emacs/'>emacs</a></span>
-</footer>
-
-
-</article>
-
+<p>I haven’t find much discussion on hash table performance corresponding
+to probe distribution. My hypothesis and experiments are in early
+stages.  If you find any similar experiments, research, or report,
+please leave a comment! I’d like to reach out and learn more.</p>
 </div>
 
+
+  <footer>
+    <p class="meta">
+      
   
+
+<span class="byline author vcard">Posted by <span class="fn">dryman (Felix Ren-Chyan Chern)</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2017-08-06T09:03:00-07:00" pubdate data-updated="true">Aug 6<span>th</span>, 2017</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/hash/'>hash</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://www.idryman.org/blog/2017/08/06/learn-hash-table-the-hard-way-3/" data-via="idryman" data-counturl="http://www.idryman.org/blog/2017/08/06/learn-hash-table-the-hard-way-3/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="medium"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left articlenav" href="/blog/2017/07/18/learn-hash-table-the-hard-way-2/" title="Previous Post: learn hash table the hard way -- part 2: probe distribution with deletions">&laquo; learn hash table the hard way -- part 2: probe distribution with deletions</a>
+      
+      
+    </p>
+  </footer>
 </article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
 
 </div>
 
@@ -278,7 +352,10 @@ MathJax.Hub.Config({
       var disqus_shortname = 'dryblog';
       
         
-        var disqus_script = 'count.js';
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.idryman.org/blog/2017/08/06/learn-hash-table-the-hard-way-3/';
+        var disqus_url = 'http://www.idryman.org/blog/2017/08/06/learn-hash-table-the-hard-way-3/';
+        var disqus_script = 'embed.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
@@ -360,7 +437,7 @@ SOFTWARE.
       hn_like.src = "http://hnlike.com/upvote.php?link="
                     + encodeURIComponent(document.location)
                     + "&title="
-                    + encodeURIComponent("Category: emacs");
+                    + encodeURIComponent("learn hash table the hard way 3 -- probe distribution and run time performance");
       hn_like.innerHTML="iframes not supported by your browser";
       var twitter = document.getElementsByClassName("twitter-share-button")[0];
 

@@ -4,7 +4,7 @@
   <title><![CDATA[Carpe diem (Felix's blog)]]></title>
   <link href="http://www.idryman.org/atom.xml" rel="self"/>
   <link href="http://www.idryman.org/"/>
-  <updated>2017-07-22T15:55:23-07:00</updated>
+  <updated>2017-08-06T21:27:21-07:00</updated>
   <id>http://www.idryman.org/</id>
   <author>
     <name><![CDATA[dryman (Felix Ren-Chyan Chern)]]></name>
@@ -12,6 +12,83 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[learn hash table the hard way 3 -- probe distribution and run time performance]]></title>
+    <link href="http://www.idryman.org/blog/2017/08/06/learn-hash-table-the-hard-way-3/"/>
+    <updated>2017-08-06T09:03:00-07:00</updated>
+    <id>http://www.idryman.org/blog/2017/08/06/learn-hash-table-the-hard-way-3</id>
+    <content type="html"><![CDATA[<p>In last two post I gathered the probe statistics in various scenarios.
+How does it impact the actual performance? I wrote some benchmarks this
+weekend and got useful results.</p>
+
+<!--more-->
+
+<hr />
+
+<p>We know that hash table has O(1) amortized random read. It’s easy
+to tell the overall throughput in regular benchmarks. Nevertheless,
+it’s harder to know the performance of the worst cases: some keys
+has much longer probes than others. Does the performance degrade
+by a lot, or not so much? This is critical for applications that
+requires real time processing on key value look up.</p>
+
+<p>In order to find the keys with potential high latency,
+I designed the experiments as follows:</p>
+
+<ol>
+  <li>Insert all keys into the hash table <em>and</em> key buffers.</li>
+  <li>Sort the keys in the key buffer by its probe count in the hash
+table.</li>
+  <li>Test the table random read throughput from different key range in
+the key buffer, where the later key range should have the larger
+probe count.</li>
+</ol>
+
+<p>My assumption is, the key look up performance should highly relate to
+the key probing count. In my
+<a href="http://www.idryman.org/blog/2017/07/04/learn-hash-table-the-hard-way/">first post of the learn hash table the hard way</a>, I showed
+that robin hood hashing can reduce the probe count variance
+significantly. The plot below compares quadratic probing under 80%
+load and quadratic robin hood hashing under 80% load:</p>
+
+<p><img src="http://www.idryman.org/images/rhh_vs_qp.png" alt="qp vs rhh" /></p>
+
+<p>Actually, the mean of quadratic probing is slightly better than quadratic
+robin hood hashing (1.3 vs 1.45). However the probe count variance of
+quadratic probing is visibly way larger than its robin hood siblings.
+We’d expect the performance reflects such difference.</p>
+
+<p><img src="http://www.idryman.org/images/worst_case.png" alt="worst case" /></p>
+
+<p>It actually does. The average read throughput of quadratic probing
+over all keys is 33,822,611 op/s, but for the worst 1% keys it only has
+throughput of 3,137,599 op/s. The difference is 10x. On the other hand,
+the throughput of all keys in robin hood hashing is 45,167,612 op/s, and
+the throughput of its worst 1% keys is 11,275,010. The difference is 4x.</p>
+
+<p>There’s another interesting observation. Although quadratic probing
+has smaller mean of probes compare to robin hood hashing, it’s total
+throughput doesn’t win. My guess is having too many large probes would
+cause bad cache efficiency.</p>
+
+<p>For instance, all probes in robin hood hashing are within 10 probes.
+In this experiments I use 6 bytes for key, 1 byte for key existence
+marker, and 8 bytes for value. 10 probes roughly converts to 100 buckets,
+each of size 6 + 1 + 8 = 15 bytes. Thus the worst case it need to
+walk through 1500 bytes, but only very few items need to go that far.
+On the other hand, there’s at least 100 items having probes larger than
+40 probes, which takes 24000 bytes. For such a long distance you’ll
+have lots of CPU cache misses.  This is my best guess of why robin
+hood hashing overtakes quadratic probing even when the average
+probe count is slightly larger.</p>
+
+<p>I haven’t find much discussion on hash table performance corresponding
+to probe distribution. My hypothesis and experiments are in early
+stages.  If you find any similar experiments, research, or report,
+please leave a comment! I’d like to reach out and learn more.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[learn hash table the hard way -- part 2: probe distribution with deletions]]></title>
@@ -5069,120 +5146,6 @@ is not documented anywhere in hadoop api nor document. You can only find it in <
 <a href="https://github.com/dryman/Hadoop-CombineFileInputFormat">Hadoop CombineFileInputFormat</a>.</p>
 
 <p>Enjoy!</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[my emacs setting on servers]]></title>
-    <link href="http://www.idryman.org/blog/2013/08/29/my-emacs-setting-on-servers/"/>
-    <updated>2013-08-29T10:28:00-07:00</updated>
-    <id>http://www.idryman.org/blog/2013/08/29/my-emacs-setting-on-servers</id>
-    <content type="html"><![CDATA[<p>My desktop emacs config is complecated, however I need a minimal config for emacs installed on ubuntu servers. This is my note of how to configure emacs on servers that works for me.</p>
-
-<!--more-->
-
-<h2 id="emacs24">Emacs24</h2>
-
-<p>First, I need to get Emacs24 installed on ubuntu, which is not by default. This link <a href="http://www.mikeyboldt.com/2011/11/30/install-emacs-24-in-ubuntu/">Install Emacs 24 in Ubuntu</a> is a great guide of how to install emacs 24. Here are the commands you need to type:</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-</pre></td><td class="code"><pre><code class=""><span class="line">sudo add-apt-repository ppa:cassou/emacs
-</span><span class="line">sudo apt-get update
-</span><span class="line">sudo apt-get install emacs24</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<h2 id="configure-packges-archives">Configure Packges Archives</h2>
-
-<p>With Emacs 24, you can use the package managing system easily. Open your <code>~/.emacs</code> file and enter</p>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-</pre></td><td class="code"><pre><code class="scm"><span class="line"><span class="p">(</span><span class="nf">require</span> <span class="ss">&#39;package</span><span class="p">)</span>
-</span><span class="line"><span class="p">(</span><span class="nf">add-to-list</span> <span class="ss">&#39;package-archives</span> <span class="o">&#39;</span><span class="p">(</span><span class="s">&quot;marmalade&quot;</span><span class="o">.</span><span class="s">&quot;http://marmalade-repo.org/packages/&quot;</span><span class="p">))</span>
-</span><span class="line"><span class="p">(</span><span class="nf">add-to-list</span> <span class="ss">&#39;package-archives</span> <span class="o">&#39;</span><span class="p">(</span><span class="s">&quot;melpa&quot;</span><span class="o">.</span><span class="s">&quot;http://melpa.milkbox.net/packages/&quot;</span><span class="p">)</span> <span class="nv">t</span><span class="p">)</span>
-</span><span class="line"><span class="p">(</span><span class="nf">package-initialize</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>Save the file, and <code>M-x eval-buffer</code>, then <code>M-x package-refresh-contents</code>. Now you’re ready to install most of the emacs plugins.</p>
-
-<h2 id="plugins-i-installed">Plugins I installed</h2>
-
-<ol>
-  <li>
-    <p><a href="http://www.emacswiki.org/emacs/ParEdit">Paredit.el</a>: a mode for editing structured s-expressions, very useful for lisp based programs including emacs-lisp and clojure.</p>
-  </li>
-  <li>
-    <p><a href="https://github.com/clojure-emacs/clojure-mode">clojure mode</a>: mode for editing clojure files </p>
-  </li>
-  <li>
-    <p><a href="http://www.emacswiki.org/emacs/AceJump">Ace Jump</a>: Move your cursor to where you eyes are looking at.</p>
-  </li>
-</ol>
-
-<h2 id="some-other-configs">Some other configs</h2>
-
-<div class="bogus-wrapper"><notextile><figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-<span class="line-number">16</span>
-<span class="line-number">17</span>
-<span class="line-number">18</span>
-<span class="line-number">19</span>
-<span class="line-number">20</span>
-<span class="line-number">21</span>
-<span class="line-number">22</span>
-<span class="line-number">23</span>
-<span class="line-number">24</span>
-<span class="line-number">25</span>
-<span class="line-number">26</span>
-<span class="line-number">27</span>
-<span class="line-number">28</span>
-</pre></td><td class="code"><pre><code class="scm"><span class="line"><span class="p">(</span><span class="nf">global-visual-line-mode</span> <span class="nv">t</span><span class="p">)</span>
-</span><span class="line"><span class="p">(</span><span class="nf">tool-bar-mode</span> <span class="mi">-1</span><span class="p">)</span>
-</span><span class="line"><span class="p">(</span><span class="nf">show-paren-mode</span> <span class="nv">t</span><span class="p">)</span>
-</span><span class="line"><span class="p">(</span><span class="nf">menu-bar-mode</span> <span class="mi">-1</span><span class="p">)</span>
-</span><span class="line"><span class="p">(</span><span class="nf">setq</span> <span class="nv">inhibit-startup-message</span> <span class="nv">t</span><span class="p">)</span>
-</span><span class="line"><span class="p">(</span><span class="nf">setq-default</span> <span class="nv">indent-tabs-mode</span> <span class="nv">nil</span><span class="p">)</span>
-</span><span class="line">
-</span><span class="line"><span class="c1">;; it&#39;s dangerous to keep backup files in the same directory on the server</span>
-</span><span class="line"><span class="p">(</span><span class="nf">setq</span> <span class="nv">backup-directory-alist</span> <span class="o">&#39;</span><span class="p">((</span><span class="s">&quot;.&quot;</span> <span class="o">.</span> <span class="s">&quot;~/.backup_emacs&quot;</span><span class="p">))</span>
-</span><span class="line">      <span class="nv">auto-save-file-name-transforms</span> <span class="o">&#39;</span><span class="p">((</span><span class="s">&quot;.*&quot;</span> <span class="s">&quot;~/.backup_emacs&quot;</span> <span class="nv">t</span><span class="p">))</span>
-</span><span class="line">      <span class="nv">backup-by-copying</span> <span class="nv">t</span>    <span class="c1">; Don&#39;t delink hardlinks</span>
-</span><span class="line">      <span class="nv">version-control</span> <span class="nv">t</span>      <span class="c1">; Use version numbers on backups</span>
-</span><span class="line">      <span class="nv">delete-old-versions</span> <span class="nv">t</span>  <span class="c1">; Automatically delete excess backups</span>
-</span><span class="line">      <span class="nv">kept-new-versions</span> <span class="mi">20</span>   <span class="c1">; how many of the newest versions to keep</span>
-</span><span class="line">      <span class="nv">kept-old-versions</span> <span class="mi">5</span>    <span class="c1">; and how many of the old</span>
-</span><span class="line"><span class="p">)</span>
-</span><span class="line">
-</span><span class="line"><span class="c1">;; configure paredit</span>
-</span><span class="line"><span class="p">(</span><span class="nf">add-hook</span> <span class="ss">&#39;clojure-mode-hook</span> <span class="p">(</span><span class="k">lambda </span><span class="p">()</span> <span class="p">(</span><span class="nf">paredit-mode</span> <span class="mi">1</span><span class="p">)))</span>
-</span><span class="line"><span class="p">(</span><span class="nf">add-hook</span> <span class="ss">&#39;emacs-lisp-mode-hook</span> <span class="p">(</span><span class="k">lambda </span><span class="p">()</span> <span class="p">(</span><span class="nf">paredit-mode</span> <span class="mi">1</span><span class="p">)))</span>
-</span><span class="line">
-</span><span class="line"><span class="c1">;; auto complete for emacs lisp</span>
-</span><span class="line"><span class="p">(</span><span class="nf">setq</span> <span class="nv">tab-always-indent</span> <span class="ss">&#39;complete</span><span class="p">)</span>
-</span><span class="line"><span class="p">(</span><span class="nf">add-to-list</span> <span class="ss">&#39;completion-styles</span> <span class="ss">&#39;initials</span> <span class="nv">t</span><span class="p">)</span>
-</span><span class="line"><span class="p">(</span><span class="nf">define-key</span> <span class="nv">global-map</span> <span class="p">(</span><span class="nf">kbd</span> <span class="s">&quot;RET&quot;</span><span class="p">)</span> <span class="ss">&#39;newline-and-indent</span><span class="p">)</span>
-</span><span class="line">
-</span><span class="line"><span class="c1">;; ace jump mode</span>
-</span><span class="line"><span class="p">(</span><span class="nf">global-set-key</span> <span class="p">(</span><span class="nf">kbd</span> <span class="s">&quot;&lt;ESC&gt;&lt;ESC&gt;&quot;</span><span class="p">)</span> <span class="ss">&#39;ace-jump-mode</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure></notextile></div>
-
-<p>Hope these helps :D</p>
 ]]></content>
   </entry>
   
