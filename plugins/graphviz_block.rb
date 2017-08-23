@@ -28,8 +28,18 @@ FileUtils.mkdir_p(GRAPHVIZ_DIR)
 
 module Jekyll
   class GraphvizBlock < Liquid::Block
+    @class = ''
+    @alt = nil
 
     def initialize(tag_name, markup, tokens)
+      if markup =~ /(\S.*\s+)?(\S+)/i
+        if $1
+          @class = $1 || ''
+        end
+        if $2
+          @alt = $2.strip
+        end
+      end
       super
     end
 
@@ -52,7 +62,7 @@ module Jekyll
             pipe.close_write
           end
         end
-        "<img src='#{web_svg}'>"
+        "<img class='caption-wrapper #{@class}' src='#{web_svg}' alt='#{@alt}'>"
       end 
     end
   end
